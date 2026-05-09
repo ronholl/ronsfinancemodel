@@ -448,12 +448,48 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="field p2-field"><label id="l-ssmo2">P2 Monthly SS ($)</label><input type="number" id="i-ssmo2" oninput="IC()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label id="l-sse1">P1 SS End Year</label><input type="number" id="i-sse1" oninput="IC()"><div class="note">9999 = indefinite</div></div>
-        <div class="field p2-field"><label id="l-sse2">P2 SS End Year</label><input type="number" id="i-sse2" oninput="IC()"></div>
+        <div class="field"><label id="l-sse1">P1 SS End Year</label><input type="number" id="i-sse1" oninput="IC()"><div class="note">9999 = indefinite. Overridden by Widow(er) Override when active.</div></div>
+        <div class="field p2-field"><label id="l-sse2">P2 SS End Year</label><input type="number" id="i-sse2" oninput="IC()"><div class="note">9999 = indefinite. Overridden by Widow(er) Override when active.</div></div>
       </div>
     </div>
 
-    <!-- 4. IRA, RMDs & MEDICARE -->
+    <!-- 4. WIDOW(ER) OVERRIDE -->
+    <div class="panel p2-field">
+      <div class="sh">Widow(er) Override</div>
+      <div class="field">
+        <label>Scenario</label>
+        <select id="i-widow-mode" onchange="IC()">
+          <option value="off">Off</option>
+          <option value="p1Survives">Person 1 survives Person 2</option>
+          <option value="p2Survives">Person 2 survives Person 1</option>
+        </select>
+        <div class="note">Models one spouse dying while the survivor keeps retirement balances and, when selected below, the higher Social Security benefit.</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Death Year</label><input type="number" id="i-widow-year" oninput="IC()" placeholder="e.g. 2045"></div>
+      </div>
+      <div class="field" style="margin-bottom:6px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
+          <input type="checkbox" id="i-widow-endss" onchange="IC()" style="width:auto">
+          End deceased spouse Social Security starting the year after death
+        </label>
+      </div>
+      <div class="field" style="margin-bottom:6px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
+          <input type="checkbox" id="i-widow-survivorss" onchange="IC()" style="width:auto">
+          Survivor receives higher Social Security benefit
+        </label>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
+          <input type="checkbox" id="i-widow-single" onchange="IC()" style="width:auto">
+          Switch survivor to Single filing starting the year after death
+        </label>
+        <div class="note">Death year remains MFJ. Starting the following year, federal and CA tax brackets, standard deductions, taxable Social Security, Medicare/IRMAA count, and senior deductions use Single.</div>
+      </div>
+    </div>
+
+    <!-- 5. IRA, RMDs & MEDICARE -->
     <div class="panel">
       <div class="sh">IRA, RMDs &amp; Medicare</div>
       <div class="field-row">
@@ -563,10 +599,10 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
       <div class="ov-section-inner">
         <div class="ov-section-label">Tax Deductions <span id="ovpill-deductions"></span></div>
-        <div class="ov-intent">Enter itemized deductions when they exceed the standard deduction — mortgage interest, charitable contributions, SALT (fed capped at $10K), large medical expenses. Model uses whichever is higher.</div>
+        <div class="ov-intent"><strong>Itemized deductions:</strong> use Fed/CA Itemized only when you want to test itemizing. <strong>Non-itemizer charity:</strong> leave itemized fields blank, choose Yes, and enter eligible cash gifts only; the app applies it only when the standard deduction is used and caps it by filing status.</div>
         <div id="conf-deductions" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-deductions">
-          <thead><tr><th>Fed Itemized ($)</th><th>CA Itemized ($)<br><span style="font-weight:400;font-size:9px">blank = CA standard</span></th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <thead><tr><th>Fed Itemized ($)<br><span style="font-weight:400;font-size:9px">optional itemizing</span></th><th>CA Itemized ($)<br><span style="font-weight:400;font-size:9px">blank = CA standard</span></th><th>Use Non-itemizer Charity?</th><th>Eligible Cash Charity ($)<br><span style="font-weight:400;font-size:9px">ignored unless Yes</span></th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-deductions"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('deductions')">+ Add Row</button>
@@ -734,8 +770,8 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
   <div class="tbl-wrap">
     <table class="data" id="tax-tbl">
       <thead><tr>
-        <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Taxable Inc</th>
-        <th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Blended</th>
+        <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
+        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Blended</th>
         <th style="color:#888">Prior MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
@@ -822,7 +858,15 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <div class="field-row">
             <div class="field"><label>Base Deduction</label><input type="number" id="tt-fed-std-base" oninput="TT()"></div>
             <div class="field"><label>Senior Add-on (per person &#8805;65)</label><input type="number" id="tt-fed-std-sr" oninput="TT()"></div>
+            <div class="field"><label>Non-itemizer Cash Charity Cap</label><input type="number" id="tt-fed-charity-cap" oninput="TT()"><div class="note">Federal only · cash gifts · applies only when using standard deduction</div></div>
           </div>
+          <div style="font-size:10px;color:var(--gold);font-weight:700;margin:12px 0 6px">FEDERAL ENHANCED SENIOR DEDUCTION (2025-2028)</div>
+          <div class="field-row">
+            <div class="field"><label>Sr. Bonus (per person &#8805;65)</label><input type="number" id="tt-fed-sr-bonus" oninput="TT()"></div>
+            <div class="field"><label>Phaseout Start (MAGI)</label><input type="number" id="tt-fed-sr-bonus-start" oninput="TT()"></div>
+            <div class="field"><label>Phaseout Max (MAGI)</label><input type="number" id="tt-fed-sr-bonus-max" oninput="TT()"></div>
+          </div>
+          <div class="note">This is separate from the existing senior standard deduction add-on and also applies when itemizing.</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:6px">CA ORDINARY INCOME</div>
@@ -1031,15 +1075,18 @@ const DEFAULT_TAX_TABLE_2026 = {
   // MFJ
   fedOrdBkts:      [[0,.10],[23850,.12],[96950,.22],[206700,.24],[394600,.32],[501050,.35],[751600,.37]],
   fedLtcgBkts:     [[0,0],[96700,.15],[583750,.20]],
-  fedStdBase:      30000, fedStdSr: 1600,
+  fedStdBase:      30000, fedStdSr: 1600, fedCharityNonItemizerCap: 2000,
+  fedSrBonus:      6000, fedSrBonusStart: 150000, fedSrBonusMax: 250000,
   // SINGLE
   fedOrdBktsSingle:  [[0,.10],[11925,.12],[48475,.22],[103350,.24],[197300,.32],[250525,.35],[626350,.37]],
   fedLtcgBktsSingle: [[0,0],[48350,.15],[533400,.20]],
-  fedStdBaseSingle:  15000, fedStdSrSingle: 2000,
+  fedStdBaseSingle:  15000, fedStdSrSingle: 2000, fedCharityNonItemizerCapSingle: 1000,
+  fedSrBonusSingle:  6000, fedSrBonusStartSingle: 75000, fedSrBonusMaxSingle: 175000,
   // HOH
   fedOrdBktsHOH:     [[0,.10],[17701,.12],[67451,.22],[105701,.24],[201751,.32],[256201,.35],[640601,.37]],
   fedLtcgBktsHOH:    [[0,0],[64751,.15],[566701,.20]],
-  fedStdBaseHOH:     24150, fedStdSrHOH: 2050,
+  fedStdBaseHOH:     24150, fedStdSrHOH: 2050, fedCharityNonItemizerCapHOH: 1000,
+  fedSrBonusHOH:     6000, fedSrBonusStartHOH: 75000, fedSrBonusMaxHOH: 175000,
   // IRMAA (same thresholds for all; surcharge per person)
   irmaaThresh: [0,218000,274000,342000,410000,750000],
   irmaaSurch:  [0,726,1816,2906,4012,5108],
@@ -1097,16 +1144,28 @@ function getScaledTables(S, yr) {
   const mfjLtcg    = scale(tf('fedLtcgBkts',    D.fedLtcgBkts),    bi);
   const fedStdBase = scaleN(tf('fedStdBase',     D.fedStdBase),     bi);
   const fedStdSr   = scaleN(tf('fedStdSr',       D.fedStdSr),       bi);
+  const fedCharityNonItemizerCap = tf('fedCharityNonItemizerCap', D.fedCharityNonItemizerCap);
+  const fedSrBonus = tf('fedSrBonus', D.fedSrBonus);
+  const fedSrBonusStart = tf('fedSrBonusStart', D.fedSrBonusStart);
+  const fedSrBonusMax = tf('fedSrBonusMax', D.fedSrBonusMax);
   // SINGLE
   const singleOrd  = scale(tf('fedOrdBktsSingle',  D.fedOrdBktsSingle),  bi);
   const singleLtcg = scale(tf('fedLtcgBktsSingle', D.fedLtcgBktsSingle), bi);
   const fedStdBaseSingle = scaleN(tf('fedStdBaseSingle', D.fedStdBaseSingle), bi);
   const fedStdSrSingle   = scaleN(tf('fedStdSrSingle',   D.fedStdSrSingle),   bi);
+  const fedCharityNonItemizerCapSingle = tf('fedCharityNonItemizerCapSingle', D.fedCharityNonItemizerCapSingle);
+  const fedSrBonusSingle = tf('fedSrBonusSingle', D.fedSrBonusSingle);
+  const fedSrBonusStartSingle = tf('fedSrBonusStartSingle', D.fedSrBonusStartSingle);
+  const fedSrBonusMaxSingle = tf('fedSrBonusMaxSingle', D.fedSrBonusMaxSingle);
   // HOH
   const hohOrd     = scale(tf('fedOrdBktsHOH',    D.fedOrdBktsHOH),    bi);
   const hohLtcg    = scale(tf('fedLtcgBktsHOH',   D.fedLtcgBktsHOH),   bi);
   const fedStdBaseHOH = scaleN(tf('fedStdBaseHOH', D.fedStdBaseHOH), bi);
   const fedStdSrHOH   = scaleN(tf('fedStdSrHOH',   D.fedStdSrHOH),   bi);
+  const fedCharityNonItemizerCapHOH = tf('fedCharityNonItemizerCapHOH', D.fedCharityNonItemizerCapHOH);
+  const fedSrBonusHOH = tf('fedSrBonusHOH', D.fedSrBonusHOH);
+  const fedSrBonusStartHOH = tf('fedSrBonusStartHOH', D.fedSrBonusStartHOH);
+  const fedSrBonusMaxHOH = tf('fedSrBonusMaxHOH', D.fedSrBonusMaxHOH);
   // IRMAA
   const irmaaT = (tf('irmaaThresh', D.irmaaThresh)).map((v,i) => i===0 ? 0 : scaleN(v, ii));
   const irmaaS = (tf('irmaaSurch', D.irmaaSurch)).map((v,i) => i===0 ? 0 : Math.round(scaleN(v, ii)));
@@ -1122,9 +1181,10 @@ function getScaledTables(S, yr) {
   const caStdHOH    = scaleN(tf('caStdHOH',        D.caStdHOH),        bi);
 
   return {
-    mfjOrd, mfjLtcg, fedStdBase, fedStdSr,
-    singleOrd, singleLtcg, fedStdBaseSingle, fedStdSrSingle,
-    hohOrd, hohLtcg, fedStdBaseHOH, fedStdSrHOH,
+    projectionYear: yr,
+    mfjOrd, mfjLtcg, fedStdBase, fedStdSr, fedCharityNonItemizerCap, fedSrBonus, fedSrBonusStart, fedSrBonusMax,
+    singleOrd, singleLtcg, fedStdBaseSingle, fedStdSrSingle, fedCharityNonItemizerCapSingle, fedSrBonusSingle, fedSrBonusStartSingle, fedSrBonusMaxSingle,
+    hohOrd, hohLtcg, fedStdBaseHOH, fedStdSrHOH, fedCharityNonItemizerCapHOH, fedSrBonusHOH, fedSrBonusStartHOH, fedSrBonusMaxHOH,
     irmaaT, irmaaS, partBBase,
     caOrd, caStd, caOrdSingle, caStdSingle, caOrdHOH, caStdHOH,
   };
@@ -1141,6 +1201,25 @@ function getStdDed(filing, age1, age2, hasP2, tables) {
   }
   const seniors = (age1>=65?1:0) + (hasP2 && age2>=65?1:0);
   return base + seniors * sr;
+}
+function getSeniorBonusDed(agi, filing, age1, age2, hasP2, tables) {
+  if (!tables || tables.projectionYear < 2025 || tables.projectionYear > 2028) return 0;
+  const seniors = (age1>=65?1:0) + (hasP2 && age2>=65?1:0);
+  if (seniors <= 0) return 0;
+  const amt = filing === 'SINGLE' ? (tables.fedSrBonusSingle ?? tables.fedSrBonus ?? 0)
+            : filing === 'HOH'    ? (tables.fedSrBonusHOH    ?? tables.fedSrBonus ?? 0)
+            :                       (tables.fedSrBonus       ?? 0);
+  const start = filing === 'SINGLE' ? (tables.fedSrBonusStartSingle ?? tables.fedSrBonusStart ?? 0)
+              : filing === 'HOH'    ? (tables.fedSrBonusStartHOH    ?? tables.fedSrBonusStart ?? 0)
+              :                       (tables.fedSrBonusStart       ?? 0);
+  const max = filing === 'SINGLE' ? (tables.fedSrBonusMaxSingle ?? tables.fedSrBonusMax ?? start)
+            : filing === 'HOH'    ? (tables.fedSrBonusMaxHOH    ?? tables.fedSrBonusMax ?? start)
+            :                       (tables.fedSrBonusMax       ?? start);
+  const rawBonus = seniors * amt;
+  if (rawBonus <= 0 || max <= start) return rawBonus;
+  if (agi <= start) return rawBonus;
+  if (agi >= max) return 0;
+  return Math.max(0, Math.round(rawBonus * (max - agi) / (max - start)));
 }
 // Returns the AGI ceiling of the bracket that 'agi' falls into (for bracket fill conversions)
 // Returns null if in top bracket. Uses standard deduction to convert to taxable income.
@@ -1165,10 +1244,22 @@ function getBracketCeiling(agi, filing, tables) {
   return null;
 }
 
-function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDed) {
+function getCharityNonItemizerCap(filing, tables) {
+  if (!tables || tables.projectionYear < 2026) return 0;
+  if (filing === 'SINGLE') return tables.fedCharityNonItemizerCapSingle ?? tables.fedCharityNonItemizerCap ?? 0;
+  if (filing === 'HOH') return tables.fedCharityNonItemizerCapHOH ?? tables.fedCharityNonItemizerCap ?? 0;
+  return tables.fedCharityNonItemizerCap ?? 0;
+}
+
+function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDed, charityCash) {
   const sd = getStdDed(filing, age1, age2, hasP2, tables);
-  // Use higher of itemized or standard deduction
-  const effDed  = (itemizedDed != null && itemizedDed > sd) ? itemizedDed : sd;
+  const seniorBonus = getSeniorBonusDed(agi, filing, age1, age2, hasP2, tables);
+  // Use higher of itemized or standard deduction, then apply the enhanced senior deduction.
+  const itemizedUsed = itemizedDed != null && itemizedDed > sd;
+  const baseDed = itemizedUsed ? itemizedDed : sd;
+  const charityCap = getCharityNonItemizerCap(filing, tables);
+  const charityDed = !itemizedUsed ? Math.min(Math.max(0, charityCash || 0), charityCap) : 0;
+  const effDed  = baseDed + seniorBonus + charityDed;
   const taxable = Math.max(0, agi - effDed);
   const ordInc  = Math.max(0, taxable - qualDivs);
   let bkts, lbkts;
@@ -1186,7 +1277,7 @@ function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDe
   const ordTax  = bracketTax(ordInc, bkts);
   const ltcgAll = bracketTax(taxable, lbkts);
   const ltcgOrd = bracketTax(ordInc,  lbkts);
-  return { ordTax, ltcgTax: Math.max(0, ltcgAll-ltcgOrd), stdDed: sd, effDed, taxableInc: taxable };
+  return { ordTax, ltcgTax: Math.max(0, ltcgAll-ltcgOrd), stdDed: sd, seniorBonus, charityDed, itemizedUsed, effDed, taxableInc: taxable };
 }
 function calcStateTax(agi, filing, state, fedTaxableInc, tables, caItemizedDed) {
   if (!state || agi<=0) return 0;
@@ -1262,6 +1353,18 @@ function resolveOverride(table, year, valueKey) {
   }
   return result;
 }
+function resolveOverrideNonBlank(table, year, valueKey) {
+  if (!table || !table.length) return null;
+  let result = null;
+  for (const row of table) {
+    const s = parseInt(row.startYear)||0, e = parseInt(row.endYear)||9999;
+    const val = row[valueKey];
+    if (year>=s && year<=e && val !== null && val !== undefined && val !== '') {
+      result = val;
+    }
+  }
+  return result;
+}
 function findConflicts(table) {
   const conflicts = [];
   for (let i=0; i<table.length; i++) {
@@ -1290,6 +1393,7 @@ function defaultState() {
     ssmo1:0, ssmo2:0,
     ssEnd1:9999, ssEnd2:9999,
     ssCola:0.025,
+    widowMode:'off', widowDeathYear:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true,
     wageGrowth:0.030,
     // RMD
     rmdStart1: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
@@ -1329,12 +1433,18 @@ function defaultState() {
         fedOrdBkts:       [[0,.10],[24801,.12],[100801,.22],[211401,.24],[403551,.32],[512451,.35],[768701,.37]],
         fedLtcgBkts:      [[0,0],[96701,.15],[600051,.20]],
         fedStdBase:       32200, fedStdSr: 1650,
+        fedCharityNonItemizerCap: 2000,
+        fedSrBonus:       6000, fedSrBonusStart: 150000, fedSrBonusMax: 250000,
         fedOrdBktsSingle: [[0,.10],[12401,.12],[50401,.22],[105701,.24],[201776,.32],[256226,.35],[640601,.37]],
         fedLtcgBktsSingle:[[0,0],[48351,.15],[533401,.20]],
         fedStdBaseSingle: 16100, fedStdSrSingle: 2050,
+        fedCharityNonItemizerCapSingle: 1000,
+        fedSrBonusSingle: 6000, fedSrBonusStartSingle: 75000, fedSrBonusMaxSingle: 175000,
         fedOrdBktsHOH:    [[0,.10],[17701,.12],[67451,.22],[105701,.24],[201751,.32],[256201,.35],[640601,.37]],
         fedLtcgBktsHOH:   [[0,0],[64751,.15],[566701,.20]],
         fedStdBaseHOH:    24150, fedStdSrHOH: 2050,
+        fedCharityNonItemizerCapHOH: 1000,
+        fedSrBonusHOH:    6000, fedSrBonusStartHOH: 75000, fedSrBonusMaxHOH: 175000,
         irmaaThresh:      [0,218000,274000,342000,410000,750000],
         irmaaSurch:       [0,726,1816,2906,4012,5108],
         caOrdBkts:        [[0,.01],[21969,.02],[51993,.04],[82094,.06],[105530,.08],[123210,.093],[640130,.103],[767950,.113],[1279550,.123]],
@@ -1362,6 +1472,19 @@ function runProjection(S) {
     const age1 = yr - S.by1 - 1, age2 = yr - S.by2 - 1; // age during the year (before birthday)
     const soy  = S.soy[yr] || {};
     const tables = getScaledTables(S, yr); // inflation-scaled tax tables for this year
+    const widowMode = S.widowMode || 'off';
+    const widowYear = parseInt(S.widowDeathYear) || 0;
+    const widowActive = hp2 && widowMode !== 'off' && widowYear > 0;
+    const p1Survivor = widowActive && widowMode === 'p1Survives';
+    const p2Survivor = widowActive && widowMode === 'p2Survives';
+    const afterDeathYear = widowActive && yr > widowYear;
+    const survivorAge = p1Survivor ? age1 : p2Survivor ? age2 : age1;
+    const taxFiling = (afterDeathYear && S.widowSwitchSingle) ? 'SINGLE' : S.filing;
+    const taxHasP2 = afterDeathYear ? false : hp2;
+    const taxAge1 = afterDeathYear ? survivorAge : age1;
+    const taxAge2 = afterDeathYear ? 0 : age2;
+    const effSsEnd1 = (widowActive && S.widowEndSS && p2Survivor) ? Math.min(S.ssEnd1 || 9999, widowYear) : S.ssEnd1;
+    const effSsEnd2 = (widowActive && S.widowEndSS && p1Survivor) ? Math.min(S.ssEnd2 || 9999, widowYear) : S.ssEnd2;
 
     // ── SOY balance overrides (override-and-resume) ──────────────────────
     if (soy.cash  != null && soy.cash  !== '') cash  = parseF(soy.cash);
@@ -1373,6 +1496,18 @@ function runProjection(S) {
     if (soy.hsa   != null && soy.hsa   !== '') hsa   = parseF(soy.hsa);
     // Only apply inherited IRA SOY override if drain year hasn't passed yet
     if (soy.inh   != null && soy.inh   !== '' && (S.inhDrainYear >= 9999 || yr <= S.inhDrainYear)) inh = parseF(soy.inh);
+
+    // Widow(er) override: at the start of the first year after death, treat spouse
+    // IRA/Roth balances as rolled into the survivor's matching account bucket.
+    if (afterDeathYear) {
+      if (p1Survivor) {
+        ira1 += ira2; ira2 = 0;
+        roth1 += roth2; roth2 = 0;
+      } else if (p2Survivor) {
+        ira2 += ira1; ira1 = 0;
+        roth2 += roth1; roth1 = 0;
+      }
+    }
 
     // Record start-of-year balances (before growth)
     const startCashBal = cash;
@@ -1408,9 +1543,9 @@ function runProjection(S) {
     const divs = cashInterest + secDivs;
 
     // ── Spending ──────────────────────────────────────────────────────────
-    const ovSpend    = resolveOverride(S.ovSpending, yr, 'amount');
-    const ovSpendPct = resolveOverride(S.ovSpending, yr, 'pctChange');
-    const ovTaxOvr   = resolveOverride(S.ovSpending, yr, 'taxOvr');   // dollar tax override
+    const ovSpend    = resolveOverrideNonBlank(S.ovSpending, yr, 'amount');
+    const ovSpendPct = resolveOverrideNonBlank(S.ovSpending, yr, 'pctChange');
+    const ovTaxOvr   = resolveOverrideNonBlank(S.ovSpending, yr, 'taxOvr');   // dollar tax override
     // Spending: find most recent anchor at or before this year and inflate forward from it.
     // Anchors are checked in order: SOY spending entries AND ovSpending override entries.
     // The most recent anchor (by year) wins as the inflation base.
@@ -1427,7 +1562,7 @@ function runProjection(S) {
       // ovSpending override anchor — a point override also resets the inflation base
       // so the year AFTER an override inflates from the override value, not the prior SOY base
       if (y < yr) {  // only look at prior years to find base (current year handled by ovSpend below)
-        const ovAmt = resolveOverride(S.ovSpending, y, 'amount');
+        const ovAmt = resolveOverrideNonBlank(S.ovSpending, y, 'amount');
         if (ovAmt != null) {
           spendBase  = parseF(ovAmt) || 0;
           spendBaseYr = y;
@@ -1463,17 +1598,30 @@ function runProjection(S) {
       if (sy.ss1 != null && sy.ss1 !== '' && by >= ss1Start) { ss1Base = parseF(sy.ss1); ss1BaseYr = by; }
       if (sy.ss2 != null && sy.ss2 !== '' && by >= ss2Start) { ss2Base = parseF(sy.ss2); ss2BaseYr = by; }
     }
-    const grossSS1 = (yr >= ss1Start && yr <= S.ssEnd1)
+    let grossSS1 = (yr >= ss1Start && yr <= effSsEnd1)
       ? (ss1Base * 12) * Math.pow(1+S.ssCola, Math.max(0, yr - ss1BaseYr)) : 0;
-    const grossSS2 = hp2 && (yr >= ss2Start && yr <= S.ssEnd2)
+    let grossSS2 = hp2 && (yr >= ss2Start && yr <= effSsEnd2)
       ? (ss2Base * 12) * Math.pow(1+S.ssCola, Math.max(0, yr - ss2BaseYr)) : 0;
+    if (afterDeathYear && S.widowSurvivorSS !== false) {
+      const p1SurvivorBenefit = (yr >= ss1Start && yr <= (S.ssEnd1 || 9999))
+        ? (ss1Base * 12) * Math.pow(1+S.ssCola, Math.max(0, yr - ss1BaseYr)) : 0;
+      const p2SurvivorBenefit = hp2 && (yr >= ss2Start && yr <= (S.ssEnd2 || 9999))
+        ? (ss2Base * 12) * Math.pow(1+S.ssCola, Math.max(0, yr - ss2BaseYr)) : 0;
+      const survivorBenefit = Math.max(p1SurvivorBenefit, p2SurvivorBenefit);
+      if (p1Survivor) { grossSS1 = survivorBenefit; grossSS2 = 0; }
+      else if (p2Survivor) { grossSS1 = 0; grossSS2 = survivorBenefit; }
+    }
     const grossSS = grossSS1 + grossSS2;
 
     // ── RMDs (based on START-of-year balance, matching Excel $AM3*(1+g) pattern) ──
     // Excel: IRA_EOY = IRA_prior*(1+g) - RMD - Additional + contributions
     // RMD uses START-of-year (prior EOY) balance divided by IRS factor
-    const rmd1 = yr >= S.rmdStart1 ? getRMD(ira1, age1) : 0;
-    const rmd2 = hp2 && yr >= S.rmdStart2 ? getRMD(ira2, age2) : 0;
+    const rmdAge1 = afterDeathYear && p2Survivor ? survivorAge : age1;
+    const rmdAge2 = afterDeathYear && p1Survivor ? survivorAge : age2;
+    const rmdStart1 = afterDeathYear && p2Survivor ? (S.by2 + ((S.by2 >= 1960) ? 76 : 74)) : S.rmdStart1;
+    const rmdStart2 = afterDeathYear && p1Survivor ? (S.by1 + ((S.by1 >= 1960) ? 76 : 74)) : S.rmdStart2;
+    const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
+    const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
 
     // ── Inherited IRA draw ────────────────────────────────────────────────
     let inhDraw = 0;
@@ -1615,18 +1763,18 @@ function runProjection(S) {
       if (gross <= 0) return 0;
       const preTax = preTaxDed || 0;
       const fedAGI = Math.max(0, gross - preTax);
-      const fedRes = calcFedTax(fedAGI, 0, S.filing, age1, age2, hp2, tables);
+      const fedRes = calcFedTax(fedAGI, 0, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
       const _ovStRow = resolveOverride(S.ovStateTax||[], yr, 'state');
       const _stRowExists = (S.ovStateTax||[]).some(r => { const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s&&yr<=e; });
       const _effState = _stRowExists ? (_ovStRow && _ovStRow!=='NONE' ? _ovStRow : '') : (S.state||'');
-      const stTax  = calcStateTax(fedAGI, S.filing, _effState, null, tables);
+      const stTax  = calcStateTax(fedAGI, taxFiling, _effState, null, tables);
       return fedRes.ordTax + fedRes.ltcgTax + stTax;
     };
     const ficaSdi = (gross) => {
       if (gross <= 0) return 0;
       return Math.min(gross, SS_BASE) * 0.062 +
              gross * 0.0145 +
-             Math.max(0, gross - (S.filing==='MFJ'?250000:200000)) * 0.009 +
+             Math.max(0, gross - (taxFiling==='MFJ'?250000:200000)) * 0.009 +
              (S.state==='CA' ? gross * 0.011 : 0);
     };
     // Withheld = income-tax portion only (FICA/SDI already gone from take-home, not income tax prepayment)
@@ -1686,9 +1834,12 @@ function runProjection(S) {
     const step1Total = mandatoryFunding + inhDraw + hsaWith;
     const cashGapNeeded = Math.max(0, cashFloor - startCashBal);
 
-    // ── Iterative tax solver loop (up to 4 passes) ────────────────────────
+    // ── Iterative tax solver loop ─────────────────────────────────────────
     // Each pass: waterfall draws based on taxEst → compute actual tax → repeat
-    // Converges in 2-3 passes. taxOvr short-circuits to 1 pass.
+    // Large conversion years can need more passes because the tax funding draw
+    // changes taxable income, so converge to near-dollar precision.
+    const TAX_SOLVER_MAX_PASSES = 20;
+    const TAX_SOLVER_EPS = 0.50;
     let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, tSSfinal_f=0, medicareBase_f=0;
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
     let rothModeWith1_f=0, rothModeWith2_f=0;
@@ -1696,7 +1847,7 @@ function runProjection(S) {
     let rothDraw1_f=0, rothDraw2_f=0;
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
-    for (let taxPass = 0; taxPass < 8; taxPass++) {
+    for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
     const totalRequired = spending + taxEst + cashGapNeeded;
 
     // ── Excess / shortfall_inner ────────────────────────────────────────────────
@@ -1765,7 +1916,7 @@ function runProjection(S) {
     const w2AGI2         = grossWages2 > 0 ? grossWages2 - k401Contrib2Trad : 0;
     const w2AGI          = w2AGI1 + w2AGI2;
     const agiExSS        = w2AGI + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
-    const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, S.filing);
+    const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling);
     let agi              = agiExSS + tSS0;
 
     // ── IRMAA / Income targeting (iterative solver) ───────────────────────
@@ -1807,7 +1958,7 @@ function runProjection(S) {
       const targetIncome = tierMax - headroom;
 
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, S.filing);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
         const curAGI = agiExSS + tSS + rothConv;
         const diff = targetIncome - curAGI;
 
@@ -1844,7 +1995,7 @@ function runProjection(S) {
     } else if (incomeOvActive && (ira1 + ira2) > 0) {
       const target = parseF(incomeLvlOv) - incomeHeadroom;
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, S.filing);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
         const curAGI = agiExSS + tSS + rothConv;
         const diff = target - curAGI;
         if (Math.abs(diff) < 10) break;
@@ -1857,9 +2008,9 @@ function runProjection(S) {
     } else if (taxFillActive && (ira1 + ira2) > 0) {
       // Tax Bracket Fill: convert IRA→Roth to top of current federal bracket minus headroom
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, S.filing);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
         const curAGI = agiExSS + tSS + rothConv;
-        const bktCeil = getBracketCeiling(curAGI, S.filing, tables);
+        const bktCeil = getBracketCeiling(curAGI, taxFiling, tables);
         if (bktCeil === null) break; // already in top bracket
         const target = bktCeil - taxFillHR;
         if (curAGI >= target) break;
@@ -1872,7 +2023,7 @@ function runProjection(S) {
     }
 
     // Final AGI with conversion
-    const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, S.filing);
+    const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
     agi = agiExSS + tSSfinal_inner + rothConv;
 
     // ── Taxes ─────────────────────────────────────────────────────────────
@@ -1883,10 +2034,14 @@ function runProjection(S) {
     // Itemized deduction override — use higher of itemized or standard for each jurisdiction
     const ovDedRow    = resolveOverride(S.ovDeductions, yr, 'fedItemized');
     const ovDedCA     = resolveOverride(S.ovDeductions, yr, 'caItemized');
+    const ovCharityFlag = resolveOverride(S.ovDeductions, yr, 'charityOn');
+    const ovCharityOn = ovCharityFlag === 'Yes' || ovCharityFlag === 'T';
+    const ovCharity    = resolveOverrideNonBlank(S.ovDeductions, yr, 'charityCash');
     const fedItemized = ovDedRow != null ? parseF(ovDedRow) : null;
+    const charityCash = ovCharityOn && ovCharity != null ? (parseF(ovCharity) || 0) : 0;
     // CA: if no CA entry, default to CA standard (no itemizing for CA)
     const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
-    const fedRes  = calcFedTax(agi, ltcgIncome, S.filing, age1, age2, hp2, tables, fedItemized);
+    const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
     // CA does not tax Social Security — subtract taxable SS from CA AGI
     const caAGI   = agi - tSSfinal_inner;
     // Resolve state override for this year (move to tax-free state, etc.)
@@ -1898,15 +2053,17 @@ function runProjection(S) {
     const effectiveState = ovStateTaxRowExists
       ? (ovStateRow && ovStateRow !== 'NONE' ? ovStateRow : '')
       : S.state;
-    const stTax   = calcStateTax(caAGI, S.filing, effectiveState, null, tables, caItemized);
+    const stTax   = calcStateTax(caAGI, taxFiling, effectiveState, null, tables, caItemized);
     // IRMAA uses 2-year prior MAGI (Medicare lookback rule)
     const irmaaMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
                       yr === S.startYear+1 ? (S.medicareMagi1||0) :
                       rows.length >= 2 ? rows[rows.length-2].agi : agi;
-    const irmaaTx = calcIRMAA(irmaaMagi, S.filing, age1, age2, hp2, tables);
+    const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
     // Part B base premium — per enrolled person (age 65+), inflated with irmaaInfl
     const partBPerPerson = tables.partBBase || 2220;
-    const medicareCount = (age1>=65?1:0) + (hp2&&age2>=65?1:0);
+    const medicareCount = afterDeathYear
+      ? (survivorAge>=65?1:0)
+      : (age1>=65?1:0) + (hp2&&age2>=65?1:0);
     const medicareBase = partBPerPerson * medicareCount;
     const newTax = fedRes.ordTax + fedRes.ltcgTax + stTax; // income tax only (IRMAA separate)
     const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld);  // IRMAA excluded — Medicare premium, not income tax funding
@@ -1920,8 +2077,8 @@ function runProjection(S) {
     unfunded_f=unfunded; fundingChoice_f=fundingChoice; irmaaMagi_f=irmaaMagi;
     qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
     taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGI; w2AGI1_f=w2AGI1; w2AGI2_f=w2AGI2;
-    // Converge if tax override supplied, or change is small enough
-    if (taxOvrAmt != null || Math.abs(newNetTax - taxEst) < 10) break;
+    // Converge if tax override supplied, or change is below display precision.
+    if (taxOvrAmt != null || Math.abs(newNetTax - taxEst) < TAX_SOLVER_EPS) break;
     taxEst = newNetTax;
     } // end taxPass loop
     // Unpack finals from converged pass
@@ -1947,9 +2104,9 @@ function runProjection(S) {
     const fundingTax = taxOvrActive ? taxOvrAmt : netTaxNeeded;
     const effRate  = agi > 0 ? cashTax / agi : 0;
     const taxableInc = Math.max(0, agi - fedRes.effDed);
-    const margRate = getMarginalRate(taxableInc, S.filing, tables);
+    const margRate = getMarginalRate(taxableInc, taxFiling, tables);
     const blended  = taxableInc > 0 ? cashTax / taxableInc : 0;
-    const irmaaTier = getIRMAATierLabel(agi, S.filing, tables);
+    const irmaaTier = getIRMAATierLabel(agi, taxFiling, tables);
 
     // ── Update EOY balances — matching Excel formula structure ────────────
     // Excel IRA formula: IRA_prior*(1+g) - RMD - Additional - RothConv + 401KContribs
@@ -2023,9 +2180,9 @@ function runProjection(S) {
       k401Contrib2Trad, k401Contrib2Roth, k401Emp2Amt,
       // Taxable income
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
-      agi, stdDed: fedRes.stdDed, effDed: fedRes.effDed, taxableInc,
+      agi, stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
-      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi,
+      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, taxFiling,
       totalTax: cashTax, incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
@@ -2532,14 +2689,26 @@ function applyMigrations(merged) {
     if (!T.fedLtcgBkts)          T.fedLtcgBkts          = merged.fedLtcgBkts || D2.fedLtcgBkts;
     if (T.fedStdBase == null)     T.fedStdBase           = merged.fedStdBase  != null ? merged.fedStdBase : D2.fedStdBase;
     if (T.fedStdSr   == null)     T.fedStdSr             = D2.fedStdSr;
+    if (T.fedCharityNonItemizerCap==null) T.fedCharityNonItemizerCap = D2.fedCharityNonItemizerCap;
+    if (T.fedSrBonus == null)     T.fedSrBonus           = D2.fedSrBonus;
+    if (T.fedSrBonusStart==null)  T.fedSrBonusStart      = D2.fedSrBonusStart;
+    if (T.fedSrBonusMax==null)    T.fedSrBonusMax        = D2.fedSrBonusMax;
     if (!T.fedOrdBktsSingle)      T.fedOrdBktsSingle     = D2.fedOrdBktsSingle;
     if (!T.fedLtcgBktsSingle)     T.fedLtcgBktsSingle    = D2.fedLtcgBktsSingle;
     if (T.fedStdBaseSingle==null) T.fedStdBaseSingle     = D2.fedStdBaseSingle;
     if (T.fedStdSrSingle  ==null) T.fedStdSrSingle       = D2.fedStdSrSingle;
+    if (T.fedCharityNonItemizerCapSingle==null) T.fedCharityNonItemizerCapSingle = D2.fedCharityNonItemizerCapSingle;
+    if (T.fedSrBonusSingle==null) T.fedSrBonusSingle     = D2.fedSrBonusSingle;
+    if (T.fedSrBonusStartSingle==null) T.fedSrBonusStartSingle = D2.fedSrBonusStartSingle;
+    if (T.fedSrBonusMaxSingle==null)   T.fedSrBonusMaxSingle   = D2.fedSrBonusMaxSingle;
     if (!T.fedOrdBktsHOH)         T.fedOrdBktsHOH        = D2.fedOrdBktsHOH;
     if (!T.fedLtcgBktsHOH)        T.fedLtcgBktsHOH       = D2.fedLtcgBktsHOH;
     if (T.fedStdBaseHOH==null)    T.fedStdBaseHOH        = D2.fedStdBaseHOH;
     if (T.fedStdSrHOH  ==null)    T.fedStdSrHOH          = D2.fedStdSrHOH;
+    if (T.fedCharityNonItemizerCapHOH==null) T.fedCharityNonItemizerCapHOH = D2.fedCharityNonItemizerCapHOH;
+    if (T.fedSrBonusHOH==null)    T.fedSrBonusHOH        = D2.fedSrBonusHOH;
+    if (T.fedSrBonusStartHOH==null) T.fedSrBonusStartHOH = D2.fedSrBonusStartHOH;
+    if (T.fedSrBonusMaxHOH==null)   T.fedSrBonusMaxHOH   = D2.fedSrBonusMaxHOH;
     if (!T.irmaaThresh)            T.irmaaThresh          = merged.irmaaThresh || D2.irmaaThresh;
     if (!T.irmaaSurch)             T.irmaaSurch           = merged.irmaaSurch  || D2.irmaaSurch;
     if (!T.caOrdBkts)              T.caOrdBkts            = merged.caOrdBkts  || D2.caOrdBkts;
@@ -2567,6 +2736,31 @@ function showDemoBanner(show) {
 function p1(){ return S.name1||'Person 1'; }
 function p2(){ return S.name2&&S.name2.trim()?S.name2:'Person 2'; }
 function hasP2(){ return !!(S.name2&&S.name2.trim()); }
+function isWidowAfterDeathYear(row) {
+  const yr = row && row.yr != null ? row.yr : row;
+  return hasP2() && (S.widowMode||'off') !== 'off' && (parseInt(S.widowDeathYear)||0) > 0 && yr > (parseInt(S.widowDeathYear)||0);
+}
+function survivorPersonNum() {
+  return S.widowMode === 'p1Survives' ? 1 : S.widowMode === 'p2Survives' ? 2 : null;
+}
+function displayAge(row) {
+  if (!row) return '';
+  if (isWidowAfterDeathYear(row)) {
+    return survivorPersonNum() === 2 ? String(row.age2||'') : String(row.age1||'');
+  }
+  return hasP2() ? `${row.age1}/${row.age2}` : String(row.age1||'');
+}
+function hideAgeField(row, field) {
+  if (!isWidowAfterDeathYear(row)) return false;
+  return (survivorPersonNum() === 1 && field === 'age2') || (survivorPersonNum() === 2 && field === 'age1');
+}
+function displayAgeText(row) {
+  if (!row) return '';
+  if (isWidowAfterDeathYear(row)) {
+    return survivorPersonNum() === 2 ? `${p2()} age ${row.age2}` : `${p1()} age ${row.age1}`;
+  }
+  return hasP2() ? `${p1()} age ${row.age1} · ${p2()} age ${row.age2}` : `${p1()} age ${row.age1}`;
+}
 
 // ── Tab switcher ──────────────────────────────────────────────────────────
 function ST(name){
@@ -2684,6 +2878,11 @@ function loadUI(){
   sv('i-ssa1',S.ssAge1);sv('i-ssa2',S.ssAge2);
   sv('i-ssmo1',S.ssmo1);sv('i-ssmo2',S.ssmo2);
   sv('i-sse1',S.ssEnd1);sv('i-sse2',S.ssEnd2);
+  sv('i-widow-mode',S.widowMode||'off');
+  sv('i-widow-year',S.widowDeathYear||'');
+  const we=document.getElementById('i-widow-endss'); if(we) we.checked = S.widowEndSS !== false;
+  const wss=document.getElementById('i-widow-survivorss'); if(wss) wss.checked = S.widowSurvivorSS !== false;
+  const ws=document.getElementById('i-widow-single'); if(ws) ws.checked = S.widowSwitchSingle !== false;
   sv('i-cola',pct(S.ssCola));
   sv('i-wagegrowth',pct(S.wageGrowth ?? S.ssCola));
   // RMD years auto-calculated, shown via updateLabels
@@ -2714,6 +2913,11 @@ function readUI(){
   S.ssAge1=gf('i-ssa1');S.ssAge2=gf('i-ssa2');
   S.ssmo1=gf('i-ssmo1');S.ssmo2=gf('i-ssmo2');
   S.ssEnd1=gi('i-sse1');S.ssEnd2=gi('i-sse2');
+  S.widowMode=gv('i-widow-mode')||'off';
+  S.widowDeathYear=gf('i-widow-year');
+  S.widowEndSS=document.getElementById('i-widow-endss')?.checked ?? true;
+  S.widowSurvivorSS=document.getElementById('i-widow-survivorss')?.checked ?? true;
+  S.widowSwitchSingle=document.getElementById('i-widow-single')?.checked ?? true;
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
   // RMD start years auto-calculated in updateLabels — not read from inputs
@@ -2753,6 +2957,13 @@ function updateLabels(){
   setTxt('l-ssage1',n1+' SS Age');setTxt('l-ssage2',n2+' SS Age');
   setTxt('l-ssmo1',n1+' Monthly SS ($)');setTxt('l-ssmo2',n2+' Monthly SS ($)');
   setTxt('l-sse1',n1+' SS End Year');setTxt('l-sse2',n2+' SS End Year');
+  const wm=document.getElementById('i-widow-mode');
+  if(wm){
+    const o1=wm.querySelector('option[value="p1Survives"]');
+    const o2=wm.querySelector('option[value="p2Survives"]');
+    if(o1)o1.textContent=n1+' survives '+n2;
+    if(o2)o2.textContent=n2+' survives '+n1;
+  }
   const planStart = parseInt(S.startYear)||2026;
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
@@ -2853,7 +3064,11 @@ function toggleSummary(){
 
 function renderSummaryTable(){
   const n1=p1(), n2=p2(), hp=hasP2();
-  const W   = n => n==null||n===0||isNaN(n) ? '—' : Math.round(n).toLocaleString('en-US');
+  const W   = n => {
+    if(n==null||isNaN(n)) return '—';
+    const rounded = Math.round(n);
+    return rounded===0 ? '—' : rounded.toLocaleString('en-US');
+  };
   const PCT = n => n==null||isNaN(n) ? '—' : (n*100).toFixed(1)+'%';
 
   const groups = [
@@ -2966,10 +3181,11 @@ function renderSummaryTable(){
         const pos  = isF
           ? `position:sticky;left:${left}px;z-index:2;background:${darkBg};color:var(--gold2);`
           : `background:${rowBg};`;
-        const raw  = derived[col.f]!==undefined ? derived[col.f] : r[col.f];
         const isAge = col.f==='age1'||col.f==='age2';
         const isYr  = col.f==='yr';
-        let val    = col.pct ? PCT(raw) : isYr ? raw : isAge && raw<=0 ? '—' : W(raw);
+        const raw  = isAge && hideAgeField(r, col.f) ? null
+                   : derived[col.f]!==undefined ? derived[col.f] : r[col.f];
+        let val    = col.pct ? PCT(raw) : isYr ? raw : isAge && (raw==null||raw<=0) ? '—' : W(raw);
         if(col.ovr && r[col.ovr]) val = '✦ ' + val; // override active marker (thin space)
         let extra  = '';
         if(col.bold)  extra += 'font-weight:700;';
@@ -2990,7 +3206,11 @@ function renderSummaryTable(){
 // ── Cash Flow ─────────────────────────────────────────────────────────────
 function renderCF(){
   const n1=p1(), n2=p2(), hp=hasP2();
-  const W   = (n) => n==null||n===0||isNaN(n) ? '—' : Math.round(n).toLocaleString('en-US');
+  const W   = (n) => {
+    if(n==null||isNaN(n)) return '—';
+    const rounded = Math.round(n);
+    return rounded===0 ? '—' : rounded.toLocaleString('en-US');
+  };
   const PCT = (n) => n==null||isNaN(n) ? '—' : (n*100).toFixed(1)+'%';
 
   // Frozen col widths (px): Year=52, Age1=46, Age2=46
@@ -3045,6 +3265,7 @@ function renderCF(){
       {f:'taxableSS',     h:'Taxable\nSoc Sec'},
     ]},
     { label:'TAX', bg:'#3a1a1a', tc:'#e08080', cols:[
+      {f:'taxFiling', h:'Filing'},
       {f:'agi',       h:'AGI',              bold:true},
       {f:'fedOrd',    h:'Federal\nOrd Tax'},
       {f:'ltcg',      h:'LTCG\nTax'},
@@ -3074,13 +3295,13 @@ function renderCF(){
   let r1='', r2='';
 
   // Frozen group header cell (spans all frozen cols)
-  r1 += `<th colspan="${frozenCols.length}" style="position:sticky;left:0;z-index:4;background:${frozenBg};border-right:3px solid #555;"></th>`;
+  r1 += `<th colspan="${frozenCols.length}" style="position:sticky;top:0;left:0;z-index:12;background:${frozenBg};border-right:3px solid #555;height:28px;"></th>`;
 
   // Frozen col sub-headers
   frozenCols.forEach((col,ci)=>{
     const left = frozenLefts[ci];
     const bdr  = ci===frozenCols.length-1 ? 'border-right:3px solid #555;' : '';
-    r2 += `<th style="position:sticky;left:${left}px;z-index:4;background:${frozenBg};color:${frozenTc};
+    r2 += `<th style="position:sticky;top:28px;left:${left}px;z-index:13;background:${frozenBg};color:${frozenTc};
       width:${col.w}px;min-width:${col.w}px;max-width:${col.w}px;
       padding:4px 4px;text-align:center;font-family:'JetBrains Mono',monospace;
       font-size:9.5px;font-weight:700;white-space:pre;overflow:hidden;text-overflow:ellipsis;border-bottom:2px solid #444;${bdr}">${col.h}</th>`;
@@ -3089,12 +3310,12 @@ function renderCF(){
   // Scrollable group headers + col headers
   groups.forEach((g,gi)=>{
     const span = g.cols.length;
-    r1 += `<th colspan="${span}" style="background:${g.bg};color:${g.tc};
+    r1 += `<th colspan="${span}" style="position:sticky;top:0;z-index:10;background:${g.bg};color:${g.tc};
       font-size:10px;font-weight:700;letter-spacing:.08em;text-align:center;
-      padding:5px 8px;border-left:3px solid #444;">${g.label}</th>`;
+      padding:5px 8px;border-left:3px solid #444;height:28px;">${g.label}</th>`;
     g.cols.forEach((col,ci)=>{
       const bdr = ci===0 ? 'border-left:3px solid #555;' : '';
-      r2 += `<th style="background:#1e1810;color:${g.tc};
+      r2 += `<th style="position:sticky;top:28px;z-index:9;background:#1e1810;color:${g.tc};
         padding:4px 8px;text-align:center;font-family:'JetBrains Mono',monospace;
         font-size:9.5px;font-weight:600;white-space:pre;border-bottom:2px solid #444;${bdr}">${col.h}</th>`;
     });
@@ -3113,7 +3334,9 @@ function renderCF(){
     frozenCols.forEach((col,ci)=>{
       const left = frozenLefts[ci];
       const bdr  = ci===frozenCols.length-1 ? 'border-right:3px solid #bbb;' : '';
-      const fval = (col.f==='age1'||col.f==='age2') && r[col.f]<=0 ? '—' : r[col.f];
+      const isAge = col.f==='age1'||col.f==='age2';
+      const fval = isAge && hideAgeField(r, col.f) ? '—'
+        : isAge && r[col.f]<=0 ? '—' : r[col.f];
       cells += `<td style="position:sticky;left:${left}px;z-index:2;
         width:${col.w}px;min-width:${col.w}px;max-width:${col.w}px;
         padding:3px 4px;text-align:center;font-family:'JetBrains Mono',monospace;
@@ -3137,7 +3360,7 @@ function renderCF(){
       g.cols.forEach((col,ci)=>{
         const bdr = ci===0 ? 'border-left:3px solid #ddd;' : '';
         const raw = derived[col.f] !== undefined ? derived[col.f] : r[col.f];
-        let val = col.pct ? PCT(raw) : W(raw);
+        let val = typeof raw === 'string' ? raw : (col.pct ? PCT(raw) : W(raw));
         if(col.ovr && r[col.ovr]) val = '✦ ' + val;
         let color='', fw='';
         if(col.bold) fw='font-weight:700;';
@@ -3186,10 +3409,13 @@ function renderTax(){
   ]},{plugins:{tooltip:{callbacks:{label:ctx=>' '+(ctx.raw*100).toFixed(1)+'%'}}},
     scales:{x:{},y:{ticks:{callback:v=>(v*100).toFixed(0)+'%'}}}});
   document.getElementById('tax-body').innerHTML=proj.map(r=>`<tr>
-    <td>${r.yr}</td><td>${hasP2()?r.age1+'/'+r.age2:r.age1}</td>
+    <td>${r.yr}</td><td>${displayAge(r)}</td>
     <td>${f$(r.agi)}</td>
-    <td>${r.effDed>r.stdDed?'✦ ':''}${f$(r.effDed||r.stdDed)}</td>
-    <td>${f$(Math.max(0,r.agi-(r.effDed||r.stdDed)))}</td>
+    <td>${r.effDed>(r.stdDed+(r.seniorBonus||0)+(r.charityDed||0))?'✦ ':''}${f$(r.effDed||r.stdDed)}</td>
+    <td>${r.seniorBonus>0?f$(r.seniorBonus):'—'}</td>
+    <td>${r.charityDed>0?f$(r.charityDed):'—'}</td>
+    <td>${f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed)))}</td>
+    <td style="font-size:9px">${r.taxFiling||S.filing}</td>
     <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${f$(r.stTax)}</td>
     <td class="hi red">${(r.taxOvrActive?'✦ ':'')+f$(r.incomeTax)}</td>
     <td>${fp(r.effRate)}</td><td>${fp(r.margRate)}</td><td>${fp(r.blended)}</td>
@@ -3256,7 +3482,7 @@ function renderYD(){
   const yr=parseInt(document.getElementById('yd-sel').value)||S.startYear;
   const r=proj.find(x=>x.yr===yr);
   if(!r)return;
-  document.getElementById('yd-badge').textContent=hasP2()?`${p1()} age ${r.age1} · ${p2()} age ${r.age2}`:`${p1()} age ${r.age1}`;
+  document.getElementById('yd-badge').textContent=displayAgeText(r);
   const dr=(l,v,cls='')=>`<div class="dr ${cls}"><span class="dl">${l}</span><span class="dv">${v}</span></div>`;
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
@@ -3314,8 +3540,11 @@ function renderYD(){
       ${r.taxableStkGain>0?dr('Taxable Stock Sale Gains',f$(r.taxableStkGain)):''}
       ${dr('Taxable Social Security',f$(r.tSS))}
       ${dr('Adjusted Gross Income',f$(r.agi),'tot')}
-      ${r.effDed > r.stdDed ? dr('Itemized Deduction',f$(r.effDed),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
-      ${dr('Taxable Income',f$(Math.max(0,r.agi-r.stdDed)))}
+      ${r.itemizedUsed ? dr('Itemized Deduction',f$(r.effDed-(r.seniorBonus||0)-(r.charityDed||0)),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
+      ${(r.seniorBonus||0)>0?dr('Enhanced Senior Deduction',f$(r.seniorBonus)):''}
+      ${(r.charityDed||0)>0?dr('Non-itemizer Charity Deduction',f$(r.charityDed)):''}
+      ${dr('Total Deduction',f$(r.effDed||r.stdDed),'tot')}
+      ${dr('Taxable Income',f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed))))}
       <div class="sh">Roth Activity</div>
       ${r.rothConv>0?dr('Roth Conv — IRA to Roth (taxable)',f$(r.rothConv)):''}
       ${dr(p1()+' IRA → Roth Conv',f$(r.rothConvDraw1||0))}
@@ -3327,6 +3556,7 @@ function renderYD(){
     </div>
     <div class="yd-panel">
       <div class="sh">Taxes</div>
+      ${dr('Filing Status Used',r.taxFiling||S.filing)}
       ${dr('Federal Ordinary',f$(r.fedOrd))}
       ${dr('LTCG / Qual Divs',f$(r.ltcg))}
       ${dr('CA State',f$(r.stTax))}
@@ -3821,6 +4051,8 @@ const OV_DEFS = {
   deductions:{key:'ovDeductions',fields:[
     {k:'fedItemized',lbl:'Fed Itemized ($)',type:'number',w:130},
     {k:'caItemized', lbl:'CA Itemized ($)', type:'number',w:130},
+    {k:'charityOn',  lbl:'Use Non-itemizer Charity?', type:'select',opts:['No','Yes'],w:150},
+    {k:'charityCash',lbl:'Eligible Cash Charity ($)',type:'number',w:160},
     {k:'startYear',  lbl:'Start Year',      type:'number',w:90},
     {k:'endYear',    lbl:'End Year',         type:'number',w:90},
     {k:'notes',      lbl:'Notes',            type:'text',  w:160},
@@ -3909,7 +4141,7 @@ let _ovTabPressed = false;
 document.addEventListener('keydown', e => { if (e.key === 'Tab') _ovTabPressed = true; });
 document.addEventListener('keyup',   e => { if (e.key === 'Tab') _ovTabPressed = false; });
 
-// Debounce timer for OV input — delays re-render so Tab moves naturally
+// Debounce timer for OV input — save/recalculate without rebuilding focused inputs
 let _ovDebounce = null;
 function setOVDebounced(name, idx, key, val) {
   // Immediately update state (no re-render yet)
@@ -3920,18 +4152,9 @@ function setOVDebounced(name, idx, key, val) {
   _ovDebounce = setTimeout(() => {
     saveState(S); showSaved();
     proj = runProjection(S);
-    renderOV(name);
+    updateOVConflicts(name);
     checkCrossConflicts();
     updateOvBadges();
-    const active = document.querySelector('.pane.active');
-    if (active) {
-      const id = active.id.replace('pane-', '');
-      if (id==='dashboard') renderDash();
-      if (id==='taxtables') renderTaxTables();
-      if (id==='action') renderAP();
-      if (id==='cashflow') renderCF();
-      if (id==='taxes') renderTax();
-    }
   }, 600);
 }
 
@@ -3944,7 +4167,12 @@ function renderOV(name){
     <tr>${def.fields.map(f=>`
       <td>${f.type==='select'
         ?`<select style="width:${f.w||100}px" onchange="setOV('${name}',${i},'${f.k}',this.value)">
-            ${f.opts.map(o=>`<option ${String(row[f.k]??'')=== String(o)?'selected':''}>${o}</option>`).join('')}
+            ${f.opts.map(o=>{
+              const val = Array.isArray(o) ? o[0] : o;
+              const lbl = Array.isArray(o) ? o[1] : o;
+              const rowVal = f.k==='charityOn' && row[f.k]==='T' ? 'Yes' : row[f.k];
+              return `<option value="${val}" ${String(rowVal??'')=== String(val)?'selected':''}>${lbl}</option>`;
+            }).join('')}
           </select>`
         :`<input type="${f.type}" value="${row[f.k]??''}" style="width:${f.w||100}px"
             data-ov-name="${name}" data-ov-idx="${i}" data-ov-key="${f.k}"
@@ -3954,7 +4182,12 @@ function renderOV(name){
       }</td>`).join('')}
       <td><button class="btn btn-del" onclick="delOV('${name}',${i})">✕</button></td>
     </tr>`).join('');
-  // Conflicts
+  updateOVConflicts(name);
+}
+
+function updateOVConflicts(name) {
+  const def=OV_DEFS[name];
+  const rows=S[def.key]||[];
   const conflicts=findConflicts(rows);
   const confEl=document.getElementById('conf-'+name);
   if(confEl){
@@ -3969,33 +4202,12 @@ function setOV(name,idx,key,val){
   const def=OV_DEFS[name];
   if(!S[def.key][idx])S[def.key][idx]={};
   S[def.key][idx][key]=val;
+  clearTimeout(_ovDebounce);
   saveState(S);showSaved();
   proj=runProjection(S);
-  // Save focus before re-render (innerHTML wipe kills all input elements)
-  const focusedEl = document.activeElement;
-  const focusName = focusedEl?.getAttribute('data-ov-name');
-  const focusIdx  = focusedEl?.getAttribute('data-ov-idx');
-  const focusKey  = focusedEl?.getAttribute('data-ov-key');
-  const focusSel  = focusedEl?.selectionStart;
-  renderOV(name);
-  // Restore focus to the same logical cell — but NOT when Tab caused the blur
-  if (!_ovTabPressed && focusName === name && focusIdx != null && focusKey != null) {
-    const el = document.querySelector(
-      `[data-ov-name="${focusName}"][data-ov-idx="${focusIdx}"][data-ov-key="${focusKey}"]`);
-    if (el) {
-      el.focus();
-      try { el.setSelectionRange(focusSel, focusSel); } catch(e){}
-    }
-  }
+  updateOVConflicts(name);
   checkCrossConflicts();
-  const active=document.querySelector('.pane.active');
-  if(active){const id=active.id.replace('pane-','');
-    if(id==='dashboard')renderDash();
-  if(id==='taxtables')renderTaxTables();
-  if(id==='action')renderAP();
-    if(id==='cashflow')renderCF();
-    if(id==='taxes')renderTax();
-  }
+  updateOvBadges();
 }
 
 function addOvRow(name){
@@ -4006,6 +4218,7 @@ function addOvRow(name){
   if(name==='irmaa'){newRow.level='0';newRow.fillMode='S';newRow.headroom=0;}
   if(name==='taxfill'){newRow.active='T';newRow.headroom=0;}
   if(name==='statetax'){newRow.state='NONE';}
+  if(name==='deductions'){newRow.charityOn='No';}
   S[def.key].push(newRow);
   saveState(S);showSaved();
   renderOV(name);
@@ -4095,7 +4308,7 @@ function renderAP(){
   sel.innerHTML = '';
   for(let y = S.startYear; y <= S.endYear - 2; y++){
     const r = proj.find(r=>r.yr===y);
-    const age = r ? (hasP2() ? ` — Age ${r.age1}/${r.age2}` : ` — Age ${r.age1}`) : '';
+    const age = r ? ` — Age ${displayAge(r)}` : '';
     sel.innerHTML += `<option value="${y}"${y===curVal?' selected':''}>${y}${age}</option>`;
   }
   const startYr = parseInt(sel.value) || defaultYear;
@@ -4130,6 +4343,24 @@ function apCard(yr){
 
   const rothConv = r.rothConv||0;
   const convSrc = rothConv > 0 ? ((r.rothConvDraw1||0)>0 ? p1()+' IRA' : p2()+' IRA') : '';
+  const fundedTax = r.fundingTax || 0;
+  const cashGap = r.cashGapNeeded || 0;
+  const taxLabel = r.taxOvrActive ? 'Income Tax Funding (override)' : 'Income Tax Funding';
+  const incomeTax = r.incomeTax || 0;
+  const fundingDelta = (r.totalFunding||0) - (r.totalRequired||0);
+  const survivorActive = isWidowAfterDeathYear(r);
+  const why = [];
+  if (survivorActive) why.push('Survivor mode active');
+  if (r.taxOvrActive) why.push('Tax override active');
+  if (cashGap > 0) why.push('Cash floor rebuild');
+  if (r.rothConv > 0) {
+    const reason = r.irmaaTx > 0 ? 'IRMAA planning'
+      : (r.margRate||0) > 0 ? 'bracket/income targeting'
+      : 'conversion strategy';
+    why.push('Roth conversion: '+reason);
+  }
+  if ((r.excessFunds||0) > 0) why.push('Mandatory income exceeds cash need');
+  if ((r.unfunded||0) > 0) why.push('Funding shortfall');
   const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
@@ -4138,7 +4369,8 @@ function apCard(yr){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div>
         <div style="font-size:22px;font-weight:900;font-family:'Playfair Display',serif;color:var(--ink)">${yr}</div>
-        <div style="font-size:11px;color:#888">${p1()} age ${r.age1}${hasP2() ? ' · '+p2()+' age '+r.age2 : ''}</div>
+        <div style="font-size:11px;color:#888">${displayAgeText(r)}</div>
+        ${survivorActive ? '<div style="display:inline-block;margin-top:4px;font-size:9px;font-weight:700;color:#1a4a1a;background:#eaf6ea;border:1px solid #9cc79c;border-radius:3px;padding:2px 6px;font-family:\'JetBrains Mono\',monospace">Survivor mode active</div>' : ''}
       </div>
       <div style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:${statusBg};color:${statusColor};border:1px solid ${statusColor}40;text-align:center;line-height:1.5">${statusLabel}</div>
     </div>
@@ -4154,7 +4386,8 @@ function apCard(yr){
 
     ${hdr('SPENDING REQUIREMENT')}
     ${row('Annual Spending', r.spending, true)}
-    ${row('Tax (computed)', r.totalTax)}
+    ${row(taxLabel, fundedTax)}
+    ${cashGap>0 ? row('Cash Gap (floor rebuild)', cashGap) : ''}
     ${row('Total Required', r.totalRequired, true)}
 
     ${hdr('AUTOMATIC INFLOWS')}
@@ -4184,8 +4417,9 @@ function apCard(yr){
     ${row('Adjusted Gross Income', r.agi, true)}
     ${row('Federal Tax', r.fedOrd||0)}
     ${row('CA State Tax', r.stTax||0)}
+    ${row('Total Income Tax', incomeTax, true)}
     ${hasIRMAA ? row('IRMAA Surcharge', r.irmaaTx, false, '#8b4000') : ''}
-    ${row('Total Tax', r.totalTax, true)}
+    ${(r.medicareBase||0)>0 ? row('Medicare Part B', r.medicareBase, false, '#555') : ''}
     <div style="display:flex;justify-content:space-between;padding:2px 0;gap:8px">
       <span style="font-size:11.5px;color:#555">Effective / Marginal</span>
       <span style="font-size:12px;font-family:'JetBrains Mono',monospace">${((r.effRate||0)*100).toFixed(1)}% / ${((r.margRate||0)*100).toFixed(0)}%</span>
@@ -4193,7 +4427,10 @@ function apCard(yr){
     ${hasIRMAA ? `<div style="font-size:10px;background:#fff4e0;border-left:3px solid #b87000;padding:4px 8px;margin-top:4px;border-radius:0 4px 4px 0;color:#7a4800">⚠ IRMAA ${r.irmaaTier || ""} — prior MAGI: ${f$(r.irmaaMagi||0)}</div>` : ''}
 
     ${hdr('END-OF-YEAR')}
+    ${fundingDelta > 0 ? row('Funding Surplus', fundingDelta, false, '#1a4a1a') : ''}
+    ${fundingDelta < 0 ? row('Funding Shortfall', Math.abs(fundingDelta), false, '#8b0000') : ''}
     ${row('Net Worth', r.netWorth, true)}
+    ${why.length ? `${hdr('WHY THIS YEAR LOOKS DIFFERENT')}${why.map(w=>`<div style="font-size:10.5px;color:#6a5830;background:#fff8e8;border-left:3px solid var(--gold);padding:3px 7px;margin:3px 0;border-radius:0 4px 4px 0">${w}</div>`).join('')}` : ''}
   </div>`;
 }
 
@@ -4296,14 +4533,26 @@ function ttLoadYear() {
   if (ttFilingTab === 'SINGLE') {
     sv('tt-fed-std-base', T.fedStdBaseSingle ?? D.fedStdBaseSingle);
     sv('tt-fed-std-sr',   T.fedStdSrSingle   ?? D.fedStdSrSingle);
+    sv('tt-fed-charity-cap', T.fedCharityNonItemizerCapSingle ?? D.fedCharityNonItemizerCapSingle);
+    sv('tt-fed-sr-bonus', T.fedSrBonusSingle ?? D.fedSrBonusSingle);
+    sv('tt-fed-sr-bonus-start', T.fedSrBonusStartSingle ?? D.fedSrBonusStartSingle);
+    sv('tt-fed-sr-bonus-max', T.fedSrBonusMaxSingle ?? D.fedSrBonusMaxSingle);
     sv('tt-ca-std',       T.caStdSingle      ?? D.caStdSingle);
   } else if (ttFilingTab === 'HOH') {
     sv('tt-fed-std-base', T.fedStdBaseHOH ?? D.fedStdBaseHOH);
     sv('tt-fed-std-sr',   T.fedStdSrHOH   ?? D.fedStdSrHOH);
+    sv('tt-fed-charity-cap', T.fedCharityNonItemizerCapHOH ?? D.fedCharityNonItemizerCapHOH);
+    sv('tt-fed-sr-bonus', T.fedSrBonusHOH ?? D.fedSrBonusHOH);
+    sv('tt-fed-sr-bonus-start', T.fedSrBonusStartHOH ?? D.fedSrBonusStartHOH);
+    sv('tt-fed-sr-bonus-max', T.fedSrBonusMaxHOH ?? D.fedSrBonusMaxHOH);
     sv('tt-ca-std',       T.caStdHOH      ?? D.caStdHOH);
   } else {
     sv('tt-fed-std-base', T.fedStdBase ?? D.fedStdBase);
     sv('tt-fed-std-sr',   T.fedStdSr   ?? D.fedStdSr);
+    sv('tt-fed-charity-cap', T.fedCharityNonItemizerCap ?? D.fedCharityNonItemizerCap);
+    sv('tt-fed-sr-bonus', T.fedSrBonus ?? D.fedSrBonus);
+    sv('tt-fed-sr-bonus-start', T.fedSrBonusStart ?? D.fedSrBonusStart);
+    sv('tt-fed-sr-bonus-max', T.fedSrBonusMax ?? D.fedSrBonusMax);
     sv('tt-ca-std',       T.caStd      ?? D.caStd);
   }
   renderFedOrdGrid();
@@ -4427,17 +4676,30 @@ function TT() {
   // Scalar fields for current editing year, filing-specific
   const T = ttGetCurrentTable();
   const D = DEFAULT_TAX_TABLE_2026;
+  const gvNum = (id, fb) => gv(id)==='' ? fb : (parseFloat(gv(id)) || 0);
   if (ttFilingTab === 'SINGLE') {
     T.fedStdBaseSingle = parseFloat(gv('tt-fed-std-base')) || D.fedStdBaseSingle;
     T.fedStdSrSingle   = parseFloat(gv('tt-fed-std-sr'))   || D.fedStdSrSingle;
+    T.fedCharityNonItemizerCapSingle = gvNum('tt-fed-charity-cap', D.fedCharityNonItemizerCapSingle);
+    T.fedSrBonusSingle = parseFloat(gv('tt-fed-sr-bonus')) || D.fedSrBonusSingle;
+    T.fedSrBonusStartSingle = parseFloat(gv('tt-fed-sr-bonus-start')) || D.fedSrBonusStartSingle;
+    T.fedSrBonusMaxSingle = parseFloat(gv('tt-fed-sr-bonus-max')) || D.fedSrBonusMaxSingle;
     T.caStdSingle      = parseFloat(gv('tt-ca-std'))        || D.caStdSingle;
   } else if (ttFilingTab === 'HOH') {
     T.fedStdBaseHOH = parseFloat(gv('tt-fed-std-base')) || D.fedStdBaseHOH;
     T.fedStdSrHOH   = parseFloat(gv('tt-fed-std-sr'))   || D.fedStdSrHOH;
+    T.fedCharityNonItemizerCapHOH = gvNum('tt-fed-charity-cap', D.fedCharityNonItemizerCapHOH);
+    T.fedSrBonusHOH = parseFloat(gv('tt-fed-sr-bonus')) || D.fedSrBonusHOH;
+    T.fedSrBonusStartHOH = parseFloat(gv('tt-fed-sr-bonus-start')) || D.fedSrBonusStartHOH;
+    T.fedSrBonusMaxHOH = parseFloat(gv('tt-fed-sr-bonus-max')) || D.fedSrBonusMaxHOH;
     T.caStdHOH      = parseFloat(gv('tt-ca-std'))        || D.caStdHOH;
   } else {
     T.fedStdBase = parseFloat(gv('tt-fed-std-base')) || D.fedStdBase;
     T.fedStdSr   = parseFloat(gv('tt-fed-std-sr'))   || D.fedStdSr;
+    T.fedCharityNonItemizerCap = gvNum('tt-fed-charity-cap', D.fedCharityNonItemizerCap);
+    T.fedSrBonus = parseFloat(gv('tt-fed-sr-bonus')) || D.fedSrBonus;
+    T.fedSrBonusStart = parseFloat(gv('tt-fed-sr-bonus-start')) || D.fedSrBonusStart;
+    T.fedSrBonusMax = parseFloat(gv('tt-fed-sr-bonus-max')) || D.fedSrBonusMax;
     T.caStd      = parseFloat(gv('tt-ca-std'))        || D.caStd;
   }
   // Update preview immediately (cheap) — debounce the expensive model run
@@ -4487,10 +4749,16 @@ function renderTTPreview() {
   const source = yrs === 0
     ? `Using exact ${tableYear} table`
     : `${tableYear} table + ${yrs} yr${yrs>1?'s':''} inflation · Fed: ${bi}%/yr · IRMAA: ${ii}%/yr`;
+  const seniorBonusPreview = (bonus, start, max) => t.projectionYear >= 2025 && t.projectionYear <= 2028
+    ? `${row('Bonus/person', f$(bonus))} ${row('Phaseout', f$(start)+'-'+f$(max))}`
+    : row('Status', 'Expired after 2028');
 
   const mfjRows = `
     ${hdr('STANDARD DEDUCTION')}
     ${row('Base', f$(t.fedStdBase))} ${row('Senior add-on', f$(t.fedStdSr))}
+    ${row('Non-itemizer charity cap', f$(t.fedCharityNonItemizerCap))}
+    ${hdr('ENHANCED SENIOR DEDUCTION')}
+    ${seniorBonusPreview(t.fedSrBonus, t.fedSrBonusStart, t.fedSrBonusMax)}
     ${hdr('ORDINARY — TOP BRACKETS')}
     ${row('22% above', f$(t.mfjOrd[2]?.[0]??0))} ${row('24% above', f$(t.mfjOrd[3]?.[0]??0))}
     ${row('32% above', f$(t.mfjOrd[4]?.[0]??0))} ${row('35% above', f$(t.mfjOrd[5]?.[0]??0))}
@@ -4499,6 +4767,9 @@ function renderTTPreview() {
   const singleRows = `
     ${hdr('STANDARD DEDUCTION')}
     ${row('Base', f$(t.fedStdBaseSingle))} ${row('Senior add-on', f$(t.fedStdSrSingle))}
+    ${row('Non-itemizer charity cap', f$(t.fedCharityNonItemizerCapSingle))}
+    ${hdr('ENHANCED SENIOR DEDUCTION')}
+    ${seniorBonusPreview(t.fedSrBonusSingle, t.fedSrBonusStartSingle, t.fedSrBonusMaxSingle)}
     ${hdr('ORDINARY — TOP BRACKETS')}
     ${row('22% above', f$(t.singleOrd[2]?.[0]??0))} ${row('24% above', f$(t.singleOrd[3]?.[0]??0))}
     ${row('32% above', f$(t.singleOrd[4]?.[0]??0))} ${row('35% above', f$(t.singleOrd[5]?.[0]??0))}
@@ -4507,6 +4778,9 @@ function renderTTPreview() {
   const hohRows = `
     ${hdr('STANDARD DEDUCTION')}
     ${row('Base', f$(t.fedStdBaseHOH))} ${row('Senior add-on', f$(t.fedStdSrHOH))}
+    ${row('Non-itemizer charity cap', f$(t.fedCharityNonItemizerCapHOH))}
+    ${hdr('ENHANCED SENIOR DEDUCTION')}
+    ${seniorBonusPreview(t.fedSrBonusHOH, t.fedSrBonusStartHOH, t.fedSrBonusMaxHOH)}
     ${hdr('ORDINARY — TOP BRACKETS')}
     ${row('22% above', f$(t.hohOrd[2]?.[0]??0))} ${row('24% above', f$(t.hohOrd[3]?.[0]??0))}
     ${row('32% above', f$(t.hohOrd[4]?.[0]??0))} ${row('35% above', f$(t.hohOrd[5]?.[0]??0))}
@@ -4716,10 +4990,28 @@ function showPrivacyStats() {
   }
 }
 
+function exportNameSlug() {
+  const names = [S.name1, S.name2]
+    .map(n => (n || '').trim())
+    .filter(n => n && !/^person\s+\d+$/i.test(n));
+  const base = (names.length ? names.join('_') : 'plan')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60);
+  return base || 'plan';
+}
+
+function exportFileName(prefix, ext) {
+  const date = new Date().toISOString().slice(0,10);
+  return `${prefix}_${exportNameSlug()}_${date}.${ext}`;
+}
+
 function exportJSON(){
   const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`finance_model_v1_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  a.download=exportFileName('finance_model_v1','json');a.click();
 }
 
 function buildReportPayload(){
@@ -4734,6 +5026,8 @@ function buildReportPayload(){
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
+    widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0,
+    widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
     k401Trad1: S.k401Trad1, k401Roth1: S.k401Roth1,
     k401Trad2: S.k401Trad2, k401Roth2: S.k401Roth2,
@@ -4754,13 +5048,13 @@ function buildReportPayload(){
     rothDraw1:r.rothDraw1||0, rothDraw2:r.rothDraw2||0,
     stkSales:r.stkSales||0,
     spending:r.spending||0, totalFunding:r.totalFunding||0,
-    agi:r.agi||0, effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0,
+    agi:r.agi||0, effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0, seniorBonus:r.seniorBonus||0, charityDed:r.charityDed||0,
     taxableInc:r.taxableInc||0,
     fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, stTax:r.stTax||0,
     incomeTax:r.incomeTax||0, irmaaTx:r.irmaaTx||0,
     medicareBase:r.medicareBase||0,
     effRate:r.effRate||0, margRate:r.margRate||0, blended:r.blended||0,
-    irmaaTier:r.irmaaTier||'', irmaaMagi:r.irmaaMagi||0,
+    irmaaTier:r.irmaaTier||'', irmaaMagi:r.irmaaMagi||0, taxFiling:r.taxFiling||S.filing,
     startCashBal:r.startCashBal||0, startSec:r.startSec||0,
     startIRA1:r.startIRA1||0, startIRA2:r.startIRA2||0,
     startRoth1:r.startRoth1||0, startRoth2:r.startRoth2||0,
@@ -4792,7 +5086,7 @@ function exportReportData(){
   const payload = buildReportPayload();
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`report_data_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  a.download=exportFileName('report_data','json');a.click();
 }
 
 function generateReport(){
@@ -4809,7 +5103,10 @@ function generateReport(){
            `$${a.toLocaleString('en-US',{maximumFractionDigits:0})}`;
     return neg?`(${s})`:s; };
   const fp=v=>v!=null?`${(parseFloat(v)*100).toFixed(1)}%`:'—';
-  const age=(r)=>has2&&r.age2?`${r.age1}/${r.age2}`:String(r.age1||'');
+  const widowAfter = r => has2 && A.widowMode && A.widowMode !== 'off' && A.widowDeathYear && r.yr > A.widowDeathYear;
+  const age=(r)=> widowAfter(r)
+    ? (A.widowMode === 'p2Survives' ? String(r.age2||'') : String(r.age1||''))
+    : has2&&r.age2?`${r.age1}/${r.age2}`:String(r.age1||'');
   const dz=(v)=>v?fd(v,true):'—';
   const th=(t)=>`<th>${t}</th>`;
   const thr=(t)=>`<th class="r">${t}</th>`;
@@ -4875,6 +5172,7 @@ function generateReport(){
   const rateRows=(pairs)=>pairs.map(([l,v])=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`).join('');
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
+    ['Widow(er) Override',A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · ${A.widowDeathYear||'year not set'}`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Dividend Rate',fp(A.divRate)],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
@@ -5035,10 +5333,11 @@ function generateReport(){
   const peak=rows.reduce((m,r)=>(r.agi||0)>(m.agi||0)?r:m,rows[0]);
 
   const txRows=rows.map(r=>{
-    const ded=r.effDed||r.stdDed||0, flag=(r.effDed||0)>(r.stdDed||0)?'✦ ':'';
+    const ded=r.effDed||r.stdDed||0, flag=(r.effDed||0)>((r.stdDed||0)+(r.seniorBonus||0)+(r.charityDed||0))?'✦ ':'';
     return `<tr>
       ${td(r.yr)}${td(age(r))}${td(fd(r.agi,true),'r')}
-      ${td(flag+fd(ded,true),'r')}${td(fd(r.taxableInc,true),'r')}
+      ${td(flag+fd(ded,true),'r')}${td(r.seniorBonus>0?fd(r.seniorBonus,true):'—','r')}${td(r.charityDed>0?fd(r.charityDed,true):'—','r')}${td(fd(r.taxableInc,true),'r')}
+      ${td(r.taxFiling||A.filing)}
       ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.stTax),'r')}
       ${td(fd(r.incomeTax,true),'r bold')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
@@ -5101,6 +5400,9 @@ function generateReport(){
       if(row.floor!=null&&row.floor!=='') parts.push('Floor $'+Number(row.floor).toLocaleString());
       if(row.state) parts.push(row.state==='NONE'?'Tax-Free':row.state);
       if(row.fedItemized!=null&&row.fedItemized!=='') parts.push('Fed $'+Number(row.fedItemized).toLocaleString());
+      if(row.caItemized!=null&&row.caItemized!=='') parts.push('CA $'+Number(row.caItemized).toLocaleString());
+      if((row.charityOn==='Yes'||row.charityOn==='T')&&row.charityCash!=null&&row.charityCash!=='') parts.push('Charity $'+Number(row.charityCash).toLocaleString());
+      else if(row.charityCash!=null&&row.charityCash!=='') parts.push('Charity entered but off');
       if(row.active) parts.push('Active');
       const yr1=row.startYear||'—', yr2=row.endYear||9999;
       return `<tr><td>${yr1}</td><td>${yr2>=9999?'ongoing':yr2}</td><td>${parts.join(' · ')||'—'}</td><td style="color:#666;font-style:italic">${row.notes||''}</td></tr>`;
@@ -5137,7 +5439,7 @@ function generateReport(){
         <td class="bold" style="padding:0 20px 0 30px">Peak Age</td><td class="r">${age(peak)}</td></tr>
   </tbody></table>
   <table><thead><tr>
-    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Taxable\nIncome'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
+    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
   </tr></thead><tbody>${txRows}</tbody></table>
   <p class="note">✦ = itemized deduction. All figures are projections only.</p>
 
@@ -5170,7 +5472,7 @@ function exportCSV(){
   const csv=[keys.join(','),...proj.map(r=>keys.map(k=>r[k]??0).join(','))].join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='finance_projection.csv';a.click();
+  a.download=exportFileName('finance_projection','csv');a.click();
 }
 
 // ── renderAll helper ──────────────────────────────────────────────────────
