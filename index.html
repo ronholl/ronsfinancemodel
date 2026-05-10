@@ -623,10 +623,10 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
       <div class="ov-section-inner">
         <div class="ov-section-label">IRMAA Level Target <span id="ovpill-irmaa"></span></div>
-        <div class="ov-intent">Sets the Medicare IRMAA tier ceiling for a year range — the model converts IRA to Roth to stay just below that tier's income threshold. Level 0 = off, 1 = Base (~$218K), 2 = Tier 1 (~$274K), up to 5. Fill mode (F) fills toward the next tier; Roth mode (R) draws Roth to avoid exceeding it.</div>
+        <div class="ov-intent">Sets the Medicare IRMAA tier ceiling for a year range — the model converts IRA to Roth to stay just below that tier's income threshold. Level 0 = off unless Max Bracket is selected; then it fills to that federal bracket target less Bracket HR. Level 1 = Base (~$218K), 2 = Tier 1 (~$274K), up to 5. Fill mode (F) fills toward the next tier only when no Max Bracket is selected; Roth mode (R) draws Roth to avoid exceeding the active target.</div>
         <div id="conf-irmaa" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-irmaa">
-          <thead><tr><th>IRMAA Level (0–5)<br><span style="font-weight:400;font-size:9px">1=Base·2=Tier1·3=Tier2…</span></th><th>Fill Mode (F/R)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <thead><tr><th>IRMAA Level (0-5)<br><span style="font-weight:400;font-size:9px">threshold before headroom</span></th><th>Fill Mode (F/R)</th><th>Max Bracket<br><span style="font-weight:400;font-size:9px">tax target vs prior IRMAA</span></th><th>Bracket HR ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-irmaa"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('irmaa')">+ Add Row</button>
@@ -1223,25 +1223,93 @@ function getSeniorBonusDed(agi, filing, age1, age2, hasP2, tables) {
 }
 // Returns the AGI ceiling of the bracket that 'agi' falls into (for bracket fill conversions)
 // Returns null if in top bracket. Uses standard deduction to convert to taxable income.
+function getOrdinaryBrackets(filing, tables) {
+  if (!tables) return [];
+  return filing === 'SINGLE' ? (tables.singleOrd || [])
+       : filing === 'HOH'    ? (tables.hohOrd || [])
+       :                       (tables.mfjOrd || []);
+}
+function getStdDedBaseForFiling(filing, tables) {
+  if (!tables) return 0;
+  return filing === 'SINGLE' ? (tables.fedStdBaseSingle || tables.fedStdBase || 0)
+       : filing === 'HOH'    ? (tables.fedStdBaseHOH    || tables.fedStdBase || 0)
+       :                       (tables.fedStdBase || 0);
+}
+// Returns the AGI ceiling of the bracket that 'agi' falls into (for bracket fill conversions)
+// Returns null if in top bracket. Uses standard deduction to convert to taxable income.
 function getBracketCeiling(agi, filing, tables) {
-  if (!tables) return null;
-  const bkts = filing === 'SINGLE' ? tables.singleOrd
-             : filing === 'HOH'    ? tables.hohOrd
-             :                       tables.mfjOrd;
+  const bkts = getOrdinaryBrackets(filing, tables);
   if (!bkts || !bkts.length) return null;
-  const stdDed = filing === 'SINGLE' ? (tables.fedStdBaseSingle || tables.fedStdBase || 0)
-               : filing === 'HOH'    ? (tables.fedStdBaseHOH    || tables.fedStdBase || 0)
-               :                       (tables.fedStdBase || 0);
+  const stdDed = getStdDedBaseForFiling(filing, tables);
   const taxableInc = Math.max(0, agi - stdDed);
   // bkts format: [[floor, rate], ...] sorted ascending by floor
   // Find which bracket taxableInc falls in; ceiling = next bracket's floor
   for (let i = bkts.length - 1; i >= 0; i--) {
     if (taxableInc >= bkts[i][0]) {
-      if (i === bkts.length - 1) return null; // top bracket — no ceiling
-      return bkts[i + 1][0] + stdDed; // next bracket floor → back to AGI terms
+      if (i === bkts.length - 1) return null; // top bracket - no ceiling
+      return bkts[i + 1][0] + stdDed; // next bracket floor -> back to AGI terms
     }
   }
   return null;
+}
+function getMaxBracketCeiling(maxRate, filing, tables) {
+  const rate = parseF(maxRate);
+  if (!rate || rate <= 0) return null;
+  const bkts = getOrdinaryBrackets(filing, tables);
+  if (!bkts || !bkts.length) return null;
+  const idx = bkts.findIndex(b => Math.abs(parseF(b[1]) - rate) < 0.0001);
+  if (idx < 0 || idx >= bkts.length - 1) return null;
+  return bkts[idx + 1][0] + getStdDedBaseForFiling(filing, tables);
+}
+function shortDollar(n) {
+  n = parseF(n);
+  if (!n && n !== 0) return '$0';
+  return '$' + new Intl.NumberFormat('en-US', {maximumFractionDigits: 0}).format(Math.round(n));
+}
+function getIRMAALevelOptions(row) {
+  const yr = parseInt(row?.startYear) || S.startYear || new Date().getFullYear();
+  const tables = getScaledTables(S, yr);
+  const thresh = (tables && tables.irmaaT) || [0,218000,274000,342000,410000,750000];
+  const names = ['Off','Base','Tier 1','Tier 2','Tier 3','Tier 4'];
+  return ['0','1','2','3','4','5'].map(v => {
+    const lvl = parseInt(v);
+    if (lvl === 0) return [v, '0 - Off'];
+    return [v, lvl + ' - ' + names[lvl] + ' ' + shortDollar(thresh[lvl])];
+  });
+}
+function getBracketRateAtAGI(agi, filing, tables) {
+  const bkts = getOrdinaryBrackets(filing, tables);
+  if (!bkts || !bkts.length || agi == null) return null;
+  const taxableInc = Math.max(0, parseF(agi) - getStdDedBaseForFiling(filing, tables));
+  for (let i = bkts.length - 1; i >= 0; i--) {
+    if (taxableInc >= bkts[i][0]) return parseF(bkts[i][1]);
+  }
+  return parseF(bkts[0][1]);
+}
+function getMaxBracketOptions(row) {
+  const yr = parseInt(row?.startYear) || S.startYear || new Date().getFullYear();
+  const filing = S.filing || 'MFJ';
+  const tables = getScaledTables(S, yr);
+  const bkts = getOrdinaryBrackets(filing, tables);
+  const lvl = parseInt(row?.level) || 0;
+  const thresh = (tables && tables.irmaaT) || [0,218000,274000,342000,410000,750000];
+  const irmaaCeil = lvl > 0 ? thresh[Math.min(lvl, thresh.length - 1)] : null;
+  const priorIRMAA = lvl > 1 ? thresh[Math.min(lvl - 1, thresh.length - 1)] : null;
+  const noCapLabel = irmaaCeil != null
+    ? 'No cap - IRMAA target ' + shortDollar(irmaaCeil) + ' (' + Math.round((getBracketRateAtAGI(irmaaCeil, filing, tables) || 0) * 100) + '% bracket)'
+    : 'No cap - off unless bracket selected';
+  const opts = [['', noCapLabel]];
+  (bkts || []).forEach((b, idx) => {
+    const rate = parseF(b[1]);
+    if (rate <= 0 || idx >= bkts.length - 1) return;
+    const cap = bkts[idx + 1][0] + getStdDedBaseForFiling(filing, tables);
+    if (irmaaCeil != null && cap >= irmaaCeil) return;
+    const capLabel = ' - tax target ' + shortDollar(cap);
+    let priorLabel = priorIRMAA ? '; prior IRMAA ' + shortDollar(priorIRMAA) : '';
+    if (priorIRMAA && cap < priorIRMAA) priorLabel += ' (below prior IRMAA)';
+    opts.push([String(rate), Math.round(rate * 100) + '%' + capLabel + priorLabel]);
+  });
+  return opts;
 }
 
 function getCharityNonItemizerCap(filing, tables) {
@@ -1925,6 +1993,8 @@ function runProjection(S) {
 
     const irmaaLvlOv  = resolveOverride(S.ovIRMAA, yr, 'level');
     const irmaaModeOv = resolveOverride(S.ovIRMAA, yr, 'fillMode');
+    const irmaaMaxBracketOv = resolveOverride(S.ovIRMAA, yr, 'maxBracket');
+    const irmaaBracketHROv = resolveOverride(S.ovIRMAA, yr, 'bracketHeadroom');
     const incomeLvlOv = resolveOverride(S.ovIncomeLevel, yr, 'magiTarget');
     const taxFillRow  = resolveOverride(S.ovTaxFill, yr, 'active');
     const taxFillOn   = taxFillRow === 'T';
@@ -1943,19 +2013,27 @@ function runProjection(S) {
     const headroom = irmaaHeadroom; // kept for IRMAA block below
     // Priority logic (Income Level always wins when active):
     // 1. Income Level override (ovIncomeLevel row) — takes precedence over everything
-    // 2. IRMAA override row (ovIRMAA) — next priority
+    // 2. IRMAA override row (ovIRMAA) — next priority. Level 0 + Max Bracket works as a bracket target.
     // 3. Global IRMAA input setting (S.irmaaTarget) — only if no income override active
-    // 4. Tax Fill — only if neither income nor IRMAA active
+    // 4. Tax Fill — only if neither income nor IRMAA/bracket target active
     const incomeOvActive = incomeOvRow != null && incomeLvlOv != null;
-    const irmaaActive    = !incomeOvActive && irmaaTarget > 0;  // covers both override row and global setting
+    const maxBracketCeilPre = getMaxBracketCeiling(irmaaMaxBracketOv, taxFiling, tables);
+    const bracketTargetActive = !incomeOvActive && maxBracketCeilPre != null;
+    const irmaaActive    = !incomeOvActive && (irmaaTarget > 0 || bracketTargetActive);  // covers IRMAA target or level 0 + bracket target
     const taxFillActive  = taxFillOn && !incomeOvActive && !irmaaActive;
 
     if (irmaaActive && (ira1 + ira2) > 0) {
       // Use scaled IRMAA thresholds (inflation-adjusted) for conversion targeting
       const baseIRMAA = (tables && tables.irmaaT) || [0,218000,274000,342000,410000,750000];
-      const ceilIdx = Math.min(irmaaTarget, baseIRMAA.length - 1);
+      const ceilIdx = Math.min(Math.max(irmaaTarget, 0), baseIRMAA.length - 1);
       const tierMax = baseIRMAA[ceilIdx];
-      const targetIncome = tierMax - headroom;
+      const maxBracketCapActive = maxBracketCeilPre != null;
+      const bracketHeadroom = parseF(irmaaBracketHROv) || 0;
+      let targetIncome = irmaaTarget > 0 ? tierMax - headroom : Infinity;
+      if (maxBracketCapActive) {
+        const bracketTarget = maxBracketCeilPre - bracketHeadroom;
+        targetIncome = irmaaTarget > 0 ? Math.min(targetIncome, bracketTarget) : bracketTarget;
+      }
 
       for (let pass = 0; pass < 6; pass++) {
         const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
@@ -1968,8 +2046,8 @@ function runProjection(S) {
           // Under target — convert from IRA to Roth to fill up to target
           // Cap: can't convert more than available IRA balance, and diff is the exact gap needed
           rothConv = Math.min(rothConv + diff, ira1 + ira2);
-        } else if (fillMode === 'F') {
-          // Over target but Fill mode: push to next tier - headroom
+        } else if (fillMode === 'F' && !maxBracketCapActive) {
+          // Over target but uncapped Fill mode: push to next tier - headroom
           // Fill to ceiling of next tier = start of tier after next
           const nextCeilIdx = Math.min(ceilIdx + 1, baseIRMAA.length - 1);
           const nextMax = nextCeilIdx < baseIRMAA.length
@@ -1979,12 +2057,15 @@ function runProjection(S) {
           const fillDiff = fillTo - curAGI;
           if (fillDiff > 0) rothConv = Math.min(rothConv + fillDiff, ira1 + ira2);
           break;
-        } else {
+        } else if (fillMode === 'R' || fillMode === 'S') {
           // Roth mode: AGI over target — withdraw from Roth tax-free instead
           rothConv = 0;
           const excess = curAGI - targetIncome;
           if (roth1 >= roth2) rothModeWith1 = Math.min(excess, roth1);
           else                 rothModeWith2 = Math.min(excess, roth2);
+          break;
+        } else {
+          // Capped Fill mode: if already over the active target, do not add conversions.
           break;
         }
       }
@@ -4006,8 +4087,10 @@ const OV_DEFS = {
     {k:'notes',lbl:'Notes',type:'text',w:160},
   ]},
   irmaa:{key:'ovIRMAA',fields:[
-    {k:'level',lbl:'Level',type:'select',opts:['0','1','2','3','4','5'],w:80},
+    {k:'level',lbl:'Level',type:'select',opts:getIRMAALevelOptions,w:210},
     {k:'fillMode',lbl:'Mode',type:'select',opts:['F','R','S'],w:60},
+    {k:'maxBracket',lbl:'Max Bracket',type:'select',opts:getMaxBracketOptions,w:300},
+    {k:'bracketHeadroom',lbl:'Bracket HR ($)',type:'number',w:120},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
     {k:'notes',lbl:'Notes',type:'text',w:160},
@@ -4167,7 +4250,7 @@ function renderOV(name){
     <tr>${def.fields.map(f=>`
       <td>${f.type==='select'
         ?`<select style="width:${f.w||100}px" onchange="setOV('${name}',${i},'${f.k}',this.value)">
-            ${f.opts.map(o=>{
+            ${(typeof f.opts==='function' ? f.opts(row) : f.opts).map(o=>{
               const val = Array.isArray(o) ? o[0] : o;
               const lbl = Array.isArray(o) ? o[1] : o;
               const rowVal = f.k==='charityOn' && row[f.k]==='T' ? 'Yes' : row[f.k];
@@ -4205,7 +4288,11 @@ function setOV(name,idx,key,val){
   clearTimeout(_ovDebounce);
   saveState(S);showSaved();
   proj=runProjection(S);
-  updateOVConflicts(name);
+  if(name==='irmaa' && (key==='level' || key==='startYear')) {
+    renderOV(name);
+  } else {
+    updateOVConflicts(name);
+  }
   checkCrossConflicts();
   updateOvBadges();
 }
@@ -4215,7 +4302,7 @@ function addOvRow(name){
   if(!S[def.key])S[def.key]=[];
   const newRow={startYear:S.startYear,endYear:new Date().getFullYear()};
   if(name==='funding')newRow.choice='SEC';
-  if(name==='irmaa'){newRow.level='0';newRow.fillMode='S';newRow.headroom=0;}
+  if(name==='irmaa'){newRow.level='0';newRow.fillMode='S';newRow.headroom=0;newRow.maxBracket='';newRow.bracketHeadroom=0;}
   if(name==='taxfill'){newRow.active='T';newRow.headroom=0;}
   if(name==='statetax'){newRow.state='NONE';}
   if(name==='deductions'){newRow.charityOn='No';}
@@ -5394,7 +5481,11 @@ function generateReport(){
       const parts=[];
       if(row.amount!=null&&row.amount!=='') parts.push('$'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
-      if(row.level!=null&&row.level!=='') parts.push('Level '+row.level+(row.fillMode?' ('+row.fillMode+')':''));
+      if(row.level!=null&&row.level!=='') {
+        let label = 'Level '+row.level+(row.fillMode?' ('+row.fillMode+')':'');
+        if(row.maxBracket) label += ', max '+Math.round(parseF(row.maxBracket)*100)+'%';
+        parts.push(label);
+      }
       if(row.magiTarget!=null&&row.magiTarget!=='') parts.push('MAGI target $'+Number(row.magiTarget).toLocaleString());
       if(row.choice) parts.push(row.choice+' first');
       if(row.floor!=null&&row.floor!=='') parts.push('Floor $'+Number(row.floor).toLocaleString());
@@ -5624,10 +5715,10 @@ function showWelcomeModal() {
 
       <div style="background:#0e1a0e;border:1px solid #2a4a2a;border-radius:6px;padding:10px 14px;
         margin-bottom:18px;font-size:11.5px;color:#8ac88a;line-height:1.9">
-        <strong style="color:#c8960c">💡 Tips:</strong>
-        &nbsp;All changes auto-save to your browser — no Save button needed.
-        &nbsp;Export a JSON backup regularly (Export tab).
-        &nbsp;The <strong style="color:#c8960c">GUIDE</strong> button (top right) is a full PDF reference for every feature.
+        <strong style="color:#c8960c">💡 Important:</strong>
+        &nbsp;Your data may be stored in this browser, and browser storage can be cleared by updates, settings, cleanup tools, or using a different device.
+        &nbsp;Export a JSON backup regularly from the Export tab.
+        &nbsp;GitHub sync helps, but keep JSON backups too because they include the GitHub setup information.
         &nbsp;In Start of Year, blue = model projection, green = value you entered.
       </div>
 
@@ -5708,11 +5799,12 @@ function showWelcomePage2() {
         <div style="background:#2a1e08;border:1px solid #4a3810;border-radius:6px;padding:12px 16px">
           <div style="color:#c8960c;font-size:12px;font-weight:700;margin-bottom:6px">🔄 Roth Conversions — Optional Strategy</div>
           <div style="font-size:11.5px;color:#b8a888;line-height:1.7">
-            The model can automatically convert IRA funds to Roth to increase income up to a target you set. Three strategies are available in the Overrides tab:<br>
-            <span style="color:#e8dfc8">· IRMAA Level Target</span> — convert up to but not exceeding a Medicare surcharge tier ceiling<br>
-            <span style="color:#e8dfc8">· Tax Bracket Fill</span> — convert to fill the current federal tax bracket to its top edge<br>
-            <span style="color:#e8dfc8">· Income Level Override</span> — convert to reach a specific dollar MAGI target<br>
-            If more than one strategy is set for the same year, <strong style="color:#c8960c">Income Level takes priority</strong>, then IRMAA, then Bracket Fill. Conversions increase taxable income in that year but reduce future RMDs and grow tax-free in Roth.
+            A Roth conversion moves money from a traditional IRA to a Roth IRA. It raises taxable income now, but can reduce future RMDs and lets the converted money grow tax-free.<br>
+            <span style="color:#e8dfc8">· IRMAA Level Target</span> — convert up to a Medicare income tier. You can also add a Max Bracket so the conversion stops at a chosen federal tax bracket if that is lower.<br>
+            <span style="color:#e8dfc8">· Level 0 + Max Bracket</span> — skip IRMAA targeting and simply fill to the selected tax bracket, less Bracket HR.<br>
+            <span style="color:#e8dfc8">· Tax Bracket Fill</span> — fill the bracket your income is already in, using its own headroom setting.<br>
+            <span style="color:#e8dfc8">· Income Level Override</span> — convert to reach a specific dollar MAGI target.<br>
+            If more than one strategy is set for the same year, <strong style="color:#c8960c">Income Level takes priority</strong>, then IRMAA / Max Bracket, then Tax Bracket Fill.
           </div>
         </div>
 
