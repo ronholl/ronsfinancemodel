@@ -4434,6 +4434,7 @@ function apCard(yr){
   const cashGap = r.cashGapNeeded || 0;
   const taxLabel = r.taxOvrActive ? 'Income Tax Funding (override)' : 'Income Tax Funding';
   const incomeTax = r.incomeTax || 0;
+  const taxMedicareBurden = incomeTax + (r.irmaaTx||0) + (r.medicareBase||0);
   const fundingDelta = (r.totalFunding||0) - (r.totalRequired||0);
   const survivorActive = isWidowAfterDeathYear(r);
   const why = [];
@@ -4507,6 +4508,7 @@ function apCard(yr){
     ${row('Total Income Tax', incomeTax, true)}
     ${hasIRMAA ? row('IRMAA Surcharge', r.irmaaTx, false, '#8b4000') : ''}
     ${(r.medicareBase||0)>0 ? row('Medicare Part B', r.medicareBase, false, '#555') : ''}
+    ${row('Total Tax + Medicare Burden', taxMedicareBurden, true)}
     <div style="display:flex;justify-content:space-between;padding:2px 0;gap:8px">
       <span style="font-size:11.5px;color:#555">Effective / Marginal</span>
       <span style="font-size:12px;font-family:'JetBrains Mono',monospace">${((r.effRate||0)*100).toFixed(1)}% / ${((r.margRate||0)*100).toFixed(0)}%</span>
