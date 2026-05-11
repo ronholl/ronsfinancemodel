@@ -2187,7 +2187,7 @@ function runProjection(S) {
     const taxableInc = Math.max(0, agi - fedRes.effDed);
     const margRate = getMarginalRate(taxableInc, taxFiling, tables);
     const blended  = taxableInc > 0 ? cashTax / taxableInc : 0;
-    const irmaaTier = getIRMAATierLabel(agi, taxFiling, tables);
+    const irmaaTier = getIRMAATierLabel(irmaaMagi, taxFiling, tables);
 
     // ── Update EOY balances — matching Excel formula structure ────────────
     // Excel IRA formula: IRA_prior*(1+g) - RMD - Additional - RothConv + 401KContribs
@@ -5137,6 +5137,8 @@ function buildReportPayload(){
     rothDraw1:r.rothDraw1||0, rothDraw2:r.rothDraw2||0,
     stkSales:r.stkSales||0,
     spending:r.spending||0, totalFunding:r.totalFunding||0,
+    fundingTax:r.fundingTax||0, taxOvrActive:!!r.taxOvrActive,
+    cashGapNeeded:r.cashGapNeeded||0, totalRequired:r.totalRequired||0,
     agi:r.agi||0, effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0, seniorBonus:r.seniorBonus||0, charityDed:r.charityDed||0,
     taxableInc:r.taxableInc||0,
     fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, stTax:r.stTax||0,
@@ -5157,18 +5159,28 @@ function buildReportPayload(){
   }));
   // Active overrides — only include non-empty tables
   const overrides = {};
-  if((S.ovSpending||[]).length)     overrides.spending    = S.ovSpending;
-  if((S.ovIRMAA||[]).length)        overrides.irmaa       = S.ovIRMAA;
-  if((S.ovIncomeLevel||[]).length)  overrides.incomeLevel = S.ovIncomeLevel;
-  if((S.ovTaxFill||[]).length)      overrides.taxFill     = S.ovTaxFill;
-  if((S.ovGrowth||[]).length)       overrides.growth      = S.ovGrowth;
-  if((S.ovWageGrowth||[]).length)   overrides.wageGrowth  = S.ovWageGrowth;
-  if((S.ovFundingOrder||[]).length) overrides.funding     = S.ovFundingOrder;
-  if((S.ovCashFloor||[]).length)    overrides.cashFloor   = S.ovCashFloor;
-  if((S.ovDeductions||[]).length)   overrides.deductions  = S.ovDeductions;
-  if((S.ovHSADeposit||[]).length)   overrides.hsaDep      = S.ovHSADeposit;
-  if((S.ovStateTax||[]).length)     overrides.stateTax    = S.ovStateTax;
-  return { assumptions, rows, apRows: rows.slice(0,5), overrides };
+  const notBlank = v => v !== null && v !== undefined && v !== '' && v !== 'off';
+  const keepRows = (rows, keys) => (rows||[]).filter(row => keys.some(k => notBlank(row[k])));
+  const addOverride = (name, rows, keys) => {
+    const kept = keepRows(rows, keys);
+    if (kept.length) overrides[name] = kept;
+  };
+  addOverride('spending',    S.ovSpending,     ['amount','pctChange','taxOvr']);
+  addOverride('irmaa',       S.ovIRMAA,        ['level','maxBracket','bracketHeadroom']);
+  addOverride('incomeLevel', S.ovIncomeLevel,  ['magiTarget']);
+  addOverride('taxFill',     S.ovTaxFill,      ['active','headroom']);
+  addOverride('growth',      S.ovGrowth,       ['rate']);
+  addOverride('wageGrowth',  S.ovWageGrowth,   ['rate']);
+  addOverride('funding',     S.ovFundingOrder, ['choice']);
+  addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
+  addOverride('deductions',  S.ovDeductions,   ['fedItemized','caItemized','charityCash']);
+  addOverride('hsaDep',      S.ovHSADeposit,   ['amount']);
+  addOverride('stateTax',    S.ovStateTax,     ['state']);
+  const currentCalYear = new Date().getFullYear();
+  const defaultActionYear = Math.max(S.startYear, Math.min(currentCalYear, S.endYear - 2));
+  const reportActionStartYear = parseInt(document.getElementById('ap-year-sel')?.value) || defaultActionYear;
+  const apRows = rows.filter(r => r.yr >= reportActionStartYear && r.yr <= Math.min(S.endYear, reportActionStartYear + 2));
+  return { assumptions, rows, apRows, reportActionStartYear, overrides };
 }
 
 function exportReportData(){
@@ -5180,7 +5192,7 @@ function exportReportData(){
 
 function generateReport(){
   const P = buildReportPayload();
-  const A = P.assumptions, rows = P.rows, ap = P.apRows||rows.slice(0,5);
+  const A = P.assumptions, rows = P.rows, ap = P.apRows||rows.slice(0,3);
   const has2 = !!(A.name2||'').trim();
   const names = has2 ? `${A.name1} & ${A.name2}` : A.name1;
   const filingMap = {MFJ:'Married Filing Jointly',SINGLE:'Single',HOH:'Head of Household'};
@@ -5201,6 +5213,14 @@ function generateReport(){
   const thr=(t)=>`<th class="r">${t}</th>`;
   const td=(v,cls='')=>`<td class="${cls}">${v}</td>`;
   const rows_by_yr = Object.fromEntries(rows.map(r=>[r.yr,r]));
+  const irmaaLevelLabel = (level, yr=A.startYear) => {
+    const lvl = parseInt(level);
+    if (!lvl) return 'Off';
+    const tables = getScaledTables(S, parseInt(yr)||A.startYear);
+    const thresh = (tables && tables.irmaaT) || [0,218000,274000,342000,410000,750000];
+    const names = ['Off','Base','Tier 1','Tier 2','Tier 3','Tier 4'];
+    return `${lvl} - ${names[lvl]||'Tier '+(lvl-1)} ${fd(thresh[Math.min(lvl, thresh.length-1)])}`;
+  };
 
   // ── CSS ──
   const css = `
@@ -5218,6 +5238,14 @@ function generateReport(){
     .box .val{font-size:15pt;font-weight:700;color:#6a4e00;}
     .box .lbl{font-size:7pt;color:#3a2a0a;margin-top:2px;}
     .disc{border:1px solid #ddd;border-radius:4px;background:#f5f0e5;padding:8px 14px;font-size:8pt;color:#3a2a0a;font-style:italic;margin-top:10px;}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 10px;}
+    .summary-card{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px 8px;}
+    .summary-card .lbl{font-size:6.7pt;color:#6a4e00;text-transform:uppercase;letter-spacing:.04em;}
+    .summary-card .val{font-size:12pt;font-weight:700;color:#1a1208;margin-top:2px;}
+    .callout{border-left:3px solid #c8960c;background:#fffaf0;padding:7px 9px;margin:6px 0 10px;font-size:8pt;color:#2a2110;}
+    .callout.red{border-left-color:#8b1a1a;background:#fff5f2;}
+    .bullets{margin:4px 0 8px 13px;font-size:8pt;}
+    .bullets li{margin-bottom:3px;}
     table{border-collapse:collapse;width:100%;margin-bottom:6px;font-size:7.5pt;}
     th{background:#1e1a0e;color:#fff;padding:3px 5px;text-align:left;font-size:6.5pt;white-space:pre-line;line-height:1.3;vertical-align:bottom;}
     td{padding:2px 5px;border-bottom:0.5px solid #ddd;vertical-align:top;}
@@ -5268,12 +5296,12 @@ function generateReport(){
   const rightRates=rateRows([
     ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Inflation',fp(A.irmaaInfl)],
     ['Stock Gain %',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
-    ['IRMAA Target',A.irmaaTarget?(String(A.irmaaTarget)):'Off'],
+    ['IRMAA Target',A.irmaaTarget?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
     ['IRMAA Headroom',fd(A.irmaaHeadroom)],
     ['Plan Period',`${A.startYear}–${A.endYear} (${A.endYear-A.startYear+1} yrs)`],
   ]);
 
-  // ── 5-Year Action Plan ──
+  // ── 3-Year Action Plan ──
   let apHtml = '';
   for(const arow of ap){
     const yr=arow.yr, full=rows_by_yr[yr]||arow;
@@ -5298,6 +5326,9 @@ function generateReport(){
     const spending=full.spending||0, inc_tax=full.incomeTax||0;
     const irmaa=full.irmaaTx||0, mcare=full.medicareBase||0;
     const unfunded=full.unfunded||0, tier=full.irmaaTier||'';
+    const taxFunding=full.fundingTax||0, cashGap=full.cashGapNeeded||0;
+    const fundingRequired=full.totalRequired || (spending + taxFunding + cashGap);
+    const taxFundingLabel=full.taxOvrActive?'Income Tax Funding (override)':'Income Tax Funding';
     const convSrc=(full.rothConvDraw1||0)>0?A.name1+' IRA':A.name2?' '+A.name2+' IRA':'IRA';
 
     // Three-panel table
@@ -5319,20 +5350,25 @@ function generateReport(){
     if(rDraw1) funds.push([A.name1+' Roth Withdrawal',rDraw1]);
     if(rDraw2) funds.push([(A.name2||'Person 2')+' Roth Withdrawal',rDraw2]);
     const totalFunded = wages+pt+ss+divs+rmds+ira1a+ira2a+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
-    funds.push(['Spending Need',spending]);
+    funds.push(['Total Funding',totalFunded]);
+    funds.push(['Annual Spending',spending]);
+    if(taxFunding>0 || full.taxOvrActive) funds.push([taxFundingLabel,taxFunding]);
+    if(cashGap>0) funds.push(['Cash Gap (floor rebuild)',cashGap]);
     if(unfunded>0) funds.push(['⚠ Funding Gap',unfunded]);
     else if((full.excessFunds||0)>50) funds.push(['Surplus → Securities',full.excessFunds]);
+    funds.push(['Funding Required',fundingRequired]);
     const fed_tax=(full.fedOrd||0)+(full.ltcg||0);
     const ca_tax=full.stTax||0;
     const taxes=[
       ['AGI',full.agi||0],
       ['Federal Tax',fed_tax],
       ...(ca_tax?[['CA State Tax',ca_tax]]:[]),
+      ['Total Income Tax',inc_tax],
       ['IRMAA Surcharge',irmaa],
       ['Medicare Part B',mcare],
     ];
     if(unfunded) taxes.push(['⚠ Shortfall',unfunded]);
-    taxes.push(['Total Tax+Medicare',inc_tax+irmaa+mcare]);
+    taxes.push(['Total Tax + Medicare Burden',inc_tax+irmaa+mcare]);
 
     const maxR=Math.max(bals.length,funds.length,taxes.length);
     while(bals.length<maxR)  bals.push(['','']);
@@ -5342,7 +5378,7 @@ function generateReport(){
     let rows3='';
     for(let i=0;i<maxR;i++){
       const [bl,bv]=bals[i], [fl,fv]=funds[i], [tl,tv]=taxes[i];
-      const boldB=bl==='Net Worth', boldF=fl==='Spending Need', boldT=tl.includes('Total');
+      const boldB=bl==='Net Worth', boldF=fl==='Total Funding'||fl==='Funding Required', boldT=tl.includes('Total');
       const italT=tl==='AGI', warnF=fl.includes('Gap'), warnT=tl.includes('Shortfall');
       const bf=s=>s?`<b>${s}</b>`:s;
       const fmt=(l,v,bold,warn,ital=false)=>{
@@ -5405,6 +5441,7 @@ function generateReport(){
       ${td(dz(hsa_inh),'r')}${td(dz(roth_wd),'r')}
       ${td(dz(stkS+cashD),'r')}
       ${td(fd(r.spending,true),'r')}${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}
+      ${td(dz(r.medicareBase),'r')}${td(fd((r.incomeTax||0)+(r.irmaaTx||0)+(r.medicareBase||0),true),'r bold')}
       ${td(fd(cash_soy,true),'r')}${td(fd(sec_soy,true),'r')}
       ${td(fd(ira_soy,true),'r')}${td(fd(roth_soy,true),'r')}
       ${td(fd(nw_soy,true),sf?'r bold red':'r bold')}
@@ -5420,6 +5457,51 @@ function generateReport(){
   const totTax=rows.reduce((s,r)=>s+(r.incomeTax||0),0);
   const avgEff=rows.reduce((s,r)=>s+(r.effRate||0),0)/rows.length;
   const peak=rows.reduce((m,r)=>(r.agi||0)>(m.agi||0)?r:m,rows[0]);
+  const first=rows[0]||{};
+  const last=rows[rows.length-1]||{};
+  const startNW=(first.startCashBal||0)+(first.startSec||0)+(first.startIRA1||0)+(first.startIRA2||0)+(first.startRoth1||0)+(first.startRoth2||0)+(first.startHSA||0)+(first.startInh||0);
+  const endNW=(last.endCash||0)+(last.sec||0)+(last.ira1||0)+(last.ira2||0)+(last.roth1||0)+(last.roth2||0)+(last.hsa||0)+(last.inh||0);
+  const totConv=rows.reduce((s,r)=>s+(r.rothConv||0),0);
+  const totalBurden=totTax+totIRMAA+totMcare;
+  const firstShortfall=rows.find(r=>(r.unfunded||0)>0);
+  const maxBurdenYear=rows.reduce((m,r)=>((r.incomeTax||0)+(r.irmaaTx||0)+(r.medicareBase||0))>((m.incomeTax||0)+(m.irmaaTx||0)+(m.medicareBase||0))?r:m,rows[0]);
+  const hasIRMAAPlan=totIRMAA>0 || (P.overrides?.irmaa||[]).length || A.irmaaTarget;
+  const survivorOn=has2 && A.widowMode && A.widowMode!=='off';
+  const survivorName=survivorOn ? (A.widowMode==='p1Survives'?A.name1:A.name2) : '';
+  const summaryCards=[
+    [fd(startNW,true),'Starting Net Worth'],
+    [fd(endNW,true),'Projected Ending Net Worth'],
+    [fd(totConv,true),'Lifetime Roth Conversions'],
+    [fd(totalBurden,true),'Total Tax + Medicare Burden'],
+    [fd(totTax,true),'Lifetime Income Tax'],
+    [fd(totIRMAA,true),'Lifetime IRMAA'],
+    [fd(totMcare,true),'Lifetime Medicare Part B'],
+    [firstShortfall?`${firstShortfall.yr} · ${fd(firstShortfall.unfunded,true)}`:'None shown','First Shortfall Year'],
+  ];
+  const strategyBullets=[
+    totConv>0 ? `Roth conversions total ${fd(totConv)} over the plan, with the largest conversion in ${rows.reduce((m,r)=>(r.rothConv||0)>(m.rothConv||0)?r:m,rows[0]).yr}.` : 'No Roth conversions are projected under the current settings.',
+    hasIRMAAPlan ? `IRMAA is modeled as a Medicare surcharge using the two-year MAGI lookback; lifetime projected IRMAA is ${fd(totIRMAA)}.` : 'No IRMAA surcharge is projected under the current settings.',
+    survivorOn ? `Survivor mode is active: ${survivorName} survives after ${A.widowDeathYear}.` : 'No survivor-mode event is active in this report.',
+    firstShortfall ? `The first funding shortfall appears in ${firstShortfall.yr}; review spending, draw order, and cash floor assumptions before relying on later-year results.` : 'The current projection does not show an unfunded year.',
+    maxBurdenYear ? `The highest single-year tax plus Medicare burden is ${fd((maxBurdenYear.incomeTax||0)+(maxBurdenYear.irmaaTx||0)+(maxBurdenYear.medicareBase||0))} in ${maxBurdenYear.yr}.` : '',
+  ].filter(Boolean);
+  const survivorHtml=survivorOn ? `
+    <h2>Survivor Mode</h2>
+    <div class="callout">
+      <strong>${survivorName} survives after ${A.widowDeathYear}.</strong>
+      Death year remains under the base filing setup. Starting the following year, this report follows the active survivor settings:
+      ${A.widowSwitchSingle?'filing switches to Single;':'filing status does not switch automatically;'}
+      ${A.widowEndSS?'the lower Social Security benefit ends;':'both Social Security streams remain as entered;'}
+      ${A.widowSurvivorSS?'the survivor receives the higher Social Security benefit;':'survivor benefit replacement is off;'}
+      Medicare/IRMAA counts follow the surviving spouse.
+    </div>` : '';
+  const advisorQuestions=[
+    'Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?',
+    'Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?',
+    'Should withholding or estimated tax payments be changed for the first three action-plan years?',
+    'Are the survivor-mode assumptions realistic for Social Security, filing status, Medicare, and spending?',
+    'Do cash floor, spending, state-tax, deduction, and funding-order overrides reflect decisions we would actually make?'
+  ];
 
   const txRows=rows.map(r=>{
     const ded=r.effDed||r.stdDed||0, flag=(r.effDed||0)>((r.stdDed||0)+(r.seniorBonus||0)+(r.charityDed||0))?'✦ ':'';
@@ -5461,6 +5543,14 @@ function generateReport(){
     </div>
   </div>
 
+  <h2>Executive Summary</h2>
+  <div class="summary-grid">
+    ${summaryCards.map(([v,l])=>`<div class="summary-card"><div class="lbl">${l}</div><div class="val">${v}</div></div>`).join('')}
+  </div>
+  <h3>Strategy Summary</h3>
+  <ul class="bullets">${strategyBullets.map(x=>`<li>${x}</li>`).join('')}</ul>
+  ${firstShortfall ? `<div class="callout red"><strong>Funding warning:</strong> This plan shows an unfunded year in ${firstShortfall.yr}. Treat projections after that point as conditional until the shortfall is addressed.</div>` : ''}
+
   <h2>Plan Assumptions</h2>
   <div class="side">
     <div>${assump}
@@ -5469,6 +5559,7 @@ function generateReport(){
     <div></div>
     <div><table><thead><tr>${th('Tax Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table></div>
   </div>
+  ${survivorHtml}
 
   ${(()=>{
     const ov = P.overrides||{};
@@ -5484,7 +5575,8 @@ function generateReport(){
       if(row.amount!=null&&row.amount!=='') parts.push('$'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
       if(row.level!=null&&row.level!=='') {
-        let label = 'Level '+row.level+(row.fillMode?' ('+row.fillMode+')':'');
+        let label = irmaaLevelLabel(row.level, row.startYear);
+        if(row.fillMode) label += ' ('+row.fillMode+')';
         if(row.maxBracket) label += ', max '+Math.round(parseF(row.maxBracket)*100)+'%';
         parts.push(label);
       }
@@ -5511,14 +5603,17 @@ function generateReport(){
     return html;
   })()}
 
-  <h2>5-Year Action Plan</h2>
+  <h2>3-Year Action Plan</h2>
   ${apHtml}
+
+  <h2>Advisor Discussion Questions</h2>
+  <ul class="bullets">${advisorQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>
 
   <h2>Year-by-Year Cash Flow</h2>
   <table style="font-size:6.5pt"><thead><tr>
-    ${[th('Year'),th('Ages'),thr('Total\nIncome'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Securities\n& Cash Draw'),thr('Spending'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Cash\n(Start of Yr)'),thr('Securities\n(Start of Yr)'),thr('IRA\n(Start of Yr)'),thr('Roth\n(Start of Yr)'),thr('Net Worth\n(Start of Yr)'),thr('Eff\nRate')].join('')}
+    ${[th('Year'),th('Ages'),thr('Total\nIncome'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Securities\n& Cash Draw'),thr('Spending'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),thr('Tax + Medicare\nBurden'),thr('Cash\n(Start of Yr)'),thr('Securities\n(Start of Yr)'),thr('IRA\n(Start of Yr)'),thr('Roth\n(Start of Yr)'),thr('Net Worth\n(Start of Yr)'),thr('Eff\nRate')].join('')}
   </tr></thead><tbody>${cfRows}</tbody></table>
-  <p class="note">Balances (Cash, Securities, IRA, Roth, Net Worth) shown as Start-of-Year. Net Worth in red = shortfall year. Total Income = all cash inflows including all draws.</p>
+  <p class="note">Balances (Cash, Securities, IRA, Roth, Net Worth) shown as Start-of-Year. Net Worth in red = shortfall year. Total Income = all cash inflows including all draws. Tax + Medicare Burden = income tax + IRMAA surcharge + Medicare Part B.</p>
 
   <h2>Lifetime Tax Summary</h2>
   <table style="width:auto;margin-bottom:12px"><tbody>
@@ -5526,7 +5621,7 @@ function generateReport(){
         <td class="bold" style="padding:0 20px 0 30px">Lifetime CA</td><td class="r">${fd(totCA,true)}</td></tr>
     <tr><td class="bold">Lifetime IRMAA</td><td class="r">${fd(totIRMAA,true)}</td>
         <td class="bold" style="padding:0 20px 0 30px">Lifetime Medicare B</td><td class="r">${fd(totMcare,true)}</td></tr>
-    <tr><td class="bold">Total Tax + Medicare</td><td class="r bold">${fd(totTax+totIRMAA+totMcare,true)}</td>
+    <tr><td class="bold">Total Tax + Medicare Burden</td><td class="r bold">${fd(totTax+totIRMAA+totMcare,true)}</td>
         <td class="bold" style="padding:0 20px 0 30px">Avg Effective Rate</td><td class="r">${fp(avgEff)}</td></tr>
     <tr><td class="bold">Peak AGI Year</td><td class="r">${peak.yr} — ${fd(peak.agi,true)}</td>
         <td class="bold" style="padding:0 20px 0 30px">Peak Age</td><td class="r">${age(peak)}</td></tr>
