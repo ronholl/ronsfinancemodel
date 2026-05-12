@@ -5301,6 +5301,17 @@ function generateReport(){
     th{background:#1e1a0e;color:#fff;padding:3px 5px;text-align:left;font-size:6.5pt;white-space:pre-line;line-height:1.3;vertical-align:bottom;}
     td{padding:2px 5px;border-bottom:0.5px solid #ddd;vertical-align:top;}
     tr:nth-child(even) td{background:#f5f0e5;}
+    .cf-table{font-size:5.9pt;}
+    .cf-table th{padding:2px 2px;}
+    .cf-table td{padding:2px 2px;}
+    .cf-table .cf-group th{background:#8a6800;color:#fff;text-align:center;font-size:5.9pt;text-transform:uppercase;letter-spacing:.04em;border-left:1px solid #fff;}
+    .cf-table .cf-group th:first-child{border-left:0;}
+    .cf-table .cf-sub th{background:#1e1a0e;}
+    .cf-table .cf-start{border-left:1px solid #c8960c;}
+    .cf-table tbody td:nth-child(3),
+    .cf-table tbody td:nth-child(12),
+    .cf-table tbody td:nth-child(16),
+    .cf-table tbody td:nth-child(21){border-left:1px solid #d8c48a;}
     .r{text-align:right;}
     .bold{font-weight:700;}
     .red{color:#8b1a1a;}
@@ -5481,25 +5492,31 @@ function generateReport(){
     const roth_wd = rDraw1+rDraw2;
     const hsa_inh = hsaW+inhD;  // HSA + Inherited IRA only (Roth now separate)
     const tot=wages+ss+rmds+divs+rc+ira1a+ira2a+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
+    const totalFunded=r.totalFunding || tot;
     const ira_tot=rmds+ira1a+ira2a;
     const ira_soy=(r.startIRA1||0)+(r.startIRA2||0);
     const roth_soy=(r.startRoth1||0)+(r.startRoth2||0);
+    const hsa_inh_soy=(r.startHSA||0)+(r.startInh||0);
     const sec_soy=r.startSec||0;
     const cash_soy=r.startCashBal||0;
-    const nw_soy=cash_soy+sec_soy+ira_soy+roth_soy+(r.startHSA||0)+(r.startInh||0);
+    const nw_soy=cash_soy+sec_soy+ira_soy+roth_soy+hsa_inh_soy;
+    const taxFunding=r.fundingTax||0;
+    const cashGap=r.cashGapNeeded||0;
+    const fundingRequired=r.totalRequired || ((r.spending||0)+taxFunding+cashGap);
     const sf=(r.unfunded||0)>0;
     return `<tr>
       ${td(r.yr)}${td(age(r))}
-      ${td(fd(tot,true),'r bold')}${td(dz(wages),'r')}${td(dz(ss),'r')}
+      ${td(dz(wages),'r')}${td(dz(ss),'r')}
       ${td(dz(ira_tot),'r')}${td(dz(rc),'r')}${td(dz(divs),'r')}
       ${td(dz(hsa_inh),'r')}${td(dz(roth_wd),'r')}
-      ${td(dz(stkS+cashD),'r')}
-      ${td(fd(r.spending,true),'r')}${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}
-      ${td(dz(r.medicareBase),'r')}${td(fd((r.incomeTax||0)+(r.irmaaTx||0)+(r.medicareBase||0),true),'r bold')}
+      ${td(dz(stkS+cashD),'r')}${td(fd(totalFunded,true),'r bold')}
+      ${td(fd(r.spending,true),'r')}${td(dz(taxFunding),'r')}${td(dz(cashGap),'r')}${td(fd(fundingRequired,true),'r bold')}
+      ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
+      ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(fd(cash_soy,true),'r')}${td(fd(sec_soy,true),'r')}
       ${td(fd(ira_soy,true),'r')}${td(fd(roth_soy,true),'r')}
+      ${td(fd(hsa_inh_soy,true),'r')}
       ${td(fd(nw_soy,true),sf?'r bold red':'r bold')}
-      ${td(fp(r.effRate),'r')}
     </tr>`;
   }).join('');
 
@@ -5664,10 +5681,19 @@ function generateReport(){
   <ul class="bullets">${advisorQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>
 
   <h2>Year-by-Year Cash Flow</h2>
-  <table style="font-size:6.5pt"><thead><tr>
-    ${[th('Year'),th('Ages'),thr('Total\nIncome'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Securities\n& Cash Draw'),thr('Spending'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),thr('Tax + Medicare\nBurden'),thr('Cash\n(Start of Yr)'),thr('Securities\n(Start of Yr)'),thr('IRA\n(Start of Yr)'),thr('Roth\n(Start of Yr)'),thr('Net Worth\n(Start of Yr)'),thr('Eff\nRate')].join('')}
-  </tr></thead><tbody>${cfRows}</tbody></table>
-  <p class="note">Balances (Cash, Securities, IRA, Roth, Net Worth) shown as Start-of-Year. Net Worth in red = shortfall year. Total Income = all cash inflows including all draws. Tax + Medicare Burden = income tax + IRMAA surcharge + Medicare Part B.</p>
+  <table class="cf-table"><thead>
+    <tr class="cf-group">
+      <th colspan="2">Year</th>
+      <th colspan="9">Funding Sources</th>
+      <th colspan="4">Funding Required</th>
+      <th colspan="5">Tax &amp; Medicare</th>
+      <th colspan="6">Start-of-Year Balances</th>
+    </tr>
+    <tr class="cf-sub">
+      ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Sec &\nCash Draw'),thr('Total\nFunded'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA +\nInh IRA'),thr('Net\nWorth')].join('')}
+    </tr>
+  </thead><tbody>${cfRows}</tbody></table>
+  <p class="note">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
 
   <h2>Lifetime Tax Summary</h2>
   <table style="width:auto;margin-bottom:12px"><tbody>
