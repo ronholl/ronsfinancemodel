@@ -609,7 +609,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="ov-intent">Override the amount of spending and/or the amount withheld for taxes for one or more years. Spending will increase from this amount the following year unless reset.</div>
         <div id="conf-spending" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-spending">
-          <thead><tr><th>Spend Amount ($)</th><th>Pct Change (%)</th><th>Tax Override ($)</th><th>Start Year</th><th>End Year</th><th></th></tr></thead>
+          <thead><tr><th>Spend Amount ($)</th><th>Pct Change (%)</th><th>Tax Override ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-spending"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('spending')">+ Add Row</button>
@@ -734,7 +734,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="ov-intent">Schedule annual HSA contributions by year range. Only applies while enrolled in an HSA-eligible high-deductible health plan.</div>
         <div id="conf-hsadep" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-hsadep">
-          <thead><tr><th>Annual Deposit ($)</th><th>Start Year</th><th>End Year</th><th></th></tr></thead>
+          <thead><tr><th>Annual Deposit ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-hsadep"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('hsadep')">+ Add Row</button>
@@ -4119,6 +4119,7 @@ const OV_DEFS = {
     {k:'taxOvr',lbl:'Tax Override ($)',type:'number',w:130},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:180},
   ]},
   growth:{key:'ovGrowth',fields:[
     {k:'rate',lbl:'Rate (%)',type:'number',w:90},
@@ -4142,6 +4143,7 @@ const OV_DEFS = {
     {k:'amount',lbl:'Annual Amount',type:'number',w:120},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:180},
   ]},
   income:{key:'ovIncomeLevel',fields:[
     {k:'magiTarget',lbl:'MAGI Target',type:'number',w:120},
@@ -5187,7 +5189,7 @@ function buildReportPayload(){
     const kept = keepRows(rows, keys);
     if (kept.length) overrides[name] = kept;
   };
-  addOverride('spending',    S.ovSpending,     ['amount','pctChange','taxOvr']);
+  addOverride('spending',    S.ovSpending,     ['amount','pctChange','taxOvr','notes']);
   addOverride('irmaa',       S.ovIRMAA,        ['level','maxBracket','bracketHeadroom']);
   addOverride('incomeLevel', S.ovIncomeLevel,  ['magiTarget']);
   addOverride('taxFill',     S.ovTaxFill,      ['active','headroom']);
@@ -5196,7 +5198,7 @@ function buildReportPayload(){
   addOverride('funding',     S.ovFundingOrder, ['choice']);
   addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
   addOverride('deductions',  S.ovDeductions,   ['fedItemized','caItemized','charityCash']);
-  addOverride('hsaDep',      S.ovHSADeposit,   ['amount']);
+  addOverride('hsaDep',      S.ovHSADeposit,   ['amount','notes']);
   addOverride('stateTax',    S.ovStateTax,     ['state']);
   const currentCalYear = new Date().getFullYear();
   const defaultActionYear = Math.max(S.startYear, Math.min(currentCalYear, S.endYear - 2));
@@ -5287,7 +5289,7 @@ function generateReport(){
     if (incomeRow && incomeRow.magiTarget !== null && incomeRow.magiTarget !== undefined && incomeRow.magiTarget !== '') {
       const headroom = parseF(incomeRow.headroom) || 0;
       const value = (parseF(incomeRow.magiTarget)||0) - headroom;
-      return {label:'Target Income (Income Level)', value, note:'target income '+fd(value)};
+      return {label:'Income Target (custom income level)', value, note:'target income '+fd(value)};
     }
     const irmaaRow = activeRow(S.ovIRMAA, yr);
     const irmaaOvExists = !!irmaaRow;
@@ -5305,7 +5307,7 @@ function generateReport(){
         target = Math.min(target, maxBracketCeil - bracketHeadroom);
       }
       return {
-        label: irmaaLevel > 0 ? 'Target Income (IRMAA)' : 'Target Income (Bracket)',
+        label: irmaaLevel > 0 ? 'Income Target (IRMAA tier ceiling)' : 'Income Target (tax bracket ceiling)',
         value: target,
         note: irmaaLevel > 0 ? 'IRMAA '+irmaaTierNameForLevel(irmaaLevel)+' target income '+fd(target) : 'bracket target income '+fd(target)
       };
@@ -5315,10 +5317,10 @@ function generateReport(){
       const target = getBracketCeiling(r.agi||0, filing, tables);
       if (target != null) {
         const value = target - (parseF(taxFillRow.headroom)||0);
-        return {label:'Target Income (Tax Fill)', value, note:'tax-fill target income '+fd(value)};
+        return {label:'Income Target (tax bracket fill)', value, note:'tax-fill target income '+fd(value)};
       }
     }
-    if ((r.rothConv||0) > 0) return {label:'Target Income (Result)', value:r.agi||0, note:'resulting AGI '+fd(r.agi||0)};
+    if ((r.rothConv||0) > 0) return {label:'Income Target (resulting AGI)', value:r.agi||0, note:'resulting AGI '+fd(r.agi||0)};
     return null;
   };
 
@@ -5453,7 +5455,7 @@ function generateReport(){
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
     ['Widow(er) Override',A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · ${A.widowDeathYear||'year not set'}`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Dividend Rate',fp(A.divRate)],
-    ['Spending Inflation',fp(A.spendInfl)],['SS COLA',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
+    ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
   const rightRates=rateRows([
     ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Inflation',fp(A.irmaaInfl)],
@@ -5783,14 +5785,16 @@ function generateReport(){
     };
     const fmtRow = (row) => {
       const parts=[];
+      const validMaxBracket = row.maxBracket && getMaxBracketOptions(row).some(([v]) => v === String(row.maxBracket));
+      const modeLabel = {F:'Fill mode', R:'Roth-withdrawal mode', S:'Stop mode'}[row.fillMode] || row.fillMode;
       if(row.amount!=null&&row.amount!=='') parts.push('Spending $'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.pctChange!=null&&row.pctChange!=='') parts.push('Spending change '+Number(row.pctChange).toLocaleString('en-US',{maximumFractionDigits:2})+'%');
       if(row.taxOvr!=null&&row.taxOvr!=='') parts.push('Tax funding override $'+Number(row.taxOvr).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
       if(row.level!=null&&row.level!=='') {
         let label = irmaaLevelLabel(row.level, row.startYear);
-        if(row.fillMode) label += ' ('+row.fillMode+')';
-        if(row.maxBracket) label += ', max '+Math.round(parseF(row.maxBracket)*100)+'%';
+        if(row.fillMode) label += ' - '+modeLabel;
+        if(validMaxBracket) label += ', bracket cap '+Math.round(parseF(row.maxBracket)*100)+'%';
         parts.push(label);
       }
       if(row.magiTarget!=null&&row.magiTarget!=='') parts.push('MAGI target $'+Number(row.magiTarget).toLocaleString());
@@ -5808,9 +5812,13 @@ function generateReport(){
     let html='<h2>Active Overrides</h2>';
     for(const [key,rows] of Object.entries(ov)){
       if(!rows||!rows.length) continue;
+      const hasNotes = rows.some(row => row.notes != null && row.notes !== '');
       html+=`<p style="font-weight:700;font-size:8pt;color:#111;margin:8px 0 2px">${ovLabels[key]||key}</p>`;
-      html+=`<table style="font-size:7pt;margin-bottom:6px"><thead><tr><th>Start</th><th>End</th><th>Setting</th><th>Notes</th></tr></thead><tbody>`;
-      html+=rows.map(fmtRow).join('');
+      html+=`<table style="font-size:7pt;margin-bottom:6px"><thead><tr><th>Start</th><th>End</th><th>Setting</th>${hasNotes?'<th>Notes</th>':''}</tr></thead><tbody>`;
+      html+=rows.map(row => {
+        const rendered = fmtRow(row);
+        return hasNotes ? rendered : rendered.replace(/<td style="color:#666;font-style:italic">.*?<\/td><\/tr>$/, '</tr>');
+      }).join('');
       html+=`</tbody></table>`;
     }
     return html;
