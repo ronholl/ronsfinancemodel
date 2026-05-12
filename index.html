@@ -30,6 +30,24 @@
 <meta property="og:title" content="Ron's Retirement Finance Model">
 <meta property="og:description" content="Interactive retirement planning dashboard and financial model.">
 <meta property="og:type" content="website">
+<script>
+(function(){
+  const params = new URLSearchParams(location.search || '');
+  const key = params.get('report');
+  if(!key) return;
+  window.__REPORT_MODE__ = true;
+  try {
+    const html = localStorage.getItem(key);
+    document.open();
+    document.write(html || '<!DOCTYPE html><html><head><title>Printable Report</title></head><body><div style="font-family:Helvetica,Arial,sans-serif;padding:24px">Printable report data was not found. Please return to the app and generate the report again.</div></body></html>');
+    document.close();
+  } catch(e) {
+    document.open();
+    document.write('<!DOCTYPE html><html><head><title>Printable Report</title></head><body><div style="font-family:Helvetica,Arial,sans-serif;padding:24px">Unable to open printable report: '+String(e.message||e)+'</div></body></html>');
+    document.close();
+  }
+})();
+</script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -4448,11 +4466,13 @@ function apCard(yr){
     why.push('Roth conversion: '+reason);
   }
   if ((r.excessFunds||0) > 0) why.push('Mandatory income exceeds cash need');
+  if ((r.cashSweep||0) > 0) why.push('Cash above floor swept to securities');
   if ((r.unfunded||0) > 0) why.push('Funding shortfall');
   const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.inhDraw||0)===0 &&
-                    (r.stkSales||0)===0 && (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
+                    (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
+                    (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
 
   return `<div style="background:#fffdf5;border:1px solid #ddd0a8;border-radius:8px;padding:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -4487,7 +4507,6 @@ function apCard(yr){
     ${(r.rmd1||0)>0 ? row(p1()+' RMD (mandatory)', r.rmd1) : ''}
     ${(r.rmd2||0)>0 ? row(p2()+' RMD (mandatory)', r.rmd2) : ''}
     ${row('Dividends & Interest', r.divs||0)}
-    ${(r.excessFunds||0)>0 ? row('Excess → Securities', r.excessFunds, false, '#1a4a1a') : ''}
 
     ${hdr('ACTIONS REQUIRED')}
     ${noActions ? '<div style="font-size:11px;color:#aaa;padding:3px 0">No draws or conversions needed</div>' : ''}
@@ -4497,6 +4516,8 @@ function apCard(yr){
     ${flag(p1()+' IRA Draw', r.ira1Addl||0, '#7a5200')}
     ${flag(p2()+' IRA Draw', r.ira2Addl||0, '#7a5200')}
     ${flag('Securities Draw', r.stkSales||0, '#8b0000')}
+    ${flag('Invest Surplus → Securities', r.excessFunds||0, '#1a4a1a')}
+    ${flag('Cash Sweep → Securities', r.cashSweep||0, '#1a4a1a')}
     ${flag('Inherited IRA Draw', r.inhDraw||0, '#7a5200')}
     ${flag(p1()+' Roth Withdrawal', r.rothDraw1||0, '#6b0080')}
     ${flag(p2()+' Roth Withdrawal', r.rothDraw2||0, '#6b0080')}
@@ -5155,7 +5176,7 @@ function buildReportPayload(){
     ira1:r.ira1||0, ira2:r.ira2||0,
     roth1:r.roth1||0, roth2:r.roth2||0,
     hsa:r.hsa||0, inh:r.inh||0, netWorth:r.netWorth||0,
-    unfunded:r.unfunded||0, excessFunds:r.excessFunds||0,
+    unfunded:r.unfunded||0, excessFunds:r.excessFunds||0, cashSweep:r.cashSweep||0,
     secDraw:r.stkSales||r.secDraw||0, cashDraw:r.cashDraw||0,
   }));
   // Active overrides — only include non-empty tables
@@ -5189,6 +5210,33 @@ function exportReportData(){
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=exportFileName('report_data','json');a.click();
+}
+
+function renderSafariInlineReport(html){
+  document.getElementById('safari-report-style')?.remove();
+  document.getElementById('safari-report-wrap')?.remove();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const style = document.createElement('style');
+  style.id = 'safari-report-style';
+  style.textContent = `
+    body.safari-report-active > :not(#safari-report-wrap):not(#safari-report-style){display:none!important}
+    #safari-report-wrap{display:block;background:#fff;color:#111;min-height:100vh}
+    #safari-report-toolbar{position:sticky;top:0;z-index:9999;background:#fff8e8;border-bottom:1px solid #c8960c;padding:10px 14px;font-family:Helvetica,Arial,sans-serif}
+    #safari-report-toolbar button{padding:8px 16px;margin-right:8px;background:#f5f0e5;color:#6a4e00;border:1px solid #c8960c;border-radius:4px;font-size:10pt;cursor:pointer;font-weight:700}
+    @media print{#safari-report-toolbar{display:none!important}}
+    ${doc.querySelector('style')?.textContent || ''}
+  `;
+  const wrap = document.createElement('div');
+  wrap.id = 'safari-report-wrap';
+  wrap.innerHTML = `
+    <div id="safari-report-toolbar">
+      <button onclick="document.body.classList.remove('safari-report-active');document.getElementById('safari-report-wrap')?.remove();document.getElementById('safari-report-style')?.remove();">Close Report</button>
+    </div>
+    ${doc.body.innerHTML}
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(wrap);
+  document.body.classList.add('safari-report-active');
 }
 
 function generateReport(){
@@ -5519,6 +5567,8 @@ function generateReport(){
     if(inhD)   acts.push(`Inherited IRA Draw: ${fd(inhD)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
     if(rDraw2) acts.push(`${A.name2||'Person 2'} Roth Withdrawal: ${fd(rDraw2)}`);
+    if((full.excessFunds||0)>50) acts.push(`Invest Surplus → Securities: ${fd(full.excessFunds)}`);
+    if((full.cashSweep||0)>50) acts.push(`Cash Sweep → Securities: ${fd(full.cashSweep)}`);
     if((full.margRate||0)>=0.32) acts.push(`Marginal rate ${fp(full.margRate)} — consider pre-tax deductions`);
     if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}`);
     if(unfunded>0) acts.push(`<span class="red">⚠ WARNING: Funding shortfall of ${fd(unfunded)}</span>`);
@@ -5650,12 +5700,18 @@ function generateReport(){
       ${A.widowSurvivorSS?'the survivor receives the higher Social Security benefit;':'survivor benefit replacement is off;'}
       Medicare/IRMAA counts follow the surviving spouse.
     </div>` : '';
+  const hasOverrides=Object.values(P.overrides||{}).some(x=>x&&x.length);
+  const apHasRothConv=ap.some(r=>(r.rothConv||0)>0);
+  const apHasIRMAA=ap.some(r=>(r.irmaaTx||0)>0);
+  const apHasWages=ap.some(r=>((r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0))>0);
+  const apHasIncomeTax=ap.some(r=>(r.incomeTax||0)>0 || (r.fundingTax||0)>0);
   const advisorQuestions=[
-    'Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?',
-    'Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?',
-    'Should withholding or estimated tax payments be changed for the first three action-plan years?',
-    'Are the survivor-mode assumptions realistic for Social Security, filing status, Medicare, and spending?',
-    'Do cash floor, spending, state-tax, deduction, and funding-order overrides reflect decisions we would actually make?'
+    ...(apHasRothConv ? ['Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?'] : []),
+    ...(apHasIRMAA ? ['Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?'] : []),
+    ...(apHasIncomeTax ? [apHasWages ? 'Should payroll withholding be adjusted for the first three action-plan years?' : 'Should estimated tax payments be changed for the first three action-plan years?'] : []),
+    ...(survivorOn ? ['Are the survivor-mode assumptions realistic for Social Security, filing status, Medicare, and spending?'] : []),
+    ...(hasOverrides ? ['Do cash floor, spending, state-tax, deduction, and funding-order overrides reflect decisions we would actually make?'] : []),
+    'Should any surplus cash flow be invested, held in cash, or used for another priority?'
   ];
 
   const txRows=rows.map(r=>{
@@ -5673,7 +5729,7 @@ function generateReport(){
   }).join('');
 
   // ── Assemble HTML ──
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+  let html=`<!DOCTYPE html><html><head><meta charset="utf-8">
   <title>Retirement Plan — ${names}</title>
   <style>${css}</style></head><body>
 
@@ -5817,8 +5873,33 @@ function generateReport(){
 
   </body></html>`;
 
-  const blob=new Blob([html],{type:'text/html'});
-  window.open(URL.createObjectURL(blob),'_blank');
+  const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent || '');
+  if(isSafari){
+    html = html
+      .replace('@page{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}', '@page{size:letter portrait;margin:0.45in;}')
+      .replace('@page cashflow{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}', '')
+      .replace('page:cashflow;break-before:page;', 'break-before:page;');
+    renderSafariInlineReport(html);
+    return;
+  }
+
+  const key='report_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  try {
+    localStorage.setItem(key, html);
+    const base=location.href.split('#')[0].split('?')[0];
+    const reportWin=window.open(base+'?report='+encodeURIComponent(key),'_blank');
+    if(!reportWin) throw new Error('popup blocked');
+  } catch(e) {
+    const reportWin=window.open('','_blank');
+    if(reportWin){
+      reportWin.document.open();
+      reportWin.document.write(html);
+      reportWin.document.close();
+      reportWin.focus();
+    } else {
+      alert('Pop-up blocked. Please allow pop-ups for this page to open the printable report.');
+    }
+  }
 }
 
 
@@ -6132,8 +6213,28 @@ function initApp() {
     if(el) el.textContent = 'Error on load: ' + e.message;
   }
 }
+function openStoredReportIfRequested(){
+  const params = new URLSearchParams(location.search || '');
+  const key = params.get('report');
+  if(!key) return false;
+  try {
+    const html = localStorage.getItem(key);
+    if(!html) {
+      document.body.innerHTML = '<div style="font-family:Helvetica,Arial,sans-serif;padding:24px">Printable report data was not found. Please return to the app and generate the report again.</div>';
+      return true;
+    }
+    document.open();
+    document.write(html);
+    document.close();
+  } catch(e) {
+    document.body.innerHTML = '<div style="font-family:Helvetica,Arial,sans-serif;padding:24px">Unable to open printable report: '+String(e.message||e)+'</div>';
+  }
+  return true;
+}
 // Wait for Chart.js then init
 window.onload = () => {
+  if(window.__REPORT_MODE__) return;
+  if(openStoredReportIfRequested()) return;
   if (typeof Chart !== 'undefined') {
     initApp();
   } else {
