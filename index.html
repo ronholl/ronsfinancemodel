@@ -5221,6 +5221,57 @@ function generateReport(){
     const names = ['Off','Base','Tier 1','Tier 2','Tier 3','Tier 4'];
     return `${lvl} - ${names[lvl]||'Tier '+(lvl-1)} ${fd(thresh[Math.min(lvl, thresh.length-1)])}`;
   };
+  const irmaaTierNameForLevel = level => {
+    const lvl = parseInt(level);
+    const names = ['Off','Base','Tier 1','Tier 2','Tier 3','Tier 4'];
+    return names[lvl] || (lvl > 0 ? 'Tier '+(lvl-1) : 'Off');
+  };
+  const activeRow = (rows, yr) => (rows||[]).find(row => {
+    const s=parseInt(row.startYear)||0, e=parseInt(row.endYear)||9999;
+    return yr>=s && yr<=e;
+  });
+  const reportIncomeTarget = (r) => {
+    const yr = r.yr;
+    const tables = getScaledTables(S, yr);
+    const filing = r.taxFiling || A.filing;
+    const incomeRow = activeRow(S.ovIncomeLevel, yr);
+    if (incomeRow && incomeRow.magiTarget !== null && incomeRow.magiTarget !== undefined && incomeRow.magiTarget !== '') {
+      const headroom = parseF(incomeRow.headroom) || 0;
+      const value = (parseF(incomeRow.magiTarget)||0) - headroom;
+      return {label:'Target Income (Income Level)', value, note:'target income '+fd(value)};
+    }
+    const irmaaRow = activeRow(S.ovIRMAA, yr);
+    const irmaaOvExists = !!irmaaRow;
+    const irmaaLevel = irmaaRow && irmaaRow.level !== '' && irmaaRow.level != null
+      ? parseInt(irmaaRow.level)
+      : irmaaOvExists ? 0 : (A.irmaaTarget||0);
+    const irmaaHeadroom = A.irmaaHeadroom||0;
+    const maxBracketRaw = irmaaRow ? irmaaRow.maxBracket : null;
+    const maxBracketCeil = getMaxBracketCeiling(maxBracketRaw, filing, tables);
+    if (irmaaLevel > 0 || maxBracketCeil != null) {
+      const thresh = (tables && tables.irmaaT) || [0,218000,274000,342000,410000,750000];
+      let target = irmaaLevel > 0 ? thresh[Math.min(irmaaLevel, thresh.length-1)] - irmaaHeadroom : Infinity;
+      if (maxBracketCeil != null) {
+        const bracketHeadroom = parseF(irmaaRow?.bracketHeadroom) || 0;
+        target = Math.min(target, maxBracketCeil - bracketHeadroom);
+      }
+      return {
+        label: irmaaLevel > 0 ? 'Target Income (IRMAA)' : 'Target Income (Bracket)',
+        value: target,
+        note: irmaaLevel > 0 ? 'IRMAA '+irmaaTierNameForLevel(irmaaLevel)+' target income '+fd(target) : 'bracket target income '+fd(target)
+      };
+    }
+    const taxFillRow = activeRow(S.ovTaxFill, yr);
+    if (taxFillRow && taxFillRow.active === 'T') {
+      const target = getBracketCeiling(r.agi||0, filing, tables);
+      if (target != null) {
+        const value = target - (parseF(taxFillRow.headroom)||0);
+        return {label:'Target Income (Tax Fill)', value, note:'tax-fill target income '+fd(value)};
+      }
+    }
+    if ((r.rothConv||0) > 0) return {label:'Target Income (Result)', value:r.agi||0, note:'resulting AGI '+fd(r.agi||0)};
+    return null;
+  };
 
   // ── CSS ──
   const css = `
@@ -5329,6 +5380,7 @@ function generateReport(){
     const taxFunding=full.fundingTax||0, cashGap=full.cashGapNeeded||0;
     const fundingRequired=full.totalRequired || (spending + taxFunding + cashGap);
     const taxFundingLabel=full.taxOvrActive?'Income Tax Funding (override)':'Income Tax Funding';
+    const targetIncome = reportIncomeTarget(full);
     const convSrc=(full.rothConvDraw1||0)>0?A.name1+' IRA':A.name2?' '+A.name2+' IRA':'IRA';
 
     // Three-panel table
@@ -5360,6 +5412,8 @@ function generateReport(){
     const fed_tax=(full.fedOrd||0)+(full.ltcg||0);
     const ca_tax=full.stTax||0;
     const taxes=[
+      ...(targetIncome?[ [targetIncome.label,targetIncome.value] ]:[]),
+      ...(rc>0?[ ['Roth Conversion Needed',rc] ]:[]),
       ['AGI',full.agi||0],
       ['Federal Tax',fed_tax],
       ...(ca_tax?[['CA State Tax',ca_tax]]:[]),
@@ -5399,7 +5453,7 @@ function generateReport(){
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
     if(rDraw2) acts.push(`${A.name2||'Person 2'} Roth Withdrawal: ${fd(rDraw2)}`);
-    if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}${tier?' (targeting '+tier+' tier)':''}`);
+    if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}${targetIncome?.note?' (targeting '+targetIncome.note+')':''}`);
     if(irmaa>0) acts.push(`IRMAA ${tier}: prior MAGI ${fd(full.irmaaMagi)} → surcharge ${fd(irmaa)}`);
     if((full.margRate||0)>=0.32) acts.push(`Marginal rate ${fp(full.margRate)} — consider pre-tax deductions`);
     if(unfunded>0) acts.push(`<span class="red">⚠ WARNING: Funding shortfall of ${fd(unfunded)}</span>`);
@@ -5408,7 +5462,7 @@ function generateReport(){
     apHtml+=`
       <div class="yr-band">${yr} — Ages ${age(full)} — AGI ${fd(full.agi)} — Marginal ${fp(full.margRate)} — Effective ${fp(full.effRate)}</div>
       <div class="yr-tbl"><table>
-        <thead><tr><th>Starting Balances</th><th class="r">Amount</th><th>Funding Sources</th><th class="r">Amount</th><th>Tax &amp; Medicare</th><th class="r">Amount</th></tr></thead>
+        <thead><tr><th>Starting Balances</th><th class="r">Amount</th><th>Funding Sources</th><th class="r">Amount</th><th>Income, Tax &amp; Medicare</th><th class="r">Amount</th></tr></thead>
         <tbody>${rows3}</tbody>
       </table></div>
       <ul class="actions">${acts.map(a=>`<li>${a}</li>`).join('')}</ul>`;
@@ -5416,7 +5470,7 @@ function generateReport(){
 
   // ── Cash Flow table ──
   const cfRows=rows.map(r=>{
-    const wages=(r.grossWages1||0)+(r.grossWages2||0);
+    const wages=(r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0);
     const ss=(r.grossSS1||0)+(r.grossSS2||0);
     const rmds=(r.rmd1||0)+(r.rmd2||0);
     const divs=r.divIncome||0, rc=r.rothConv||0;
