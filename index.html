@@ -5308,6 +5308,10 @@ function generateReport(){
     .cf-table .cf-group th:first-child{border-left:0;}
     .cf-table .cf-sub th{background:#1e1a0e;}
     .cf-table .cf-start{border-left:1px solid #c8960c;}
+    .cf-print-only{display:none;}
+    .cf-print-table{font-size:7.2pt;}
+    .cf-print-table th{font-size:6.7pt;padding:3px 4px;}
+    .cf-print-table td{padding:2px 4px;}
     .cf-table tbody td:nth-child(3),
     .cf-table tbody td:nth-child(12),
     .cf-table tbody td:nth-child(16),
@@ -5328,6 +5332,12 @@ function generateReport(){
     @media print{
       body{padding:0.35in;font-size:8pt;}
       .no-print{display:none;}
+      .cf-screen-only{display:none;}
+      .cf-print-only{display:block;}
+      .cf-print-only h3{font-size:9pt;color:#6a4e00;margin:8px 0 3px;}
+      .cf-print-table{font-size:7.4pt;margin-bottom:10px;}
+      .cf-print-table th{font-size:6.8pt;padding:3px 4px;}
+      .cf-print-table td{padding:2px 4px;}
       h2{page-break-after:avoid;}
       .yr-band{page-break-before:auto;}
       table{page-break-inside:auto;}
@@ -5480,7 +5490,7 @@ function generateReport(){
   }
 
   // ── Cash Flow table ──
-  const cfRows=rows.map(r=>{
+  const cfVals=(r)=>{
     const wages=(r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0);
     const ss=(r.grossSS1||0)+(r.grossSS2||0);
     const rmds=(r.rmd1||0)+(r.rmd2||0);
@@ -5504,19 +5514,41 @@ function generateReport(){
     const cashGap=r.cashGapNeeded||0;
     const fundingRequired=r.totalRequired || ((r.spending||0)+taxFunding+cashGap);
     const sf=(r.unfunded||0)>0;
+    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,inhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
+  };
+  const dzGap=(v)=>Math.abs(v||0)>=50?fd(v,true):'—';
+  const cfRows=rows.map(r=>{
+    const v=cfVals(r);
     return `<tr>
       ${td(r.yr)}${td(age(r))}
-      ${td(dz(wages),'r')}${td(dz(ss),'r')}
-      ${td(dz(ira_tot),'r')}${td(dz(rc),'r')}${td(dz(divs),'r')}
-      ${td(dz(hsa_inh),'r')}${td(dz(roth_wd),'r')}
-      ${td(dz(stkS+cashD),'r')}${td(fd(totalFunded,true),'r bold')}
-      ${td(fd(r.spending,true),'r')}${td(dz(taxFunding),'r')}${td(dz(cashGap),'r')}${td(fd(fundingRequired,true),'r bold')}
+      ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}
+      ${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
+      ${td(dz(v.hsa_inh),'r')}${td(dz(v.roth_wd),'r')}
+      ${td(dz(v.stkCash),'r')}${td(fd(v.totalFunded,true),'r bold')}
+      ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
       ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td(fd(cash_soy,true),'r')}${td(fd(sec_soy,true),'r')}
-      ${td(fd(ira_soy,true),'r')}${td(fd(roth_soy,true),'r')}
-      ${td(fd(hsa_inh_soy,true),'r')}
-      ${td(fd(nw_soy,true),sf?'r bold red':'r bold')}
+      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}
+      ${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}
+      ${td(fd(v.hsa_inh_soy,true),'r')}
+      ${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
+    </tr>`;
+  }).join('');
+  const cfFundingRows=rows.map(r=>{
+    const v=cfVals(r);
+    return `<tr>
+      ${td(r.yr)}${td(age(r))}
+      ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
+      ${td(dz(v.hsaW),'r')}${td(dz(v.inhD),'r')}${td(dz(v.roth_wd),'r')}${td(dz(v.cashD),'r')}${td(dz(v.stkS),'r')}${td(fd(v.totalFunded,true),'r bold')}
+      ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
+    </tr>`;
+  }).join('');
+  const cfTaxBalanceRows=rows.map(r=>{
+    const v=cfVals(r);
+    return `<tr>
+      ${td(r.yr)}${td(age(r))}
+      ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
+      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd(r.startInh||0,true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
 
@@ -5681,7 +5713,7 @@ function generateReport(){
   <ul class="bullets">${advisorQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>
 
   <h2>Year-by-Year Cash Flow</h2>
-  <table class="cf-table"><thead>
+  <table class="cf-table cf-screen-only"><thead>
     <tr class="cf-group">
       <th colspan="2">Year</th>
       <th colspan="9">Funding Sources</th>
@@ -5693,7 +5725,18 @@ function generateReport(){
       ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Sec &\nCash Draw'),thr('Total\nFunded'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA +\nInh IRA'),thr('Net\nWorth')].join('')}
     </tr>
   </thead><tbody>${cfRows}</tbody></table>
-  <p class="note">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
+  <div class="cf-print-only">
+    <h3>Funding Reconciliation</h3>
+    <table class="cf-print-table"><thead><tr>
+      ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConv'),thr('Div &\nInterest'),thr('HSA\nWd'),thr('Inh IRA\nDraw'),thr('Roth\nWd'),thr('Cash\nDraw'),thr('Sec\nDraw'),thr('Total\nFunded'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired')].join('')}
+    </tr></thead><tbody>${cfFundingRows}</tbody></table>
+    <h3>Tax, Medicare &amp; Start-of-Year Balances</h3>
+    <table class="cf-print-table"><thead><tr>
+      ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth')].join('')}
+    </tr></thead><tbody>${cfTaxBalanceRows}</tbody></table>
+  </div>
+  <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
+  <p class="note cf-print-only">Print view splits the cash flow into two larger-font tables for readability. Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Net Worth in red = shortfall year.</p>
 
   <h2>Lifetime Tax Summary</h2>
   <table style="width:auto;margin-bottom:12px"><tbody>
