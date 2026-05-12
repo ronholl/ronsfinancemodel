@@ -4451,6 +4451,7 @@ function apCard(yr){
   if ((r.unfunded||0) > 0) why.push('Funding shortfall');
   const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
+                    (r.inhDraw||0)===0 &&
                     (r.stkSales||0)===0 && (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
 
   return `<div style="background:#fffdf5;border:1px solid #ddd0a8;border-radius:8px;padding:16px">
@@ -4485,7 +4486,6 @@ function apCard(yr){
     ${(r.grossSS2||0)>0 ? row(p2()+' Social Security', r.grossSS2) : ''}
     ${(r.rmd1||0)>0 ? row(p1()+' RMD (mandatory)', r.rmd1) : ''}
     ${(r.rmd2||0)>0 ? row(p2()+' RMD (mandatory)', r.rmd2) : ''}
-    ${(r.inhDraw||0)>0 ? row('Inherited IRA Draw', r.inhDraw) : ''}
     ${row('Dividends & Interest', r.divs||0)}
     ${(r.excessFunds||0)>0 ? row('Excess → Securities', r.excessFunds, false, '#1a4a1a') : ''}
 
@@ -4497,6 +4497,7 @@ function apCard(yr){
     ${flag(p1()+' IRA Draw', r.ira1Addl||0, '#7a5200')}
     ${flag(p2()+' IRA Draw', r.ira2Addl||0, '#7a5200')}
     ${flag('Securities Draw', r.stkSales||0, '#8b0000')}
+    ${flag('Inherited IRA Draw', r.inhDraw||0, '#7a5200')}
     ${flag(p1()+' Roth Withdrawal', r.rothDraw1||0, '#6b0080')}
     ${flag(p2()+' Roth Withdrawal', r.rothDraw2||0, '#6b0080')}
     ${rothConv>0 ? flag('Roth Conv — '+convSrc+' → Roth', rothConv, '#1a3a6a') : ''}
@@ -5312,6 +5313,7 @@ function generateReport(){
     .cf-print-table{font-size:7.2pt;}
     .cf-print-table th{font-size:6.7pt;padding:3px 4px;}
     .cf-print-table td{padding:2px 4px;}
+    .print-break-after-overrides{display:none;}
     .cf-table tbody td:nth-child(3),
     .cf-table tbody td:nth-child(12),
     .cf-table tbody td:nth-child(16),
@@ -5328,16 +5330,56 @@ function generateReport(){
     .actions{margin:4px 0 8px 8px;font-size:8pt;}
     .actions li{margin-bottom:2px;list-style:none;padding-left:10px;text-indent:-10px;}
     .actions li:before{content:"▸ ";}
+    .ap-actions-title{font-weight:700;color:#6a4e00;margin:2px 0 3px;font-size:8.5pt;}
+    .checklist{margin:4px 0 8px 0;font-size:8pt;list-style:none;}
+    .checklist li{margin-bottom:4px;padding-left:16px;text-indent:-16px;}
+    .checklist li:before{content:"☐ ";font-weight:700;color:#6a4e00;}
     .side{display:grid;grid-template-columns:1fr 16px 1fr;gap:0;}
+    @page{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}
+    @page cashflow{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}
     @media print{
-      body{padding:0.35in;font-size:8pt;}
+      body{padding:0;font-size:9.5pt;color:#111;font-weight:500;}
       .no-print{display:none;}
+      h1{font-size:20pt;color:#5e4700;}
+      h2{font-size:13pt;color:#5e4700;margin:12px 0 6px;border-bottom:2px solid #8a6800;}
+      h3{font-size:10.5pt;color:#111;}
+      table{font-size:9pt;color:#111;}
+      th{background:#e8dfc8;color:#111;font-size:8.2pt;padding:5px 6px;font-weight:800;}
+      td{padding:4px 6px;border-bottom:1px solid #cfcfcf;}
+      .cover{text-align:left;padding:0 0 8px;}
+      .cover h1{font-size:22pt;}
+      .sub{font-size:11pt;color:#5e4700;}
+      .boxes{margin:10px 0;justify-content:flex-start;gap:8px;}
+      .box{padding:6px 10px;min-width:86px;}
+      .box .val{font-size:14pt;}
+      .box .lbl{font-size:8pt;}
+      .disc{font-size:7.8pt;padding:6px 10px;margin-top:8px;}
+      .summary-grid{grid-template-columns:repeat(4,1fr);gap:7px;}
+      .summary-card{padding:7px 8px;}
+      .summary-card .lbl{font-size:7.3pt;color:#4a3500;font-weight:800;}
+      .summary-card .val{font-size:13pt;}
+      .callout,.bullets,.actions,.checklist{font-size:9.2pt;color:#111;}
+      .checklist li:before{color:#111;}
+      .note{font-size:8pt;color:#4a3500;}
+      .gold{color:#111;}
+      .side{break-after:page;}
+      .side table th,.yr-tbl th{background:#e8dfc8;color:#111;}
+      .ap-year{display:grid;grid-template-columns:minmax(0,1fr) 1.9in;gap:10px;align-items:start;break-inside:avoid;}
+      .ap-actions{border:1px solid #b9aa80;background:#faf7f2;padding:7px 8px;margin-top:0;}
+      .ap-actions-title{font-size:9.5pt;color:#111;font-weight:800;margin-bottom:4px;}
+      .ap-actions .actions{margin:0;font-size:8.8pt;}
+      .print-break-after-overrides{display:block;break-after:page;}
+      .yr-band{font-size:10pt;padding:6px 8px;}
+      .yr-tbl table{font-size:8.7pt;}
+      .yr-tbl th{font-size:8pt;padding:4px 5px;}
+      .yr-tbl td{padding:3px 5px;}
+      .cashflow-section{page:cashflow;break-before:page;}
       .cf-screen-only{display:none;}
       .cf-print-only{display:block;}
-      .cf-print-only h3{font-size:9pt;color:#6a4e00;margin:8px 0 3px;}
-      .cf-print-table{font-size:7.4pt;margin-bottom:10px;}
-      .cf-print-table th{font-size:6.8pt;padding:3px 4px;}
-      .cf-print-table td{padding:2px 4px;}
+      .cf-print-only h3{font-size:12pt;color:#5e4700;margin:10px 0 5px;break-after:avoid;}
+      .cf-print-table{font-size:8.9pt;margin-bottom:14px;page-break-inside:auto;}
+      .cf-print-table th{background:#e8dfc8;color:#111;font-size:8.1pt;padding:5px 5px;font-weight:800;}
+      .cf-print-table td{padding:4px 5px;color:#111;font-weight:600;}
       h2{page-break-after:avoid;}
       .yr-band{page-break-before:auto;}
       table{page-break-inside:auto;}
@@ -5367,7 +5409,8 @@ function generateReport(){
   ]);
   const rightRates=rateRows([
     ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Inflation',fp(A.irmaaInfl)],
-    ['Stock Gain %',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
+    ['Stock Gain % Taxable',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
+    ['Default Funding Order','Securities before IRA unless overridden'],
     ['IRMAA Target',A.irmaaTarget?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
     ['IRMAA Headroom',fd(A.irmaaHeadroom)],
     ['Plan Period',`${A.startYear}–${A.endYear} (${A.endYear-A.startYear+1} yrs)`],
@@ -5417,7 +5460,7 @@ function generateReport(){
     if(ira1a)  funds.push([A.name1+' IRA Draw',ira1a]);
     if(ira2a)  funds.push([(A.name2||'Person 2')+' IRA Draw',ira2a]);
     if(stkS)   funds.push(['Securities Draw',stkS]);
-    if(cashD)  funds.push(['Cash Draw',cashD]);
+    if(cashD)  funds.push(['Cash Draw (to raise to cash floor)',cashD]);
     if(hsaW)   funds.push(['HSA Withdrawal',hsaW]);
     if(inhD)   funds.push(['Inherited IRA Draw',inhD]);
     if(rDraw1) funds.push([A.name1+' Roth Withdrawal',rDraw1]);
@@ -5435,7 +5478,7 @@ function generateReport(){
     const taxes=[
       ...(targetIncome?[ [targetIncome.label,targetIncome.value] ]:[]),
       ...(rc>0?[ ['Roth Conversion Needed',rc] ]:[]),
-      ['AGI',full.agi||0],
+      ['Adjusted Gross Income',full.agi||0],
       ['Federal Tax',fed_tax],
       ...(ca_tax?[['CA State Tax',ca_tax]]:[]),
       ['Total Income Tax',inc_tax],
@@ -5453,8 +5496,8 @@ function generateReport(){
     let rows3='';
     for(let i=0;i<maxR;i++){
       const [bl,bv]=bals[i], [fl,fv]=funds[i], [tl,tv]=taxes[i];
-      const boldB=bl==='Net Worth', boldF=fl==='Total Funding'||fl==='Funding Required', boldT=tl.includes('Total');
-      const italT=tl==='AGI', warnF=fl.includes('Gap'), warnT=tl.includes('Shortfall');
+      const boldB=bl==='Net Worth', boldF=fl==='Total Funding'||fl==='Funding Required', boldT=tl.includes('Total')||tl==='Adjusted Gross Income';
+      const italT=false, warnF=fl.includes('Funding Gap'), warnT=tl.includes('Shortfall');
       const bf=s=>s?`<b>${s}</b>`:s;
       const fmt=(l,v,bold,warn,ital=false)=>{
         const lc=warn?'red':bold?'bold':ital?'gold':'', rc=warn?'red r':bold?'bold r':ital?'gold r':'r';
@@ -5466,27 +5509,30 @@ function generateReport(){
 
     // Actions Required — matches dashboard exactly, full dollar amounts
     const acts=[];
-    if(hsaW)   acts.push(`HSA Withdrawal: ${fd(hsaW)}`);
     if(full.rmd1>0) acts.push(`${A.name1} RMD — Withdraw from IRA: ${fd(full.rmd1)}`);
     if(full.rmd2>0) acts.push(`${A.name2||'Person 2'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
     if(ira1a)  acts.push(`${A.name1} IRA Draw: ${fd(ira1a)}`);
     if(ira2a)  acts.push(`${A.name2||'Person 2'} IRA Draw: ${fd(ira2a)}`);
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
+    if(cashD)  acts.push(`Cash Draw: ${fd(cashD)}`);
+    if(hsaW)   acts.push(`HSA Withdrawal: ${fd(hsaW)}`);
+    if(inhD)   acts.push(`Inherited IRA Draw: ${fd(inhD)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
     if(rDraw2) acts.push(`${A.name2||'Person 2'} Roth Withdrawal: ${fd(rDraw2)}`);
-    if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}${targetIncome?.note?' (targeting '+targetIncome.note+')':''}`);
-    if(irmaa>0) acts.push(`IRMAA ${tier}: prior MAGI ${fd(full.irmaaMagi)} → surcharge ${fd(irmaa)}`);
     if((full.margRate||0)>=0.32) acts.push(`Marginal rate ${fp(full.margRate)} — consider pre-tax deductions`);
+    if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}`);
     if(unfunded>0) acts.push(`<span class="red">⚠ WARNING: Funding shortfall of ${fd(unfunded)}</span>`);
     if(!acts.length) acts.push('No draws or conversions needed');
 
     apHtml+=`
-      <div class="yr-band">${yr} — Ages ${age(full)} — AGI ${fd(full.agi)} — Marginal ${fp(full.margRate)} — Effective ${fp(full.effRate)}</div>
-      <div class="yr-tbl"><table>
-        <thead><tr><th>Starting Balances</th><th class="r">Amount</th><th>Funding Sources</th><th class="r">Amount</th><th>Income, Tax &amp; Medicare</th><th class="r">Amount</th></tr></thead>
-        <tbody>${rows3}</tbody>
-      </table></div>
-      <ul class="actions">${acts.map(a=>`<li>${a}</li>`).join('')}</ul>`;
+      <div class="yr-band">${yr} — Ages ${age(full)} — Adjusted Gross Income ${fd(full.agi)} — Marginal ${fp(full.margRate)} — Effective ${fp(full.effRate)}</div>
+      <div class="ap-year">
+        <div class="yr-tbl"><table>
+          <thead><tr><th>Starting Balances</th><th class="r">Amount</th><th>Funding Sources</th><th class="r">Amount</th><th>Income, Tax &amp; Medicare</th><th class="r">Amount</th></tr></thead>
+          <tbody>${rows3}</tbody>
+        </table></div>
+        <div class="ap-actions"><div class="ap-actions-title">Action Plan</div><ul class="actions">${acts.map(a=>`<li>${a}</li>`).join('')}</ul></div>
+      </div>`;
   }
 
   // ── Cash Flow table ──
@@ -5534,12 +5580,18 @@ function generateReport(){
       ${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
-  const cfFundingRows=rows.map(r=>{
+  const cfSourceRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
       ${td(r.yr)}${td(age(r))}
       ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
       ${td(dz(v.hsaW),'r')}${td(dz(v.inhD),'r')}${td(dz(v.roth_wd),'r')}${td(dz(v.cashD),'r')}${td(dz(v.stkS),'r')}${td(fd(v.totalFunded,true),'r bold')}
+    </tr>`;
+  }).join('');
+  const cfRequiredRows=rows.map(r=>{
+    const v=cfVals(r);
+    return `<tr>
+      ${td(r.yr)}${td(age(r))}
       ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
     </tr>`;
   }).join('');
@@ -5657,10 +5709,10 @@ function generateReport(){
   <h2>Plan Assumptions</h2>
   <div class="side">
     <div>${assump}
-      <table><thead><tr>${th('Rate')}<th class="r">Value</th></tr></thead><tbody>${leftRates}</tbody></table>
+      <table><thead><tr>${th('Plan Setting')}<th class="r">Value</th></tr></thead><tbody>${leftRates}</tbody></table>
     </div>
     <div></div>
-    <div><table><thead><tr>${th('Tax Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table></div>
+    <div><table><thead><tr>${th('Tax & Funding Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table></div>
   </div>
   ${survivorHtml}
 
@@ -5675,7 +5727,9 @@ function generateReport(){
     };
     const fmtRow = (row) => {
       const parts=[];
-      if(row.amount!=null&&row.amount!=='') parts.push('$'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
+      if(row.amount!=null&&row.amount!=='') parts.push('Spending $'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
+      if(row.pctChange!=null&&row.pctChange!=='') parts.push('Spending change '+Number(row.pctChange).toLocaleString('en-US',{maximumFractionDigits:2})+'%');
+      if(row.taxOvr!=null&&row.taxOvr!=='') parts.push('Tax funding override $'+Number(row.taxOvr).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
       if(row.level!=null&&row.level!=='') {
         let label = irmaaLevelLabel(row.level, row.startYear);
@@ -5698,20 +5752,22 @@ function generateReport(){
     let html='<h2>Active Overrides</h2>';
     for(const [key,rows] of Object.entries(ov)){
       if(!rows||!rows.length) continue;
-      html+=`<p style="font-weight:700;font-size:8pt;color:#6a4e00;margin:8px 0 2px">${ovLabels[key]||key}</p>`;
+      html+=`<p style="font-weight:700;font-size:8pt;color:#111;margin:8px 0 2px">${ovLabels[key]||key}</p>`;
       html+=`<table style="font-size:7pt;margin-bottom:6px"><thead><tr><th>Start</th><th>End</th><th>Setting</th><th>Notes</th></tr></thead><tbody>`;
       html+=rows.map(fmtRow).join('');
       html+=`</tbody></table>`;
     }
     return html;
   })()}
+  ${(survivorOn || Object.values(P.overrides||{}).some(x=>x&&x.length)) ? '<div class="print-break-after-overrides"></div>' : ''}
 
   <h2>3-Year Action Plan</h2>
   ${apHtml}
 
-  <h2>Advisor Discussion Questions</h2>
-  <ul class="bullets">${advisorQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>
+  <h2>Discussion Questions</h2>
+  <ul class="checklist">${advisorQuestions.map(q=>`<li>${q}</li>`).join('')}</ul>
 
+  <div class="cashflow-section">
   <h2>Year-by-Year Cash Flow</h2>
   <table class="cf-table cf-screen-only"><thead>
     <tr class="cf-group">
@@ -5726,10 +5782,14 @@ function generateReport(){
     </tr>
   </thead><tbody>${cfRows}</tbody></table>
   <div class="cf-print-only">
-    <h3>Funding Reconciliation</h3>
+    <h3>Funding Sources</h3>
     <table class="cf-print-table"><thead><tr>
-      ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConv'),thr('Div &\nInterest'),thr('HSA\nWd'),thr('Inh IRA\nDraw'),thr('Roth\nWd'),thr('Cash\nDraw'),thr('Sec\nDraw'),thr('Total\nFunded'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired')].join('')}
-    </tr></thead><tbody>${cfFundingRows}</tbody></table>
+      ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConv'),thr('Div &\nInterest'),thr('HSA\nWd'),thr('Inh IRA\nDraw'),thr('Roth\nWd'),thr('Cash\nDraw'),thr('Sec\nDraw'),thr('Total\nFunded')].join('')}
+    </tr></thead><tbody>${cfSourceRows}</tbody></table>
+    <h3>Funding Required</h3>
+    <table class="cf-print-table"><thead><tr>
+      ${[th('Year'),th('Ages'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired')].join('')}
+    </tr></thead><tbody>${cfRequiredRows}</tbody></table>
     <h3>Tax, Medicare &amp; Start-of-Year Balances</h3>
     <table class="cf-print-table"><thead><tr>
       ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth')].join('')}
@@ -5737,6 +5797,7 @@ function generateReport(){
   </div>
   <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
   <p class="note cf-print-only">Print view splits the cash flow into two larger-font tables for readability. Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Net Worth in red = shortfall year.</p>
+  </div>
 
   <h2>Lifetime Tax Summary</h2>
   <table style="width:auto;margin-bottom:12px"><tbody>
