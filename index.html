@@ -5883,22 +5883,14 @@ function generateReport(){
     return;
   }
 
-  const key='report_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-  try {
-    localStorage.setItem(key, html);
-    const base=location.href.split('#')[0].split('?')[0];
-    const reportWin=window.open(base+'?report='+encodeURIComponent(key),'_blank');
-    if(!reportWin) throw new Error('popup blocked');
-  } catch(e) {
-    const reportWin=window.open('','_blank');
-    if(reportWin){
-      reportWin.document.open();
-      reportWin.document.write(html);
-      reportWin.document.close();
-      reportWin.focus();
-    } else {
-      alert('Pop-up blocked. Please allow pop-ups for this page to open the printable report.');
-    }
+  const reportWin=window.open('','_blank');
+  if(reportWin){
+    reportWin.document.open();
+    reportWin.document.write(html);
+    reportWin.document.close();
+    reportWin.focus();
+  } else {
+    alert('Pop-up blocked. Please allow pop-ups for this page to open the printable report.');
   }
 }
 
