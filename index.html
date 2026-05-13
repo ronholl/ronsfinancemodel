@@ -3359,7 +3359,8 @@ function renderCF(){
       {f:'totalWages',    h:'Wages &\nSelf-Employ'},
       {f:'rothConv',      h:'Roth Conv\nTaxable'},
       {f:'hsaDep',        h:'HSA\nDeposit'},
-      {f:'taxableRMDs',   h:'IRA Draws\n& Dividends'},
+      {f:'taxableIRADraws', h:'IRA/RMD/\nInh IRA'},
+      {f:'taxableDivs',   h:'Taxable\nDiv & Int'},
       {f:'taxableStkGain',h:'Taxable\nStk Sales'},
       {f:'taxableSS',     h:'Taxable\nSoc Sec'},
     ]},
@@ -3443,8 +3444,10 @@ function renderCF(){
         background:${even?'#2a1e08':'#1e1408'};color:var(--gold2);">${fval}</td>`;
     });
 
-    // Scrollable cells — derive taxableRMDs, taxableStkGain, taxableSS if not on row
+    // Scrollable cells — derive taxable IRA draws, dividends, stock gains, taxable SS if not on row
     const taxableRMDs    = (r.taxableRMDs    != null) ? r.taxableRMDs    : (r.rmd1||0)+(r.rmd2||0)+(r.inhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
+    const taxableDivs    = (r.qualDivs != null) ? r.qualDivs : (r.divs||0);
+    const taxableIRADraws = Math.max(0, taxableRMDs - taxableDivs);
     const taxableStkGain = (r.taxableStkGain != null) ? r.taxableStkGain : 0;
     const taxableSS      = (r.taxableSS      != null) ? r.taxableSS      : ((r.agi||0) - (r.ptWages||0) - taxableRMDs - taxableStkGain - (r.rothConv||0));
     const actualTax      = r.fundingTax||0; // what waterfall actually funded for taxes
@@ -3453,7 +3456,7 @@ function renderCF(){
     const sowNetWorth = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+(r.startInh||0)+(r.startHSA||0);
     const totalWages  = (r.w2AGI||0) + (r.ptWages||0);   // taxable wages (for TAXABLE INCOME section)
     const fundingWages = (r.atWages||0) + (r.ptWages||0); // cash received (for MANDATORY FUNDING section)
-    const derived = { taxableRMDs, taxableStkGain, taxableSS, actualTax, sowNetWorth, totalWages, fundingWages };
+    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, sowNetWorth, totalWages, fundingWages };
 
     groups.forEach((g,gi)=>{
       g.cols.forEach((col,ci)=>{
