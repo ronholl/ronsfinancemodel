@@ -137,6 +137,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 .field input:focus,.field select:focus{border-color:var(--ink2);box-shadow:0 0 0 2px rgba(180,130,30,.18)}
 .field input.dim{opacity:.4}
 .field .note{font-size:11px;color:var(--ink2);font-style:italic;margin-top:3px;line-height:1.4}
+.field .note strong{font-weight:900;color:var(--ink);font-style:normal}
 .field-row{display:flex;gap:10px;flex-wrap:wrap}
 .field-row .field{flex:1;min-width:160px}
 
@@ -425,9 +426,9 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
     <div class="panel">
       <div class="sh">Key Variables (Global Defaults)</div>
       <div class="field-row">
-        <div class="field"><label>Portfolio Growth Rate (%)</label><input type="number" id="i-growth" step="0.1" min="-100" oninput="IC()"><div class="note">Total return (price + dividends) — overridable per year range</div></div>
-        <div class="field"><label>Brokerage Dividend Rate (%)</label><input type="number" id="i-divr" step="0.1" min="0" oninput="IC()"><div class="note">Dividend yield on brokerage/securities account only</div></div>
-        <div class="field"><label>Cash Interest Rate (%)</label><input type="number" id="i-intr" step="0.1" min="0" oninput="IC()"><div class="note">Interest on cash balance (e.g. HYSA rate)</div></div>
+        <div class="field"><label>Portfolio Growth Rate (%)</label><input type="number" id="i-growth" step="0.1" min="-100" oninput="IC()"><div class="note">Total return (price + dividends). <strong>Can be overridden by year range in Override Tables.</strong></div></div>
+        <div class="field"><label>Brokerage Dividend Rate (%)</label><input type="number" id="i-divr" step="0.01" min="0" oninput="IC()"><div class="note">Dividend yield on brokerage/securities account only. <strong>Can be overridden with Cash Interest Rate by year range.</strong></div></div>
+        <div class="field"><label>Cash Interest Rate (%)</label><input type="number" id="i-intr" step="0.01" min="0" oninput="IC()"><div class="note">Interest on cash balance (e.g. HYSA rate). <strong>Can be overridden with Brokerage Dividend Rate by year range.</strong></div></div>
         <div class="field"><label>Reinvest Brokerage Dividends?</label>
           <select id="i-reinvestdivs" onchange="IC()">
             <option value="no">No — paid out as taxable income</option>
@@ -444,13 +445,13 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Annual Spending Increase (%)</label><input type="number" id="i-spinfl" step="0.1" min="0" oninput="IC()"><div class="note">e.g. 3 = 3% annual increase</div></div>
+        <div class="field"><label>Annual Spending Increase (%)</label><input type="number" id="i-spinfl" step="0.1" min="0" oninput="IC()"><div class="note">e.g. 3 = 3% annual increase. <strong>Can be overridden by year range in Spending overrides.</strong></div></div>
         <div class="field"><label>SS COLA (%)</label><input type="number" id="i-cola" step="0.1" min="0" oninput="IC()"><div class="note">Annual Social Security cost-of-living adjustment</div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Wage Growth (%/yr)</label><input type="number" id="i-wagegrowth" step="0.1" min="0" oninput="IC()"><div class="note">Default annual wage &amp; self-employment income growth. Overridable by year range in Override Tables. SOY entries always take priority.</div></div>
-        <div class="field"><label>Stock Sales Taxable Gain (%)</label><input type="number" id="i-stkgain" step="1" min="0" max="100" oninput="IC()"><div class="note">e.g. 30 = 30% of security sale proceeds is taxable gain</div></div>
-        <div class="field"><label>Cash Floor ($)</label><input type="number" id="i-cfloor" oninput="IC()"><div class="note">Minimum cash balance to maintain</div></div>
+        <div class="field"><label>Wage Growth (%/yr)</label><input type="number" id="i-wagegrowth" step="0.1" min="0" oninput="IC()"><div class="note">Default annual wage &amp; self-employment income growth. <strong>Can be overridden by year range in Override Tables.</strong></div></div>
+        <div class="field"><label>Stock Sales Taxable Gain (%)</label><input type="number" id="i-stkgain" step="1" min="0" max="100" oninput="IC()"><div class="note">e.g. 30 = 30% of security sale proceeds is taxable gain. <strong>Can be overridden by year range.</strong></div></div>
+        <div class="field"><label>Cash Floor ($)</label><input type="number" id="i-cfloor" oninput="IC()"><div class="note">Minimum cash balance to maintain. <strong>Can be overridden by year range.</strong></div></div>
       </div>
     </div>
 
@@ -485,6 +486,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
       </div>
       <div class="field-row">
         <div class="field"><label>Death Year</label><input type="number" id="i-widow-year" oninput="IC()" placeholder="e.g. 2045"></div>
+        <div class="field"><label>Survivor Spending Adjustment (%)</label><input type="number" id="i-widow-spendpct" step="1" oninput="IC()" placeholder="0"><div class="note">Applied starting the year after death. Use negative for lower spending, positive for higher spending. Explicit Spending overrides still take priority.</div></div>
       </div>
       <div class="field" style="margin-bottom:6px">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
@@ -526,7 +528,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">MEDICARE / IRMAA</div>
         <div class="field-row">
-          <div class="field"><label>IRMAA Level Target (0–5)</label><input type="number" id="i-irmaat" min="0" max="5" step="1" oninput="IC()"><div class="note">0 = off · 1 = Base tier (~$218K) · 2 = Tier 1 (~$274K) · 3 = Tier 2 (~$342K) · 4 = Tier 3 (~$410K) · 5 = Tier 4 (~$750K). Converts IRA→Roth to stay below ceiling.</div></div>
+          <div class="field"><label>IRMAA Level Target (0–5)</label><input type="number" id="i-irmaat" min="0" max="5" step="1" oninput="IC()"><div class="note">0 = off · 1 = Base tier (~$218K) · 2 = Tier 1 (~$274K) · 3 = Tier 2 (~$342K) · 4 = Tier 3 (~$410K) · 5 = Tier 4 (~$750K). Converts IRA→Roth to stay below ceiling. <strong>Can be overridden by year range in Roth Conversion Strategy.</strong></div></div>
           <div class="field"><label>IRMAA Headroom ($)</label><input type="number" id="i-irmaah" oninput="IC()"><div class="note">Stay this far below the tier limit</div></div>
         </div>
         <div class="field-row">
@@ -680,7 +682,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
     <div class="ov-group-header" onclick="toggleOvGroup('portfolio')">
       <span class="ov-chevron open" id="ovg-chevron-portfolio">▶</span>
       <span class="ov-group-title">Portfolio &amp; Accounts</span>
-      <span class="ov-group-desc">Growth rates, funding order, cash floor, HSA deposits</span>
+      <span class="ov-group-desc">Growth, income rates, funding order, cash floor, HSA deposits</span>
       <span class="ov-group-badges" id="ovg-badges-portfolio"></span>
     </div>
     <div class="ov-group-body" id="ovg-body-portfolio">
@@ -694,6 +696,28 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <tbody id="ovb-growth"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('growth')">+ Add Row</button>
+      </div>
+
+      <div class="ov-section-inner">
+        <div class="ov-section-label">Brokerage Dividend &amp; Cash Interest Rates <span id="ovpill-incomerates"></span></div>
+        <div class="ov-intent">Override taxable income rates for a year range. Enter either rate or both: brokerage dividend rate affects taxable brokerage dividends and paid-out securities cash flow; cash interest rate affects taxable cash interest.</div>
+        <div id="conf-incomerates" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl" id="ov-incomerates">
+          <thead><tr><th>Brokerage Dividend Rate (%)</th><th>Cash Interest Rate (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-incomerates"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('incomerates')">+ Add Row</button>
+      </div>
+
+      <div class="ov-section-inner">
+        <div class="ov-section-label">Stock Sales Taxable Gain <span id="ovpill-stkgain"></span></div>
+        <div class="ov-intent">Override the taxable-gain percentage applied to brokerage stock sales for a year range. Enter as a percentage — e.g. 30 = 30% of securities sold is treated as taxable capital gain.</div>
+        <div id="conf-stkgain" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl" id="ov-stkgain">
+          <thead><tr><th>Taxable Gain (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-stkgain"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('stkgain')">+ Add Row</button>
       </div>
 
       <div class="ov-section-inner">
@@ -1479,7 +1503,7 @@ function defaultState() {
     ssmo1:0, ssmo2:0,
     ssEnd1:9999, ssEnd2:9999,
     ssCola:0.025,
-    widowMode:'off', widowDeathYear:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true,
+    widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true,
     wageGrowth:0.030,
     // RMD
     rmdStart1: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
@@ -1506,6 +1530,10 @@ function defaultState() {
     ovIRMAA:[],          // {level:0-5, fillMode:'F'|'R', startYear, endYear, notes}
     ovSpending:[],       // {amount, taxOvr, startYear, endYear}
     ovGrowth:[],         // {rate, startYear, endYear, notes}
+    ovIncomeRates:[],    // {divRate, intRate, startYear, endYear, notes}
+    ovDivRate:[],        // legacy {rate, startYear, endYear, notes}
+    ovIntRate:[],        // legacy {rate, startYear, endYear, notes}
+    ovStkGainPct:[],     // {rate, startYear, endYear, notes}
     ovCashFloor:[],      // {floor, startYear, endYear, notes}
     ovHSADeposit:[],     // {amount, startYear, endYear}
     ovIncomeLevel:[],    // {magiTarget, startYear, endYear, notes}
@@ -1605,13 +1633,19 @@ function runProjection(S) {
     // ── Growth rate ───────────────────────────────────────────────────────
     const _gRaw = resolveOverride(S.ovGrowth, yr, 'rate');
     const gRate = _gRaw != null ? parseF(_gRaw)/100 : S.growthRate;
+    const _divRateRaw = resolveOverrideNonBlank(S.ovIncomeRates, yr, 'divRate') ?? resolveOverrideNonBlank(S.ovDivRate, yr, 'rate');
+    const divRate = _divRateRaw != null ? parseF(_divRateRaw)/100 : (S.divRate||0);
+    const _intRateRaw = resolveOverrideNonBlank(S.ovIncomeRates, yr, 'intRate') ?? resolveOverrideNonBlank(S.ovIntRate, yr, 'rate');
+    const intRate = _intRateRaw != null ? parseF(_intRateRaw)/100 : (S.intRate||0);
+    const _stkGainRaw = resolveOverride(S.ovStkGainPct, yr, 'rate');
+    const stkGainPct = _stkGainRaw != null ? parseF(_stkGainRaw)/100 : (S.stkGainPct||0);
 
     // ── Apply growth to investment accounts ──────────────────────────────
     // growthRate = total return (price appreciation + dividends)
     // reinvestDivs='yes': dividends already in growth rate, no separate cash income
     // reinvestDivs='no' (default): dividends paid out as cash; sec price growth = gRate - divRate
     const reinvest = (S.reinvestDivs||'no') === 'yes';
-    const priceG   = reinvest ? gRate : Math.max(0, gRate - S.divRate); // price appreciation only when paying out
+    const priceG   = reinvest ? gRate : Math.max(0, gRate - divRate); // price appreciation only when paying out
     const secGrowth  = sec  * priceG;
     const ira1Growth = ira1 * gRate;
     const ira2Growth = ira2 * gRate;
@@ -1623,9 +1657,9 @@ function runProjection(S) {
 
     // ── Income from cash (interest) and securities (dividends) ──────────
     // Cash interest: intRate applied to cash balance
-    const cashInterest = cash * (S.intRate||0);
+    const cashInterest = cash * intRate;
     // Securities dividends: only when paying out (reinvest=false)
-    const secDivs = reinvest ? 0 : sec * S.divRate;
+    const secDivs = reinvest ? 0 : sec * divRate;
     const divs = cashInterest + secDivs;
 
     // ── Spending ──────────────────────────────────────────────────────────
@@ -1657,11 +1691,15 @@ function runProjection(S) {
     }
     const yearsFromBase = yr - spendBaseYr;
     const inflSpend = spendBase * Math.pow(1 + S.spendInfl, yearsFromBase);
-    const spending = ovSpend != null
+    const baseSpending = ovSpend != null
       ? parseF(ovSpend)                                        // fixed dollar override
       : ovSpendPct != null
         ? inflSpend * (1 + parseF(ovSpendPct)/100)             // inflation base ± pct adjustment
         : inflSpend;
+    const survivorSpendAdj = afterDeathYear && ovSpend == null && ovSpendPct == null
+      ? (parseF(S.widowSpendPct) || 0) / 100
+      : 0;
+    const spending = baseSpending * (1 + survivorSpendAdj);
     // ── Iterative tax solver: run waterfall up to 4 passes until tax converges ─
     // Pass 0 seed: use prior year actual tax if available, else 0
     let taxEst = rows.length > 0 ? (rows[rows.length-1].netTaxNeeded || 0) : 0;
@@ -1988,12 +2026,12 @@ function runProjection(S) {
     // Update draw aliases
 
     // ── First-pass AGI (before IRMAA conversion) ──────────────────────────
-    const taxableStkGain = secDraw_inner * S.stkGainPct;
+    const taxableStkGain = secDraw_inner * stkGainPct;
     // Dividends are ALWAYS a taxable event whether reinvested or not.
     // The reinvest flag only controls whether dividends are paid out as cash;
     // they still appear in AGI. Cash interest is always ordinary income.
-    const allSecDivs = sec * (S.divRate||0);               // security dividends (always taxable)
-    const cashInt    = cash * (S.intRate||0);               // cash interest (always ordinary)
+    const allSecDivs = sec * divRate;                       // security dividends (always taxable)
+    const cashInt    = cash * intRate;                      // cash interest (always ordinary)
     const qualDivs   = cashInt + allSecDivs;                // total taxable dividends & interest
     const taxableRMDs    = rmd1 + rmd2 + inhDraw + ira1Addl + ira2Addl + qualDivs;
     // W-2 wages in AGI = gross wages minus pre-tax 401k contributions
@@ -2766,9 +2804,25 @@ function applyMigrations(merged) {
   }
   if (merged.bracketInfl == null || isNaN(merged.bracketInfl)) merged.bracketInfl = 0.025;
   if (merged.irmaaInfl   == null || isNaN(merged.irmaaInfl))   merged.irmaaInfl   = 0.020;
+  if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
   // Seed wageGrowth from ssCola for old plans that didn't have it separately
   if (merged.wageGrowth == null || isNaN(merged.wageGrowth)) {
     merged.wageGrowth = merged.ssCola ?? 0.030;
+  }
+  if (!Array.isArray(merged.ovIncomeRates)) merged.ovIncomeRates = [];
+  if (!merged.ovIncomeRates.length) {
+    const migratedRateRows = [];
+    (merged.ovDivRate||[]).forEach(r => migratedRateRows.push({
+      divRate:r.rate, startYear:r.startYear, endYear:r.endYear, notes:r.notes
+    }));
+    (merged.ovIntRate||[]).forEach(r => migratedRateRows.push({
+      intRate:r.rate, startYear:r.startYear, endYear:r.endYear, notes:r.notes
+    }));
+    if (migratedRateRows.length) {
+      merged.ovIncomeRates = migratedRateRows;
+      merged.ovDivRate = [];
+      merged.ovIntRate = [];
+    }
   }
   if (!merged.taxTables || Object.keys(merged.taxTables).length === 0) {
     merged.taxTables = { 2026: {} };
@@ -2979,6 +3033,7 @@ function loadUI(){
   sv('i-sse1',S.ssEnd1);sv('i-sse2',S.ssEnd2);
   sv('i-widow-mode',S.widowMode||'off');
   sv('i-widow-year',S.widowDeathYear||'');
+  sv('i-widow-spendpct',S.widowSpendPct||0);
   const we=document.getElementById('i-widow-endss'); if(we) we.checked = S.widowEndSS !== false;
   const wss=document.getElementById('i-widow-survivorss'); if(wss) wss.checked = S.widowSurvivorSS !== false;
   const ws=document.getElementById('i-widow-single'); if(ws) ws.checked = S.widowSwitchSingle !== false;
@@ -3014,6 +3069,7 @@ function readUI(){
   S.ssEnd1=gi('i-sse1');S.ssEnd2=gi('i-sse2');
   S.widowMode=gv('i-widow-mode')||'off';
   S.widowDeathYear=gf('i-widow-year');
+  S.widowSpendPct=gf('i-widow-spendpct');
   S.widowEndSS=document.getElementById('i-widow-endss')?.checked ?? true;
   S.widowSurvivorSS=document.getElementById('i-widow-survivorss')?.checked ?? true;
   S.widowSwitchSingle=document.getElementById('i-widow-single')?.checked ?? true;
@@ -4130,6 +4186,19 @@ const OV_DEFS = {
     {k:'endYear',lbl:'End Year',type:'number',w:90},
     {k:'notes',lbl:'Notes',type:'text',w:160},
   ]},
+  incomerates:{key:'ovIncomeRates',fields:[
+    {k:'divRate',lbl:'Brokerage Dividend Rate (%)',type:'number',w:180},
+    {k:'intRate',lbl:'Cash Interest Rate (%)',type:'number',w:150},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:180},
+  ]},
+  stkgain:{key:'ovStkGainPct',fields:[
+    {k:'rate',lbl:'Taxable Gain (%)',type:'number',w:130},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:180},
+  ]},
   wagegrowth:{key:'ovWageGrowth',fields:[
     {k:'rate',lbl:'Growth (%)',type:'number',w:90},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
@@ -4197,7 +4266,7 @@ function updateOvBadges(){
   const groups={
     'spending-taxes': ['spending','deductions'],
     'conversion':     ['irmaa','income','taxfill'],
-    'portfolio':      ['growth','funding','cashfloor','hsadep'],
+    'portfolio':      ['growth','incomerates','stkgain','wagegrowth','funding','cashfloor','hsadep','statetax'],
   };
   // Summary bar at top
   const bar=document.getElementById('ov-summary-bar');
@@ -4207,9 +4276,15 @@ function updateOvBadges(){
     if(active.length===0){
       bar.innerHTML='<span style="color:#666;font-size:10px">No overrides active — all years use global defaults.</span>';
     } else {
+      const ovNames = {
+        spending:'Spending', deductions:'Deductions', irmaa:'IRMAA', income:'Income',
+        taxfill:'Tax Fill', growth:'Growth', incomerates:'Income Rates',
+        stkgain:'Stock Gain', wagegrowth:'Wage Growth',
+        funding:'Funding', cashfloor:'Cash Floor', hsadep:'HSA Deposit', statetax:'State Tax'
+      };
       bar.innerHTML=active.map(n=>{
         const rows=S[OV_DEFS[n].key]||[];
-        const label=n.charAt(0).toUpperCase()+n.slice(1);
+        const label=ovNames[n]||n.charAt(0).toUpperCase()+n.slice(1);
         // Build compact year-range pills
         const pills=rows.map(r=>`${r.startYear||'?'}–${r.endYear===9999?'∞':r.endYear||'?'}`).join(', ');
         return `<span class="ov-badge ov-badge-active" title="${pills}">${label} <span style="opacity:.7">${rows.length}</span></span>`;
@@ -4324,6 +4399,10 @@ function addOvRow(name){
   const def=OV_DEFS[name];
   if(!S[def.key])S[def.key]=[];
   const newRow={startYear:S.startYear,endYear:new Date().getFullYear()};
+  if(name==='growth')newRow.rate=pct(S.growthRate);
+  if(name==='incomerates'){newRow.divRate=pct(S.divRate);newRow.intRate=pct(S.intRate||0);}
+  if(name==='stkgain')newRow.rate=pct(S.stkGainPct);
+  if(name==='wagegrowth')newRow.rate=pct(S.wageGrowth);
   if(name==='funding')newRow.choice='SEC';
   if(name==='irmaa'){newRow.level='0';newRow.fillMode='S';newRow.headroom=0;newRow.maxBracket='';newRow.bracketHeadroom=0;}
   if(name==='taxfill'){newRow.active='T';newRow.headroom=0;}
@@ -4924,7 +5003,7 @@ function showPrivacyStats(){
     const bytes = raw ? new Blob([raw]).size : 0;
     const kb = (bytes/1024).toFixed(1);
     const soyYears = Object.keys(S.soy).filter(y=>Object.values(S.soy[y]||{}).some(v=>v!=null&&v!=='')).length;
-    const ovCount = (S.ovSpending?.length||0)+(S.ovCashFloor?.length||0)+(S.ovGrowth?.length||0)+(S.ovWageGrowth?.length||0);
+    const ovCount = Object.values(OV_DEFS).reduce((sum, def) => sum + ((S[def.key]||[]).length), 0);
     document.getElementById('privacy-stats').innerHTML =
       `<span style="display:inline-block;margin-right:20px">📦 <strong>Storage size:</strong> ${kb} KB</span>` +
       `<span style="display:inline-block;margin-right:20px">📅 <strong>SOY entries:</strong> ${soyYears} years</span>` +
@@ -5142,7 +5221,7 @@ function buildReportPayload(){
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
-    widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0,
+    widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
     widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
     k401Trad1: S.k401Trad1, k401Roth1: S.k401Roth1,
@@ -5197,6 +5276,8 @@ function buildReportPayload(){
   addOverride('incomeLevel', S.ovIncomeLevel,  ['magiTarget']);
   addOverride('taxFill',     S.ovTaxFill,      ['active','headroom']);
   addOverride('growth',      S.ovGrowth,       ['rate']);
+  addOverride('incomeRates', S.ovIncomeRates,  ['divRate','intRate','notes']);
+  addOverride('stockGainPct',S.ovStkGainPct,   ['rate','notes']);
   addOverride('wageGrowth',  S.ovWageGrowth,   ['rate']);
   addOverride('funding',     S.ovFundingOrder, ['choice']);
   addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
@@ -5456,7 +5537,7 @@ function generateReport(){
   const rateRows=(pairs)=>pairs.map(([l,v])=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`).join('');
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
-    ['Widow(er) Override',A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · ${A.widowDeathYear||'year not set'}`:'Off'],
+    ['Widow(er) Override',A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · ${A.widowDeathYear||'year not set'} · spending ${Number(A.widowSpendPct||0).toFixed(1)}%`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Dividend Rate',fp(A.divRate)],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
@@ -5783,6 +5864,7 @@ function generateReport(){
     const ovLabels = {
       spending:'Spending',irmaa:'IRMAA Level',incomeLevel:'Income Level Target',
       taxFill:'Tax Bracket Fill',growth:'Portfolio Growth Rate',wageGrowth:'Wage Growth Rate',
+      incomeRates:'Brokerage Dividend & Cash Interest Rates',stockGainPct:'Stock Sales Taxable Gain',
       funding:'Funding Order',cashFloor:'Cash Floor',deductions:'Deductions',
       hsaDep:'HSA Deposits',stateTax:'State Tax'
     };
@@ -5793,6 +5875,8 @@ function generateReport(){
       if(row.amount!=null&&row.amount!=='') parts.push('Spending $'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
       if(row.pctChange!=null&&row.pctChange!=='') parts.push('Spending change '+Number(row.pctChange).toLocaleString('en-US',{maximumFractionDigits:2})+'%');
       if(row.taxOvr!=null&&row.taxOvr!=='') parts.push('Tax funding override $'+Number(row.taxOvr).toLocaleString('en-US',{maximumFractionDigits:0}));
+      if(row.divRate!=null&&row.divRate!=='') parts.push('Brokerage dividend '+row.divRate+'%');
+      if(row.intRate!=null&&row.intRate!=='') parts.push('Cash interest '+row.intRate+'%');
       if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
       if(row.level!=null&&row.level!=='') {
         let label = irmaaLevelLabel(row.level, row.startYear);
