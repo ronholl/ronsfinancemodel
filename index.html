@@ -3743,6 +3743,21 @@ function renderYD(){
   const taxFeedbackNote = taxableAccountDraws > 0
     ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">Taxable IRA funding increases AGI, which increases tax, which can require more funding in IRA-first years.</div>'
     : '';
+  const agiDrivers = [
+    ['IRA / RMD / Inherited IRA', agiIRADraws],
+    ['Roth Conversion', agiRothConv],
+    ['Taxable Dividends & Interest', agiDivInt],
+    ['Taxable Wages & Self-Employ', agiWages],
+    ['Taxable Stock Sale Gains', agiStkGain],
+    ['Taxable Social Security', agiTaxableSS],
+  ].filter(([,v]) => Math.abs(v||0) > 1).sort((a,b) => Math.abs(b[1])-Math.abs(a[1]));
+  const agiDriverRows = agiDrivers.map(([label,val],idx) => dr((idx+1)+'. '+label, f$(val))).join('');
+  const agiAlertLines = [
+    Math.abs(agiResidual)>2 ? '<div style="font-size:10px;line-height:1.5;color:#8b0000;background:#fff0f0;border-left:3px solid #8b0000;padding:5px 8px;margin-top:6px">AGI parts do not tie to AGI. Check this year for a model or display issue.</div>' : '',
+    agiRothConv>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a3a6a;background:#eef5ff;border-left:3px solid #1a3a6a;padding:5px 8px;margin-top:6px">Roth conversion is adding taxable income this year.</div>' : '',
+    agiStkGain>0 ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">Security sales are adding taxable capital gains this year.</div>' : '',
+    agiIRADraws>0 && (r.fundingChoice||'SEC')==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : ''
+  ].filter(Boolean).join('');
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
       <div class="sh">Funding Sources</div>
@@ -3799,31 +3814,11 @@ function renderYD(){
     </div>
     <div class="yd-panel">
       <div class="sh">AGI Diagnostic</div>
-      ${dr('Taxable Wages & Self-Employ',f$(agiWages))}
-      ${dr('IRA/RMD/Inherited IRA',f$(agiIRADraws))}
-      ${agiRothConv>0?dr('Roth Conversion',f$(agiRothConv)):''}
-      ${dr('Taxable Dividends & Interest',f$(agiDivInt))}
-      ${agiStkGain>0?dr('Taxable Stock Sale Gains',f$(agiStkGain)):''}
-      ${dr('Taxable Social Security',f$(agiTaxableSS))}
+      ${agiDriverRows || '<div style="font-size:11px;color:#aaa;padding:3px 0">No taxable AGI drivers in this year</div>'}
       ${Math.abs(agiResidual)>2?dr('Unexplained / Rounding',f$(agiResidual),'','color:#8b0000'):''}
       ${dr('AGI Parts Total',f$(agiPartsTotal),'tot')}
       ${dr('Adjusted Gross Income',f$(r.agi),'tot')}
-      <div class="sh">Taxable Income Detail</div>
-      ${r.ptWages>0?dr('Pre-Tax Wages',f$(r.ptWages)):''}
-      ${r.rmd1>0?dr(p1()+' RMD (ordinary)',f$(r.rmd1)):''}
-      ${r.rmd2>0?dr(p2()+' RMD (ordinary)',f$(r.rmd2)):''}
-      ${r.inhDraw>0?dr('Inherited IRA Draw (ordinary)',f$(r.inhDraw)):''}
-      ${r.ira1Addl>0?dr(p1()+' IRA Draw (ordinary)',f$(r.ira1Addl)):''}
-      ${r.ira2Addl>0?dr(p2()+' IRA Draw (ordinary)',f$(r.ira2Addl)):''}
-      ${dr('Dividends & Interest',f$(r.qualDivs))}
-      ${r.qualDivsForTax>0?dr('Qualified Divs at LTCG Rate',f$(r.qualDivsForTax)):''}
-      ${r.taxableStkGain>0?dr('Taxable Stock Sale Gains',f$(r.taxableStkGain)):''}
-      ${dr('Taxable Social Security',f$(r.tSS))}
-      ${r.itemizedUsed ? dr('Itemized Deduction',f$(r.effDed-(r.seniorBonus||0)-(r.charityDed||0)),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
-      ${(r.seniorBonus||0)>0?dr('Enhanced Senior Deduction',f$(r.seniorBonus)):''}
-      ${(r.charityDed||0)>0?dr('Non-itemizer Charity Deduction',f$(r.charityDed)):''}
-      ${dr('Total Deduction',f$(r.effDed||r.stdDed),'tot')}
-      ${dr('Taxable Income',f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed))))}
+      ${agiAlertLines}
       <div class="sh">Roth Activity</div>
       ${r.rothConv>0?dr('Roth Conv — IRA to Roth (taxable)',f$(r.rothConv)):''}
       ${dr(p1()+' IRA → Roth Conv',f$(r.rothConvDraw1||0))}
@@ -3839,6 +3834,10 @@ function renderYD(){
       ${dr('Federal Ordinary',f$(r.fedOrd))}
       ${dr('LTCG / Qual Divs',f$(r.ltcg))}
       ${dr('CA State',f$(r.stTax))}
+      ${r.itemizedUsed ? dr('Itemized Deduction',f$(r.effDed-(r.seniorBonus||0)-(r.charityDed||0)),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
+      ${(r.seniorBonus||0)>0?dr('Enhanced Senior Deduction',f$(r.seniorBonus)):''}
+      ${(r.charityDed||0)>0?dr('Non-itemizer Charity Deduction',f$(r.charityDed)):''}
+      ${dr('Taxable Income',f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed))))}
       ${dr('IRMAA ('+r.irmaaTier+') — prior MAGI: '+f$(r.irmaaMagi||0),f$(r.irmaaTx))}
       ${dr('Total Cash Tax (Inc + IRMAA)',f$(r.cashTax),'tot')}
       ${dr('Effective Rate',fp(r.effRate))}
