@@ -522,8 +522,10 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">PRE-2020 INHERITED IRA RMD</div>
         <div class="field-row">
-          <div class="field"><label id="l-preinh-rmdyr1">P1 First RMD Year</label><input type="number" id="i-preinh-rmdyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Pre-2020 inherited IRA only. Enter the first distribution year, based on the deceased owner's inherited IRA/RMD rules; blank = not applicable. Balance is entered in Start of Year; divisor is calculated from this person's birth year.</div></div>
-          <div class="field p2-field"><label id="l-preinh-rmdyr2">P2 First RMD Year</label><input type="number" id="i-preinh-rmdyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Pre-2020 inherited IRA only. Enter the first distribution year, based on the deceased owner's inherited IRA/RMD rules; blank = not applicable. Balance is entered in Start of Year; divisor is calculated from this person's birth year.</div></div>
+          <div class="field"><label id="l-preinh-ownerby1">P1 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age. Balance is entered in Start of Year.</div></div>
+          <div class="field"><label id="l-preinh-deathyr1">P1 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
+          <div class="field p2-field"><label id="l-preinh-ownerby2">P2 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age. Balance is entered in Start of Year.</div></div>
+          <div class="field p2-field"><label id="l-preinh-deathyr2">P2 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
@@ -1475,18 +1477,30 @@ function getRMD(bal, age) {
   if (bal <= 0 || age < 73) return 0;
   return bal / (RMD_TABLE[Math.min(age,113)]||3.1);
 }
+function rmdAgeForBirthYear(by) {
+  return (parseInt(by)||1959) >= 1960 ? 75 : 73;
+}
+function rmdStartYearForBirthYear(by) {
+  const b = parseInt(by);
+  if (!b) return null;
+  return b + rmdAgeForBirthYear(b) + 1;
+}
 function singleLifeFactor(age) {
   const a = Math.max(0, Math.min(120, Math.floor(age)));
   return SINGLE_LIFE_EXPECTANCY_TABLE[a] || 1.0;
 }
-function getPre2020InheritedRMD(bal, yr, firstYear, birthYear) {
-  if (bal <= 0) return {draw:0, divisor:0};
-  const fy = parseInt(firstYear);
-  if (!fy || fy >= 9999 || yr < fy) return {draw:0, divisor:0};
-  const firstAge = fy - birthYear - 1;
+function getPre2020InheritedRMD(bal, yr, ownerBirthYear, ownerDeathYear, beneficiaryBirthYear) {
+  if (bal <= 0) return {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
+  const deathYear = parseInt(ownerDeathYear);
+  if (!deathYear) return {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
+  const firstYear = deathYear + 1;
+  if (yr < firstYear) return {draw:0, divisor:0, firstYear, ownerReachedRMD:false};
+  const ownerStart = rmdStartYearForBirthYear(ownerBirthYear);
+  const ownerReachedRMD = ownerStart ? deathYear >= ownerStart : false;
+  const firstAge = firstYear - beneficiaryBirthYear - 1;
   const startDiv = singleLifeFactor(firstAge);
-  const divisor = Math.max(1, startDiv - Math.max(0, yr - fy));
-  return {draw: bal / divisor, divisor};
+  const divisor = Math.max(1, startDiv - Math.max(0, yr - firstYear));
+  return {draw: bal / divisor, divisor, firstYear, ownerReachedRMD};
 }
 function getMarginalRate(taxableInc, filing, tables) {
   let bkts;
@@ -1561,7 +1575,9 @@ function defaultState() {
     rmdStart1: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
     rmdStart2: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
     inhDrainYear:9999,
-    pre2020InhRmdYear1:'', pre2020InhRmdYear2:'',
+    pre2020InhOwnerBy1:'', pre2020InhDeathYear1:'',
+    pre2020InhOwnerBy2:'', pre2020InhDeathYear2:'',
+    pre2020InhRmdYear1:'', pre2020InhRmdYear2:'', // legacy saved field
     // Key variables (global defaults)
     growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02, reinvestDivs:'yes',
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
@@ -1807,8 +1823,8 @@ function runProjection(S) {
     const rmdStart2 = afterDeathYear && p1Survivor ? (S.by1 + ((S.by1 >= 1960) ? 76 : 74)) : S.rmdStart2;
     const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
     const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
-    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, S.pre2020InhRmdYear1, S.by1);
-    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, S.pre2020InhRmdYear2, S.by2) : {draw:0, divisor:0};
+    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, S.pre2020InhOwnerBy1, S.pre2020InhDeathYear1, S.by1);
+    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, S.pre2020InhOwnerBy2, S.pre2020InhDeathYear2, S.by2) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
     const pre2020InhDraw1 = pre2020Calc1.draw;
     const pre2020InhDraw2 = pre2020Calc2.draw;
     const pre2020InhDraw = pre2020InhDraw1 + pre2020InhDraw2;
@@ -2374,7 +2390,10 @@ function runProjection(S) {
       cashDraw,
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
-      rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, inhDraw, ira1Addl, ira2Addl,
+      rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw,
+      pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
+      pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
+      pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, inhDraw, ira1Addl, ira2Addl,
       divs, totalSecDivs, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
       mandatoryFunding, step1Total, totalFunding,
       // Spending / cash
@@ -3138,7 +3157,7 @@ function loadUI(){
   sv('i-cola',pct(S.ssCola));
   sv('i-wagegrowth',pct(S.wageGrowth ?? S.ssCola));
   // RMD years auto-calculated, shown via updateLabels
-  sv('i-inhdrain',S.inhDrainYear);sv('i-preinh-rmdyr1',S.pre2020InhRmdYear1&&S.pre2020InhRmdYear1<9999?S.pre2020InhRmdYear1:'');sv('i-preinh-rmdyr2',S.pre2020InhRmdYear2&&S.pre2020InhRmdYear2<9999?S.pre2020InhRmdYear2:'');sv('i-stkgain',pct(S.stkGainPct));
+  sv('i-inhdrain',S.inhDrainYear);sv('i-preinh-ownerby1',S.pre2020InhOwnerBy1||'');sv('i-preinh-deathyr1',S.pre2020InhDeathYear1||'');sv('i-preinh-ownerby2',S.pre2020InhOwnerBy2||'');sv('i-preinh-deathyr2',S.pre2020InhDeathYear2||'');sv('i-stkgain',pct(S.stkGainPct));
   sv('i-growth',pct(S.growthRate));sv('i-divr',pct(S.divRate));sv('i-divreinv',pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0)));sv('i-intr',pct(S.intRate||0));
   sv('i-qualdivsmode',S.qualDivsMode||'ordinary');
   sv('i-spinfl',pct(S.spendInfl));
@@ -3181,7 +3200,7 @@ function readUI(){
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
   // RMD start years auto-calculated in updateLabels — not read from inputs
-  S.inhDrainYear=gi('i-inhdrain');S.pre2020InhRmdYear1=gv('i-preinh-rmdyr1')||'';S.pre2020InhRmdYear2=gv('i-preinh-rmdyr2')||'';S.stkGainPct=gf('i-stkgain')/100;
+  S.inhDrainYear=gi('i-inhdrain');S.pre2020InhOwnerBy1=gv('i-preinh-ownerby1')||'';S.pre2020InhDeathYear1=gv('i-preinh-deathyr1')||'';S.pre2020InhOwnerBy2=gv('i-preinh-ownerby2')||'';S.pre2020InhDeathYear2=gv('i-preinh-deathyr2')||'';S.stkGainPct=gf('i-stkgain')/100;
   S.growthRate=gf('i-growth')/100;S.divRate=gf('i-divr')/100;S.divReinvestPct=Math.max(0,Math.min(1,gf('i-divreinv')/100));
   S.intRate=gf('i-intr')/100;S.reinvestDivs=S.divReinvestPct>=0.999?'yes':S.divReinvestPct<=0.001?'no':'partial';
   S.qualDivsMode=document.getElementById('i-qualdivsmode')?.value||'ordinary';
@@ -3238,16 +3257,16 @@ function updateLabels(){
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
   setTxt('l-rmd1',n1+' RMD Start Year');setTxt('l-rmd2',n2+' RMD Start Year');
-  setTxt('l-preinh-rmdyr1',n1+' First RMD Year');
-  setTxt('l-preinh-rmdyr2',n2+' First RMD Year');
+  setTxt('l-preinh-ownerby1',n1+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr1',n1+' Deceased Owner Death Year');
+  setTxt('l-preinh-ownerby2',n2+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr2',n2+' Deceased Owner Death Year');
   setTxt('l-ira1',n1+' IRA');setTxt('l-ira2',n2+' IRA');
   setTxt('l-roth1',n1+' Roth');setTxt('l-roth2',n2+' Roth');
   // SECURE 2.0 RMD age by birth year:
   //   Born 1951-1959 → RMD age 73 → start year = by + 73 + 1 = by + 74
   //   Born 1960+     → RMD age 75 → start year = by + 75 + 1 = by + 76
-  const rmdAge = (by) => (parseInt(by)||1959) >= 1960 ? 75 : 73; // fallback 1959 = safe default (age 73)
-  const rmd1yr = (parseInt(S.by1)||1959) + rmdAge(S.by1) + 1;
-  const rmd2yr = (parseInt(S.by2)||1960) + rmdAge(S.by2) + 1;
+  const rmdAge = rmdAgeForBirthYear; // fallback 1959 = safe default (age 73)
+  const rmd1yr = rmdStartYearForBirthYear(S.by1) || 0;
+  const rmd2yr = rmdStartYearForBirthYear(S.by2) || 0;
   S.rmdStart1 = rmd1yr;
   S.rmdStart2 = rmd2yr;
   const rmd1el = document.getElementById('i-rmd1-disp');
@@ -3503,8 +3522,9 @@ function renderCF(){
       {f:'grossSS1', h:n1+'\nSoc Sec'},
       ...(hp?[{f:'grossSS2', h:n2+'\nSoc Sec'}]:[]),
       {f:'rmd1',     h:n1+'\nRMD'},
-      ...(hp?[{f:'rmd2', h:n2+'\nRMD'}]:[]),
-      {f:'inhDraw',  h:'Inherited\nIRA Draw'},
+      {f:'pre2020InhDraw1', h:n1+'\nInh RMD'},
+      ...(hp?[{f:'rmd2', h:n2+'\nRMD'}, {f:'pre2020InhDraw2', h:n2+'\nInh RMD'}]:[]),
+      {f:'inhDraw',  h:'Post-2020\nInh IRA Draw'},
       {f:'divs',     h:'Dividends'},
     ]},
     { label:'DISCRETIONARY FUNDING', bg:'#3a1a00', tc:'#d4844a', cols:[
@@ -3558,7 +3578,7 @@ function renderCF(){
       {f:'startRoth1',   h:n1+'\nRoth'},
       ...(hp?[{f:'startRoth2', h:n2+'\nRoth'}]:[]),
       {f:'startHSA',     h:'HSA'},
-      {f:'startInh',     h:'Inherited\nIRA'},
+      {f:'startAllInh',  h:'Inherited\nIRA'},
       {f:'sowNetWorth',  h:'SOY Net\nWorth', bold:true, green:true},
     ]},
   ];
@@ -3626,10 +3646,11 @@ function renderCF(){
     const actualTax      = r.fundingTax||0; // what waterfall actually funded for taxes
     const iraSOY      = (r.startIRA1||0)+(r.startIRA2||0);
     const rothSOY     = (r.startRoth1||0)+(r.startRoth2||0);
-    const sowNetWorth = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+(r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startHSA||0);
+    const startAllInh = (r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0);
+    const sowNetWorth = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+startAllInh+(r.startHSA||0);
     const totalWages  = (r.w2AGI||0) + (r.ptWages||0);   // taxable wages (for TAXABLE INCOME section)
     const fundingWages = (r.atWages||0) + (r.ptWages||0); // cash received (for MANDATORY FUNDING section)
-    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, sowNetWorth, totalWages, fundingWages };
+    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, startAllInh, sowNetWorth, totalWages, fundingWages };
 
     groups.forEach((g,gi)=>{
       g.cols.forEach((col,ci)=>{
@@ -3932,7 +3953,7 @@ function renderSOY(){
     const pt2 = yr <= (S.ptEnd2||9999);
     const map = {
       cash: r.endCash, sec: r.sec, ira1: r.ira1, ira2: r.ira2,
-      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, inh: r.inh, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2,
+      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, inh: r.inh, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2,
       grossWages:  w1  ? (r.grossWages1||0) * wCola : null,
       grossWages2: w2  ? (r.grossWages2||0) * wCola : null,
       withholdPct: null, withholdPct2: null,
@@ -5416,6 +5437,8 @@ function buildReportPayload(){
     widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
     widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
+    pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
+    pre2020InhOwnerBy2: S.pre2020InhOwnerBy2||'', pre2020InhDeathYear2: S.pre2020InhDeathYear2||'',
     k401Trad1: S.k401Trad1, k401Roth1: S.k401Roth1,
     k401Trad2: S.k401Trad2, k401Roth2: S.k401Roth2,
     wagesEnd1: S.wagesEnd1, wagesEnd2: S.wagesEnd2,
@@ -5430,6 +5453,8 @@ function buildReportPayload(){
     grossSS1:r.grossSS1||0, grossSS2:r.grossSS2||0,
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
     pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0,
+    pre2020InhStartYear1:r.pre2020InhStartYear1||0, pre2020InhStartYear2:r.pre2020InhStartYear2||0,
+    pre2020InhOwnerReachedRMD1:!!r.pre2020InhOwnerReachedRMD1, pre2020InhOwnerReachedRMD2:!!r.pre2020InhOwnerReachedRMD2,
     pre2020InhDivisor1:r.pre2020InhDivisor1||0, pre2020InhDivisor2:r.pre2020InhDivisor2||0,
     rothConv:r.rothConv||0, rothConvDraw1:r.rothConvDraw1||0, rothConvDraw2:r.rothConvDraw2||0,
     divIncome:r.divs||r.divIncome||0,
@@ -5726,7 +5751,7 @@ function generateReport(){
     <tr><td>SS Monthly Benefit</td><td>${fd(A.ssmo1)}</td>${has2?`<td>${fd(A.ssmo2)}</td>`:''}</tr>
     <tr><td>Wages End Year</td><td>${wend(A.wagesEnd1)}</td>${has2?`<td>${wend(A.wagesEnd2)}</td>`:''}</tr>
     <tr><td>RMD Start Year</td><td>${A.rmdStart1||'—'}</td>${has2?`<td>${A.rmdStart2||'—'}</td>`:''}</tr>
-    <tr><td>Pre-2020 Inh IRA First RMD Year</td><td>${A.pre2020InhRmdYear1&&A.pre2020InhRmdYear1<9999?A.pre2020InhRmdYear1:'—'}</td>${has2?`<td>${A.pre2020InhRmdYear2&&A.pre2020InhRmdYear2<9999?A.pre2020InhRmdYear2:'—'}</td>`:''}</tr>
+    <tr><td>Pre-2020 Inh IRA Owner Birth / Death</td><td>${A.pre2020InhOwnerBy1||'—'} / ${A.pre2020InhDeathYear1||'—'}</td>${has2?`<td>${A.pre2020InhOwnerBy2||'—'} / ${A.pre2020InhDeathYear2||'—'}</td>`:''}</tr>
     <tr><td>401k Trad/Roth</td><td>${fp(A.k401Trad1)} / ${fp(A.k401Roth1)}</td>${has2?`<td>${fp(A.k401Trad2)} / ${fp(A.k401Roth2)}</td>`:''}</tr>
     </tbody></table>`;
 
@@ -5843,6 +5868,8 @@ function generateReport(){
     const acts=[];
     if(full.rmd1>0) acts.push(`${A.name1} RMD — Withdraw from IRA: ${fd(full.rmd1)}`);
     if(full.rmd2>0) acts.push(`${A.name2||'Person 2'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
+    if(full.pre2020InhDraw1>0) acts.push(`${A.name1} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw1)}`);
+    if(full.pre2020InhDraw2>0) acts.push(`${A.name2||'Person 2'} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw2)}`);
     if(ira1a)  acts.push(`${A.name1} IRA Draw: ${fd(ira1a)}`);
     if(ira2a)  acts.push(`${A.name2||'Person 2'} IRA Draw: ${fd(ira2a)}`);
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
@@ -5873,14 +5900,15 @@ function generateReport(){
   const cfVals=(r)=>{
     const wages=(r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0);
     const ss=(r.grossSS1||0)+(r.grossSS2||0);
-    const rmds=(r.rmd1||0)+(r.rmd2||0);
+    const rmds=(r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0);
     const divs=r.divIncome||0, rc=r.rothConv||0;
     const ira1a=r.ira1Addl||0, ira2a=r.ira2Addl||0;
     const stkS=r.stkSales||r.secDraw||0, cashD=r.cashDraw||0;
     const hsaW=r.hsaWith||0, inhD=r.inhDraw||0, preInhD=r.pre2020InhDraw||0;
+    const allInhD=inhD+preInhD;
     const rDraw1=r.rothDraw1||0, rDraw2=r.rothDraw2||0;
     const roth_wd = rDraw1+rDraw2;
-    const hsa_inh = hsaW+inhD+preInhD;  // HSA + Inherited IRA only (Roth now separate)
+    const hsa_inh = hsaW+allInhD;  // HSA + Inherited IRA only (Roth now separate)
     const tot=wages+ss+rmds+divs+rc+ira1a+ira2a+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
     const totalFunded=r.totalFunding || tot;
     const ira_tot=rmds+ira1a+ira2a;
@@ -5894,7 +5922,7 @@ function generateReport(){
     const cashGap=r.cashGapNeeded||0;
     const fundingRequired=r.totalRequired || ((r.spending||0)+taxFunding+cashGap);
     const sf=(r.unfunded||0)>0;
-    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,inhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
+    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,inhD,preInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
   };
   const dzGap=(v)=>Math.abs(v||0)>=50?fd(v,true):'—';
   const cfRows=rows.map(r=>{
@@ -5919,7 +5947,7 @@ function generateReport(){
     return `<tr>
       ${td(r.yr)}${td(age(r))}
       ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
-      ${td(dz(v.hsaW),'r')}${td(dz(v.inhD),'r')}${td(dz(v.roth_wd),'r')}${td(dz(v.cashD),'r')}${td(dz(v.stkS),'r')}${td(fd(v.totalFunded,true),'r bold')}
+      ${td(dz(v.hsaW),'r')}${td(dz(v.allInhD),'r')}${td(dz(v.roth_wd),'r')}${td(dz(v.cashD),'r')}${td(dz(v.stkS),'r')}${td(fd(v.totalFunded,true),'r bold')}
     </tr>`;
   }).join('');
   const cfRequiredRows=rows.map(r=>{
@@ -5934,7 +5962,7 @@ function generateReport(){
     return `<tr>
       ${td(r.yr)}${td(age(r))}
       ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd(r.startInh||0,true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
+      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
 
