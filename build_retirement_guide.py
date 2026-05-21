@@ -16,7 +16,7 @@ from reportlab.platypus import (
 )
 
 
-OUT = "/Users/ronholl/Documents/Apps/Ron_Finance_Model/Deployed Versions/Version 1.3/rons_retirement_guide.pdf"
+OUT = "/Users/ronholl/Documents/Apps/Ron_Finance_Model/Deployed Versions/Version 1.4/rons_retirement_guide.pdf"
 
 GOLD = colors.HexColor("#8a6800")
 DARK = colors.HexColor("#1a1208")
@@ -294,11 +294,11 @@ story += bullets([
     "Cash, down to your cash floor.",
     "Securities/brokerage account.",
     "Traditional IRA or 401(k), which is taxable when withdrawn.",
-    "Roth IRA, used last because it is usually the most tax-friendly account.",
+    "The remaining account buckets in the selected funding order: Securities, traditional IRA, and Roth IRA. The default is Securities, then IRA, then Roth.",
 ])
 story += [
-    p("You can change the order of securities and IRA for selected years using the Funding Order override. That can be useful when you intentionally want to draw down IRA earlier.", "Callout"),
-    p("Pre-2020 inherited IRA has its own funding setting. It can be set to RMDs only, used before regular IRA, or used after regular IRA. That setting only controls where inherited IRA sits inside the IRA-side funding path; the Securities/IRA Funding Order still controls whether brokerage or IRA-side funding comes first."),
+    p("Cash stays outside the funding-order setting. If you want the model to preserve more cash, raise the Cash Floor. After cash above the floor is used, the Default Funding Order controls whether Securities, IRA, or Roth is drawn first, second, and third. This can also be overridden by year range.", "Callout"),
+    p("Pre-2020 inherited IRA has its own funding setting. It can be set to RMDs only, used before regular IRA, or used after regular IRA. That setting only controls where inherited IRA sits inside the IRA-side funding path."),
 ]
 
 story += section("5. Account Flow Timing")
@@ -327,24 +327,26 @@ story += [
         ("Wage Growth", "Can be overridden by year range for career stages, part-time periods, or salary assumptions."),
         ("Stock Sales Taxable Gain", "Override the percentage of securities sales treated as taxable gain. Useful when basis assumptions change over time."),
         ("Cash Floor", "Override the minimum cash balance to maintain for a year range."),
+        ("Default Funding Order", "Choose the global draw order for Securities, IRA, and Roth. Cash remains controlled separately by Cash Floor."),
         ("IRMAA Target Cap", "Can be overridden in Roth Conversion Strategy for years with different Medicare income targets."),
+        ("IRMAA Fill Mode", "Controls what happens when income is already above the selected IRMAA target: add no extra fill, fill toward the next tier, or use Roth withdrawals instead of taxable draws."),
         ("IRMAA Max Bracket and Bracket Headroom", "Global defaults can be set in Inputs and overridden by year range in Roth Conversion Strategy."),
     ]),
 ]
 
 story += section("7. Override Tables and Year Ranges")
 story += [
-    p("Overrides let you change behavior for selected years without changing global assumptions. Each row has a start year and end year. If rows overlap, the later row wins in the overlapping years.", "Callout"),
+    p("Overrides let you change behavior for selected years without changing global assumptions. Overlapping rows are layered: for each field, the later nonblank value wins. Blank cells inherit from an earlier matching row, and then from the global Inputs default if no override row supplies that field.", "Callout"),
     override_table([
-        ("Spending", "Override annual spending amount, percentage change, tax funding dollars, and notes. Spending amount resets the spending base; percentage change adjusts the inflation-based amount."),
+        ("Spending", "Override annual spending amount, percentage change, tax funding dollars, and notes. Spending amount resets the spending base unless 1 Year Only is selected; percentage change adjusts the inflation-based amount."),
         ("Deductions", "Test itemized deductions, charity, or tax changes."),
-        ("IRMAA Level Target", "Manage Roth conversions around Medicare income tiers and optional tax bracket caps."),
+        ("IRMAA Level Target", "Manage Roth conversions around Medicare income tiers, fill mode, and optional tax bracket caps."),
         ("Income Level Target", "Use a specific dollar MAGI ceiling. It has priority over IRMAA and Tax Bracket Fill."),
         ("Tax Bracket Fill", "Fill the current federal tax bracket."),
         ("Growth / Wage Growth", "Change market return or wage growth for selected years."),
         ("Income Rates", "Combined brokerage dividend rate, dividend reinvest percentage, and cash interest rate override."),
         ("Stock Sales Taxable Gain", "Change the taxable-gain percentage used for securities sales."),
-        ("Cash Floor / HSA / State / Funding Order", "Change cash reserve targets, HSA deposits, state tax assumption, or whether securities or IRA is drawn first."),
+        ("Cash Floor / HSA / State / Funding Order", "Change cash reserve targets, HSA deposits, state tax assumption, or the Securities / IRA / Roth draw order."),
     ]),
 ]
 story.append(PageBreak())
@@ -369,7 +371,7 @@ story += [
     p("The Max Bracket option adds a second guardrail. It lets you say: I am willing to go up to this IRMAA level, but do not push me into a higher federal tax bracket than I choose."),
     info_table(("Control", "What It Means"), [
         ("IRMAA Target Cap", "The Medicare income tier ceiling you are willing to target. Off disables IRMAA targeting unless Max Bracket is selected. Level 0 means the base tier, Level 1 means Tier 1, up through Level 4 for Tier 4."),
-        ("Fill Mode", "Fill mode uses conversions to fill upward. Roth-withdrawal mode can use Roth withdrawals to avoid exceeding a target. Stop mode turns the row off."),
+        ("Fill Mode", "Blank means no extra fill when income is already above the target. Fill mode can use conversions to fill toward the next tier. Roth-withdrawal mode can use Roth withdrawals instead of taxable draws above the target."),
         ("Max Bracket", "Optional tax bracket ceiling. If selected, conversions stop at that bracket target when it is lower than the IRMAA target."),
         ("Bracket HR ($)", "Extra cushion below the Max Bracket target. Example: $5,000 stops $5,000 below the bracket target."),
     ]),
