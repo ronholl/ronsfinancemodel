@@ -2457,8 +2457,8 @@ function runProjection(S) {
     // ── Update EOY balances — matching Excel formula structure ────────────
     // Excel IRA formula: IRA_prior*(1+g) - RMD - Additional - RothConv + 401KContribs
     // Excel Roth formula: Roth_prior*(1+g) + RothConv + Roth401K - RothWithdrawal
-    // Excel Inh formula:  Inh_prior*(1+g) - InhDraw
-    // Growth was already computed above; apply it now then adjust for flows
+    // Regular IRA/Roth growth is applied to start-of-year balance before flows.
+    // Inherited IRA growth is applied after inherited IRA RMDs/draws so only the remaining balance grows.
 
     // IRA 1: prior * (1+g) - rmd1 - ira1Addl - rothConvDraw1 + 401K trad + employer
     ira1 = Math.max(0, ira1 + ira1Growth - rmd1 - ira1Addl - rothConvDraw1
@@ -2476,8 +2476,8 @@ function runProjection(S) {
     roth2 = Math.max(0, roth2 + roth2Growth + rothConvDraw2 + k401Contrib2Roth
                         - rothDraw2 - rothModeWith2);
 
-    pre2020Inh1 = Math.max(0, pre2020Inh1 * (1 + gRate) - pre2020InhDraw1 - pre2020InhAddl1);
-    pre2020Inh2 = Math.max(0, pre2020Inh2 * (1 + gRate) - pre2020InhDraw2 - pre2020InhAddl2);
+    pre2020Inh1 = Math.max(0, (pre2020Inh1 - pre2020InhDraw1 - pre2020InhAddl1) * (1 + gRate));
+    pre2020Inh2 = Math.max(0, (pre2020Inh2 - pre2020InhDraw2 - pre2020InhAddl2) * (1 + gRate));
 
     // Securities: prior * (1+g) - secDraw + excess mandatory funding + employer 401K
     // (excess goes to brokerage, not cash)

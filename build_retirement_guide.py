@@ -310,8 +310,8 @@ story += [
         ("Traditional IRA / 401(k)", "Growth is applied to the starting balance. Then RMDs, extra IRA draws, and Roth conversions reduce the account. Traditional 401(k) employee and employer contributions can add to it when wages are active."),
         ("Roth IRA / Roth 401(k)", "Growth is applied to the starting balance. Roth conversions and Roth 401(k) contributions add to it. Roth withdrawals reduce it."),
         ("HSA", "Growth is applied to the starting balance, then HSA deposits are added and HSA withdrawals are subtracted."),
-        ("Pre-2020 inherited IRA", "Growth is applied to the start-of-year inherited IRA balance, then required inherited IRA RMDs and optional funding draws reduce it. Start of Year entries can reset the balance later."),
-        ("Post-2020 inherited IRA lots", "Each lot is tracked separately. Required RMD, optional draw strategy, and the final 10-year deadline draw are calculated first; then the remaining lot balance grows into the next year."),
+        ("Pre-2020 inherited IRA", "RMDs are calculated from the start-of-year inherited IRA balance. Required inherited IRA RMDs and optional funding draws are then subtracted, and growth is applied to the remaining balance. Start of Year entries can reset the balance later."),
+        ("Post-2020 inherited IRA lots", "Each lot is tracked separately. Required RMD, optional draw strategy, and the final 10-year deadline draw are calculated from the lot balance for that year, then withdrawals are subtracted and growth is applied to the remaining balance."),
     ]),
     p("Because these timing rules differ by account, two balances with the same beginning value and growth rate can end the year differently when one has deposits or withdrawals during the year.", "Callout"),
 ]
