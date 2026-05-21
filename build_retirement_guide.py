@@ -16,7 +16,7 @@ from reportlab.platypus import (
 )
 
 
-OUT = "/Users/ronholl/Documents/Apps/Ron_Finance_Model/Deployed Versions/Version 1.2/rons_retirement_guide.pdf"
+OUT = "/Users/ronholl/Documents/Apps/Ron_Finance_Model/Deployed Versions/Version 1.3/rons_retirement_guide.pdf"
 
 GOLD = colors.HexColor("#8a6800")
 DARK = colors.HexColor("#1a1208")
@@ -203,6 +203,8 @@ story += [
         ("IRA", "A retirement account where withdrawals are usually taxable."),
         ("Roth IRA", "A retirement account where qualified withdrawals are usually tax-free."),
         ("Roth conversion", "Moving money from IRA to Roth. You pay tax now so the money can grow tax-free later."),
+        ("Inherited IRA", "An IRA inherited from someone else. The model separates older pre-2020 inherited IRAs from post-2020 lots because the distribution rules are different."),
+        ("RMD", "Required minimum distribution. This is money the tax rules require you to withdraw from certain retirement accounts."),
         ("MAGI", "Income number used by Medicare for IRMAA. For this model, think Medicare income."),
         ("IRMAA", "Extra Medicare premium charged when income is above certain thresholds."),
         ("Headroom", "A cushion. Example: stop $5,000 below a limit instead of exactly at it."),
@@ -237,10 +239,11 @@ story += [
 ]
 story += bullets([
     "Start with the account balances and assumptions for that year.",
+    "Apply the year’s growth model to most investment balances, while tracking taxable dividends and interest separately.",
     "Add income that arrives automatically, such as wages, Social Security, RMDs, dividends, interest, HSA withdrawals, and inherited IRA draws.",
     "Pay spending and taxes using the draw order built into the model.",
     "Apply optional Roth conversion strategies from the Override Tables.",
-    "Grow the remaining balances into the next year.",
+    "Carry the ending balances into the next year.",
 ])
 story += [
     p("The model is most useful when you compare scenarios: different Roth conversion plans, different Social Security ages, different spending levels, different survivor assumptions, or different tax assumptions.", "Callout"),
@@ -270,9 +273,10 @@ story += [
 ]
 story += bullets([
     "Enter names, birth years, filing status, state, and plan years.",
-    "Enter growth, dividend, interest, spending inflation, Social Security COLA, wage growth, stock-gain, and cash-floor assumptions.",
+    "Enter growth, dividend, interest, dividend reinvestment, spending inflation, Social Security COLA, wage growth, stock-gain, and cash-floor assumptions.",
     "Enter Social Security start age and monthly benefit for each person.",
     "Enter Medicare/IRMAA settings if you want the model to plan around Medicare income tiers.",
+    "Enter inherited IRA information if the plan includes inherited retirement accounts. Use the pre-2020 section for older inherited IRAs and the post-2020 lot section for 10-year-rule inherited IRAs.",
     "Enter survivor-mode assumptions if you want to model one spouse surviving the other.",
     "Enter 401(k) contribution and employer match assumptions if still working.",
 ])
@@ -294,24 +298,41 @@ story += bullets([
 ])
 story += [
     p("You can change the order of securities and IRA for selected years using the Funding Order override. That can be useful when you intentionally want to draw down IRA earlier.", "Callout"),
+    p("Pre-2020 inherited IRA has its own funding setting. It can be set to RMDs only, used before regular IRA, or used after regular IRA. That setting only controls where inherited IRA sits inside the IRA-side funding path; the Securities/IRA Funding Order still controls whether brokerage or IRA-side funding comes first."),
+]
+
+story += section("5. Account Flow Timing")
+story += [
+    p("The model is year-based, so it has to decide whether growth happens before or after deposits and withdrawals. These rules are useful when checking the Cash Flow and Year Detail screens."),
+    info_table(("Account", "How the Year Is Modeled"), [
+        ("Brokerage / Securities", "Starts with the start-of-year balance. Total return is split between price growth and dividends. The dividend reinvest percentage controls how much of the dividend is reinvested versus paid out as taxable cash flow. Securities draws reduce the account; excess funding and cash sweeps can add to it."),
+        ("Cash", "Starts with the start-of-year cash balance. Wages, Social Security, dividends not reinvested, interest, RMDs, IRA draws, inherited IRA draws, HSA withdrawals, Roth withdrawals, and securities sales can add cash. Spending, taxes, Medicare costs, and cash sweeps reduce it. The cash floor controls how much cash the model tries to preserve."),
+        ("Traditional IRA / 401(k)", "Growth is applied to the starting balance. Then RMDs, extra IRA draws, and Roth conversions reduce the account. Traditional 401(k) employee and employer contributions can add to it when wages are active."),
+        ("Roth IRA / Roth 401(k)", "Growth is applied to the starting balance. Roth conversions and Roth 401(k) contributions add to it. Roth withdrawals reduce it."),
+        ("HSA", "Growth is applied to the starting balance, then HSA deposits are added and HSA withdrawals are subtracted."),
+        ("Pre-2020 inherited IRA", "Growth is applied to the start-of-year inherited IRA balance, then required inherited IRA RMDs and optional funding draws reduce it. Start of Year entries can reset the balance later."),
+        ("Post-2020 inherited IRA lots", "Each lot is tracked separately. Required RMD, optional draw strategy, and the final 10-year deadline draw are calculated first; then the remaining lot balance grows into the next year."),
+    ]),
+    p("Because these timing rules differ by account, two balances with the same beginning value and growth rate can end the year differently when one has deposits or withdrawals during the year.", "Callout"),
 ]
 story.append(PageBreak())
 
-story += section("5. Inputs That Can Be Overridden")
+story += section("6. Inputs That Can Be Overridden")
 story += [
     p("Several Inputs fields are global defaults but can be overridden by year range. The bold note under those fields is meant to make that flexibility visible."),
     override_table([
         ("Portfolio Growth Rate", "Override by year range to model a down-market period, a conservative early-retirement sequence, or a different long-term return assumption."),
-        ("Brokerage Dividend Rate and Cash Interest Rate", "These share one override row. Enter either field or both. Brokerage dividend rate affects taxable brokerage dividends and paid-out securities cash flow. Cash interest rate affects taxable cash interest."),
+        ("Brokerage Dividend Rate, Dividend Reinvest, and Cash Interest Rate", "These share one override row. Enter any combination. Brokerage dividend rate affects taxable brokerage dividends; Dividend Reinvest controls what percentage is reinvested versus paid to cash; Cash Interest Rate affects taxable cash interest."),
         ("Annual Spending Increase", "Can be adjusted with the Spending override percentage-change field for a year range."),
         ("Wage Growth", "Can be overridden by year range for career stages, part-time periods, or salary assumptions."),
         ("Stock Sales Taxable Gain", "Override the percentage of securities sales treated as taxable gain. Useful when basis assumptions change over time."),
         ("Cash Floor", "Override the minimum cash balance to maintain for a year range."),
-        ("IRMAA Level Target", "Can be overridden in Roth Conversion Strategy for years with different Medicare income targets."),
+        ("IRMAA Target Cap", "Can be overridden in Roth Conversion Strategy for years with different Medicare income targets."),
+        ("IRMAA Max Bracket and Bracket Headroom", "Global defaults can be set in Inputs and overridden by year range in Roth Conversion Strategy."),
     ]),
 ]
 
-story += section("6. Override Tables and Year Ranges")
+story += section("7. Override Tables and Year Ranges")
 story += [
     p("Overrides let you change behavior for selected years without changing global assumptions. Each row has a start year and end year. If rows overlap, the later row wins in the overlapping years.", "Callout"),
     override_table([
@@ -321,14 +342,14 @@ story += [
         ("Income Level Target", "Use a specific dollar MAGI ceiling. It has priority over IRMAA and Tax Bracket Fill."),
         ("Tax Bracket Fill", "Fill the current federal tax bracket."),
         ("Growth / Wage Growth", "Change market return or wage growth for selected years."),
-        ("Income Rates", "Combined brokerage dividend and cash interest rate override."),
+        ("Income Rates", "Combined brokerage dividend rate, dividend reinvest percentage, and cash interest rate override."),
         ("Stock Sales Taxable Gain", "Change the taxable-gain percentage used for securities sales."),
         ("Cash Floor / HSA / State / Funding Order", "Change cash reserve targets, HSA deposits, state tax assumption, or whether securities or IRA is drawn first."),
     ]),
 ]
 story.append(PageBreak())
 
-story += section("7. Roth Conversions in Plain English")
+story += section("8. Roth Conversions in Plain English")
 story += [
     p("A Roth conversion moves money from a traditional IRA into a Roth IRA. The conversion increases taxable income in the year it happens. The benefit is that the money may grow tax-free afterward and may reduce future required IRA withdrawals."),
     p("A conversion is not automatically good or bad. It depends on tax brackets, Medicare IRMAA, future RMDs, survivor taxes, and how long the money may stay invested."),
@@ -342,43 +363,43 @@ story += [
     p("Conversions add taxable income now. The model shows the result in Cash Flow and Tax Summary so you can see both the conversion amount and the tax/Medicare effect."),
 ]
 
-story += section("8. IRMAA and Max Bracket Override")
+story += section("9. IRMAA and Max Bracket Override")
 story += [
     p("IRMAA is an extra Medicare premium charged when Medicare income is above certain thresholds. In the model, the IRMAA Level Target is a way to say: Convert IRA money to Roth, but try not to cross this Medicare income line."),
     p("The Max Bracket option adds a second guardrail. It lets you say: I am willing to go up to this IRMAA level, but do not push me into a higher federal tax bracket than I choose."),
     info_table(("Control", "What It Means"), [
-        ("IRMAA Level", "The Medicare income tier you are willing to target. Level 0 means IRMAA targeting is off unless Max Bracket is selected."),
+        ("IRMAA Target Cap", "The Medicare income tier ceiling you are willing to target. Off disables IRMAA targeting unless Max Bracket is selected. Level 0 means the base tier, Level 1 means Tier 1, up through Level 4 for Tier 4."),
         ("Fill Mode", "Fill mode uses conversions to fill upward. Roth-withdrawal mode can use Roth withdrawals to avoid exceeding a target. Stop mode turns the row off."),
         ("Max Bracket", "Optional tax bracket ceiling. If selected, conversions stop at that bracket target when it is lower than the IRMAA target."),
         ("Bracket HR ($)", "Extra cushion below the Max Bracket target. Example: $5,000 stops $5,000 below the bracket target."),
     ]),
 ]
 story += bullets([
-    "If IRMAA Level is 1-5 and Max Bracket is blank, the model targets the selected IRMAA threshold.",
-    "If IRMAA Level is 1-5 and Max Bracket is selected, the model uses whichever target is lower: the IRMAA threshold or the bracket target.",
-    "If IRMAA Level is 0 and Max Bracket is selected, the row becomes a bracket-only conversion target.",
-    "If IRMAA Level is 0 and Max Bracket is blank, the row is off.",
+    "If IRMAA Target Cap is Off and Max Bracket is blank, the row is off.",
+    "If IRMAA Target Cap is Off and Max Bracket is selected, the row becomes a bracket-only conversion target.",
+    "If IRMAA Target Cap is Level 0-4 and Max Bracket is blank, the model targets the selected IRMAA threshold.",
+    "If IRMAA Target Cap is Level 0-4 and Max Bracket is selected, the model uses whichever target is lower: the IRMAA threshold or the bracket target.",
 ])
 story += [
     p("The Max Bracket dropdown only shows bracket choices that can actually affect the selected IRMAA level. The No cap choice shows the uncapped IRMAA target and the tax bracket it lands in, so you can compare before choosing.", "Callout"),
 ]
 story.append(PageBreak())
 
-story += section("9. Simple Conversion Examples")
+story += section("10. Simple Conversion Examples")
 story += [
     p("These examples are simplified, but they show how to think about the controls."),
     info_table(("Goal", "Override Row"), [
         ("Convert up to an IRMAA tier and do not care which tax bracket it reaches.", "Choose an IRMAA Level and leave Max Bracket as No cap."),
         ("Target a high IRMAA level but avoid a painful tax bracket.", "Choose the IRMAA Level, then choose a Max Bracket such as 24% or 32%."),
-        ("Do not target IRMAA; just fill a tax bracket.", "Choose IRMAA Level 0 and select a Max Bracket. Add Bracket HR if you want cushion."),
+        ("Do not target IRMAA; just fill a tax bracket.", "Choose IRMAA Target Cap Off and select a Max Bracket. Add Bracket HR if you want cushion."),
         ("Stay slightly below a bracket line.", "Select Max Bracket and enter Bracket HR, such as 5,000."),
         ("Use an exact income number instead of IRMAA/bracket logic.", "Use Income Level Override. It has priority over IRMAA and Tax Bracket Fill."),
     ]),
     p("Example: if IRMAA Level 5 would allow income up to a high Medicare threshold but also push you into a 35% marginal bracket, choose Level 5 plus Max Bracket 24% or 32%. The model will convert only up to the lower bracket target."),
-    p("Example: if you choose IRMAA Level 0 and Max Bracket 24%, the model is not using IRMAA at all. It is simply trying to convert up to the 24% bracket target, less Bracket HR."),
+    p("Example: if you choose IRMAA Target Cap Off and Max Bracket 24%, the model is not using IRMAA at all. It is simply trying to convert up to the 24% bracket target, less Bracket HR."),
 ]
 
-story += section("10. Survivor Mode")
+story += section("11. Survivor Mode")
 story += [
     p("Survivor mode models one spouse dying while the survivor keeps retirement balances. It can also end the deceased spouse’s Social Security, replace the survivor’s Social Security with the higher benefit, and switch the survivor to Single filing starting the year after death."),
     info_table(("Control", "What It Means"), [
@@ -393,7 +414,19 @@ story += [
 ]
 story.append(PageBreak())
 
-story += section("11. Reading the Results")
+story += section("12. Inherited IRAs")
+story += [
+    p("Inherited IRAs are modeled separately because the rules are different depending on when the account was inherited. The model supports both pre-2020 inherited IRA RMDs and post-2020 inherited IRA lots."),
+    info_table(("Type", "How to Enter It"), [
+        ("Pre-2020 inherited IRA", "Use the Inputs tab section named Pre-2020 Inherited IRA RMD. Enter the initial inherited IRA balance, optional balance start year, deceased owner birth year, and deceased owner death year for the applicable person. Start of Year can update the balance later."),
+        ("Post-2020 inherited IRA", "Use the Post-2020 Inherited IRA Lots section. Enter one row per inherited IRA lot with beneficiary, balance, active year, deceased owner birth year, death year, and optional draw strategy."),
+        ("Start of Year updates", "Use Start of Year when you have a real annual balance. Pre-2020 inherited IRA balances are person-specific. Post-2020 inherited IRA has a total reset that is allocated across active lots proportionally."),
+    ]),
+    p("For pre-2020 inherited IRAs, the model uses the deceased owner birth/death years to determine whether inherited IRA RMDs are required, then uses the beneficiary’s life-expectancy schedule for the divisor. In survivor mode, any remaining pre-2020 inherited IRA balance carries to the survivor and the inherited IRA RMDs continue from the inherited IRA settings."),
+    p("For post-2020 inherited IRA lots, the death year sets the 10-year deadline. If the deceased owner had reached RMD age, the model calculates required inherited IRA RMDs before the deadline. Optional draw strategies can take more than the required amount, and the final deadline year drains the remaining lot balance.", "Callout"),
+]
+
+story += section("13. Reading the Results")
 story += bullets([
     "<b>Dashboard:</b> check the three-year action plan and overall net worth path.",
     "<b>Year Detail:</b> use this when a year looks strange and you want to see what drove it.",
@@ -405,7 +438,7 @@ story += [
     p("A larger Roth conversion can look bad in one year because tax rises, but still help long-term if it reduces later RMDs or survivor taxes. Always compare scenarios, not just one year.", "Callout"),
 ]
 
-story += section("12. Printed Report")
+story += section("14. Printed Report")
 story += bullets([
     "Use the browser’s normal print command to print or save as PDF.",
     "The report includes active override rows and notes so assumptions can be reviewed later.",
@@ -414,7 +447,7 @@ story += bullets([
     "Page numbers are included in the printed report.",
 ])
 
-story += section("13. Updating Tax Tables")
+story += section("15. Updating Tax Tables")
 story += [
     p("The Tax Tables tab stores federal brackets, standard deductions, state tax values, Medicare IRMAA thresholds, and Medicare premium amounts. The model can inflate values into future years, but actual IRS and Medicare numbers change over time."),
 ]
@@ -427,7 +460,7 @@ story += [
     p("If you are not sure whether a table is current, treat the results as a planning estimate and avoid making precise tax decisions from it.", "Callout"),
 ]
 
-story += section("14. Good Habits")
+story += section("16. Good Habits")
 story += bullets([
     "Export a JSON backup after major changes, and keep it somewhere outside the browser.",
     "Use notes in override rows so Future You knows why a change was made.",
