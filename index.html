@@ -526,6 +526,27 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         </div>
       </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">MEDICARE / IRMAA</div>
+        <div class="field-row">
+          <div class="field"><label>IRMAA Target Cap</label><select id="i-irmaat" onchange="IC()"></select><div class="note">Select the Medicare income tier ceiling to target. Off disables global IRMAA targeting unless Max Bracket is selected.</div></div>
+          <div class="field"><label>IRMAA Headroom ($)</label><input type="number" id="i-irmaah" oninput="IC()"><div class="note">Stay this far below the selected IRMAA tier limit</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>IRMAA Max Bracket</label><select id="i-irmaa-maxbracket" onchange="IC()"></select><div class="note">Optional global federal bracket cap for IRA-to-Roth conversions. Overrides can replace this by year range.</div></div>
+          <div class="field"><label>Bracket Headroom ($)</label><input type="number" id="i-irmaa-brackethr" oninput="IC()"><div class="note">Stay this far below the selected federal bracket cap</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label id="l-magi2">Medicare MAGI — 2 Yrs Before Start ($)</label><input type="number" id="i-magi2" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 1 (2-yr lookback)</div></div>
+          <div class="field"><label id="l-magi1">Medicare MAGI — 1 Yr Before Start ($)</label><input type="number" id="i-magi1" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 2 (2-yr lookback)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. INHERITED IRAS -->
+    <div class="panel">
+      <div class="sh">Inherited IRAs</div>
+      <div class="post2020-intro">Use this section only when the plan includes inherited retirement accounts. Pre-2020 inherited IRAs use beneficiary life-expectancy RMDs; post-2020 lots use death year, required RMD rules when applicable, and the 10-year deadline.</div>
+      <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">POST-2020 INHERITED IRA LOTS</div>
         <div class="post2020-intro">Use one row per inherited IRA. Balance and active year seed the projection; Start of Year can reset the active lots' total balance later. Death year sets the 10-year deadline. Required RMDs apply when the deceased owner had reached RMD age; draw strategy controls optional withdrawals.</div>
         <div id="post2020-inh-body" class="post2020-lots"></div>
@@ -550,21 +571,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <div class="field"><label id="l-preinh-deathyr2">Person 2 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
         </div>
       </div>
-      <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">MEDICARE / IRMAA</div>
-        <div class="field-row">
-          <div class="field"><label>IRMAA Target Cap</label><select id="i-irmaat" onchange="IC()"></select><div class="note">Select the Medicare income tier ceiling to target. Off disables global IRMAA targeting unless Max Bracket is selected.</div></div>
-          <div class="field"><label>IRMAA Headroom ($)</label><input type="number" id="i-irmaah" oninput="IC()"><div class="note">Stay this far below the selected IRMAA tier limit</div></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>IRMAA Max Bracket</label><select id="i-irmaa-maxbracket" onchange="IC()"></select><div class="note">Optional global federal bracket cap for IRA-to-Roth conversions. Overrides can replace this by year range.</div></div>
-          <div class="field"><label>Bracket Headroom ($)</label><input type="number" id="i-irmaa-brackethr" oninput="IC()"><div class="note">Stay this far below the selected federal bracket cap</div></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label id="l-magi2">Medicare MAGI — 2 Yrs Before Start ($)</label><input type="number" id="i-magi2" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 1 (2-yr lookback)</div></div>
-          <div class="field"><label id="l-magi1">Medicare MAGI — 1 Yr Before Start ($)</label><input type="number" id="i-magi1" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 2 (2-yr lookback)</div></div>
-        </div>
-      </div>
+
     </div>
 
     <div class="panel">
