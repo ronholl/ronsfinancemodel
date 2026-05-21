@@ -865,7 +865,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
     <table class="data" id="tax-tbl">
       <thead><tr>
         <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
-        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Blended</th>
+        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
         <th style="color:#888">Prior MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
@@ -3829,7 +3829,7 @@ function renderCF(){
       {f:'incomeTax', h:'Total\nTax',       bold:true},
       {f:'effRate',   h:'Eff\nRate',        pct:true},
       {f:'margRate',  h:'Marginal\nRate',   pct:true},
-      {f:'blended',   h:'All-In\nBlended',   pct:true},
+      {f:'blended',   h:'Taxable\nBlend',   pct:true},
       {f:'irmaaTx',   h:'IRMAA\nSurcharge'},
       {f:'medicareBase', h:'Medicare\nPart B'},
     ]},
@@ -3846,9 +3846,10 @@ function renderCF(){
     ]},
   ];
 
-  const hideWhenEmptyCols = new Set(['atWages','ptWages','totalWages','hsaDep','excessFunds','cashSweep','unfunded','pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD','pre2020InhAddl1','pre2020InhAddl2','post2020InhDiscretionary','startHSA','startAllInh']);
+  const hideWhenEmptyCols = new Set(['atWages','ptWages','totalWages','hsaDep','blended','excessFunds','cashSweep','unfunded','pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD','pre2020InhAddl1','pre2020InhAddl2','post2020InhDiscretionary','startHSA','startAllInh']);
   const hasColumnData = (field) => proj.some(r => {
     if (field === 'startAllInh') return ((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)) > 0;
+    if (field === 'blended') return Math.abs(r.ltcg||0) > 0.49 || Math.abs(r.qualDivsForTax||0) > 0.49 || Math.abs(r.taxableStkGain||0) > 0.49;
     return Math.abs(r[field]||0) > 0.49;
   });
   groups = groups.map(g => Object.assign({}, g, {cols:g.cols.filter(c => !hideWhenEmptyCols.has(c.f) || hasColumnData(c.f))}))
@@ -3972,7 +3973,7 @@ function renderTax(){
   mkChart('ch-rates','line',{labels:lbs,datasets:[
     {label:'Effective',data:proj.map(r=>r.effRate),borderColor:'#c0392b',borderWidth:2,pointRadius:0,fill:false},
     {label:'Marginal',data:proj.map(r=>r.margRate),borderColor:'#2980b9',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[5,3]},
-    {label:'Blended',data:proj.map(r=>r.blended),borderColor:'#27ae60',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,3]},
+    {label:'Taxable Blend',data:proj.map(r=>r.blended),borderColor:'#27ae60',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,3]},
   ]},{plugins:{tooltip:{callbacks:{label:ctx=>' '+(ctx.raw*100).toFixed(1)+'%'}}},
     scales:{x:{},y:{ticks:{callback:v=>(v*100).toFixed(0)+'%'}}}});
   document.getElementById('tax-body').innerHTML=proj.map(r=>`<tr>
@@ -4174,7 +4175,7 @@ function renderYD(){
       ${dr('Total Cash Tax (Inc + IRMAA)',f$(r.cashTax),'tot')}
       ${dr('Effective Rate',fp(r.effRate))}
       ${dr('Marginal Rate',fp(r.margRate))}
-      ${dr('Blended LTCG Rate',fp(r.blended))}
+      ${dr('Taxable Blend',fp(r.blended))}
       <div class="sh">End-of-Year Balances</div>
       ${dr('Cash',f$(r.endCash))}
       ${dr('Securities',f$(r.sec))}
