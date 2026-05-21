@@ -140,6 +140,13 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 .field .note strong{font-weight:900;color:var(--ink);font-style:normal}
 .field-row{display:flex;gap:10px;flex-wrap:wrap}
 .field-row .field{flex:1;min-width:160px}
+.post2020-lots{display:flex;flex-direction:column;gap:8px}
+.post2020-lot{border:1px solid var(--cream3);background:var(--cream2);border-radius:4px;padding:8px}
+.post2020-lot-head{display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em;margin-bottom:6px}
+.post2020-intro{font-family:'Lora',Georgia,serif;font-size:12px!important;line-height:1.45;color:var(--ink2);font-style:italic;margin-bottom:8px}
+.post2020-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.post2020-grid label{font-family:'JetBrains Mono',monospace;font-size:9px!important;font-weight:700;color:var(--ink2);letter-spacing:.03em;display:flex;flex-direction:column;gap:2px}
+.post2020-grid input,.post2020-grid select{width:100%;padding:4px 7px!important;border:1px solid var(--border);border-radius:3px;background:var(--cream);color:var(--ink);font-size:11px!important;line-height:1.25;font-family:'JetBrains Mono',monospace!important}
 
 /* ── KPI CARDS ── */
 .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
@@ -518,14 +525,29 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <div class="note">Auto: age 73 if born 1951–1959, age 75 if born 1960+ (SECURE 2.0)</div>
         </div>
       </div>
-      <div class="field"><label>Post-2020 / Custom Inherited IRA Drain Year</label><input type="number" id="i-inhdrain" oninput="IC()"><div class="note">For the shared inherited IRA balance in Start of Year. Balance is split equally to zero by this year. 9999 = not applicable</div></div>
+      <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">POST-2020 INHERITED IRA LOTS</div>
+        <div class="post2020-intro">Use one row per inherited IRA. Balance and active year seed the projection; Start of Year can reset the active lots' total balance later. Death year sets the 10-year deadline. Required RMDs apply when the deceased owner had reached RMD age; draw strategy controls optional withdrawals.</div>
+        <div id="post2020-inh-body" class="post2020-lots"></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addPost2020InhLot()">+ Add Inherited IRA</button>
+      </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">PRE-2020 INHERITED IRA RMD</div>
+        <div class="post2020-intro">For inherited IRAs that predate the SECURE Act 10-year rule. Enter the deceased owner's birth/death years so the app can calculate the beneficiary life-expectancy RMD. Initial balances can be seeded here and updated later in Start of Year.</div>
         <div class="field-row">
-          <div class="field"><label id="l-preinh-ownerby1">P1 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age. Balance is entered in Start of Year.</div></div>
-          <div class="field"><label id="l-preinh-deathyr1">P1 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
-          <div class="field p2-field"><label id="l-preinh-ownerby2">P2 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age. Balance is entered in Start of Year.</div></div>
-          <div class="field p2-field"><label id="l-preinh-deathyr2">P2 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
+          <div class="field"><label>Use Pre-2020 Inherited IRA for Funding</label><select id="i-preinh-fund" onchange="IC()"><option value="no">RMDs only</option><option value="before">Yes - before regular IRA</option><option value="after">Yes - after regular IRA</option></select><div class="note">The Securities/IRA funding override still controls whether securities or IRA-side funding comes first. This controls where pre-2020 inherited IRA sits within IRA-side funding. Roth remains last.</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label id="l-preinh-startbal1">Person 1 Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal1" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
+          <div class="field"><label id="l-preinh-startyr1">Person 1 Balance Start Year</label><input type="number" id="i-preinh-startyr1" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
+          <div class="field"><label id="l-preinh-ownerby1">Person 1 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
+          <div class="field"><label id="l-preinh-deathyr1">Person 1 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
+        </div>
+        <div class="field-row p2-field">
+          <div class="field"><label id="l-preinh-startbal2">Person 2 Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal2" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
+          <div class="field"><label id="l-preinh-startyr2">Person 2 Balance Start Year</label><input type="number" id="i-preinh-startyr2" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
+          <div class="field"><label id="l-preinh-ownerby2">Person 2 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
+          <div class="field"><label id="l-preinh-deathyr2">Person 2 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
@@ -1575,8 +1597,12 @@ function defaultState() {
     rmdStart1: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
     rmdStart2: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
     inhDrainYear:9999,
+    post2020InhLots:[],
     pre2020InhOwnerBy1:'', pre2020InhDeathYear1:'',
     pre2020InhOwnerBy2:'', pre2020InhDeathYear2:'',
+    pre2020InhUseForFunding:'no',
+    pre2020InhStartBal1:0, pre2020InhStartYear1:'',
+    pre2020InhStartBal2:0, pre2020InhStartYear2:'',
     pre2020InhRmdYear1:'', pre2020InhRmdYear2:'', // legacy saved field
     // Key variables (global defaults)
     growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02, reinvestDivs:'yes',
@@ -1593,7 +1619,7 @@ function defaultState() {
     startCash:0, startSec:0,
     startIRA1:0, startIRA2:0,
     startRoth1:0, startRoth2:0,
-    startHSA:0, startInh:0, startPre2020Inh1:0, startPre2020Inh2:0,
+    startHSA:0, startPre2020Inh1:0, startPre2020Inh2:0,
     // Override tables
     ovFundingOrder:[],   // {choice:'SEC'|'IRA', startYear, endYear, notes}
     ovIRMAA:[],          // {level:''|'0'...'4', fillMode:'F'|'R'|'S', startYear, endYear, notes}
@@ -1652,7 +1678,9 @@ function runProjection(S) {
   const hp2 = !!(S.name2 && S.name2.trim());
 
   // Working balances — will be overridden by SOY entries when present
-  let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0, inh=0, pre2020Inh1=0, pre2020Inh2=0;
+  let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0, pre2020Inh1=0, pre2020Inh2=0;
+  let pre2020Seeded1=false, pre2020Seeded2=false;
+  const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
 
   for (let yr = S.startYear; yr <= S.endYear; yr++) {
     const age1 = yr - S.by1 - 1, age2 = yr - S.by2 - 1; // age during the year (before birthday)
@@ -1680,10 +1708,28 @@ function runProjection(S) {
     if (soy.roth1 != null && soy.roth1 !== '') roth1 = parseF(soy.roth1);
     if (soy.roth2 != null && soy.roth2 !== '') roth2 = parseF(soy.roth2);
     if (soy.hsa   != null && soy.hsa   !== '') hsa   = parseF(soy.hsa);
-    // Only apply inherited IRA SOY override if drain year hasn't passed yet
-    if (soy.inh   != null && soy.inh   !== '' && (S.inhDrainYear >= 9999 || yr <= S.inhDrainYear)) inh = parseF(soy.inh);
-    if (soy.pre2020Inh1 != null && soy.pre2020Inh1 !== '') pre2020Inh1 = parseF(soy.pre2020Inh1);
-    if (soy.pre2020Inh2 != null && soy.pre2020Inh2 !== '') pre2020Inh2 = parseF(soy.pre2020Inh2);
+    const pre2020StartYr1 = parseInt(S.pre2020InhStartYear1) || S.startYear;
+    const pre2020StartYr2 = parseInt(S.pre2020InhStartYear2) || S.startYear;
+    if (!pre2020Seeded1 && (S.pre2020InhStartBal1||0) > 0 && yr >= pre2020StartYr1) { pre2020Inh1 = parseF(S.pre2020InhStartBal1)||0; pre2020Seeded1 = true; }
+    if (!pre2020Seeded2 && (S.pre2020InhStartBal2||0) > 0 && yr >= pre2020StartYr2) { pre2020Inh2 = parseF(S.pre2020InhStartBal2)||0; pre2020Seeded2 = true; }
+    if (soy.pre2020Inh1 != null && soy.pre2020Inh1 !== '') { pre2020Inh1 = parseF(soy.pre2020Inh1); pre2020Seeded1 = true; }
+    if (soy.pre2020Inh2 != null && soy.pre2020Inh2 !== '') { pre2020Inh2 = parseF(soy.pre2020Inh2); pre2020Seeded2 = true; }
+    for (const lot of post2020Lots) {
+      const startYear = parseInt(lot.startYear) || parseInt(lot.deathYear) + 1 || S.startYear;
+      if (!lot.active && yr >= startYear) {
+        lot.bal = parseF(lot.balance) || 0;
+        lot.active = true;
+      }
+    }
+    if (soy.post2020Inh != null && soy.post2020Inh !== '') {
+      const activeLots = post2020Lots.filter(l=>l.active);
+      const targetTotal = Math.max(0, parseF(soy.post2020Inh)||0);
+      const currentTotal = activeLots.reduce((sum,l)=>sum+(l.bal||0),0);
+      if (activeLots.length) {
+        if (currentTotal > 0) activeLots.forEach(l=>{ l.bal = (l.bal||0) * targetTotal / currentTotal; });
+        else activeLots.forEach(l=>{ l.bal = targetTotal / activeLots.length; });
+      }
+    }
 
     // Widow(er) override: at the start of the first year after death, treat spouse
     // IRA/Roth balances as rolled into the survivor's matching account bucket.
@@ -1691,9 +1737,11 @@ function runProjection(S) {
       if (p1Survivor) {
         ira1 += ira2; ira2 = 0;
         roth1 += roth2; roth2 = 0;
+        pre2020Inh1 += pre2020Inh2; pre2020Inh2 = 0;
       } else if (p2Survivor) {
         ira2 += ira1; ira1 = 0;
         roth2 += roth1; roth1 = 0;
+        pre2020Inh2 += pre2020Inh1; pre2020Inh1 = 0;
       }
     }
 
@@ -1702,8 +1750,8 @@ function runProjection(S) {
     const startSec = sec, startIRA1 = ira1, startIRA2 = ira2;
     const startRoth1 = roth1, startRoth2 = roth2;
     const startHSABal = hsa;
-    const startInhBal = inh;
     const startPre2020Inh1 = pre2020Inh1, startPre2020Inh2 = pre2020Inh2;
+    const startPost2020Inh = post2020Lots.reduce((sum, lot)=>sum+(lot.active?(lot.bal||0):0),0);
 
     // ── Growth rate ───────────────────────────────────────────────────────
     const _gRaw = resolveOverride(S.ovGrowth, yr, 'rate');
@@ -1823,27 +1871,47 @@ function runProjection(S) {
     const rmdStart2 = afterDeathYear && p1Survivor ? (S.by1 + ((S.by1 >= 1960) ? 76 : 74)) : S.rmdStart2;
     const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
     const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
-    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, S.pre2020InhOwnerBy1, S.pre2020InhDeathYear1, S.by1);
-    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, S.pre2020InhOwnerBy2, S.pre2020InhDeathYear2, S.by2) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
+    const pre2020OwnerBy1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhOwnerBy1 && S.pre2020InhOwnerBy2) ? S.pre2020InhOwnerBy2 : S.pre2020InhOwnerBy1;
+    const pre2020DeathYr1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhDeathYear1 && S.pre2020InhDeathYear2) ? S.pre2020InhDeathYear2 : S.pre2020InhDeathYear1;
+    const pre2020OwnerBy2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhOwnerBy2 && S.pre2020InhOwnerBy1) ? S.pre2020InhOwnerBy1 : S.pre2020InhOwnerBy2;
+    const pre2020DeathYr2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhDeathYear2 && S.pre2020InhDeathYear1) ? S.pre2020InhDeathYear1 : S.pre2020InhDeathYear2;
+    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, pre2020OwnerBy1Eff, pre2020DeathYr1Eff, S.by1);
+    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, pre2020OwnerBy2Eff, pre2020DeathYr2Eff, S.by2) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
     const pre2020InhDraw1 = pre2020Calc1.draw;
     const pre2020InhDraw2 = pre2020Calc2.draw;
     const pre2020InhDraw = pre2020InhDraw1 + pre2020InhDraw2;
 
-    // ── Inherited IRA draw ────────────────────────────────────────────────
-    let inhDraw = 0;
-    if (inh > 0) {
-      if (S.inhDrainYear >= 9999) {
-        // Not applicable — no forced draws, just holds
-      } else if (yr <= S.inhDrainYear) {
-        const yearsLeft = Math.max(1, S.inhDrainYear - yr + 1);
-        // Account for growth: draw enough so balance reaches 0 by drain year
-        // Draw = inh*(1+g) / yearsLeft so that after growth and draw, balance trends to 0
-        inhDraw = inh * (1 + gRate) / yearsLeft;
-      } else {
-        // Past drain year — force any residual to be distributed
-        inhDraw = inh * (1 + gRate); // take entire remaining balance
+    // ── Post-2020 inherited IRA lots ──────────────────────────────────────
+    let post2020InhRMD = 0, post2020InhExtra = 0, post2020InhFinal = 0;
+    const post2020LotDetails = [];
+    for (const lot of post2020Lots) {
+      if (!lot.active || (lot.bal||0) <= 0) continue;
+      const deathYear = parseInt(lot.deathYear) || 0;
+      if (!deathYear) continue;
+      const finalYear = deathYear + 10;
+      const firstYear = deathYear + 1;
+      const ownerStart = rmdStartYearForBirthYear(lot.ownerBy);
+      const ownerReachedRMD = ownerStart ? deathYear >= ownerStart : false;
+      const benefBy = String(lot.beneficiary||'1') === '2' ? S.by2 : S.by1;
+      const firstAge = firstYear - benefBy - 1;
+      const divisor = Math.max(1, singleLifeFactor(firstAge) - Math.max(0, yr - firstYear));
+      const required = ownerReachedRMD && yr >= firstYear && yr < finalYear ? lot.bal / divisor : 0;
+      let extra = 0;
+      if (yr < finalYear) {
+        if (lot.strategy === 'even') extra = lot.bal / Math.max(1, finalYear - yr + 1);
+        else if (lot.strategy === 'pct') extra = lot.bal * Math.max(0, parseF(lot.pct)||0) / 100;
       }
+      let finalDraw = yr >= finalYear ? lot.bal : 0;
+      const draw = Math.min(lot.bal, Math.max(required, extra, finalDraw));
+      if (yr >= finalYear) post2020InhFinal += draw;
+      else if (draw > required) post2020InhExtra += draw - required;
+      post2020InhRMD += yr >= finalYear ? draw : Math.min(draw, required);
+      lot.bal = Math.max(0, (lot.bal - draw) * (1 + gRate));
+      post2020LotDetails.push({idx:lot.idx, beneficiary:lot.beneficiary||'1', draw, required:yr >= finalYear ? draw : Math.min(draw, required), extra:yr >= finalYear ? 0 : Math.max(0, draw-required), finalYear, divisor, ownerReachedRMD, endBal:lot.bal});
     }
+    const post2020InhDraw = post2020InhRMD + post2020InhExtra;
+    const post2020InhDiscretionary = post2020InhExtra;
+
 
     // ── HSA ───────────────────────────────────────────────────────────────
     const hsaDep  = soy.hsaDep  != null && soy.hsaDep  !== '' ? parseF(soy.hsaDep)  :
@@ -2034,10 +2102,10 @@ function runProjection(S) {
 
     // ── Mandatory funding (step 1 of waterfall) ───────────────────────────
     // SS + RMDs + Inh draw + dividends + wages — these come in regardless
-    const mandatoryFunding = grossSS + rmd1 + rmd2 + pre2020InhDraw + divs + netAtWages + ptWages; // SS, RMDs, pre-2020 inherited RMDs, dividends, wages = W-2 take-home + self-employ
+    const mandatoryFunding = grossSS + rmd1 + rmd2 + pre2020InhDraw + post2020InhDraw + divs + netAtWages + ptWages; // SS, RMDs, pre-2020 inherited RMDs, dividends, wages = W-2 take-home + self-employ
 
     // ── Required funding ──────────────────────────────────────────────────
-    const step1Total = mandatoryFunding + inhDraw + hsaWith;
+    const step1Total = mandatoryFunding + hsaWith;
     const cashGapNeeded = Math.max(0, cashFloor - startCashBal);
 
     // ── Iterative tax solver loop ─────────────────────────────────────────
@@ -2050,6 +2118,7 @@ function runProjection(S) {
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
     let rothModeWith1_f=0, rothModeWith2_f=0;
     let ira1Draw_f=0, ira2Draw_f=0, secDraw_f=0, cashDraw_f=0;
+    let pre2020InhAddl1_f=0, pre2020InhAddl2_f=0;
     let rothDraw1_f=0, rothDraw2_f=0;
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
@@ -2058,14 +2127,29 @@ function runProjection(S) {
 
     // ── Excess / shortfall_inner ────────────────────────────────────────────────
     // Excess mandatory funding goes to Securities
-    // Step 1 inflows: mandatory (SS/RMDs/divs/wages) + inh draw + HSA withdrawal
+    // Step 1 inflows: mandatory (SS/RMDs/divs/wages) + HSA withdrawal
     const excessFunds_inner  = Math.max(0, step1Total - totalRequired);
     let   remainingShortfall = Math.max(0, totalRequired - step1Total);
     const shortfall_inner = remainingShortfall;
 
     // ── Funding waterfall — steps 2-4 ────────────────────────────────────
     const fundingChoice = resolveOverride(S.ovFundingOrder, yr, 'choice') || 'SEC';
-    let cashDraw_inner=0, secDraw_inner=0, ira1Draw_inner=0, ira2Draw_inner=0, rothDraw1_inner=0, rothDraw2_inner=0;
+    let cashDraw_inner=0, secDraw_inner=0, ira1Draw_inner=0, ira2Draw_inner=0, pre2020InhAddl1_inner=0, pre2020InhAddl2_inner=0, rothDraw1_inner=0, rothDraw2_inner=0;
+    const pre2020FundingMode = S.pre2020InhUseForFunding === true ? 'before' : (S.pre2020InhUseForFunding || 'no');
+    const drawPre2020ForFunding = (slot) => {
+      if (pre2020FundingMode !== slot || remainingShortfall <= 0) return;
+      const buckets = [
+        {i:1, avail:Math.max(0, pre2020Inh1 - pre2020InhDraw1 - pre2020InhAddl1_inner)},
+        ...(hp2 ? [{i:2, avail:Math.max(0, pre2020Inh2 - pre2020InhDraw2 - pre2020InhAddl2_inner)}] : [])
+      ].sort((a,b)=>b.avail-a.avail);
+      for (const b of buckets) {
+        if (remainingShortfall <= 0 || b.avail <= 0) continue;
+        const d = Math.min(remainingShortfall, b.avail);
+        if (b.i === 1) pre2020InhAddl1_inner += d;
+        else pre2020InhAddl2_inner += d;
+        remainingShortfall -= d;
+      }
+    };
 
     // Step 2: Cash down to floor
     if (remainingShortfall > 0) {
@@ -2079,15 +2163,23 @@ function runProjection(S) {
         secDraw_inner = Math.min(remainingShortfall, sec);
         remainingShortfall -= secDraw_inner;
         if (remainingShortfall > 0) {
+          drawPre2020ForFunding('before');
+          if (remainingShortfall > 0) {
+            if (ira1 >= ira2) { ira1Draw_inner = Math.min(remainingShortfall, ira1); }
+            else               { ira2Draw_inner = Math.min(remainingShortfall, ira2); }
+            remainingShortfall -= (ira1Draw_inner + ira2Draw_inner);
+            drawPre2020ForFunding('after');
+          }
+        }
+      } else {
+        // IRA first, with optional pre-2020 inherited IRA before regular IRA
+        drawPre2020ForFunding('before');
+        if (remainingShortfall > 0) {
           if (ira1 >= ira2) { ira1Draw_inner = Math.min(remainingShortfall, ira1); }
           else               { ira2Draw_inner = Math.min(remainingShortfall, ira2); }
           remainingShortfall -= (ira1Draw_inner + ira2Draw_inner);
+          drawPre2020ForFunding('after');
         }
-      } else {
-        // IRA first
-        if (ira1 >= ira2) { ira1Draw_inner = Math.min(remainingShortfall, ira1); }
-        else               { ira2Draw_inner = Math.min(remainingShortfall, ira2); }
-        remainingShortfall -= (ira1Draw_inner + ira2Draw_inner);
         if (remainingShortfall > 0) {
           secDraw_inner = Math.min(remainingShortfall, sec);
           remainingShortfall -= secDraw_inner;
@@ -2115,7 +2207,7 @@ function runProjection(S) {
     const allSecDivs = totalSecDivs;                        // security dividends (always taxable)
     const cashInt    = cash * intRate;                      // cash interest (always ordinary)
     const qualDivs   = cashInt + allSecDivs;                // total taxable dividends & interest
-    const taxableRMDs    = rmd1 + rmd2 + pre2020InhDraw + inhDraw + ira1Addl + ira2Addl + qualDivs;
+    const taxableRMDs    = rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
     // W-2 wages in AGI = gross wages minus pre-tax 401k contributions
     // Only applies when grossWages entered — atWages is take-home spend money, not AGI
     const w2AGI1         = grossWages1 > 0 ? grossWages1 - k401Contrib1Trad : 0;
@@ -2294,6 +2386,7 @@ function runProjection(S) {
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
     rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
     ira1Draw_f=ira1Draw_inner; ira2Draw_f=ira2Draw_inner; secDraw_f=secDraw_inner; cashDraw_f=cashDraw_inner;
+    pre2020InhAddl1_f=pre2020InhAddl1_inner; pre2020InhAddl2_f=pre2020InhAddl2_inner;
     rothDraw1_f=rothDraw1_inner; rothDraw2_f=rothDraw2_inner;
     excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
     unfunded_f=unfunded; fundingChoice_f=fundingChoice; irmaaMagi_f=irmaaMagi;
@@ -2308,6 +2401,7 @@ function runProjection(S) {
     const rothConvDraw1=rothConvDraw1_f, rothConvDraw2=rothConvDraw2_f;
     const rothModeWith1=rothModeWith1_f, rothModeWith2=rothModeWith2_f;
     const ira1Draw=ira1Draw_f, ira2Draw=ira2Draw_f, secDraw=secDraw_f, cashDraw=cashDraw_f;
+    const pre2020InhAddl1=pre2020InhAddl1_f, pre2020InhAddl2=pre2020InhAddl2_f, pre2020InhAddl=pre2020InhAddl1+pre2020InhAddl2;
     const rothDraw1=rothDraw1_f, rothDraw2=rothDraw2_f;
     const excessFunds=excessFunds_f, shortfall=shortfall_f;
     const fedRes=fedRes_f, stTax=stTax_f, irmaaTx=irmaaTx_f, agi=agi_f;
@@ -2352,10 +2446,8 @@ function runProjection(S) {
     roth2 = Math.max(0, roth2 + roth2Growth + rothConvDraw2 + k401Contrib2Roth
                         - rothDraw2 - rothModeWith2);
 
-    // Inherited IRA: prior * (1+g) - draw  (grow-then-draw, consistent with IRA1/2/Roth)
-    inh = Math.max(0, inh * (1 + gRate) - inhDraw);
-    pre2020Inh1 = Math.max(0, pre2020Inh1 * (1 + gRate) - pre2020InhDraw1);
-    pre2020Inh2 = Math.max(0, pre2020Inh2 * (1 + gRate) - pre2020InhDraw2);
+    pre2020Inh1 = Math.max(0, pre2020Inh1 * (1 + gRate) - pre2020InhDraw1 - pre2020InhAddl1);
+    pre2020Inh2 = Math.max(0, pre2020Inh2 * (1 + gRate) - pre2020InhDraw2 - pre2020InhAddl2);
 
     // Securities: prior * (1+g) - secDraw + excess mandatory funding + employer 401K
     // (excess goes to brokerage, not cash)
@@ -2366,7 +2458,7 @@ function runProjection(S) {
     hsa = Math.max(0, hsa * (1 + gRate) + hsaDep - hsaWith);
 
     const rawCash = startCashBal + netAtWages + ptWages + grossSS + divs + hsaWith
-                  + rmd1 + rmd2 + pre2020InhDraw + inhDraw + ira1Addl + ira2Addl
+                  + rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl + post2020InhDraw + ira1Addl + ira2Addl
                   + secDraw + rothDraw1 + rothDraw2 + rothModeWith1 + rothModeWith2
                   - (spending + fundingTax);
     // CashSweep: only sweep cash that's genuinely sitting above the floor.
@@ -2381,8 +2473,9 @@ function runProjection(S) {
     if (cashSweep > 0) sec = Math.max(0, sec + cashSweep);
     const allCashOut = spending + fundingTax;
 
-    const netWorth = cash + sec + ira1 + ira2 + roth1 + roth2 + hsa + inh + pre2020Inh1 + pre2020Inh2;
-    const totalFunding = mandatoryFunding + inhDraw + hsaWith + cashDraw + secDraw + ira1Draw + ira2Draw
+    const endPost2020Inh = post2020Lots.reduce((sum, lot)=>sum+(lot.active?(lot.bal||0):0),0);
+    const netWorth = cash + sec + ira1 + ira2 + roth1 + roth2 + hsa + pre2020Inh1 + pre2020Inh2 + endPost2020Inh;
+    const totalFunding = mandatoryFunding + hsaWith + cashDraw + secDraw + pre2020InhAddl + ira1Draw + ira2Draw
                          + rothDraw1 + rothDraw2;
 
     rows.push({
@@ -2390,10 +2483,11 @@ function runProjection(S) {
       cashDraw,
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
-      rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw,
+      rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
+      post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails,
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
       pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
-      pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, inhDraw, ira1Addl, ira2Addl,
+      pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, ira1Addl, ira2Addl,
       divs, totalSecDivs, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
       mandatoryFunding, step1Total, totalFunding,
       // Spending / cash
@@ -2413,8 +2507,8 @@ function runProjection(S) {
       totalTax: cashTax, incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
-      startCashBal, startSec, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startInh: startInhBal, startPre2020Inh1, startPre2020Inh2,
-      endCash: cash, sec, ira1, ira2, roth1, roth2, hsa, inh, pre2020Inh1, pre2020Inh2, netWorth,
+      startCashBal, startSec, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startPre2020Inh1, startPre2020Inh2, startPost2020Inh,
+      endCash: cash, sec, ira1, ira2, roth1, roth2, hsa, pre2020Inh1, pre2020Inh2, post2020Inh: endPost2020Inh, netWorth,
       // Growth amounts (for transparency)
       gRate, secGrowth, ira1Growth, ira2Growth, roth1Growth, roth2Growth,
     });
@@ -3157,7 +3251,7 @@ function loadUI(){
   sv('i-cola',pct(S.ssCola));
   sv('i-wagegrowth',pct(S.wageGrowth ?? S.ssCola));
   // RMD years auto-calculated, shown via updateLabels
-  sv('i-inhdrain',S.inhDrainYear);sv('i-preinh-ownerby1',S.pre2020InhOwnerBy1||'');sv('i-preinh-deathyr1',S.pre2020InhDeathYear1||'');sv('i-preinh-ownerby2',S.pre2020InhOwnerBy2||'');sv('i-preinh-deathyr2',S.pre2020InhDeathYear2||'');sv('i-stkgain',pct(S.stkGainPct));
+  sv('i-preinh-fund',S.pre2020InhUseForFunding===true?'before':(S.pre2020InhUseForFunding||'no'));sv('i-preinh-startbal1',S.pre2020InhStartBal1||'');sv('i-preinh-startyr1',S.pre2020InhStartYear1||'');sv('i-preinh-startbal2',S.pre2020InhStartBal2||'');sv('i-preinh-startyr2',S.pre2020InhStartYear2||'');sv('i-preinh-ownerby1',S.pre2020InhOwnerBy1||'');sv('i-preinh-deathyr1',S.pre2020InhDeathYear1||'');sv('i-preinh-ownerby2',S.pre2020InhOwnerBy2||'');sv('i-preinh-deathyr2',S.pre2020InhDeathYear2||'');sv('i-stkgain',pct(S.stkGainPct));
   sv('i-growth',pct(S.growthRate));sv('i-divr',pct(S.divRate));sv('i-divreinv',pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0)));sv('i-intr',pct(S.intRate||0));
   sv('i-qualdivsmode',S.qualDivsMode||'ordinary');
   sv('i-spinfl',pct(S.spendInfl));
@@ -3176,7 +3270,55 @@ function loadUI(){
   sv('i-k2t',pct(S.k401Trad2));sv('i-k2r',pct(S.k401Roth2));sv('i-k2e',pct(S.k401Emp2));sv('i-we2',S.wagesEnd2);sv('i-pte2',S.ptEnd2);
   // Starting balances now entered via Start of Year tab
   renderOVAll();
+  renderPost2020InhLots();
   toggleP2Fields();
+}
+
+function renderPost2020InhLots(){
+  const body=document.getElementById('post2020-inh-body'); if(!body)return;
+  const lots=S.post2020InhLots||[];
+  body.innerHTML=lots.map((lot,i)=>`
+    <div class="post2020-lot">
+      <div class="post2020-lot-head">Inherited IRA Lot ${i+1}<button class="btn btn-danger btn-sm" onclick="deletePost2020InhLot(${i})">×</button></div>
+      <div class="post2020-grid">
+        <label>Beneficiary<select data-postlot="${i}" data-k="beneficiary" onchange="readPost2020InhLots();IC()">
+          <option value="1" ${String(lot.beneficiary||'1')==='1'?'selected':''}>${p1()}</option>
+          ${hasP2()?`<option value="2" ${String(lot.beneficiary)==='2'?'selected':''}>${p2()}</option>`:''}
+        </select></label>
+        <label>Balance ($)<input type="number" data-postlot="${i}" data-k="balance" value="${lot.balance||''}" oninput="readPost2020InhLots();IC()"></label>
+        <label>Active Year<input type="number" data-postlot="${i}" data-k="startYear" value="${lot.startYear||''}" placeholder="${S.startYear}" oninput="readPost2020InhLots();IC()"></label>
+        <label>Owner Birth Year<input type="number" data-postlot="${i}" data-k="ownerBy" value="${lot.ownerBy||''}" oninput="readPost2020InhLots();IC()"></label>
+        <label>Death Year<input type="number" data-postlot="${i}" data-k="deathYear" value="${lot.deathYear||''}" oninput="readPost2020InhLots();IC()"></label>
+        <label>Draw Strategy<select data-postlot="${i}" data-k="strategy" onchange="readPost2020InhLots();IC()">
+          <option value="none" ${(lot.strategy||'none')==='none'?'selected':''}>RMD only / final year</option>
+          <option value="even" ${lot.strategy==='even'?'selected':''}>Even to year 10</option>
+          <option value="pct" ${lot.strategy==='pct'?'selected':''}>% of balance</option>
+        </select></label>
+        <label>Draw %<input type="number" data-postlot="${i}" data-k="pct" value="${lot.pct||''}" placeholder="0" oninput="readPost2020InhLots();IC()"></label>
+        <label>Notes<input type="text" data-postlot="${i}" data-k="notes" value="${lot.notes||''}" oninput="readPost2020InhLots();IC()"></label>
+      </div>
+    </div>`).join('');
+}
+function readPost2020InhLots(){
+  const body=document.getElementById('post2020-inh-body'); if(!body)return;
+  const lots=(S.post2020InhLots||[]).map(l=>Object.assign({},l));
+  body.querySelectorAll('[data-postlot]').forEach(el=>{
+    const i=parseInt(el.dataset.postlot), k=el.dataset.k;
+    if(!lots[i])lots[i]={};
+    lots[i][k]=el.value;
+  });
+  S.post2020InhLots=lots;
+}
+function addPost2020InhLot(){
+  readPost2020InhLots();
+  if(!Array.isArray(S.post2020InhLots))S.post2020InhLots=[];
+  S.post2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',strategy:'none',pct:'',notes:''});
+  saveState(S);renderPost2020InhLots();IC();
+}
+function deletePost2020InhLot(i){
+  readPost2020InhLots();
+  S.post2020InhLots.splice(i,1);
+  saveState(S);renderPost2020InhLots();IC();
 }
 
 // ── Read UI into state ────────────────────────────────────────────────────
@@ -3200,7 +3342,7 @@ function readUI(){
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
   // RMD start years auto-calculated in updateLabels — not read from inputs
-  S.inhDrainYear=gi('i-inhdrain');S.pre2020InhOwnerBy1=gv('i-preinh-ownerby1')||'';S.pre2020InhDeathYear1=gv('i-preinh-deathyr1')||'';S.pre2020InhOwnerBy2=gv('i-preinh-ownerby2')||'';S.pre2020InhDeathYear2=gv('i-preinh-deathyr2')||'';S.stkGainPct=gf('i-stkgain')/100;
+  S.pre2020InhUseForFunding=gv('i-preinh-fund')||'no';S.pre2020InhStartBal1=gf('i-preinh-startbal1');S.pre2020InhStartYear1=gv('i-preinh-startyr1')||'';S.pre2020InhStartBal2=gf('i-preinh-startbal2');S.pre2020InhStartYear2=gv('i-preinh-startyr2')||'';S.pre2020InhOwnerBy1=gv('i-preinh-ownerby1')||'';S.pre2020InhDeathYear1=gv('i-preinh-deathyr1')||'';S.pre2020InhOwnerBy2=gv('i-preinh-ownerby2')||'';S.pre2020InhDeathYear2=gv('i-preinh-deathyr2')||'';S.stkGainPct=gf('i-stkgain')/100;
   S.growthRate=gf('i-growth')/100;S.divRate=gf('i-divr')/100;S.divReinvestPct=Math.max(0,Math.min(1,gf('i-divreinv')/100));
   S.intRate=gf('i-intr')/100;S.reinvestDivs=S.divReinvestPct>=0.999?'yes':S.divReinvestPct<=0.001?'no':'partial';
   S.qualDivsMode=document.getElementById('i-qualdivsmode')?.value||'ordinary';
@@ -3209,6 +3351,7 @@ function readUI(){
   S.irmaaTarget=gv('i-irmaat')||'';S.irmaaHeadroom=gf('i-irmaah');S.irmaaMaxBracket=gv('i-irmaa-maxbracket')||'';S.irmaaBracketHeadroom=gf('i-irmaa-brackethr');S.medicareMagi2=gf('i-magi2');S.medicareMagi1=gf('i-magi1');
   S.k401Trad1=gf('i-k1t')/100;S.k401Roth1=gf('i-k1r')/100;S.k401Emp1=gf('i-k1e')/100;S.wagesEnd1=gi('i-we1');S.ptEnd1=gi('i-pte1')||9999;
   S.k401Trad2=gf('i-k2t')/100;S.k401Roth2=gf('i-k2r')/100;S.k401Emp2=gf('i-k2e')/100;S.wagesEnd2=gi('i-we2');S.ptEnd2=gi('i-pte2')||9999;
+  readPost2020InhLots();
   // Starting balances read from SOY state, not input fields
 }
 
@@ -3257,6 +3400,8 @@ function updateLabels(){
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
   setTxt('l-rmd1',n1+' RMD Start Year');setTxt('l-rmd2',n2+' RMD Start Year');
+  setTxt('l-preinh-startbal1',n1+' Initial Pre-2020 Inh IRA ($)');setTxt('l-preinh-startyr1',n1+' Balance Start Year');
+  setTxt('l-preinh-startbal2',n2+' Initial Pre-2020 Inh IRA ($)');setTxt('l-preinh-startyr2',n2+' Balance Start Year');
   setTxt('l-preinh-ownerby1',n1+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr1',n1+' Deceased Owner Death Year');
   setTxt('l-preinh-ownerby2',n2+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr2',n2+' Deceased Owner Death Year');
   setTxt('l-ira1',n1+' IRA');setTxt('l-ira2',n2+' IRA');
@@ -3308,7 +3453,7 @@ function renderDash(){
   const totConv=proj.reduce((s,r)=>s+r.rothConv,0);
   const avgEff=proj.reduce((s,r)=>s+r.effRate,0)/proj.length;
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi"><div class="kpi-lbl">Starting Net Worth</div><div class="kpi-val g">${f$((f.startCashBal||0)+(f.startSec||0)+(f.startIRA1||0)+(f.startIRA2||0)+(f.startRoth1||0)+(f.startRoth2||0)+(f.startHSA||0)+(f.startInh||0)+(f.startPre2020Inh1||0)+(f.startPre2020Inh2||0),true)}</div><div class="kpi-sub">Year ${S.startYear}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Starting Net Worth</div><div class="kpi-val g">${f$((f.startCashBal||0)+(f.startSec||0)+(f.startIRA1||0)+(f.startIRA2||0)+(f.startRoth1||0)+(f.startRoth2||0)+(f.startHSA||0)+(f.startPre2020Inh1||0)+(f.startPre2020Inh2||0)+(f.startPost2020Inh||0),true)}</div><div class="kpi-sub">Year ${S.startYear}</div></div>
     <div class="kpi"><div class="kpi-lbl">Final Net Worth</div><div class="kpi-val ${l.netWorth<0?'r':'g'}">${f$(l.netWorth,true)}</div><div class="kpi-sub">Year ${S.endYear}</div></div>
     <div class="kpi"><div class="kpi-lbl">Peak Net Worth</div><div class="kpi-val">${f$(Math.max(...proj.map(r=>r.netWorth)),true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Lifetime SS</div><div class="kpi-val b">${f$(totSS,true)}</div></div>
@@ -3372,7 +3517,7 @@ function renderSummaryTable(){
       {f:'fundingWages',  h:'Wages &\nSelf-Employ'},
       {f:'grossSS',       h:'Soc Sec'},
       {f:'rmdTotal',      h:'RMDs'},
-      {f:'inhDraw',       h:'Inherited'},
+      
       {f:'divs',          h:'Dividends'},
     ]},
     { label:'DISCRETIONARY FUNDING', bg:'#3a1a00', tc:'#d4844a', cols:[
@@ -3409,7 +3554,7 @@ function renderSummaryTable(){
       {f:'startSec',      h:'Securities'},
       {f:'iraSOY',        h:'IRA\n(combined)'},
       {f:'rothSOY',       h:'Roth\n(combined)'},
-      {f:'startInh',      h:'Inherited'},
+      
       {f:'startHSA',      h:'HSA'},
       {f:'sowNetWorth',   h:'Net Worth',  bold:true},
     ]},
@@ -3452,13 +3597,13 @@ function renderSummaryTable(){
     const even  = ri%2===0;
     const rowBg = even ? '#fffdf5' : '#f5f0e8';
     const darkBg= even ? '#2a1e08' : '#1e1408';
-    const rmdTotal      = (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0);
+    const rmdTotal      = (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.post2020InhDraw||0);
     const iraTotal      = (r.ira1Addl||0)+(r.ira2Addl||0);
     const rothDrawTotal = (r.rothDraw1||0)+(r.rothDraw2||0);
     const actualTax     = r.fundingTax||0; // what waterfall actually funded for taxes
     const iraSOY        = (r.startIRA1||0)+(r.startIRA2||0);
     const rothSOY       = (r.startRoth1||0)+(r.startRoth2||0);
-    const sowNetWorth   = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+(r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startHSA||0);
+    const sowNetWorth   = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)+(r.startHSA||0);
     const cashDraw      = r.cashDraw || 0;
     const fundingWages   = (r.atWages||0) + (r.ptWages||0);
     const derived       = {rmdTotal, iraTotal, rothDrawTotal, cashDraw, actualTax, iraSOY, rothSOY, sowNetWorth, fundingWages};
@@ -3515,7 +3660,7 @@ function renderCF(){
   const frozenTotal  = frozenWidths.reduce((a,b)=>a+b,0);
 
   // Scrollable column groups
-  const groups = [
+  let groups = [
     { label:'MANDATORY FUNDING', bg:'#1a3a1a', tc:'#6abf6a', cols:[
       {f:'atWages',     h:'Take-Home\nWages'},
       {f:'ptWages',     h:'Self-Employ\nIncome'},
@@ -3524,7 +3669,7 @@ function renderCF(){
       {f:'rmd1',     h:n1+'\nRMD'},
       {f:'pre2020InhDraw1', h:n1+'\nInh RMD'},
       ...(hp?[{f:'rmd2', h:n2+'\nRMD'}, {f:'pre2020InhDraw2', h:n2+'\nInh RMD'}]:[]),
-      {f:'inhDraw',  h:'Post-2020\nInh IRA Draw'},
+      {f:'post2020InhRMD', h:'Post-2020\nInh RMD'},
       {f:'divs',     h:'Dividends'},
     ]},
     { label:'DISCRETIONARY FUNDING', bg:'#3a1a00', tc:'#d4844a', cols:[
@@ -3535,6 +3680,9 @@ function renderCF(){
       {f:'rothDraw1', h:n1+'\nRoth W/D'},
       ...(hp?[{f:'rothDraw2', h:n2+'\nRoth W/D'}]:[]),
       {f:'hsaWith',   h:'HSA\nW/D'},
+      {f:'pre2020InhAddl1', h:n1+'\nInh Draw'},
+      ...(hp?[{f:'pre2020InhAddl2', h:n2+'\nInh Draw'}]:[]),
+      {f:'post2020InhDiscretionary', h:'Post-2020\nInh Draw'},
     ]},
     { label:'SPENDING', bg:'#2a1a2a', tc:'#c080c0', cols:[
       {f:'spending',      h:'Annual\nSpending'},
@@ -3582,6 +3730,14 @@ function renderCF(){
       {f:'sowNetWorth',  h:'SOY Net\nWorth', bold:true, green:true},
     ]},
   ];
+
+  const inheritedCols = new Set(['pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD','pre2020InhAddl1','pre2020InhAddl2','post2020InhDiscretionary','startAllInh']);
+  const hasColumnData = (field) => proj.some(r => {
+    if (field === 'startAllInh') return ((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)) > 0;
+    return Math.abs(r[field]||0) > 0.49;
+  });
+  groups = groups.map(g => Object.assign({}, g, {cols:g.cols.filter(c => !inheritedCols.has(c.f) || hasColumnData(c.f))}))
+                 .filter(g => g.cols.length);
 
   // ── thead ────────────────────────────────────────────────────────────────
   const frozenBg = '#1a1208', frozenTc = '#b8860b';
@@ -3638,7 +3794,7 @@ function renderCF(){
     });
 
     // Scrollable cells — derive taxable IRA draws, dividends, stock gains, taxable SS if not on row
-    const taxableRMDs    = (r.taxableRMDs    != null) ? r.taxableRMDs    : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.inhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
+    const taxableRMDs    = (r.taxableRMDs    != null) ? r.taxableRMDs    : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
     const taxableDivs    = (r.qualDivs != null) ? r.qualDivs : (r.divs||0);
     const taxableIRADraws = Math.max(0, taxableRMDs - taxableDivs);
     const taxableStkGain = (r.taxableStkGain != null) ? r.taxableStkGain : 0;
@@ -3646,7 +3802,7 @@ function renderCF(){
     const actualTax      = r.fundingTax||0; // what waterfall actually funded for taxes
     const iraSOY      = (r.startIRA1||0)+(r.startIRA2||0);
     const rothSOY     = (r.startRoth1||0)+(r.startRoth2||0);
-    const startAllInh = (r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0);
+    const startAllInh = (r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0);
     const sowNetWorth = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+startAllInh+(r.startHSA||0);
     const totalWages  = (r.w2AGI||0) + (r.ptWages||0);   // taxable wages (for TAXABLE INCOME section)
     const fundingWages = (r.atWages||0) + (r.ptWages||0); // cash received (for MANDATORY FUNDING section)
@@ -3747,7 +3903,7 @@ function renderCharts(){
     {label:p1()+' RMD',data:proj.map(r=>r.rmd1),backgroundColor:'#ff9800',stack:'s'},
     {label:p2()+' RMD',data:proj.map(r=>r.rmd2),backgroundColor:'#f44336',stack:'s'},
     {label:'Pre-2020 Inh RMD',data:proj.map(r=>r.pre2020InhDraw||0),backgroundColor:'#a66a2a',stack:'s'},
-    {label:'Post-2020 / Custom Inh Draw',data:proj.map(r=>r.inhDraw),backgroundColor:'#795548',stack:'s'},
+    {label:'Post-2020 Inh Lots',data:proj.map(r=>r.post2020InhDraw||0),backgroundColor:'#6d4c41',stack:'s'},
   ]},{scales:{x:{stacked:true},y:{stacked:true}}});
   mkChart('ch-roth','bar',{labels:lbs,datasets:[
     {label:p1()+' Roth Bal',data:proj.map(r=>r.roth1),backgroundColor:'rgba(155,89,182,.5)',type:'line',borderColor:'#9b59b6',borderWidth:1.5,pointRadius:0,fill:false},
@@ -3757,6 +3913,7 @@ function renderCharts(){
   mkChart('ch-waterfall','bar',{labels:lbs,datasets:[
     {label:'Cash Draw',data:proj.map(r=>r.shortfall>0?Math.min(r.shortfall,Math.max(0,r.startCashBal-(parseF(resolveOverride(S.ovCashFloor,r.yr,'floor'))??S.cashFloor))):0),backgroundColor:'#27ae60',stack:'s'},
     {label:'Sec Draw',data:proj.map(r=>r.stkSales),backgroundColor:'#2980b9',stack:'s'},
+    {label:'Pre-2020 Inh Draw',data:proj.map(r=>r.pre2020InhAddl||0),backgroundColor:'#a66a2a',stack:'s'},
     {label:'IRA Draw',data:proj.map(r=>r.ira1Addl+r.ira2Addl),backgroundColor:'#e67e22',stack:'s'},
     {label:'Roth Draw',data:proj.map(r=>r.rothDraw1+r.rothDraw2),backgroundColor:'#8e44ad',stack:'s'},
   ]},{scales:{x:{stacked:true},y:{stacked:true}}});
@@ -3782,16 +3939,16 @@ function renderYD(){
   document.getElementById('yd-badge').textContent=displayAgeText(r);
   const dr=(l,v,cls='')=>`<div class="dr ${cls}"><span class="dl">${l}</span><span class="dv">${v}</span></div>`;
   const agiWages = (r.w2AGI||0) + (r.ptWages||0);
-  const agiIRADraws = (r.rmd1||0) + (r.rmd2||0) + (r.pre2020InhDraw||0) + (r.inhDraw||0) + (r.ira1Addl||0) + (r.ira2Addl||0);
+  const agiIRADraws = (r.rmd1||0) + (r.rmd2||0) + (r.pre2020InhDraw||0) + (r.pre2020InhAddl||0) + (r.post2020InhDraw||0) + (r.ira1Addl||0) + (r.ira2Addl||0);
   const agiRothConv = r.rothConv || 0;
   const agiDivInt = r.qualDivs != null ? r.qualDivs : (r.divs||0);
   const agiStkGain = r.taxableStkGain || 0;
   const agiTaxableSS = r.tSS || 0;
   const agiPartsTotal = agiWages + agiIRADraws + agiRothConv + agiDivInt + agiStkGain + agiTaxableSS;
   const agiResidual = (r.agi || 0) - agiPartsTotal;
-  const autoFunding = (r.mandatoryFunding||0) + (r.inhDraw||0) + (r.hsaWith||0);
-  const accountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothDraw1||0) + (r.rothDraw2||0);
-  const taxableAccountDraws = (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothConv||0);
+  const autoFunding = (r.mandatoryFunding||0) + (r.hsaWith||0);
+  const accountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.pre2020InhAddl||0) + (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothDraw1||0) + (r.rothDraw2||0);
+  const taxableAccountDraws = (r.pre2020InhAddl||0) + (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothConv||0);
   const nonTaxableAccountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.rothDraw1||0) + (r.rothDraw2||0);
   const fundingTax = r.fundingTax || 0;
   const taxFeedbackNote = taxableAccountDraws > 0
@@ -3823,12 +3980,16 @@ function renderYD(){
       ${r.rmd2>0?dr(p2()+' RMD',f$(r.rmd2)):''}
       ${r.pre2020InhDraw1>0?dr(p1()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw1)):''}
       ${r.pre2020InhDraw2>0?dr(p2()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw2)):''}
-      ${r.inhDraw>0?dr('Post-2020 / Custom Inh IRA Draw',f$(r.inhDraw)):''}
+      ${r.post2020InhRMD>0?dr('Post-2020 Inh IRA Required RMD',f$(r.post2020InhRMD)):''}
+      ${r.post2020InhExtra>0?dr('Post-2020 Inh IRA Draw',f$(r.post2020InhExtra)):''}
+
       ${dr('Dividends & Interest',f$(r.divs))}
       <div class="dr tot"><span class="dl">Step 1 Total</span><span class="dv">${f$(r.mandatoryFunding)}</span></div>
       <div class="sh" style="font-size:8px;color:#a07830;border:none;margin-bottom:4px;margin-top:6px">STEP 2–4 — ACCOUNT DRAWS</div>
-      ${r.inhDraw>0?dr('Post-2020 / Custom Inh IRA Draw',f$(r.inhDraw)):''}
+
       ${r.hsaWith>0?dr('HSA Withdrawal',f$(r.hsaWith)):''}
+      ${r.pre2020InhAddl1>0?dr(p1()+' Pre-2020 Inh IRA Draw',f$(r.pre2020InhAddl1)):''}
+      ${r.pre2020InhAddl2>0?dr(p2()+' Pre-2020 Inh IRA Draw',f$(r.pre2020InhAddl2)):''}
       ${r.cashDraw>0?dr('Cash Draw',f$(r.cashDraw)):''}
       ${r.ira1Addl>0?dr(p1()+' IRA Draw',f$(r.ira1Addl)):''}
       ${r.ira2Addl>0?dr(p2()+' IRA Draw',f$(r.ira2Addl)):''}
@@ -3907,7 +4068,8 @@ function renderYD(){
       ${dr(p1()+' Roth',f$(r.roth1))}
       ${dr(p2()+' Roth',f$(r.roth2))}
       ${dr('HSA',f$(r.hsa))}
-      ${dr('Post-2020 / Custom Inherited IRA',f$(r.inh))}
+      ${dr('Post-2020 Inherited IRA Lots',f$(r.post2020Inh||0))}
+
       ${dr(p1()+' Pre-2020 Inherited IRA',f$(r.pre2020Inh1||0))}
       ${hasP2()?dr(p2()+' Pre-2020 Inherited IRA',f$(r.pre2020Inh2||0)):''}
       ${dr('Net Worth',f$(r.netWorth),'big')}
@@ -3934,9 +4096,9 @@ function renderSOY(){
     ['roth1',    n1,          'Roth'],
     ...(hp ? [['roth2', n2, 'Roth']] : []),
     ['hsa',      'HSA',       'Balance'],
-    ['inh',      'Inherited', 'IRA'],
     ['pre2020Inh1', n1,       'Pre-2020 Inh IRA'],
     ...(hp ? [['pre2020Inh2', n2, 'Pre-2020 Inh IRA']] : []),
+    ['post2020Inh', 'Post-2020', 'Inh IRA'],
     ['hsaDep',   'HSA',       'Deposit'],
     ['hsaWith',  'HSA',       'Withdrawal'],
   ];
@@ -3953,7 +4115,7 @@ function renderSOY(){
     const pt2 = yr <= (S.ptEnd2||9999);
     const map = {
       cash: r.endCash, sec: r.sec, ira1: r.ira1, ira2: r.ira2,
-      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, inh: r.inh, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2,
+      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2, post2020Inh: r.post2020Inh,
       grossWages:  w1  ? (r.grossWages1||0) * wCola : null,
       grossWages2: w2  ? (r.grossWages2||0) * wCola : null,
       withholdPct: null, withholdPct2: null,
@@ -4031,7 +4193,7 @@ function editSOY(yr){
       // First year — use S starting inputs as fallback
       const firstMap = {
         cash: S.startCash, sec: S.startSec, ira1: S.startIRA1, ira2: S.startIRA2,
-        roth1: S.startRoth1, roth2: S.startRoth2, hsa: S.startHSA, inh: S.startInh, pre2020Inh1: S.startPre2020Inh1, pre2020Inh2: S.startPre2020Inh2,
+        roth1: S.startRoth1, roth2: S.startRoth2, hsa: S.startHSA, pre2020Inh1: S.startPre2020Inh1, pre2020Inh2: S.startPre2020Inh2, post2020Inh: (S.post2020InhLots||[]).reduce((sum,l)=>sum+(parseF(l.balance)||0),0),
         grossWages: S.grossWages1||0, withholdPct: S.withholdPct1||null,
         ptWages: S.ptWages1||0,
         grossWages2: S.grossWages2||0, withholdPct2: S.withholdPct2||null,
@@ -4051,7 +4213,7 @@ function editSOY(yr){
     const pt2 = yr <= (S.ptEnd2||9999);
     const map = {
       cash: r.endCash, sec: r.sec, ira1: r.ira1, ira2: r.ira2,
-      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, inh: r.inh,
+      roth1: r.roth1, roth2: r.roth2, hsa: r.hsa,
       grossWages:  w1  ? Math.round((r.grossWages1||0) * wCola) : 0,
       ptWages:     pt1 ? Math.round((r.ptWages1||0)   * wCola) : 0,
       grossWages2: w2  ? Math.round((r.grossWages2||0) * wCola) : 0,
@@ -4183,9 +4345,10 @@ function editSOY(yr){
       ${fld('roth1',p1()+' Roth ($)')}
       ${hasP2()?fld('roth2',p2()+' Roth ($)'):''}
       ${fld('hsa','HSA ($)')}
-      ${fld('inh','Post-2020 / Custom Inherited IRA ($)')}
+
       ${fld('pre2020Inh1',p1()+' Pre-2020 Inherited IRA ($)','Uses the person-specific inherited IRA RMD settings from Inputs')}
       ${hasP2()?fld('pre2020Inh2',p2()+' Pre-2020 Inherited IRA ($)','Uses the person-specific inherited IRA RMD settings from Inputs'):''}
+      ${fld('post2020Inh','Post-2020 Inherited IRA Lots Total ($)','Optional total reset for active post-2020 lots; allocated proportionally across active lots')}
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-light btn-sm" onclick="clearSOY(${yr})">✕ Clear All Entries for ${yr}</button>
@@ -4288,15 +4451,15 @@ function refreshSOYRow(yr){
       const hasData = Object.values(s).some(v=>v!==null&&v!==undefined&&v!=='');
       tr.className = hasData ? 'soy-entered' : '';
       // Update data cells (skip first two: year, ages)
-      const fields=['grossWages','withholdPct','ptWages','grossWages2','withholdPct2','ptWages2','ss1','ss2','spending','cash','sec','ira1','ira2','roth1','roth2','hsa','inh','hsaDep','hsaWith'];
+      const fields=['grossWages','withholdPct','ptWages','grossWages2','withholdPct2','ptWages2','ss1','ss2','spending','cash','sec','ira1','ira2','roth1','roth2','hsa','hsaDep','hsaWith'];
       const cells = tr.querySelectorAll('td');
       const n1=p1(),n2=p2(),hp=hasP2();
       const colKeys=['grossWages','withholdPct','ptWages',...(hp?['grossWages2','withholdPct2','ptWages2']:[]),'ss1',...(hp?['ss2']:[]),'spending',
         'cash','sec','ira1',...(hp?['ira2']:[]),'roth1',...(hp?['roth2']:[]),
-        'hsa','inh','pre2020Inh1',...(hp?['pre2020Inh2']:[]),'hsaDep','hsaWith'];
+        'hsa','pre2020Inh1',...(hp?['pre2020Inh2']:[]),'post2020Inh','hsaDep','hsaWith'];
       const r = proj.find(x=>x.yr===yr-1);
       const defMap = r ? {cash:r.endCash,sec:r.sec,ira1:r.ira1,ira2:r.ira2,
-        roth1:r.roth1,roth2:r.roth2,hsa:r.hsa,inh:r.inh,pre2020Inh1:r.pre2020Inh1,pre2020Inh2:r.pre2020Inh2,atWages:r.atWages1,
+        roth1:r.roth1,roth2:r.roth2,hsa:r.hsa,pre2020Inh1:r.pre2020Inh1,pre2020Inh2:r.pre2020Inh2,post2020Inh:r.post2020Inh,atWages:r.atWages1,
         ptWages:r.ptWages1,atWages2:r.atWages2,ptWages2:r.ptWages2,
         ss1:r.grossSS1>0?Math.round(r.grossSS1/12):null,
         ss2:r.grossSS2>0?Math.round(r.grossSS2/12):null,
@@ -4748,7 +4911,6 @@ function apCard(yr){
   if ((r.unfunded||0) > 0) why.push('Funding shortfall');
   const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
-                    (r.inhDraw||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
                     (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
 
@@ -4769,8 +4931,6 @@ function apCard(yr){
     ${row(p2()+' IRA', r.startIRA2||0)}
     ${row('Roth (combined)', (r.startRoth1||0)+(r.startRoth2||0))}
     ${(r.startHSA||0)>0 ? row('HSA', r.startHSA) : ''}
-    ${(r.startInh||0)>0 ? row('Inherited IRA', r.startInh) : ''}
-
     ${hdr('SPENDING REQUIREMENT')}
     ${row('Annual Spending', r.spending, true)}
     ${row(taxLabel, fundedTax)}
@@ -4796,7 +4956,6 @@ function apCard(yr){
     ${flag('Securities Draw', r.stkSales||0, '#8b0000')}
     ${flag('Invest Surplus → Securities', r.excessFunds||0, '#1a4a1a')}
     ${flag('Cash Sweep → Securities', r.cashSweep||0, '#1a4a1a')}
-    ${flag('Inherited IRA Draw', r.inhDraw||0, '#7a5200')}
     ${flag(p1()+' Roth Withdrawal', r.rothDraw1||0, '#6b0080')}
     ${flag(p2()+' Roth Withdrawal', r.rothDraw2||0, '#6b0080')}
     ${rothConv>0 ? flag('Roth Conv — '+convSrc+' → Roth', rothConv, '#1a3a6a') : ''}
@@ -5237,7 +5396,7 @@ function renderExport(){
     ${[[p1()+(hasP2()?' & '+p2():''),'Persons'],[S.by1+' / '+S.by2,'Birth Years'],
       [({MFJ:'Married (MFJ)',SINGLE:'Single',HOH:'Head of Household'}[S.filing]||S.filing)+' / '+(S.state||'Federal'),'Filing/State'],
       [S.startYear+'–'+S.endYear+' ('+proj.length+' yrs)','Plan Range'],
-      [f$(S.startCash+S.startSec+S.startIRA1+S.startIRA2+S.startRoth1+S.startRoth2+S.startHSA+S.startInh),'Starting Net Worth'],
+      [f$(S.startCash+S.startSec+S.startIRA1+S.startIRA2+S.startRoth1+S.startRoth2+S.startHSA),'Starting Net Worth'],
       [f$(l?.netWorth),'Final Net Worth'],
       [f$(totTax),'Total Taxes Paid'],
       [f$(totConv),'Total Roth Conversions'],
@@ -5439,6 +5598,9 @@ function buildReportPayload(){
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
     pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
     pre2020InhOwnerBy2: S.pre2020InhOwnerBy2||'', pre2020InhDeathYear2: S.pre2020InhDeathYear2||'',
+    pre2020InhUseForFunding: S.pre2020InhUseForFunding||'no',
+    pre2020InhStartBal1:S.pre2020InhStartBal1||0, pre2020InhStartYear1:S.pre2020InhStartYear1||'',
+    pre2020InhStartBal2:S.pre2020InhStartBal2||0, pre2020InhStartYear2:S.pre2020InhStartYear2||'',
     k401Trad1: S.k401Trad1, k401Roth1: S.k401Roth1,
     k401Trad2: S.k401Trad2, k401Roth2: S.k401Roth2,
     wagesEnd1: S.wagesEnd1, wagesEnd2: S.wagesEnd2,
@@ -5452,14 +5614,15 @@ function buildReportPayload(){
     ptWages1:r.ptWages1||0, ptWages2:r.ptWages2||0,
     grossSS1:r.grossSS1||0, grossSS2:r.grossSS2||0,
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
-    pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0,
+    pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0, pre2020InhAddl1:r.pre2020InhAddl1||0, pre2020InhAddl2:r.pre2020InhAddl2||0, pre2020InhAddl:r.pre2020InhAddl||0,
+    post2020InhRMD:r.post2020InhRMD||0, post2020InhExtra:r.post2020InhExtra||0, post2020InhFinal:r.post2020InhFinal||0, post2020InhDiscretionary:r.post2020InhDiscretionary||0, post2020InhDraw:r.post2020InhDraw||0,
     pre2020InhStartYear1:r.pre2020InhStartYear1||0, pre2020InhStartYear2:r.pre2020InhStartYear2||0,
     pre2020InhOwnerReachedRMD1:!!r.pre2020InhOwnerReachedRMD1, pre2020InhOwnerReachedRMD2:!!r.pre2020InhOwnerReachedRMD2,
     pre2020InhDivisor1:r.pre2020InhDivisor1||0, pre2020InhDivisor2:r.pre2020InhDivisor2||0,
     rothConv:r.rothConv||0, rothConvDraw1:r.rothConvDraw1||0, rothConvDraw2:r.rothConvDraw2||0,
     divIncome:r.divs||r.divIncome||0,
     ira1Addl:r.ira1Addl||0, ira2Addl:r.ira2Addl||0,
-    hsaWith:r.hsaWith||0, inhDraw:r.inhDraw||0,
+    hsaWith:r.hsaWith||0,
     rothDraw1:r.rothDraw1||0, rothDraw2:r.rothDraw2||0,
     stkSales:r.stkSales||0,
     spending:r.spending||0, totalFunding:r.totalFunding||0,
@@ -5475,12 +5638,12 @@ function buildReportPayload(){
     startCashBal:r.startCashBal||0, startSec:r.startSec||0,
     startIRA1:r.startIRA1||0, startIRA2:r.startIRA2||0,
     startRoth1:r.startRoth1||0, startRoth2:r.startRoth2||0,
-    startHSA:r.startHSA||0, startInh:r.startInh||0,
-    startPre2020Inh1:r.startPre2020Inh1||0, startPre2020Inh2:r.startPre2020Inh2||0,
+    startHSA:r.startHSA||0,
+    startPre2020Inh1:r.startPre2020Inh1||0, startPre2020Inh2:r.startPre2020Inh2||0, startPost2020Inh:r.startPost2020Inh||0,
     endCash:r.endCash||0, sec:r.sec||0,
     ira1:r.ira1||0, ira2:r.ira2||0,
     roth1:r.roth1||0, roth2:r.roth2||0,
-    hsa:r.hsa||0, inh:r.inh||0, pre2020Inh1:r.pre2020Inh1||0, pre2020Inh2:r.pre2020Inh2||0, netWorth:r.netWorth||0,
+    hsa:r.hsa||0, pre2020Inh1:r.pre2020Inh1||0, pre2020Inh2:r.pre2020Inh2||0, post2020Inh:r.post2020Inh||0, netWorth:r.netWorth||0,
     unfunded:r.unfunded||0, excessFunds:r.excessFunds||0, cashSweep:r.cashSweep||0,
     secDraw:r.stkSales||r.secDraw||0, cashDraw:r.cashDraw||0,
   }));
@@ -5752,6 +5915,7 @@ function generateReport(){
     <tr><td>Wages End Year</td><td>${wend(A.wagesEnd1)}</td>${has2?`<td>${wend(A.wagesEnd2)}</td>`:''}</tr>
     <tr><td>RMD Start Year</td><td>${A.rmdStart1||'—'}</td>${has2?`<td>${A.rmdStart2||'—'}</td>`:''}</tr>
     <tr><td>Pre-2020 Inh IRA Owner Birth / Death</td><td>${A.pre2020InhOwnerBy1||'—'} / ${A.pre2020InhDeathYear1||'—'}</td>${has2?`<td>${A.pre2020InhOwnerBy2||'—'} / ${A.pre2020InhDeathYear2||'—'}</td>`:''}</tr>
+    <tr><td>Pre-2020 Inh IRA Funding</td><td>${A.pre2020InhUseForFunding==='before'?'Use before regular IRA':A.pre2020InhUseForFunding==='after'?'Use after regular IRA':'RMDs only'}</td>${has2?'<td></td>':''}</tr>
     <tr><td>401k Trad/Roth</td><td>${fp(A.k401Trad1)} / ${fp(A.k401Roth1)}</td>${has2?`<td>${fp(A.k401Trad2)} / ${fp(A.k401Roth2)}</td>`:''}</tr>
     </tbody></table>`;
 
@@ -5780,18 +5944,18 @@ function generateReport(){
     const cash_s=full.startCashBal||0, sec_s=full.startSec||0;
     const ira_s=(full.startIRA1||0)+(full.startIRA2||0);
     const roth_s=(full.startRoth1||0)+(full.startRoth2||0);
-    const hsa_s=full.startHSA||0, inh_s=full.startInh||0, preinh_s=(full.startPre2020Inh1||0)+(full.startPre2020Inh2||0);
-    let nw_s=cash_s+sec_s+ira_s+roth_s+hsa_s+inh_s+preinh_s;
+    const hsa_s=full.startHSA||0, preinh_s=(full.startPre2020Inh1||0)+(full.startPre2020Inh2||0), postinh_s=full.startPost2020Inh||0;
+    let nw_s=cash_s+sec_s+ira_s+roth_s+hsa_s+preinh_s+postinh_s;
     if(!nw_s){ // fallback to prior EOY
       const prev=rows_by_yr[yr-1]||{};
       nw_s=(prev.endCash||0)+(prev.sec||0)+(prev.ira1||0)+(prev.ira2||0)+(prev.roth1||0)+(prev.roth2||0)+(prev.hsa||0);
     }
     const wages=(full.grossWages1||0)+(full.grossWages2||0);
     const ss=(full.grossSS1||0)+(full.grossSS2||0);
-    const rmds=(full.rmd1||0)+(full.rmd2||0)+(full.pre2020InhDraw||0);
+    const rmds=(full.rmd1||0)+(full.rmd2||0)+(full.pre2020InhDraw||0)+(full.post2020InhDraw||0);
     const divs=full.divIncome||0, rc=full.rothConv||0;
-    const ira1a=full.ira1Addl||0, ira2a=full.ira2Addl||0;
-    const hsaW=full.hsaWith||0, inhD=full.inhDraw||0;
+    const ira1a=full.ira1Addl||0, ira2a=full.ira2Addl||0, preInhA=full.pre2020InhAddl||0;
+    const hsaW=full.hsaWith||0, inhD=0;
     const rDraw1=full.rothDraw1||0, rDraw2=full.rothDraw2||0;
     const stkS=full.stkSales||full.secDraw||0;
     const cashD=full.cashDraw||0;
@@ -5806,7 +5970,7 @@ function generateReport(){
 
     // Three-panel table
     const bals=[['Cash',cash_s],['Securities',sec_s],['IRA (combined)',ira_s],
-                ['Roth (combined)',roth_s],...(hsa_s?[['HSA',hsa_s]]:[]),...(inh_s?[['Post-2020 / Custom Inh IRA',inh_s]]:[]),...(preinh_s?[['Pre-2020 Inh IRA',preinh_s]]:[]),
+                ['Roth (combined)',roth_s],...(hsa_s?[['HSA',hsa_s]]:[]),...(postinh_s?[['Post-2020 Inh IRA Lots',postinh_s]]:[]),...(preinh_s?[['Pre-2020 Inh IRA',preinh_s]]:[]),
                 ['Net Worth',nw_s]];
     const funds=[];
     const pt=(full.ptWages1||0)+(full.ptWages2||0);
@@ -5819,10 +5983,10 @@ function generateReport(){
     if(stkS)   funds.push(['Securities Draw',stkS]);
     if(cashD)  funds.push(['Cash Draw (to raise to cash floor)',cashD]);
     if(hsaW)   funds.push(['HSA Withdrawal',hsaW]);
-    if(inhD)   funds.push(['Post-2020 / Custom Inh IRA Draw',inhD]);
+    if(preInhA) funds.push(['Pre-2020 Inh IRA Draw',preInhA]);
     if(rDraw1) funds.push([A.name1+' Roth Withdrawal',rDraw1]);
     if(rDraw2) funds.push([(A.name2||'Person 2')+' Roth Withdrawal',rDraw2]);
-    const totalFunded = wages+pt+ss+divs+rmds+ira1a+ira2a+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
+    const totalFunded = wages+pt+ss+divs+rmds+ira1a+ira2a+preInhA+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
     funds.push(['Total Funding',totalFunded]);
     funds.push(['Annual Spending',spending]);
     if(taxFunding>0 || full.taxOvrActive) funds.push([taxFundingLabel,taxFunding]);
@@ -5870,12 +6034,14 @@ function generateReport(){
     if(full.rmd2>0) acts.push(`${A.name2||'Person 2'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
     if(full.pre2020InhDraw1>0) acts.push(`${A.name1} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw1)}`);
     if(full.pre2020InhDraw2>0) acts.push(`${A.name2||'Person 2'} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw2)}`);
+    if(full.post2020InhRMD>0) acts.push(`Post-2020 Inherited IRA Required RMD: ${fd(full.post2020InhRMD)}`);
+    if((full.post2020InhExtra||0)>0) acts.push(`Post-2020 Inherited IRA Draw: ${fd(full.post2020InhExtra)}`);
+    if(preInhA) acts.push(`Pre-2020 Inherited IRA Draw: ${fd(preInhA)}`);
     if(ira1a)  acts.push(`${A.name1} IRA Draw: ${fd(ira1a)}`);
     if(ira2a)  acts.push(`${A.name2||'Person 2'} IRA Draw: ${fd(ira2a)}`);
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
     if(cashD)  acts.push(`Cash Draw: ${fd(cashD)}`);
     if(hsaW)   acts.push(`HSA Withdrawal: ${fd(hsaW)}`);
-    if(inhD)   acts.push(`Inherited IRA Draw: ${fd(inhD)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
     if(rDraw2) acts.push(`${A.name2||'Person 2'} Roth Withdrawal: ${fd(rDraw2)}`);
     if((full.excessFunds||0)>50) acts.push(`Invest Surplus → Securities: ${fd(full.excessFunds)}`);
@@ -5900,21 +6066,22 @@ function generateReport(){
   const cfVals=(r)=>{
     const wages=(r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0);
     const ss=(r.grossSS1||0)+(r.grossSS2||0);
-    const rmds=(r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0);
+    const regularRmds=(r.rmd1||0)+(r.rmd2||0);
+    const inheritedRmds=(r.pre2020InhDraw||0)+(r.post2020InhDraw||0);
     const divs=r.divIncome||0, rc=r.rothConv||0;
     const ira1a=r.ira1Addl||0, ira2a=r.ira2Addl||0;
     const stkS=r.stkSales||r.secDraw||0, cashD=r.cashDraw||0;
-    const hsaW=r.hsaWith||0, inhD=r.inhDraw||0, preInhD=r.pre2020InhDraw||0;
-    const allInhD=inhD+preInhD;
+    const hsaW=r.hsaWith||0, preInhD=(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0), postInhD=r.post2020InhDraw||0;
+    const allInhD=preInhD+postInhD;
     const rDraw1=r.rothDraw1||0, rDraw2=r.rothDraw2||0;
     const roth_wd = rDraw1+rDraw2;
     const hsa_inh = hsaW+allInhD;  // HSA + Inherited IRA only (Roth now separate)
-    const tot=wages+ss+rmds+divs+rc+ira1a+ira2a+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
+    const ira_tot=regularRmds+ira1a+ira2a;
+    const tot=wages+ss+ira_tot+divs+rc+stkS+cashD+hsaW+allInhD+rDraw1+rDraw2;
     const totalFunded=r.totalFunding || tot;
-    const ira_tot=rmds+ira1a+ira2a;
     const ira_soy=(r.startIRA1||0)+(r.startIRA2||0);
     const roth_soy=(r.startRoth1||0)+(r.startRoth2||0);
-    const hsa_inh_soy=(r.startHSA||0)+(r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0);
+    const hsa_inh_soy=(r.startHSA||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0);
     const sec_soy=r.startSec||0;
     const cash_soy=r.startCashBal||0;
     const nw_soy=cash_soy+sec_soy+ira_soy+roth_soy+hsa_inh_soy;
@@ -5922,7 +6089,7 @@ function generateReport(){
     const cashGap=r.cashGapNeeded||0;
     const fundingRequired=r.totalRequired || ((r.spending||0)+taxFunding+cashGap);
     const sf=(r.unfunded||0)>0;
-    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,inhD,preInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
+    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,preInhD,postInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
   };
   const dzGap=(v)=>Math.abs(v||0)>=50?fd(v,true):'—';
   const cfRows=rows.map(r=>{
@@ -5962,7 +6129,7 @@ function generateReport(){
     return `<tr>
       ${td(r.yr)}${td(age(r))}
       ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startInh||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
+      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
 
@@ -5976,8 +6143,8 @@ function generateReport(){
   const peak=rows.reduce((m,r)=>(r.agi||0)>(m.agi||0)?r:m,rows[0]);
   const first=rows[0]||{};
   const last=rows[rows.length-1]||{};
-  const startNW=(first.startCashBal||0)+(first.startSec||0)+(first.startIRA1||0)+(first.startIRA2||0)+(first.startRoth1||0)+(first.startRoth2||0)+(first.startHSA||0)+(first.startInh||0)+(first.startPre2020Inh1||0)+(first.startPre2020Inh2||0);
-  const endNW=(last.endCash||0)+(last.sec||0)+(last.ira1||0)+(last.ira2||0)+(last.roth1||0)+(last.roth2||0)+(last.hsa||0)+(last.inh||0)+(last.pre2020Inh1||0)+(last.pre2020Inh2||0);
+  const startNW=(first.startCashBal||0)+(first.startSec||0)+(first.startIRA1||0)+(first.startIRA2||0)+(first.startRoth1||0)+(first.startRoth2||0)+(first.startHSA||0)+(first.startPre2020Inh1||0)+(first.startPre2020Inh2||0)+(first.startPost2020Inh||0);
+  const endNW=(last.endCash||0)+(last.sec||0)+(last.ira1||0)+(last.ira2||0)+(last.roth1||0)+(last.roth2||0)+(last.hsa||0)+(last.pre2020Inh1||0)+(last.pre2020Inh2||0)+(last.post2020Inh||0);
   const totConv=rows.reduce((s,r)=>s+(r.rothConv||0),0);
   const totalBurden=totTax+totIRMAA+totMcare;
   const firstShortfall=rows.find(r=>(r.unfunded||0)>0);
