@@ -980,7 +980,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <span style="font-size:10px;color:var(--gold);font-weight:700">MFJ MAGI ABOVE ($)</span>
         <span style="font-size:10px;color:var(--gold);font-weight:700">SINGLE MAGI ABOVE ($)</span>
         <span style="font-size:10px;color:var(--gold);font-weight:700">HOH MAGI ABOVE ($)</span>
-        <span style="font-size:10px;color:var(--gold);font-weight:700">SURCHARGE/YR/PERSON</span>
+        <span style="font-size:10px;color:var(--gold);font-weight:700">B+D SURCH/YR/PERSON</span>
       </div>
     </div>
 
@@ -1151,11 +1151,11 @@ const CA_ORD = {
 };
 const CA_STD = {MFJ:11500, SINGLE:5750, HOH:11500};
 
-// IRMAA 2026 — annual Part B income-related adjustment per person
+// IRMAA 2026 — annual Part B + Part D income-related adjustment per person
 const IRMAA_TIERS = {
-  MFJ:   [{min:0,max:218000,a:0},{min:218001,max:274000,a:974.40},{min:274001,max:342000,a:2434.80},{min:342001,max:410000,a:3895.20},{min:410001,max:750000,a:5355.60},{min:750001,max:1e12,a:5844.00}],
-  SINGLE:[{min:0,max:109000,a:0},{min:109001,max:137000,a:974.40},{min:137001,max:171000,a:2434.80},{min:171001,max:205000,a:3895.20},{min:205001,max:500000,a:5355.60},{min:500001,max:1e12,a:5844.00}],
-  HOH:   [{min:0,max:109000,a:0},{min:109001,max:137000,a:974.40},{min:137001,max:171000,a:2434.80},{min:171001,max:205000,a:3895.20},{min:205001,max:500000,a:5355.60},{min:500001,max:1e12,a:5844.00}]};
+  MFJ:   [{min:0,max:218000,a:0},{min:218001,max:274000,a:1148.40},{min:274001,max:342000,a:2884.80},{min:342001,max:410000,a:4620.00},{min:410001,max:750000,a:6355.20},{min:750001,max:1e12,a:6936.00}],
+  SINGLE:[{min:0,max:109000,a:0},{min:109001,max:137000,a:1148.40},{min:137001,max:171000,a:2884.80},{min:171001,max:205000,a:4620.00},{min:205001,max:500000,a:6355.20},{min:500001,max:1e12,a:6936.00}],
+  HOH:   [{min:0,max:109000,a:0},{min:109001,max:137000,a:1148.40},{min:137001,max:171000,a:2884.80},{min:171001,max:205000,a:4620.00},{min:205001,max:500000,a:6355.20},{min:500001,max:1e12,a:6936.00}]};
 
 // ── Tax helpers ──────────────────────────────────────────────────────────────
 function bracketTax(inc, brackets) {
@@ -1185,11 +1185,11 @@ const DEFAULT_TAX_TABLE_2026 = {
   fedLtcgBktsHOH:    [[0,0],[64751,.15],[566701,.20]],
   fedStdBaseHOH:     24150, fedStdSrHOH: 2050, fedCharityNonItemizerCapHOH: 1000,
   fedSrBonusHOH:     6000, fedSrBonusStartHOH: 75000, fedSrBonusMaxHOH: 175000,
-  // IRMAA thresholds and annual Part B income-related adjustment per person
+  // IRMAA thresholds and annual Part B + Part D income-related adjustment per person
   irmaaThresh:       [0,218000,274000,342000,410000,750000],
   irmaaThreshSingle: [0,109000,137000,171000,205000,500000],
   irmaaThreshHOH:    [0,109000,137000,171000,205000,500000],
-  irmaaSurch:        [0,974.40,2434.80,3895.20,5355.60,5844.00],
+  irmaaSurch:        [0,1148.40,2884.80,4620.00,6355.20,6936.00],
   partBBase:         2434.80,   // annual Part B base premium per person (2026: $202.90/mo × 12)
   // CA — MFJ
   caOrdBkts:   [[0,.01],[21512,.02],[50998,.04],[80490,.06],[109980,.08],[136700,.093],[698274,.103],[837922,.113],[1000000,.123]],
@@ -1683,7 +1683,7 @@ function defaultState() {
         irmaaThresh:      [0,218000,274000,342000,410000,750000],
         irmaaThreshSingle:[0,109000,137000,171000,205000,500000],
         irmaaThreshHOH:   [0,109000,137000,171000,205000,500000],
-        irmaaSurch:       [0,974.40,2434.80,3895.20,5355.60,5844.00],
+        irmaaSurch:       [0,1148.40,2884.80,4620.00,6355.20,6936.00],
         partBBase:        2434.80,
         caOrdBkts:        [[0,.01],[21969,.02],[51993,.04],[82094,.06],[105530,.08],[123210,.093],[640130,.103],[767950,.113],[1279550,.123]],
         caStd:            11500,
@@ -3128,6 +3128,18 @@ function applyMigrations(merged) {
     });
   }
   const D2 = DEFAULT_TAX_TABLE_2026;
+  const updatePartBOnlyIRMAA = arr => {
+    if (!Array.isArray(arr) || !arr.length) return false;
+    const tier1 = Math.round((parseF(arr[1]) || 0) * 100) / 100;
+    // Earlier releases stored only the Part B IRMAA surcharge. Refresh those
+    // standard 2026 tables to the combined Part B + Part D surcharge.
+    if (tier1 > 0 && tier1 <= 974.40) return true;
+    return false;
+  };
+  if (!merged._m_irmaaPartDIncluded) {
+    if (updatePartBOnlyIRMAA(merged.irmaaSurch)) merged.irmaaSurch = [...D2.irmaaSurch];
+    merged._m_irmaaPartDIncluded = true;
+  }
   Object.keys(merged.taxTables).forEach(yr => {
     const T = merged.taxTables[yr];
     if (!T.fedOrdBkts)           T.fedOrdBkts           = merged.fedOrdBkts  || D2.fedOrdBkts;
@@ -3158,6 +3170,7 @@ function applyMigrations(merged) {
     if (!T.irmaaThreshSingle)      T.irmaaThreshSingle    = merged.irmaaThreshSingle || D2.irmaaThreshSingle;
     if (!T.irmaaThreshHOH)         T.irmaaThreshHOH       = merged.irmaaThreshHOH || D2.irmaaThreshHOH;
     if (!T.irmaaSurch)             T.irmaaSurch           = merged.irmaaSurch  || D2.irmaaSurch;
+    else if (Number(yr) === 2026 && updatePartBOnlyIRMAA(T.irmaaSurch)) T.irmaaSurch = [...D2.irmaaSurch];
     if (T.partBBase == null)       T.partBBase            = D2.partBBase;
     if (!T.caOrdBkts)              T.caOrdBkts            = merged.caOrdBkts  || D2.caOrdBkts;
     if (T.caStd==null)             T.caStd                = merged.caStd      != null ? merged.caStd : D2.caStd;
@@ -5349,7 +5362,7 @@ function renderIrmaaGrid() {
     <span style="font-size:10px;color:var(--gold);font-weight:700">MFJ MAGI ABOVE ($)</span>
     <span style="font-size:10px;color:var(--gold);font-weight:700">SINGLE MAGI ABOVE ($)</span>
     <span style="font-size:10px;color:var(--gold);font-weight:700">HOH MAGI ABOVE ($)</span>
-    <span style="font-size:10px;color:var(--gold);font-weight:700">SURCHARGE/YR/PERSON</span>`;
+    <span style="font-size:10px;color:var(--gold);font-weight:700">B+D SURCH/YR/PERSON</span>`;
   thresh.forEach((t,i) => {
     const lock = i===0;
     const lockStyle = lock ? 'background:#f0ede0;color:#aaa;' : '';

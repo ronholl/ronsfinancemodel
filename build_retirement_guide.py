@@ -451,11 +451,11 @@ story += bullets([
 
 story += section("15. Updating Tax Tables")
 story += [
-    p("The Tax Tables tab stores federal brackets, standard deductions, state tax values, Medicare IRMAA thresholds, and Medicare premium amounts. The model can inflate values into future years, but actual IRS and Medicare numbers change over time."),
+    p("The Tax Tables tab stores federal brackets, standard deductions, state tax values, Medicare IRMAA thresholds, combined Part B and Part D IRMAA surcharges, and Medicare Part B base premiums. The model can inflate values into future years, but actual IRS and Medicare numbers change over time."),
 ]
 story += bullets([
     "Each year, add the newest tax year when official numbers are available.",
-    "Use IRS sources for federal brackets and CMS/Medicare sources for IRMAA and Part B premiums.",
+    "Use IRS sources for federal brackets and SSA/CMS/Medicare sources for IRMAA and Part B premiums.",
     "Keep old years because they are useful for historical calculations and comparisons.",
 ])
 story += [
