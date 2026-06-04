@@ -5181,8 +5181,8 @@ function apCard(yr){
     ${row('Total Required', r.totalRequired, true)}
 
     ${hdr('AUTOMATIC INFLOWS')}
-    ${((r.grossWages1||0)+(r.ptWages1||0))>0 ? row(p1()+' Wages & Self-Employ', (r.grossWages1||0)+(r.ptWages1||0)) : ''}
-    ${((r.grossWages2||0)+(r.ptWages2||0))>0 ? row(p2()+' Wages & Self-Employ', (r.grossWages2||0)+(r.ptWages2||0)) : ''}
+    ${((r.atWages1||0)+(r.ptWages1||0))>0 ? row(p1()+' Take-home Wages & Self-Employ', (r.atWages1||0)+(r.ptWages1||0)) : ''}
+    ${((r.atWages2||0)+(r.ptWages2||0))>0 ? row(p2()+' Take-home Wages & Self-Employ', (r.atWages2||0)+(r.ptWages2||0)) : ''}
     ${(r.grossSS1||0)>0 ? row(p1()+' Social Security', r.grossSS1) : ''}
     ${(r.grossSS2||0)>0 ? row(p2()+' Social Security', r.grossSS2) : ''}
     ${(r.rmd1||0)>0 ? row(p1()+' RMD (mandatory)', r.rmd1) : ''}
@@ -5862,6 +5862,7 @@ function buildReportPayload(){
   const rows = (proj||[]).map(r=>({
     yr:r.yr, age1:r.age1, age2:r.age2,
     grossWages1:r.grossWages1||0, grossWages2:r.grossWages2||0,
+    atWages:r.atWages||0, atWages1:r.atWages1||0, atWages2:r.atWages2||0,
     ptWages1:r.ptWages1||0, ptWages2:r.ptWages2||0,
     grossSS1:r.grossSS1||0, grossSS2:r.grossSS2||0,
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
@@ -6203,7 +6204,7 @@ function generateReport(){
       const prev=rows_by_yr[yr-1]||{};
       nw_s=(prev.endCash||0)+(prev.sec||0)+(prev.ira1||0)+(prev.ira2||0)+(prev.roth1||0)+(prev.roth2||0)+(prev.hsa||0);
     }
-    const wages=(full.grossWages1||0)+(full.grossWages2||0);
+    const wages = (full.atWages != null) ? (full.atWages||0) : ((full.atWages1||0)+(full.atWages2||0));
     const ss=(full.grossSS1||0)+(full.grossSS2||0);
     const rmds=(full.rmd1||0)+(full.rmd2||0)+(full.pre2020InhDraw||0)+(full.post2020InhDraw||0);
     const divs=full.divIncome||0, rc=full.rothConv||0;
@@ -6227,7 +6228,7 @@ function generateReport(){
                 ['Net Worth',nw_s]];
     const funds=[];
     const pt=(full.ptWages1||0)+(full.ptWages2||0);
-    if(wages||pt) funds.push(['Wages & Self-Employ', wages+pt]);
+    if(wages||pt) funds.push(['Take-home Wages & Self-Employ', wages+pt]);
     if(ss)     funds.push(['Social Security',ss]);
     if(divs)   funds.push(['Dividends & Interest',divs]);
     if(rmds)   funds.push(['RMDs',rmds]);
@@ -6239,7 +6240,7 @@ function generateReport(){
     if(preInhA) funds.push(['Pre-2020 Inh IRA Draw',preInhA]);
     if(rDraw1) funds.push([A.name1+' Roth Withdrawal',rDraw1]);
     if(rDraw2) funds.push([(A.name2||'Person 2')+' Roth Withdrawal',rDraw2]);
-    const totalFunded = wages+pt+ss+divs+rmds+ira1a+ira2a+preInhA+stkS+cashD+hsaW+inhD+rDraw1+rDraw2;
+    const totalFunded = full.totalFunding || (wages+pt+ss+divs+rmds+ira1a+ira2a+preInhA+stkS+cashD+hsaW+inhD+rDraw1+rDraw2);
     funds.push(['Total Funding',totalFunded]);
     funds.push(['Annual Spending',spending]);
     if(taxFunding>0 || full.taxOvrActive) funds.push([taxFundingLabel,taxFunding]);
@@ -6317,7 +6318,8 @@ function generateReport(){
 
   // ── Cash Flow table ──
   const cfVals=(r)=>{
-    const wages=(r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0);
+    const w2Cash = (r.atWages != null) ? (r.atWages||0) : ((r.atWages1||0)+(r.atWages2||0));
+    const wages=w2Cash+(r.ptWages1||0)+(r.ptWages2||0);
     const ss=(r.grossSS1||0)+(r.grossSS2||0);
     const regularRmds=(r.rmd1||0)+(r.rmd2||0);
     const inheritedRmds=(r.pre2020InhDraw||0)+(r.post2020InhDraw||0);
