@@ -3295,6 +3295,7 @@ function ST(name){
   if(name==='soy')        { soyEditYear=null; renderSOY(); }
   if(name==='overrides')  renderOVAll();
   if(name==='export')     { renderExport(); showPrivacyStats(); }
+  requestAnimationFrame(() => window.scrollTo({top:0, left:0, behavior:'auto'}));
 }
 
 // ── Input change handler (debounced) ─────────────────────────────────────
@@ -6937,10 +6938,13 @@ let setupStrategyType = 'spending-onetime';
 
 const SETUP_STEPS = [
   {id:'household', title:'Household', copy:'Start with the people and filing setup. These answers control ages, tax filing, RMD timing, and Medicare logic.'},
+  {id:'survivor', title:'Survivor Plan', copy:'Default is simple: both people live through the plan end. Use this only when you want to test what changes after one spouse dies.'},
   {id:'assumptions', title:'Assumptions', copy:'These are the global defaults the model uses unless a future strategy overrides them.'},
   {id:'balances', title:'Opening Year', copy:'These values seed the first plan year through Start of Year actuals. Blank or zero accounts are fine when they truly do not exist.'},
+  {id:'inherited', title:'Inherited IRAs', copy:'Use this only when inherited retirement accounts exist. The setup needs rule details, not just balances, so the model can calculate required withdrawals correctly.'},
   {id:'income', title:'Income', copy:'Current wages and Social Security go into the first plan year. Future retirement timing is handled as a strategy or wage end year.'},
-  {id:'medicare', title:'Medicare & Savings', copy:'Set Medicare lookback income, basic IRMAA preferences, and 401k defaults if they apply.'},
+  {id:'savings', title:'401k Defaults', copy:'Set global employee and employer 401k contribution percentages once. Annual Check-In or Start of Year can override a specific year when reality changes.'},
+  {id:'medicare', title:'Medicare & IRMAA', copy:'This section estimates Medicare surcharges and sets guardrails for Roth conversions. It is optional, but important when Medicare income thresholds matter.'},
   {id:'review', title:'Review', copy:'Check what is complete, what is assumed, and where the plan may need attention before generating a report.'}
 ];
 
@@ -7008,6 +7012,19 @@ function setupSOYInput(label, yr, key, kind, opts){
   const control = "<input type='number' value='"+setupEsc(value)+"'"+step+min+max+placeholder+" onchange=\"setupSetSOY("+yr+",'"+key+"','"+kind+"',this.value,false)\">";
   return setupField(label, control, opts.note || '');
 }
+function setupSOYPctInput(label, yr, key, defaultPct, opts){
+  opts = opts || {};
+  const raw = setupSOYValue(yr, key);
+  const value = setupHasValue(raw) ? setupPct(raw) : '';
+  const globalTxt = setupHasValue(defaultPct) ? setupPct(defaultPct) : '';
+  const placeholder = opts.placeholder || (globalTxt !== '' ? 'Global '+globalTxt+'%' : 'Global default');
+  const note = opts.note || (globalTxt !== '' ? 'Leave blank to use global default '+globalTxt+'%.' : 'Leave blank to use the global default.');
+  const step = opts.step || '0.1';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : " min='0'";
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : " max='100'";
+  const control = "<input type='number' value='"+setupEsc(value)+"' step='"+setupEsc(step)+"'"+min+max+" placeholder='"+setupEsc(placeholder)+"' onchange=\"setupSetSOY("+yr+",'"+key+"','pct-decimal',this.value,false)\">";
+  return setupField(label, control, note);
+}
 function setupPlanLengthField(){
   const years = (S.endYear && S.startYear) ? Math.max(1, S.endYear - S.startYear + 1) : 30;
   return setupField('Plan Length (years)', "<input type='number' min='1' max='60' value='"+setupEsc(years)+"' onchange=\"setupSetPlanYears(this.value)\">", 'The end year updates automatically from your plan start year.');
@@ -7019,6 +7036,8 @@ function setupSetPlanYears(value){
 }
 function setupSetState(key, kind, value, rerender){
   if (kind === 'pct') S[key] = (parseF(value) || 0) / 100;
+  else if (kind === 'optional-int') S[key] = value === '' ? '' : (parseInt(value) || 0);
+  else if (kind === 'optional-number') S[key] = value === '' ? '' : (parseF(value) || 0);
   else if (kind === 'int') S[key] = parseInt(value) || 0;
   else if (kind === 'number') S[key] = parseF(value) || 0;
   else if (kind === 'bool') S[key] = !!value;
@@ -7032,6 +7051,10 @@ function setupSetState(key, kind, value, rerender){
     const ord = normalizeFundingOrder(S.fundingOrder1, S.fundingOrder2, S.fundingOrder3);
     S.fundingOrder1 = ord[0]; S.fundingOrder2 = ord[1]; S.fundingOrder3 = ord[2];
   }
+  setupAfterChange(!!rerender);
+}
+function setupSetBoolState(key, value, rerender){
+  S[key] = String(value) === 'true';
   setupAfterChange(!!rerender);
 }
 function setupSetSOY(yr, key, kind, value, rerender){
@@ -7065,6 +7088,12 @@ function setupSetStep(step){
   setupStep = Math.max(0, Math.min(SETUP_STEPS.length - 1, step));
   renderSetupGuide();
 }
+function setupOpenInterviewStep(id){
+  const idx = SETUP_STEPS.findIndex(st => st.id === id);
+  setupView = 'interview';
+  setupStep = idx >= 0 ? idx : setupStep;
+  renderSetupGuide();
+}
 
 function setupReadiness(){
   const yr = setupYear();
@@ -7072,7 +7101,11 @@ function setupReadiness(){
   const has2 = hasP2();
   const items = [];
   const add = (status, title, body, action, view) => items.push({status, title, body, action, view});
-  const hasOpeningBalance = ['cash','sec','ira1','ira2','roth1','roth2','hsa','pre2020Inh1','pre2020Inh2','post2020Inh'].some(k => parseF(soy[k]) > 0);
+  const postLots = S.post2020InhLots || [];
+  const hasConfiguredPostLot = postLots.some(l => parseF(l.balance) > 0 || parseInt(l.deathYear) || parseInt(l.ownerBy) || String(l.notes || '').trim());
+  const hasInheritedBalance = ['pre2020Inh1','pre2020Inh2','post2020Inh'].some(k => parseF(soy[k]) > 0) ||
+    parseF(S.pre2020InhStartBal1) > 0 || parseF(S.pre2020InhStartBal2) > 0 || postLots.some(l => parseF(l.balance) > 0);
+  const hasOpeningBalance = ['cash','sec','ira1','ira2','roth1','roth2','hsa'].some(k => parseF(soy[k]) > 0) || hasInheritedBalance;
   const hasIncome = ['grossWages','ptWages','grossWages2','ptWages2','ss1','ss2'].some(k => parseF(soy[k]) > 0) || parseF(S.ssmo1) > 0 || parseF(S.ssmo2) > 0;
   const p1Age = yr - (parseInt(S.by1) || yr) - 1;
   const p2Age = yr - (parseInt(S.by2) || yr) - 1;
@@ -7085,8 +7118,32 @@ function setupReadiness(){
   add(hasIncome ? 'done' : 'warn', 'Income sources', hasIncome ? 'First-year wages, self-employment, or Social Security are present.' : 'This may be fine for an asset-only plan, but confirm there is no wage or Social Security income to model.', 'Annual check-in', 'annual');
   if (S.ssAge1 || S.ssmo1) add(S.ssAge1 && S.ssmo1 ? 'done' : 'warn', p1()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
   if (has2 && (S.ssAge2 || S.ssmo2)) add(S.ssAge2 && S.ssmo2 ? 'done' : 'warn', p2()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
+  if (has2) {
+    const survivorActive = (S.widowMode || 'off') !== 'off';
+    add(!survivorActive || parseInt(S.widowDeathYear) ? 'done' : 'warn',
+      'Survivor plan',
+      survivorActive ? 'A survivor scenario is active. Confirm death year, filing switch, Social Security, and spending assumptions.' : 'Default assumption: both people live through the end of the plan.',
+      'Review survivor plan',
+      'interview-survivor');
+  }
   if (p1Age >= 63 || (has2 && p2Age >= 63)) {
     add((S.medicareMagi1 || S.medicareMagi2) ? 'done' : 'warn', 'Medicare lookback', 'Prior MAGI helps year-one and year-two IRMAA estimates for Medicare-age households.', 'Open interview', 'interview');
+  }
+  if (hasInheritedBalance || hasConfiguredPostLot) {
+    const pre1NeedsRules = (parseF(soy.pre2020Inh1) > 0 || parseF(S.pre2020InhStartBal1) > 0) && (!S.pre2020InhOwnerBy1 || !S.pre2020InhDeathYear1);
+    const pre2NeedsRules = has2 && (parseF(soy.pre2020Inh2) > 0 || parseF(S.pre2020InhStartBal2) > 0) && (!S.pre2020InhOwnerBy2 || !S.pre2020InhDeathYear2);
+    const postNeedsRows = parseF(soy.post2020Inh) > 0 && !postLots.length;
+    const postNeedsRules = postLots.some(l => parseF(l.balance) > 0 && (!parseInt(l.deathYear) || !parseInt(l.ownerBy)));
+    add(!(pre1NeedsRules || pre2NeedsRules || postNeedsRows || postNeedsRules) ? 'done' : 'warn',
+      'Inherited IRA rules',
+      'Inherited IRAs need more than a balance: death year, owner birth year, beneficiary, and draw strategy determine required distributions.',
+      'Open inherited setup',
+      'interview-inherited');
+  }
+  const hasW2Wages = ['grossWages','grossWages2'].some(k => parseF(soy[k]) > 0);
+  if (hasW2Wages) {
+    const has401kDefault = (S.k401Trad1||0) || (S.k401Roth1||0) || (S.k401Emp1||0) || (S.k401Trad2||0) || (S.k401Roth2||0) || (S.k401Emp2||0);
+    add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k defaults', 'interview-savings');
   }
   add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open interview', 'interview');
   const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
@@ -7117,7 +7174,14 @@ function setupReadinessList(limit){
   const r = setupReadiness();
   const rows = (limit ? r.items.slice(0, limit) : r.items).map(item => {
     const label = item.status === 'done' ? 'Complete' : item.status === 'missing' ? 'Missing' : 'Review';
-    const action = item.view ? '<div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupSetView(\''+item.view+'\')">'+setupEsc(item.action || 'Open')+'</button></div>' : '';
+    const click = item.view === 'interview-inherited'
+      ? "setupOpenInterviewStep('inherited')"
+      : item.view === 'interview-savings'
+        ? "setupOpenInterviewStep('savings')"
+        : item.view === 'interview-survivor'
+          ? "setupOpenInterviewStep('survivor')"
+          : "setupSetView('"+item.view+"')";
+    const action = item.view ? '<div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="'+click+'">'+setupEsc(item.action || 'Open')+'</button></div>' : '';
     return '<div class="setup-check '+item.status+'"><div class="setup-check-title">'+label+' · '+setupEsc(item.title)+'</div><div class="setup-check-body">'+setupEsc(item.body)+'</div>'+action+'</div>';
   }).join('');
   return '<div class="setup-list">'+rows+'</div>';
@@ -7154,8 +7218,8 @@ function renderSetupInterviewView(){
     '<div class="setup-actions">' +
       '<button class="btn btn-light" onclick="setupSetStep('+(setupStep-1)+')" '+(setupStep===0?'disabled':'')+'>Back</button>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-light" onclick="ST(\'dashboard\')">Dashboard</button>' +
-        '<button class="btn btn-dark" onclick="'+(setupStep >= SETUP_STEPS.length-1 ? "setupSetView('readiness')" : 'setupSetStep('+(setupStep+1)+')')+'">'+(setupStep >= SETUP_STEPS.length-1 ? 'Review Readiness' : 'Next')+'</button>' +
+        (setupStep >= SETUP_STEPS.length-1 ? '' : '<button class="btn btn-light" onclick="ST(\'dashboard\')">Dashboard</button>') +
+        '<button class="btn btn-dark" onclick="'+(setupStep >= SETUP_STEPS.length-1 ? "ST('dashboard')" : 'setupSetStep('+(setupStep+1)+')')+'">'+(setupStep >= SETUP_STEPS.length-1 ? 'Dashboard' : 'Next')+'</button>' +
       '</div>' +
     '</div></div>' +
     '<div class="setup-side"><div class="setup-section-title" style="font-size:18px">Needs Attention</div>'+setupReadinessList(5)+'</div></div>';
@@ -7173,6 +7237,7 @@ function renderSetupStepFields(id){
     setupInput('Plan Start Year','startYear','int',S.startYear,{min:2020,max:2060,rerender:true}),
     setupPlanLengthField()
   ].join('');
+  if (id === 'survivor') return renderSetupSurvivorStep();
   if (id === 'assumptions') return [
     setupInput('Portfolio Growth Rate (%)','growthRate','pct',setupPct(S.growthRate),{step:'0.1',min:-100,note:'Total return assumption before year-specific overrides.'}),
     setupInput('Brokerage Dividend Rate (%)','divRate','pct',setupPct(S.divRate),{step:'0.01',min:0}),
@@ -7197,17 +7262,21 @@ function renderSetupStepFields(id){
     setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' Roth ($)',yr,'roth2','number',{min:0}) : '',
     setupSOYInput('HSA ($)',yr,'hsa','number',{min:0}),
-    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0}),
-    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0}) : '',
-    setupSOYInput('Post-2020 Inherited IRA Total ($)',yr,'post2020Inh','number',{min:0})
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0,note:'Optional opening-year reset. Use the Inherited IRAs step for owner/death-year rules.'}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0,note:'Optional opening-year reset. Use the Inherited IRAs step for owner/death-year rules.'}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Total Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for active post-2020 lots. Add the actual lots in the Inherited IRAs step.'}),
+    '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Inherited IRA setup</div><div class="setup-check-body">If inherited accounts exist, open the next step so the model has the rule details it needs, not just the balances.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRAs</button></div></div>'
   ].join('');
+  if (id === 'inherited') return renderSetupInheritedStep();
   if (id === 'income') return [
     setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0}),
-    setupSOYInput(p1()+' Withholding %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Tax withholding only; payroll taxes are modeled separately.'}),
+    setupSOYInput(p1()+' Withholding %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Income-tax withholding only; payroll taxes are modeled separately.'}),
     setupInput(p1()+' Last Wage Year','wagesEnd1','int',S.wagesEnd1,{min:yr,placeholder:'9999'}),
     setupInput(p1()+' Last Self-Employment Year','ptEnd1','int',S.ptEnd1,{min:yr,placeholder:'9999'}),
     has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0}) : '',
     has2 ? setupSOYInput(p2()+' Withholding %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100}) : '',
     has2 ? setupInput(p2()+' Last Wage Year','wagesEnd2','int',S.wagesEnd2,{min:yr,placeholder:'9999'}) : '',
@@ -7219,23 +7288,150 @@ function renderSetupStepFields(id){
     setupSOYInput(p1()+' Current Monthly SS ($)',yr,'ss1','number',{min:0,note:'Use only if already receiving Social Security in the plan start year.'}),
     has2 ? setupSOYInput(p2()+' Current Monthly SS ($)',yr,'ss2','number',{min:0}) : ''
   ].join('');
-  if (id === 'medicare') return [
-    setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true}),
-    setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{}),
-    setupInput('IRMAA Headroom ($)','irmaaHeadroom','number',S.irmaaHeadroom,{min:0}),
-    setupSelect('IRMAA Max Bracket','irmaaMaxBracket',S.irmaaMaxBracket || '',getMaxBracketOptions({startYear:S.startYear, level:S.irmaaTarget}),{}),
-    setupInput('Bracket Headroom ($)','irmaaBracketHeadroom','number',S.irmaaBracketHeadroom || 0,{min:0}),
-    setupInput('Medicare MAGI - 2 Years Before Start ($)','medicareMagi2','number',S.medicareMagi2,{min:0}),
-    setupInput('Medicare MAGI - 1 Year Before Start ($)','medicareMagi1','number',S.medicareMagi1,{min:0}),
-    setupInput(p1()+' Trad 401k %','k401Trad1','pct',setupPct(S.k401Trad1),{step:'0.1',min:0,max:100}),
-    setupInput(p1()+' Roth 401k %','k401Roth1','pct',setupPct(S.k401Roth1),{step:'0.1',min:0,max:100}),
-    setupInput(p1()+' Employer 401k %','k401Emp1','pct',setupPct(S.k401Emp1),{step:'0.1',min:0,max:100}),
-    has2 ? setupInput(p2()+' Trad 401k %','k401Trad2','pct',setupPct(S.k401Trad2),{step:'0.1',min:0,max:100}) : '',
-    has2 ? setupInput(p2()+' Roth 401k %','k401Roth2','pct',setupPct(S.k401Roth2),{step:'0.1',min:0,max:100}) : '',
-    has2 ? setupInput(p2()+' Employer 401k %','k401Emp2','pct',setupPct(S.k401Emp2),{step:'0.1',min:0,max:100}) : ''
+  if (id === 'savings') return [
+    '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Global 401k defaults</div><div class="setup-check-body">Set the normal contribution percentages here once. The Annual Check-In and Start of Year screens can override a specific year if contributions change, stop, or restart.</div></div>',
+    setupInput(p1()+' Trad 401k %','k401Trad1','pct',setupPct(S.k401Trad1),{step:'0.1',min:0,max:100,note:'Employee traditional 401k contribution as a percent of gross W-2 wages.'}),
+    setupInput(p1()+' Roth 401k %','k401Roth1','pct',setupPct(S.k401Roth1),{step:'0.1',min:0,max:100,note:'Employee Roth 401k contribution as a percent of gross W-2 wages.'}),
+    setupInput(p1()+' Employer 401k %','k401Emp1','pct',setupPct(S.k401Emp1),{step:'0.1',min:0,max:100,note:'Employer match/contribution as a percent of gross W-2 wages.'}),
+    has2 ? setupInput(p2()+' Trad 401k %','k401Trad2','pct',setupPct(S.k401Trad2),{step:'0.1',min:0,max:100,note:'Employee traditional 401k contribution as a percent of gross W-2 wages.'}) : '',
+    has2 ? setupInput(p2()+' Roth 401k %','k401Roth2','pct',setupPct(S.k401Roth2),{step:'0.1',min:0,max:100,note:'Employee Roth 401k contribution as a percent of gross W-2 wages.'}) : '',
+    has2 ? setupInput(p2()+' Employer 401k %','k401Emp2','pct',setupPct(S.k401Emp2),{step:'0.1',min:0,max:100,note:'Employer match/contribution as a percent of gross W-2 wages.'}) : '',
+    '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Year-specific changes</div><div class="setup-check-body">If a contribution percentage changes for only one year, leave the global default alone and enter that year in Annual Check-In or Start of Year.</div></div>'
   ].join('');
+  if (id === 'medicare') return renderSetupMedicareStep();
   return '<div style="grid-column:1/-1">'+setupReadinessList()+'<div class="setup-mini-actions"><button class="btn btn-dark" onclick="generateReport()">Generate Report</button><button class="btn btn-light" onclick="ST(\'cashflow\')">Open Sheet View</button></div></div>';
 }
+function setupBoolSelect(label, key, value, trueLabel, falseLabel, note){
+  const body = "<select onchange=\"setupSetBoolState('"+key+"',this.value,true)\">" +
+    "<option value='true' "+(value !== false ? 'selected' : '')+">"+setupEsc(trueLabel)+"</option>" +
+    "<option value='false' "+(value === false ? 'selected' : '')+">"+setupEsc(falseLabel)+"</option>" +
+    "</select>";
+  return setupField(label, body, note || '');
+}
+function renderSetupSurvivorStep(){
+  const has2 = hasP2();
+  if (!has2) {
+    return [
+      '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Default assumption</div><div class="setup-check-body">This is a single-person plan, so survivor mode is not needed. The projection assumes '+setupEsc(p1())+' lives through the plan end.</div></div>',
+      '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">When this would matter</div><div class="setup-check-body">For couples, survivor mode can model one spouse dying during the plan. That changes filing status, Social Security, Medicare count, RMD age, and spending assumptions.</div></div>'
+    ].join('');
+  }
+  const active = (S.widowMode || 'off') !== 'off';
+  const survivorName = S.widowMode === 'p1Survives' ? p1() : S.widowMode === 'p2Survives' ? p2() : '';
+  const scenario = setupSelect('Survivor Scenario','widowMode',S.widowMode || 'off',[
+    ['off','Both live through plan end (default)'],
+    ['p1Survives',p1()+' survives '+p2()],
+    ['p2Survives',p2()+' survives '+p1()]
+  ],{rerender:true,note:'Leave this at the default unless you want to test a death-of-spouse scenario.'});
+  const activeFields = active ? [
+    setupInput('Death Year','widowDeathYear','number',S.widowDeathYear || '',{min:S.startYear,placeholder:'e.g. 2045',note:'The death year itself stays under the normal household filing setup. Survivor changes begin the following year.'}),
+    setupInput('Survivor Spending Adjustment (%)','widowSpendPct','number',S.widowSpendPct || 0,{step:'1',placeholder:'0',note:'Applied starting the year after death. Use negative for lower spending or positive for higher spending. Explicit spending overrides still win.'}),
+    setupBoolSelect('End Deceased Spouse Social Security','widowEndSS',S.widowEndSS !== false,'Yes - end the lower/deceased benefit','No - keep both streams','Normally yes. This prevents the model from continuing both Social Security checks after one spouse dies.'),
+    setupBoolSelect('Survivor Receives Higher Social Security','widowSurvivorSS',S.widowSurvivorSS !== false,'Yes - use the higher benefit','No - no survivor benefit replacement','Normally yes. The surviving spouse often keeps the larger of the two benefits, not both.'),
+    setupBoolSelect('Switch Survivor to Single Filing','widowSwitchSingle',S.widowSwitchSingle !== false,'Yes - switch after death year','No - keep current filing','Normally yes. This changes tax brackets, standard deduction, Medicare/IRMAA count, and senior deduction logic after the death year.')
+  ].join('') : '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Both living through plan end</div><div class="setup-check-body">No death event is modeled. The projection keeps both people, both Social Security streams as entered, married filing assumptions, Medicare count, and account/RMD logic through the end year.</div></div>';
+  const impact = active
+    ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(S.widowDeathYear || 'the death year')+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps the retirement balances. Depending on the choices below, the model can switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
+    : '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Why this exists</div><div class="setup-check-body">A survivor year can materially change taxes and cash flow: one standard deduction instead of two, one Medicare premium count, possible survivor Social Security, different RMD age, and often different spending. The default is off because most users first need a base plan.</div></div>';
+  return [
+    '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Plain English</div><div class="setup-check-body">This step answers: should we model both spouses living through the whole plan, or should we test what happens if one person dies first?</div></div>',
+    scenario,
+    impact,
+    activeFields
+  ].join('');
+}
+function renderSetupMedicareStep(){
+  return [
+    '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">What this section is for</div><div class="setup-check-body">This section does two jobs. First, it estimates IRMAA, the Medicare premium surcharge based on income. Second, it gives the Roth conversion engine guardrails so it can convert IRA money without accidentally crossing income thresholds you want to avoid.</div></div>',
+    '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Roth conversion in plain English</div><div class="setup-check-body">A Roth conversion moves money from a traditional IRA to a Roth IRA. It creates taxable income now, but can reduce future RMDs and future taxable income. These fields tell the model how much income room it is allowed to use for conversions.</div></div>',
+    '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">How the limits work together</div><div class="setup-check-body">The model first calculates normal income. If there is room under your selected IRMAA target and tax bracket cap, it can fill that room with Roth conversions. Headroom leaves a safety cushion below the limit. When both IRMAA and bracket limits are set, the lower practical limit wins.</div></div>',
+    setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true,note:'The Medicare MAGI ceiling to target. Off means no global IRMAA ceiling; a Max Bracket can still guide Roth conversions.'}),
+    setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{note:'What to do when normal income is already above the selected IRMAA target. No extra fill leaves it alone; Fill to next tier uses the next threshold; Use Roth above target can prefer Roth withdrawals instead of additional taxable draws.'}),
+    setupInput('IRMAA Headroom ($)','irmaaHeadroom','number',S.irmaaHeadroom,{min:0,note:'A cushion below the selected IRMAA target. Example: $4,000 means stop about $4,000 under the Medicare income tier.'}),
+    setupSelect('IRMAA Max Bracket','irmaaMaxBracket',S.irmaaMaxBracket || '',getMaxBracketOptions({startYear:S.startYear, level:S.irmaaTarget}),{note:'Optional federal tax bracket ceiling for Roth conversions. Use this when you want conversions to stop before entering a higher ordinary-income bracket.'}),
+    setupInput('Bracket Headroom ($)','irmaaBracketHeadroom','number',S.irmaaBracketHeadroom || 0,{min:0,note:'A cushion below the selected federal bracket limit. This is separate from IRMAA headroom.'}),
+    setupInput('Medicare MAGI - 2 Years Before Start ($)','medicareMagi2','number',S.medicareMagi2,{min:0,note:'Medicare uses a two-year lookback. This value estimates IRMAA for the first plan year because the model cannot calculate income from before the plan starts.'}),
+    setupInput('Medicare MAGI - 1 Year Before Start ($)','medicareMagi1','number',S.medicareMagi1,{min:0,note:'This estimates IRMAA for the second plan year. After that, the model uses projected income from two years earlier.'})
+  ].join('');
+}
+function setupPost2020LotInput(i, key, label, value, opts){
+  opts = opts || {};
+  const type = opts.type || 'number';
+  const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
+  const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
+  const control = "<input type='"+setupEsc(type)+"' value='"+setupEsc(value || '')+"'"+step+min+max+placeholder+" onchange=\"setupUpdatePost2020Lot("+i+",'"+key+"',this.value,false)\">";
+  return setupField(label, control, opts.note || '');
+}
+function setupPost2020LotSelect(i, key, label, value, options, note){
+  const body = "<select onchange=\"setupUpdatePost2020Lot("+i+",'"+key+"',this.value,true)\">" +
+    options.map(o => {
+      const val = Array.isArray(o) ? o[0] : o;
+      const txt = Array.isArray(o) ? o[1] : o;
+      return "<option value='"+setupEsc(val)+"' "+(String(value || '') === String(val) ? 'selected' : '')+">"+setupEsc(txt)+"</option>";
+    }).join('') + "</select>";
+  return setupField(label, body, note || '');
+}
+function setupUpdatePost2020Lot(i, key, value, rerender){
+  if (!Array.isArray(S.post2020InhLots)) S.post2020InhLots = [];
+  if (!S.post2020InhLots[i]) S.post2020InhLots[i] = {};
+  S.post2020InhLots[i][key] = value;
+  setupAfterChange(!!rerender);
+}
+function setupAddPost2020InhLot(){
+  if (!Array.isArray(S.post2020InhLots)) S.post2020InhLots = [];
+  S.post2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',strategy:'none',pct:'',notes:''});
+  setupAfterChange(true);
+}
+function setupDeletePost2020InhLot(i){
+  const lot = (S.post2020InhLots || [])[i] || {};
+  const label = lot.notes ? 'Inherited IRA lot "'+lot.notes+'"' : 'Inherited IRA Lot '+(i+1);
+  if (!confirm('Delete '+label+'?')) return;
+  S.post2020InhLots.splice(i, 1);
+  setupAfterChange(true);
+}
+function renderSetupPost2020Lots(){
+  const lots = S.post2020InhLots || [];
+  if (!lots.length) {
+    return '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">No post-2020 lots</div><div class="setup-check-body">If there are post-2020 inherited IRAs, add one row per inherited IRA. If there are none, leave this section empty.</div></div>';
+  }
+  return lots.map((lot, i) => {
+    const beneficiaryOptions = [['1',p1()], ...(hasP2() ? [['2',p2()]] : [])];
+    return '<div class="strategy-card" style="grid-column:1/-1"><div class="strategy-card-title">Post-2020 Inherited IRA Lot '+(i+1)+' <button class="btn btn-danger btn-sm" style="float:right" onclick="setupDeletePost2020InhLot('+i+')">Delete</button></div><div class="setup-field-grid">' +
+      setupPost2020LotSelect(i,'beneficiary','Beneficiary',lot.beneficiary || '1',beneficiaryOptions,'Whose inherited IRA rules and age should apply.') +
+      setupPost2020LotInput(i,'balance','Starting Balance ($)',lot.balance,{min:0,note:'Balance when this lot becomes active.'}) +
+      setupPost2020LotInput(i,'startYear','Active Year',lot.startYear,{min:S.startYear,placeholder:S.startYear,note:'Usually the first plan year or the year after death.'}) +
+      setupPost2020LotInput(i,'ownerBy','Deceased Owner Birth Year',lot.ownerBy,{min:1900,placeholder:'Required for RMD rules'}) +
+      setupPost2020LotInput(i,'deathYear','Death Year',lot.deathYear,{min:1900,placeholder:'Required'}) +
+      setupPost2020LotSelect(i,'strategy','Draw Strategy',lot.strategy || 'none',[['none','RMD only / final year'],['even','Even to year 10'],['pct','Percent of balance']],'Controls optional draws before the 10-year deadline.') +
+      setupPost2020LotInput(i,'pct','Draw %',lot.pct,{step:'0.1',min:0,max:100,note:'Used only when Draw Strategy is Percent of balance.'}) +
+      setupPost2020LotInput(i,'notes','Notes',lot.notes,{type:'text',placeholder:'Optional label'}) +
+    '</div></div>';
+  }).join('');
+}
+function renderSetupInheritedStep(){
+  const has2 = hasP2();
+  return [
+    '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">When to use this</div><div class="setup-check-body">Use this only for inherited retirement accounts. Regular IRA and Roth balances stay in Opening Year. Annual Check-In can reset inherited IRA balances later, but this step supplies the rule details.</div></div>',
+    '<div class="sh" style="grid-column:1/-1">Post-2020 Inherited IRA Lots</div>',
+    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">Use one row per inherited IRA. Death year sets the 10-year deadline. Owner birth year tells the model whether annual RMDs are required before the final year.</div>',
+    renderSetupPost2020Lots(),
+    '<div class="setup-mini-actions" style="grid-column:1/-1"><button class="btn btn-add btn-sm" onclick="setupAddPost2020InhLot()">+ Add Post-2020 Inherited IRA</button></div>',
+    '<div class="sh" style="grid-column:1/-1">Pre-2020 Inherited IRA RMD</div>',
+    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">For inherited IRAs that predate the SECURE Act 10-year rule. The app uses the deceased owner birth/death years and beneficiary birth year to calculate life-expectancy RMDs.</div>',
+    setupSelect('Use Pre-2020 Inherited IRA for Funding','pre2020InhUseForFunding',S.pre2020InhUseForFunding || 'no',[['no','RMDs only'],['before','Use before regular IRA'],['after','Use after regular IRA']],{note:'Controls whether extra funding draws can use this inherited IRA, and where it sits inside the IRA-side funding path.'}),
+    setupInput(p1()+' Initial Pre-2020 Inherited IRA ($)','pre2020InhStartBal1','number',setupNum(S.pre2020InhStartBal1),{min:0,note:'Seed balance. Annual Check-In can update this later.'}),
+    setupInput(p1()+' Balance Start Year','pre2020InhStartYear1','optional-int',S.pre2020InhStartYear1 || '',{min:S.startYear,placeholder:'Plan start',note:'Blank means plan start year.'}),
+    setupInput(p1()+' Deceased Owner Birth Year','pre2020InhOwnerBy1','optional-int',S.pre2020InhOwnerBy1 || '',{min:1900,placeholder:'Required if balance exists'}),
+    setupInput(p1()+' Deceased Owner Death Year','pre2020InhDeathYear1','optional-int',S.pre2020InhDeathYear1 || '',{min:1900,placeholder:'Required if balance exists'}),
+    has2 ? setupInput(p2()+' Initial Pre-2020 Inherited IRA ($)','pre2020InhStartBal2','number',setupNum(S.pre2020InhStartBal2),{min:0,note:'Seed balance. Annual Check-In can update this later.'}) : '',
+    has2 ? setupInput(p2()+' Balance Start Year','pre2020InhStartYear2','optional-int',S.pre2020InhStartYear2 || '',{min:S.startYear,placeholder:'Plan start',note:'Blank means plan start year.'}) : '',
+    has2 ? setupInput(p2()+' Deceased Owner Birth Year','pre2020InhOwnerBy2','optional-int',S.pre2020InhOwnerBy2 || '',{min:1900,placeholder:'Required if balance exists'}) : '',
+    has2 ? setupInput(p2()+' Deceased Owner Death Year','pre2020InhDeathYear2','optional-int',S.pre2020InhDeathYear2 || '',{min:1900,placeholder:'Required if balance exists'}) : ''
+  ].join('');
+}
+
 function renderSetupReadinessView(){
   return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Readiness Checks</div><div class="setup-section-copy">This does not judge the plan. It checks whether the model has enough information to produce a projection a new user can trust.</div>'+setupReadinessList()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Next Best Steps</div><div class="setup-list"><div class="setup-check warn"><div class="setup-check-title">Start here</div><div class="setup-check-body">Fix missing items first, then review warnings. Defaults are acceptable when they are intentional.</div></div></div><div class="setup-mini-actions"><button class="btn btn-dark" onclick="setupSetView(\'interview\')">Open Interview</button><button class="btn btn-light" onclick="generateReport()">Report</button></div></div></div>';
 }
@@ -7246,9 +7442,11 @@ function renderSetupAnnualView(){
   const has2 = hasP2();
   const income = [
     setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Withholding %',yr,'withholdPct','number',{step:'0.1',min:0,max:100}),
     setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0}),
     has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Withholding %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100}) : '',
     has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0}) : '',
     setupSOYInput(p1()+' Monthly SS ($)',yr,'ss1','number',{min:0}),
@@ -7256,6 +7454,14 @@ function renderSetupAnnualView(){
     setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0}),
     setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0}),
     setupSOYInput('HSA Withdrawal ($)',yr,'hsaWith','number',{min:0})
+  ].join('');
+  const k401 = [
+    setupSOYPctInput(p1()+' Trad 401k % Override',yr,'k401Trad1',S.k401Trad1),
+    setupSOYPctInput(p1()+' Roth 401k % Override',yr,'k401Roth1',S.k401Roth1),
+    setupSOYPctInput(p1()+' Employer 401k % Override',yr,'k401Emp1',S.k401Emp1),
+    has2 ? setupSOYPctInput(p2()+' Trad 401k % Override',yr,'k401Trad2',S.k401Trad2) : '',
+    has2 ? setupSOYPctInput(p2()+' Roth 401k % Override',yr,'k401Roth2',S.k401Roth2) : '',
+    has2 ? setupSOYPctInput(p2()+' Employer 401k % Override',yr,'k401Emp2',S.k401Emp2) : ''
   ].join('');
   const bals = [
     setupSOYInput('Cash ($)',yr,'cash','number',{min:0}),
@@ -7265,11 +7471,12 @@ function renderSetupAnnualView(){
     setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' Roth ($)',yr,'roth2','number',{min:0}) : '',
     setupSOYInput('HSA ($)',yr,'hsa','number',{min:0}),
-    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0}),
-    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0}) : '',
-    setupSOYInput('Post-2020 Inherited IRA Total ($)',yr,'post2020Inh','number',{min:0})
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0,note:'Balance reset for this year; rule details live in Inherited IRA Setup.'}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0,note:'Balance reset for this year; rule details live in Inherited IRA Setup.'}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Total Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for active lots; add new lots in Inherited IRA Setup.'})
   ].join('');
-  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div><div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
+  const inheritedNote = '<div class="setup-check warn" style="margin:12px 0"><div class="setup-check-title">Inherited IRA changes</div><div class="setup-check-body">If a new inherited IRA appears, or if the death year / beneficiary / draw strategy needs correction, update the Inherited IRAs setup. This Annual Check-In only resets balances.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRA Setup</button></div></div>';
+  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
 }
 function setupStrategyOptions(){
   return [
