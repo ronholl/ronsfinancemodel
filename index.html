@@ -298,6 +298,53 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 .info-box{background:#e8f4ff;border:1px solid #90b8e0;border-radius:4px;padding:10px 14px;font-size:12px;line-height:1.8;margin-bottom:14px}
 .info-box.warn{background:var(--warn-bg);border-color:#c8a000;color:var(--warn)}
 footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-size:9px;letter-spacing:.14em;border-top:2px solid var(--gold);font-family:'JetBrains Mono',monospace;margin-top:32px}
+
+/* -- guided setup --------------------------------------------------------- */
+.setup-shell{display:flex;flex-direction:column;gap:16px}
+.setup-hero{background:linear-gradient(135deg,#fffaf0 0%,#f1e4c4 50%,#e4f0e5 100%);border:1px solid var(--border);border-radius:6px;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,340px);gap:18px;align-items:center}
+.setup-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--ink);line-height:1.05}
+.setup-copy{font-size:14px;line-height:1.55;color:var(--ink2);max-width:760px;margin-top:7px}
+.setup-score-card{background:rgba(255,253,245,.8);border:1px solid rgba(180,134,11,.45);border-radius:5px;padding:13px}
+.setup-score-num{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;color:var(--green);line-height:1}
+.setup-score-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--gold);margin-top:4px}
+.setup-progress{height:9px;background:#eadfc5;border-radius:99px;overflow:hidden;margin-top:10px}
+.setup-progress span{display:block;height:100%;background:linear-gradient(90deg,#1a5c1a,#b8860b);width:0}
+.setup-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--cream3);padding-bottom:10px}
+.setup-tab{border:1px solid var(--border);background:var(--panel);color:var(--ink2);border-radius:4px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.setup-tab.active{background:var(--ink);color:var(--gold3);border-color:var(--gold)}
+.setup-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.setup-main,.setup-side{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px}
+.setup-side{position:sticky;top:110px;max-height:calc(100vh - 130px);overflow:auto}
+.setup-section-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--ink);margin-bottom:5px}
+.setup-section-copy{font-size:13px;line-height:1.55;color:var(--ink2);margin-bottom:14px}
+.setup-stepper{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.setup-step{border:1px solid var(--cream3);background:var(--cream);color:var(--ink2);border-radius:4px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer}
+.setup-step.active{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:900}
+.setup-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}
+.setup-field{margin-bottom:0}
+.setup-field label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--ink2);margin-bottom:4px}
+.setup-field input,.setup-field select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:4px;background:var(--cream);color:var(--ink);font-family:'Lora',serif;font-size:13px;outline:none}
+.setup-field input:focus,.setup-field select:focus{border-color:var(--ink2);box-shadow:0 0 0 2px rgba(180,130,30,.18)}
+.setup-field-note{font-size:11px;color:var(--ink2);font-style:italic;line-height:1.4;margin-top:4px}
+.setup-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+.setup-mini-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.setup-list{display:flex;flex-direction:column;gap:8px}
+.setup-check{border:1px solid var(--cream3);background:#fffdf5;border-left-width:4px;border-radius:5px;padding:9px 10px}
+.setup-check.done{border-left-color:var(--green)}
+.setup-check.warn{border-left-color:var(--warn)}
+.setup-check.missing{border-left-color:var(--red)}
+.setup-check-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.setup-check-body{font-size:12px;line-height:1.45;color:var(--ink2);margin-top:3px}
+.setup-pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.setup-pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--cream3);background:var(--cream);border-radius:99px;padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink2)}
+.setup-pill.good{border-color:#87b887;background:#eef8ee;color:var(--green)}
+.setup-pill.warn{border-color:#d5b46e;background:#fff7df;color:var(--warn)}
+.setup-pill.bad{border-color:#c9958d;background:#fff0ee;color:var(--red)}
+.strategy-card{border:1px solid var(--cream3);background:#fffdf5;border-radius:6px;padding:12px;margin-bottom:10px}
+.strategy-card-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.strategy-card-body{font-size:12px;color:var(--ink2);line-height:1.45}
+@media(max-width:860px){.setup-hero,.setup-grid{grid-template-columns:1fr}.setup-side{position:static}.setup-title{font-size:24px}}
+
 .p2-field{transition:opacity .2s;}
 .p2-hidden{display:none!important;}
 </style>
@@ -320,6 +367,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
 <div id="tabs">
   <button class="tab active" onclick="ST('dashboard')">Dashboard</button>
+  <button class="tab" onclick="ST('setup')">Setup Guide</button>
   <button class="tab" onclick="ST('inputs')">Inputs</button>
   <button class="tab" onclick="ST('soy')">Start of Year</button>
   <button class="tab" onclick="ST('overrides')">Override Tables</button>
@@ -385,6 +433,12 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
     <div class="sh">Balance Trajectories</div>
     <div class="chart-box" style="margin-bottom:18px"><canvas id="ch-bal"></canvas></div>
   </div>
+</div>
+
+
+<!-- ═══════════ SETUP GUIDE ═══════════ -->
+<div id="pane-setup" class="pane">
+  <div id="setup-guide-root"></div>
 </div>
 
 <!-- ═══════════ INPUTS ═══════════ -->
@@ -616,7 +670,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
     <div class="panel">
       <div class="sh">Starting Balances</div>
       <div class="info-box">All balances are entered on the <strong>Start of Year</strong> tab. The model starts with zero for any year not entered. Go there to enter your actual opening balances for <span id="start-year-ref">2026</span>.</div>
-      <button class="btn btn-dark" style="margin-top:4px" onclick="ST('soy');document.querySelectorAll('.tab')[2].classList.add('active')">→ Go to Start of Year Entry</button>
+      <button class="btn btn-dark" style="margin-top:4px" onclick="ST('soy')">→ Go to Start of Year Entry</button>
     </div>
 
   </div>
@@ -660,10 +714,10 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
       <div class="ov-section-inner">
         <div class="ov-section-label">Spending <span id="ovpill-spending"></span></div>
-        <div class="ov-intent">Override the amount of spending and/or the amount withheld for taxes for one or more years. Spending will increase from this amount the following year unless reset. Use 1 Year Only for one-time expenses that should not become the new inflation base.</div>
+        <div class="ov-intent">Override spending and/or the cash-flow amount funded for income taxes for one or more years. Spending will increase from this amount the following year unless reset. Tax funding changes model timing only; calculated tax liability still appears separately. Use 1 Year Only for one-year spending changes that should not become the new inflation base.</div>
         <div id="conf-spending" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-spending">
-          <thead><tr><th>Spend Amount ($)</th><th>Pct Change (%)</th><th>Tax Override ($)</th><th>1 Year Only</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <thead><tr><th>Spend Amount ($)</th><th>Pct Change (%)</th><th>Tax Funding ($)<br><span style="font-weight:400;font-size:9px">cash-flow timing only</span></th><th>1 Year Only</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-spending"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('spending')">+ Add Row</button>
@@ -3227,9 +3281,12 @@ function displayAgeText(row) {
 function ST(name){
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('pane-'+name).classList.add('active');
-  event.target.classList.add('active');
+  const pane=document.getElementById('pane-'+name);
+  if(pane)pane.classList.add('active');
+  const tab=Array.from(document.querySelectorAll('.tab')).find(t=>(t.getAttribute('onclick')||'').includes("ST('"+name+"')"));
+  if(tab)tab.classList.add('active');
   if(name==='dashboard')  renderDash();
+  if(name==='setup')      renderSetupGuide();
   if(name==='taxtables')  renderTaxTables();
   if(name==='cashflow')   renderCF();
   if(name==='taxes')      renderTax();
@@ -4161,7 +4218,7 @@ function renderYD(){
       ${r.irmaaTx>0?dr('IRMAA Medicare Surcharge',f$(r.irmaaTx)):''}
       ${r.medicareBase>0?dr('Medicare Part B Premium',f$(r.medicareBase)):''}
 
-      ${r.taxOvrActive?dr('Tax Override (funding only)',f$(r.fundingTax),'','color:#8cf'):''}
+      ${r.taxOvrActive?dr('Tax Funding Override',f$(r.fundingTax),'','color:#8cf'):''}
       ${dr('Cash Floor',f$(parseF(resolveOverrideNonBlank(S.ovCashFloor,yr,'floor'))??S.cashFloor))}
       ${dr('Cash Gap (floor rebuild)',f$(r.cashGapNeeded))}
       ${dr('Total Required (spend+tax+cash gap)',f$(r.totalRequired),'tot')}
@@ -4677,7 +4734,7 @@ const OV_DEFS = {
   spending:{key:'ovSpending',fields:[
     {k:'amount',lbl:'Amount ($)',type:'number',w:110},
     {k:'pctChange',lbl:'Pct Change (%)',type:'number',w:110},
-    {k:'taxOvr',lbl:'Tax Override ($)',type:'number',w:130},
+    {k:'taxOvr',lbl:'Tax Funding ($)',type:'number',w:130},
     {k:'oneYear',lbl:'1 Year Only',type:'select',opts:[['','No'],['Y','Yes']],w:95},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
@@ -5082,7 +5139,7 @@ function apCard(yr){
   const survivorActive = isWidowAfterDeathYear(r);
   const why = [];
   if (survivorActive) why.push('Survivor mode active');
-  if (r.taxOvrActive) why.push('Tax override active');
+  if (r.taxOvrActive) why.push('Tax funding override active');
   if (cashGap > 0) why.push('Cash floor rebuild');
   if (r.rothConv > 0) {
     const reason = r.irmaaTx > 0 ? 'IRMAA planning'
@@ -6738,11 +6795,11 @@ function showWelcomeModal() {
 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
         ${[
-          ['1️⃣','Personal Info & Key Variables','<strong>Inputs tab, top sections:</strong> Enter names, birth years, filing status, and state. Set portfolio growth rate, dividend/interest rates, spending inflation, SS COLA, and wage growth. These global defaults drive the entire projection.'],
-          ['2️⃣','Social Security, Medicare & 401K','<strong>Inputs tab, middle sections:</strong> Enter SS start age and monthly benefit per person. Set IRMAA planning targets and prior-year MAGI for Medicare planning. Add 401K contribution percentages and employer match.'],
-          ['3️⃣','Starting Balances — Start of Year Tab','<strong>Start of Year tab, year 1:</strong> Click the first year row to open it. Enter opening balances for all accounts — IRA, Roth, brokerage (securities), cash, HSA, and inherited IRA. These seed the projection and carry forward automatically.'],
-          ['4️⃣','Start-of-Year Actuals','<strong>Start of Year tab:</strong> Enter year-by-year actuals as time passes — gross wages, self-employment income, Social Security monthly amount, annual spending, and account balances for each year. Keeps projections anchored to reality.'],
-          ['5️⃣','Review Results & Fine-Tune','<strong>Dashboard</strong> shows net worth trajectory and a 3-year action plan. <strong>Cash Flow</strong> shows every year in detail. <strong>Overrides</strong> models IRMAA targeting, Roth conversions, spending changes, and state tax moves year by year.'],
+          ['1️⃣','Guided Interview','<strong>Setup Guide → Interview:</strong> Enter names, birth years, filing status, plan years, assumptions, income, Social Security, Medicare, and savings defaults in one guided flow.'],
+          ['2️⃣','Readiness Checks','<strong>Setup Guide → Readiness:</strong> See what is complete, what is missing, and which defaults should be reviewed before relying on a report.'],
+          ['3️⃣','Opening Balances & Annual Check-In','<strong>Setup Guide → Annual Check-In:</strong> Confirm wages, spending, Social Security, and starting balances. Entered values become actuals; blank values continue from the projection where applicable.'],
+          ['4️⃣','Strategy Builder','<strong>Setup Guide → Strategy Builder:</strong> Add future events like retirement, one-year spending changes, tax funding timing, state moves, cash floor changes, Roth conversion targets, or portfolio growth changes.'],
+          ['5️⃣','Review Results & Expert Views','<strong>Dashboard</strong> shows net worth trajectory and a 3-year action plan. <strong>Cash Flow</strong> shows every year in detail. Inputs, Start of Year, and Override Tables remain available for expert editing.'],
         ].map(([ic,title,desc])=>`
           <div style="background:#2a1e08;border:1px solid #4a3810;border-radius:6px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start">
             <div style="font-size:18px;flex-shrink:0;margin-top:1px">${ic}</div>
@@ -6759,14 +6816,14 @@ function showWelcomeModal() {
         &nbsp;Your data may be stored in this browser, and browser storage can be cleared by updates, settings, cleanup tools, or using a different device.
         &nbsp;Export a JSON backup regularly from the Export tab.
         &nbsp;GitHub sync helps, but keep JSON backups too because they include the GitHub setup information.
-        &nbsp;In Start of Year, blue = model projection, green = value you entered.
+        &nbsp;Setup Guide is the easiest place to start; expert tabs remain available when you want the full sheet-style controls.
       </div>
 
       <div style="text-align:center">
-        <button onclick="document.getElementById('welcome-modal').remove();ST('inputs')"
+        <button onclick="document.getElementById('welcome-modal').remove();ST('setup')"
           style="padding:11px 28px;background:#c8960c;color:#1a1208;border:none;border-radius:6px;
           font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin:4px">
-          Get Started → Inputs
+          Start Setup Guide
         </button>
         <button onclick="showWelcomePage2()"
           style="padding:11px 20px;background:#2a1e08;color:#c8960c;border:1px solid #c8960c;
@@ -6851,10 +6908,10 @@ function showWelcomePage2() {
       </div>
 
       <div style="text-align:center">
-        <button onclick="document.getElementById('welcome-modal').remove();ST('inputs')"
+        <button onclick="document.getElementById('welcome-modal').remove();ST('setup')"
           style="padding:11px 28px;background:#c8960c;color:#1a1208;border:none;border-radius:6px;
           font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin:4px">
-          Get Started → Inputs
+          Start Setup Guide
         </button>
         <button onclick="(()=>{ const m=document.getElementById('welcome-modal'); if(m) m.remove(); showWelcomePage1(); })()"
           style="padding:11px 20px;background:#2a1e08;color:#c8960c;border:1px solid #c8960c;
@@ -6867,6 +6924,687 @@ function showWelcomePage2() {
   // Scroll to top and swap content
   modal.scrollTop = 0;
   modal.innerHTML = card;
+}
+
+
+// -- Guided setup, readiness, annual check-in, and strategy builder ----------
+let setupView = 'interview';
+let setupStep = 0;
+let setupCheckYear = null;
+let setupStrategyType = 'spending-onetime';
+
+const SETUP_STEPS = [
+  {id:'household', title:'Household', copy:'Start with the people and filing setup. These answers control ages, tax filing, RMD timing, and Medicare logic.'},
+  {id:'assumptions', title:'Assumptions', copy:'These are the global defaults the model uses unless a future strategy overrides them.'},
+  {id:'balances', title:'Opening Year', copy:'These values seed the first plan year through Start of Year actuals. Blank or zero accounts are fine when they truly do not exist.'},
+  {id:'income', title:'Income', copy:'Current wages and Social Security go into the first plan year. Future retirement timing is handled as a strategy or wage end year.'},
+  {id:'medicare', title:'Medicare & Savings', copy:'Set Medicare lookback income, basic IRMAA preferences, and 401k defaults if they apply.'},
+  {id:'review', title:'Review', copy:'Check what is complete, what is assumed, and where the plan may need attention before generating a report.'}
+];
+
+function setupEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function setupPct(v){
+  const n = parseF(v);
+  return n || n === 0 ? Math.round(n * 10000) / 100 : '';
+}
+function setupNum(v){
+  return v || v === 0 ? v : '';
+}
+function setupYear(){
+  return parseInt(S.startYear) || new Date().getFullYear();
+}
+function setupCheckYearValue(){
+  if (!setupCheckYear) setupCheckYear = Math.max(S.startYear || setupYear(), Math.min(new Date().getFullYear(), S.endYear || setupYear()));
+  return setupCheckYear;
+}
+function setupHasSOYValue(yr, key){
+  const v = S.soy && S.soy[yr] ? S.soy[yr][key] : null;
+  return v !== null && v !== undefined && v !== '';
+}
+function setupSOYValue(yr, key){
+  return setupHasSOYValue(yr, key) ? S.soy[yr][key] : '';
+}
+function setupFirstYearSOY(){
+  const yr = setupYear();
+  return (S.soy && S.soy[yr]) || {};
+}
+function setupField(label, control, note){
+  return '<div class="setup-field"><label>'+setupEsc(label)+'</label>'+control+(note?'<div class="setup-field-note">'+note+'</div>':'')+'</div>';
+}
+function setupInput(label, key, kind, value, opts){
+  opts = opts || {};
+  const type = opts.type || (kind === 'text' ? 'text' : 'number');
+  const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
+  const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
+  const rerender = opts.rerender ? 'true' : 'false';
+  const eventName = opts.live ? 'oninput' : 'onchange';
+  const control = "<input type='"+type+"' value='"+setupEsc(value)+"'"+step+min+max+placeholder+" "+eventName+"=\"setupSetState('"+key+"','"+kind+"',this.value,"+rerender+")\">";
+  return setupField(label, control, opts.note || '');
+}
+function setupSelect(label, key, value, options, opts){
+  opts = opts || {};
+  const rerender = opts.rerender ? 'true' : 'false';
+  const body = "<select onchange=\"setupSetState('"+key+"','select',this.value,"+rerender+")\">" +
+    options.map(o => {
+      const val = Array.isArray(o) ? o[0] : o;
+      const txt = Array.isArray(o) ? o[1] : o;
+      return "<option value='"+setupEsc(val)+"' "+(String(value || '') === String(val) ? 'selected' : '')+">"+setupEsc(txt)+"</option>";
+    }).join('') + "</select>";
+  return setupField(label, body, opts.note || '');
+}
+function setupSOYInput(label, yr, key, kind, opts){
+  opts = opts || {};
+  const value = setupSOYValue(yr, key);
+  const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
+  const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
+  const control = "<input type='number' value='"+setupEsc(value)+"'"+step+min+max+placeholder+" onchange=\"setupSetSOY("+yr+",'"+key+"','"+kind+"',this.value,false)\">";
+  return setupField(label, control, opts.note || '');
+}
+function setupPlanLengthField(){
+  const years = (S.endYear && S.startYear) ? Math.max(1, S.endYear - S.startYear + 1) : 30;
+  return setupField('Plan Length (years)', "<input type='number' min='1' max='60' value='"+setupEsc(years)+"' onchange=\"setupSetPlanYears(this.value)\">", 'The end year updates automatically from your plan start year.');
+}
+function setupSetPlanYears(value){
+  const yrs = Math.max(1, Math.min(60, parseInt(value) || 30));
+  S.endYear = (parseInt(S.startYear) || setupYear()) + yrs - 1;
+  setupAfterChange(true);
+}
+function setupSetState(key, kind, value, rerender){
+  if (kind === 'pct') S[key] = (parseF(value) || 0) / 100;
+  else if (kind === 'int') S[key] = parseInt(value) || 0;
+  else if (kind === 'number') S[key] = parseF(value) || 0;
+  else if (kind === 'bool') S[key] = !!value;
+  else S[key] = value == null ? '' : value;
+  if (key === 'startYear') {
+    const yrs = (S.endYear && S.startYear) ? Math.max(1, S.endYear - S.startYear + 1) : 30;
+    S.endYear = (parseInt(S.startYear) || new Date().getFullYear()) + yrs - 1;
+    setupCheckYear = S.startYear;
+  }
+  if (['fundingOrder1','fundingOrder2','fundingOrder3'].includes(key)) {
+    const ord = normalizeFundingOrder(S.fundingOrder1, S.fundingOrder2, S.fundingOrder3);
+    S.fundingOrder1 = ord[0]; S.fundingOrder2 = ord[1]; S.fundingOrder3 = ord[2];
+  }
+  setupAfterChange(!!rerender);
+}
+function setupSetSOY(yr, key, kind, value, rerender){
+  if (!S.soy) S.soy = {};
+  if (!S.soy[yr]) S.soy[yr] = {};
+  if (value === null || value === undefined || value === '') S.soy[yr][key] = null;
+  else if (kind === 'pct-decimal') S.soy[yr][key] = String((parseF(value) || 0) / 100);
+  else S.soy[yr][key] = value;
+  setupAfterChange(!!rerender);
+}
+function setupAfterChange(rerender){
+  const active = document.activeElement;
+  const activeId = active && active.id ? active.id : null;
+  saveState(S);
+  loadUI();
+  updateHeader();
+  updateLabels();
+  proj = runProjection(S);
+  renderSetupReadinessSummary();
+  if (rerender) renderSetupGuide();
+  if (activeId) {
+    const el = document.getElementById(activeId);
+    if (el) try { el.focus(); } catch(e) {}
+  }
+}
+function setupSetView(view){
+  setupView = view;
+  renderSetupGuide();
+}
+function setupSetStep(step){
+  setupStep = Math.max(0, Math.min(SETUP_STEPS.length - 1, step));
+  renderSetupGuide();
+}
+
+function setupReadiness(){
+  const yr = setupYear();
+  const soy = setupFirstYearSOY();
+  const has2 = hasP2();
+  const items = [];
+  const add = (status, title, body, action, view) => items.push({status, title, body, action, view});
+  const hasOpeningBalance = ['cash','sec','ira1','ira2','roth1','roth2','hsa','pre2020Inh1','pre2020Inh2','post2020Inh'].some(k => parseF(soy[k]) > 0);
+  const hasIncome = ['grossWages','ptWages','grossWages2','ptWages2','ss1','ss2'].some(k => parseF(soy[k]) > 0) || parseF(S.ssmo1) > 0 || parseF(S.ssmo2) > 0;
+  const p1Age = yr - (parseInt(S.by1) || yr) - 1;
+  const p2Age = yr - (parseInt(S.by2) || yr) - 1;
+  add(S.name1 && String(S.name1).trim() ? 'done' : 'missing', 'Household name', S.name1 ? 'Person 1 is named.' : 'Enter at least Person 1 name so reports and labels make sense.', 'Open interview', 'interview');
+  add(S.by1 && S.by1 > 1900 && S.by1 < yr ? 'done' : 'missing', 'Person 1 birth year', 'Needed for age, RMD, Social Security, Medicare, and senior deduction calculations.', 'Open interview', 'interview');
+  if (has2) add(S.by2 && S.by2 > 1900 && S.by2 < yr ? 'done' : 'missing', 'Person 2 birth year', 'Needed because Person 2 is active in this plan.', 'Open interview', 'interview');
+  add(S.startYear <= S.endYear ? 'done' : 'missing', 'Plan horizon', 'Start year and end year must form a valid projection range.', 'Open interview', 'interview');
+  add(hasOpeningBalance ? 'done' : 'missing', 'Opening balances', 'Enter the account balances that exist at the start of '+yr+'.', 'Annual check-in', 'annual');
+  add(parseF(soy.spending) > 0 ? 'done' : 'missing', 'Annual spending', 'Enter first-year spending so the funding waterfall has a real target.', 'Annual check-in', 'annual');
+  add(hasIncome ? 'done' : 'warn', 'Income sources', hasIncome ? 'First-year wages, self-employment, or Social Security are present.' : 'This may be fine for an asset-only plan, but confirm there is no wage or Social Security income to model.', 'Annual check-in', 'annual');
+  if (S.ssAge1 || S.ssmo1) add(S.ssAge1 && S.ssmo1 ? 'done' : 'warn', p1()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
+  if (has2 && (S.ssAge2 || S.ssmo2)) add(S.ssAge2 && S.ssmo2 ? 'done' : 'warn', p2()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
+  if (p1Age >= 63 || (has2 && p2Age >= 63)) {
+    add((S.medicareMagi1 || S.medicareMagi2) ? 'done' : 'warn', 'Medicare lookback', 'Prior MAGI helps year-one and year-two IRMAA estimates for Medicare-age households.', 'Open interview', 'interview');
+  }
+  add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open interview', 'interview');
+  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
+  add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
+  const done = items.filter(i => i.status === 'done').length;
+  const missing = items.filter(i => i.status === 'missing').length;
+  const warn = items.filter(i => i.status === 'warn').length;
+  const score = Math.round(done / Math.max(1, items.length) * 100);
+  return {items, done, missing, warn, score};
+}
+function renderSetupReadinessSummary(){
+  const host = document.getElementById('setup-readiness-summary');
+  if (!host) return;
+  const r = setupReadiness();
+  host.innerHTML = setupReadinessCard(r);
+}
+function setupReadinessCard(r){
+  return '<div class="setup-score-num">'+r.score+'%</div>' +
+    '<div class="setup-score-label">Plan readiness</div>' +
+    '<div class="setup-progress"><span style="width:'+r.score+'%"></span></div>' +
+    '<div class="setup-pill-row">' +
+      '<span class="setup-pill good">'+r.done+' complete</span>' +
+      '<span class="setup-pill bad">'+r.missing+' missing</span>' +
+      '<span class="setup-pill warn">'+r.warn+' review</span>' +
+    '</div>';
+}
+function setupReadinessList(limit){
+  const r = setupReadiness();
+  const rows = (limit ? r.items.slice(0, limit) : r.items).map(item => {
+    const label = item.status === 'done' ? 'Complete' : item.status === 'missing' ? 'Missing' : 'Review';
+    const action = item.view ? '<div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupSetView(\''+item.view+'\')">'+setupEsc(item.action || 'Open')+'</button></div>' : '';
+    return '<div class="setup-check '+item.status+'"><div class="setup-check-title">'+label+' · '+setupEsc(item.title)+'</div><div class="setup-check-body">'+setupEsc(item.body)+'</div>'+action+'</div>';
+  }).join('');
+  return '<div class="setup-list">'+rows+'</div>';
+}
+
+function renderSetupGuide(){
+  const root = document.getElementById('setup-guide-root');
+  if (!root) return;
+  const r = setupReadiness();
+  root.innerHTML =
+    '<div class="setup-shell">' +
+      '<div class="setup-hero">' +
+        '<div><div class="setup-title">Guided Plan Setup</div><div class="setup-copy">A calmer front door for the same model: answer the interview, confirm each year as reality changes, add future strategies in plain language, then generate the report or inspect the sheet.</div></div>' +
+        '<div class="setup-score-card" id="setup-readiness-summary">'+setupReadinessCard(r)+'</div>' +
+      '</div>' +
+      '<div class="setup-tabs">' +
+        setupTopTab('interview','Interview') +
+        setupTopTab('readiness','Readiness') +
+        setupTopTab('annual','Annual Check-In') +
+        setupTopTab('strategy','Strategy Builder') +
+      '</div>' +
+      (setupView === 'readiness' ? renderSetupReadinessView() : setupView === 'annual' ? renderSetupAnnualView() : setupView === 'strategy' ? renderSetupStrategyView() : renderSetupInterviewView()) +
+    '</div>';
+}
+function setupTopTab(id, label){
+  return '<button class="setup-tab '+(setupView === id ? 'active' : '')+'" onclick="setupSetView(\''+id+'\')">'+setupEsc(label)+'</button>';
+}
+function renderSetupInterviewView(){
+  const step = SETUP_STEPS[setupStep] || SETUP_STEPS[0];
+  return '<div class="setup-grid"><div class="setup-main">' +
+    '<div class="setup-stepper">'+SETUP_STEPS.map((st,i)=>'<button class="setup-step '+(i===setupStep?'active':'')+'" onclick="setupSetStep('+i+')">'+(i+1)+'. '+setupEsc(st.title)+'</button>').join('')+'</div>' +
+    '<div class="setup-section-title">'+setupEsc(step.title)+'</div><div class="setup-section-copy">'+setupEsc(step.copy)+'</div>' +
+    '<div class="setup-field-grid">'+renderSetupStepFields(step.id)+'</div>' +
+    '<div class="setup-actions">' +
+      '<button class="btn btn-light" onclick="setupSetStep('+(setupStep-1)+')" '+(setupStep===0?'disabled':'')+'>Back</button>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-light" onclick="ST(\'dashboard\')">Dashboard</button>' +
+        '<button class="btn btn-dark" onclick="'+(setupStep >= SETUP_STEPS.length-1 ? "setupSetView('readiness')" : 'setupSetStep('+(setupStep+1)+')')+'">'+(setupStep >= SETUP_STEPS.length-1 ? 'Review Readiness' : 'Next')+'</button>' +
+      '</div>' +
+    '</div></div>' +
+    '<div class="setup-side"><div class="setup-section-title" style="font-size:18px">Needs Attention</div>'+setupReadinessList(5)+'</div></div>';
+}
+function renderSetupStepFields(id){
+  const yr = setupYear();
+  const has2 = hasP2();
+  if (id === 'household') return [
+    setupInput('Person 1 Name','name1','text',S.name1,{type:'text',rerender:true}),
+    setupInput('Person 2 Name','name2','text',S.name2,{type:'text',rerender:true,placeholder:'Blank for single filer'}),
+    setupInput('Person 1 Birth Year','by1','int',S.by1,{min:1900,max:yr}),
+    has2 ? setupInput('Person 2 Birth Year','by2','int',S.by2,{min:1900,max:yr}) : '',
+    setupSelect('Filing Status','filing',S.filing,[['MFJ','Married Filing Jointly'],['SINGLE','Single'],['HOH','Head of Household']],{rerender:true}),
+    setupSelect('State','state',S.state,[['CA','California'],['','Federal Only']],{}),
+    setupInput('Plan Start Year','startYear','int',S.startYear,{min:2020,max:2060,rerender:true}),
+    setupPlanLengthField()
+  ].join('');
+  if (id === 'assumptions') return [
+    setupInput('Portfolio Growth Rate (%)','growthRate','pct',setupPct(S.growthRate),{step:'0.1',min:-100,note:'Total return assumption before year-specific overrides.'}),
+    setupInput('Brokerage Dividend Rate (%)','divRate','pct',setupPct(S.divRate),{step:'0.01',min:0}),
+    setupInput('Cash Interest Rate (%)','intRate','pct',setupPct(S.intRate),{step:'0.01',min:0}),
+    setupInput('Dividend Reinvest (%)','divReinvestPct','pct',setupPct(S.divReinvestPct),{step:'1',min:0,max:100}),
+    setupSelect('Dividend Tax Treatment','qualDivsMode',S.qualDivsMode || 'ordinary',[['ordinary','Ordinary Income'],['qualified','Qualified / LTCG Rate']],{}),
+    setupInput('Annual Spending Increase (%)','spendInfl','pct',setupPct(S.spendInfl),{step:'0.1',min:0}),
+    setupInput('SS COLA (%)','ssCola','pct',setupPct(S.ssCola),{step:'0.1',min:0}),
+    setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0}),
+    setupInput('Stock Sales Taxable Gain (%)','stkGainPct','pct',setupPct(S.stkGainPct),{step:'1',min:0,max:100}),
+    setupInput('Cash Floor ($)','cashFloor','number',setupNum(S.cashFloor),{min:0}),
+    setupSelect('Draw 1','fundingOrder1',S.fundingOrder1 || 'SEC',FUNDING_ORDER_OPTIONS,{rerender:true}),
+    setupSelect('Draw 2','fundingOrder2',S.fundingOrder2 || 'IRA',FUNDING_ORDER_OPTIONS,{rerender:true}),
+    setupSelect('Draw 3','fundingOrder3',S.fundingOrder3 || 'ROTH',FUNDING_ORDER_OPTIONS,{rerender:true})
+  ].join('');
+  if (id === 'balances') return [
+    setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0,note:'This becomes the first spending base; later years inflate from here unless overridden.'}),
+    setupSOYInput('Cash Balance ($)',yr,'cash','number',{min:0}),
+    setupSOYInput('Securities / Brokerage ($)',yr,'sec','number',{min:0}),
+    setupSOYInput(p1()+' IRA ($)',yr,'ira1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' IRA ($)',yr,'ira2','number',{min:0}) : '',
+    setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Roth ($)',yr,'roth2','number',{min:0}) : '',
+    setupSOYInput('HSA ($)',yr,'hsa','number',{min:0}),
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Total ($)',yr,'post2020Inh','number',{min:0})
+  ].join('');
+  if (id === 'income') return [
+    setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
+    setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0}),
+    setupSOYInput(p1()+' Withholding %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Tax withholding only; payroll taxes are modeled separately.'}),
+    setupInput(p1()+' Last Wage Year','wagesEnd1','int',S.wagesEnd1,{min:yr,placeholder:'9999'}),
+    setupInput(p1()+' Last Self-Employment Year','ptEnd1','int',S.ptEnd1,{min:yr,placeholder:'9999'}),
+    has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Withholding %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100}) : '',
+    has2 ? setupInput(p2()+' Last Wage Year','wagesEnd2','int',S.wagesEnd2,{min:yr,placeholder:'9999'}) : '',
+    has2 ? setupInput(p2()+' Last Self-Employment Year','ptEnd2','int',S.ptEnd2,{min:yr,placeholder:'9999'}) : '',
+    setupInput(p1()+' SS Start Age','ssAge1','number',S.ssAge1,{min:0,max:90}),
+    setupInput(p1()+' Monthly SS at Start ($)','ssmo1','number',S.ssmo1,{min:0}),
+    has2 ? setupInput(p2()+' SS Start Age','ssAge2','number',S.ssAge2,{min:0,max:90}) : '',
+    has2 ? setupInput(p2()+' Monthly SS at Start ($)','ssmo2','number',S.ssmo2,{min:0}) : '',
+    setupSOYInput(p1()+' Current Monthly SS ($)',yr,'ss1','number',{min:0,note:'Use only if already receiving Social Security in the plan start year.'}),
+    has2 ? setupSOYInput(p2()+' Current Monthly SS ($)',yr,'ss2','number',{min:0}) : ''
+  ].join('');
+  if (id === 'medicare') return [
+    setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true}),
+    setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{}),
+    setupInput('IRMAA Headroom ($)','irmaaHeadroom','number',S.irmaaHeadroom,{min:0}),
+    setupSelect('IRMAA Max Bracket','irmaaMaxBracket',S.irmaaMaxBracket || '',getMaxBracketOptions({startYear:S.startYear, level:S.irmaaTarget}),{}),
+    setupInput('Bracket Headroom ($)','irmaaBracketHeadroom','number',S.irmaaBracketHeadroom || 0,{min:0}),
+    setupInput('Medicare MAGI - 2 Years Before Start ($)','medicareMagi2','number',S.medicareMagi2,{min:0}),
+    setupInput('Medicare MAGI - 1 Year Before Start ($)','medicareMagi1','number',S.medicareMagi1,{min:0}),
+    setupInput(p1()+' Trad 401k %','k401Trad1','pct',setupPct(S.k401Trad1),{step:'0.1',min:0,max:100}),
+    setupInput(p1()+' Roth 401k %','k401Roth1','pct',setupPct(S.k401Roth1),{step:'0.1',min:0,max:100}),
+    setupInput(p1()+' Employer 401k %','k401Emp1','pct',setupPct(S.k401Emp1),{step:'0.1',min:0,max:100}),
+    has2 ? setupInput(p2()+' Trad 401k %','k401Trad2','pct',setupPct(S.k401Trad2),{step:'0.1',min:0,max:100}) : '',
+    has2 ? setupInput(p2()+' Roth 401k %','k401Roth2','pct',setupPct(S.k401Roth2),{step:'0.1',min:0,max:100}) : '',
+    has2 ? setupInput(p2()+' Employer 401k %','k401Emp2','pct',setupPct(S.k401Emp2),{step:'0.1',min:0,max:100}) : ''
+  ].join('');
+  return '<div style="grid-column:1/-1">'+setupReadinessList()+'<div class="setup-mini-actions"><button class="btn btn-dark" onclick="generateReport()">Generate Report</button><button class="btn btn-light" onclick="ST(\'cashflow\')">Open Sheet View</button></div></div>';
+}
+function renderSetupReadinessView(){
+  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Readiness Checks</div><div class="setup-section-copy">This does not judge the plan. It checks whether the model has enough information to produce a projection a new user can trust.</div>'+setupReadinessList()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Next Best Steps</div><div class="setup-list"><div class="setup-check warn"><div class="setup-check-title">Start here</div><div class="setup-check-body">Fix missing items first, then review warnings. Defaults are acceptable when they are intentional.</div></div></div><div class="setup-mini-actions"><button class="btn btn-dark" onclick="setupSetView(\'interview\')">Open Interview</button><button class="btn btn-light" onclick="generateReport()">Report</button></div></div></div>';
+}
+function renderSetupAnnualView(){
+  const yr = setupCheckYearValue();
+  const opts = [];
+  for (let y = S.startYear; y <= S.endYear; y++) opts.push('<option value="'+y+'" '+(y===yr?'selected':'')+'>'+y+'</option>');
+  const has2 = hasP2();
+  const income = [
+    setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
+    setupSOYInput(p1()+' Withholding %',yr,'withholdPct','number',{step:'0.1',min:0,max:100}),
+    setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Withholding %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100}) : '',
+    has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0}) : '',
+    setupSOYInput(p1()+' Monthly SS ($)',yr,'ss1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Monthly SS ($)',yr,'ss2','number',{min:0}) : '',
+    setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0}),
+    setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0}),
+    setupSOYInput('HSA Withdrawal ($)',yr,'hsaWith','number',{min:0})
+  ].join('');
+  const bals = [
+    setupSOYInput('Cash ($)',yr,'cash','number',{min:0}),
+    setupSOYInput('Securities ($)',yr,'sec','number',{min:0}),
+    setupSOYInput(p1()+' IRA ($)',yr,'ira1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' IRA ($)',yr,'ira2','number',{min:0}) : '',
+    setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Roth ($)',yr,'roth2','number',{min:0}) : '',
+    setupSOYInput('HSA ($)',yr,'hsa','number',{min:0}),
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Total ($)',yr,'post2020Inh','number',{min:0})
+  ].join('');
+  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div><div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
+}
+function setupStrategyOptions(){
+  return [
+    ['spending-onetime','One-year spending change'],
+    ['tax-funding','Tax funding timing'],
+    ['spending-reset','Ongoing spending change'],
+    ['retirement','Retirement / income ends'],
+    ['deductions','Tax deductions'],
+    ['state-move','Move / state tax change'],
+    ['irmaa','Roth conversion target'],
+    ['income-level','MAGI income ceiling'],
+    ['tax-fill','Tax bracket fill'],
+    ['income-rates','Dividend / interest rates'],
+    ['stock-gain','Stock sale gain rate'],
+    ['cash-floor','Cash floor change'],
+    ['hsa-deposit','HSA deposit'],
+    ['growth','Portfolio growth rate'],
+    ['wage-growth','Wage growth change'],
+    ['funding','Funding order change']
+  ];
+}
+function setupStrategyLabel(type){
+  const found = setupStrategyOptions().find(o => o[0] === type);
+  return found ? found[1] : String(type || '').replace(/-/g,' ');
+}
+function setupStrategyDescription(){
+  const descriptions = {
+    'spending-onetime': {
+      title:'One-year spending change',
+      body:'Use this for a single year where spending is different from normal, such as a remodel, car purchase, big trip, family support, or medical expense. It changes that year only and does not become the new normal spending level.'
+    },
+    'tax-funding': {
+      title:'Tax funding timing',
+      body:'Use this when the cash you plan to set aside for income taxes is different from the tax the model calculates for that year. This is helpful when estimated payments lag reality, such as paying less after a low-income prior year and catching up the following year. It changes cash flow timing, not the actual calculated tax.'
+    },
+    'spending-reset': {
+      title:'Ongoing spending change',
+      body:'Use this when normal annual spending changes for a period of time, such as retirement lifestyle changes, downsizing, higher travel years, or supporting someone for several years. A dollar amount becomes the new base that later years can inflate from.'
+    },
+    'retirement': {
+      title:'Retirement / income ends',
+      body:'Use this to tell the model when wages or self-employment income stops. This keeps the plan from assuming paychecks continue forever and helps the account draw plan start in the right year.'
+    },
+    'deductions': {
+      title:'Tax deductions',
+      body:'Use this for years where deductible expenses are different from normal, such as large charitable gifts, mortgage interest, property taxes, or itemized deductions. The model compares these with standard deduction rules when calculating taxes.'
+    },
+    'state-move': {
+      title:'Move / state tax change',
+      body:'Use this if you expect to move or otherwise change state tax treatment. For example, moving from California to a no-income-tax state can change the tax bill and the account draw plan.'
+    },
+    'irmaa': {
+      title:'Roth conversion target',
+      body:'Use this when you want the model to manage IRA-to-Roth conversions around Medicare IRMAA income tiers or federal tax brackets. In plain terms, it can convert some IRA money now to try to avoid larger taxable IRA withdrawals later.'
+    },
+    'income-level': {
+      title:'MAGI income ceiling',
+      body:'Use this to keep taxable income under a chosen limit in certain years. This can matter before Medicare for health insurance subsidies, or whenever you want the model to avoid crossing a tax or benefit threshold.'
+    },
+    'tax-fill': {
+      title:'Tax bracket fill',
+      body:'Use this to let the model convert IRA money to Roth until it reaches the top of the current tax bracket, leaving any headroom you choose. It is a way to use lower-tax years on purpose.'
+    },
+    'income-rates': {
+      title:'Dividend / interest rates',
+      body:'Use this when investment income assumptions change for a period, such as a higher cash interest rate, different brokerage dividend yield, or a choice to reinvest more or fewer dividends.'
+    },
+    'stock-gain': {
+      title:'Stock sale gain rate',
+      body:'Use this to estimate how much of brokerage stock sales will be taxable gain. For example, selling long-held shares may create more taxable gain than selling recently purchased shares.'
+    },
+    'cash-floor': {
+      title:'Cash floor change',
+      body:'Use this when you want to keep a minimum amount of cash available. A higher floor can protect against near-term spending needs; a lower floor lets more money stay invested.'
+    },
+    'hsa-deposit': {
+      title:'HSA deposit',
+      body:'Use this to schedule health savings account contributions for years when you are eligible. HSA deposits can reduce taxable income and add to a separate health-expense account.'
+    },
+    'growth': {
+      title:'Portfolio growth rate',
+      body:'Use this to change the investment growth assumption for a year or range of years. You might model lower returns early in retirement, a bad market year, a conservative plan, or a more optimistic period.'
+    },
+    'wage-growth': {
+      title:'Wage growth change',
+      body:'Use this when wages or self-employment income should grow differently than the global default. This can model promotions, slowing work, consulting income changes, or flat income years.'
+    },
+    'funding': {
+      title:'Funding order change',
+      body:'Use this to change which accounts are drawn first when the plan needs cash. For example, you may want to spend taxable brokerage first, preserve Roth money, or use IRA money earlier in some years.'
+    }
+  };
+  const d = descriptions[setupStrategyType] || {title:setupStrategyLabel(setupStrategyType), body:'Use this strategy to add a future planning change without editing the raw override table directly.'};
+  return '<div class="setup-check done" style="margin:10px 0 14px"><div class="setup-check-title">'+setupEsc(d.title)+'</div><div class="setup-check-body">'+setupEsc(d.body)+'</div></div>';
+}
+function renderSetupStrategyView(){
+  const options = setupStrategyOptions();
+  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
+  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Strategy Builder</div><div class="setup-section-copy">Add future changes without touching override tables. The builder creates the same override rows the expert view uses, so advanced users can still inspect and edit everything later.</div>'+selector+'<div class="strategy-card">'+renderStrategyForm()+'</div>'+renderSelectedStrategyOverrides()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Active Strategies</div>'+renderActiveStrategies()+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'overrides\')">Open Override Tables</button></div></div></div>';
+}
+function stratInput(id,label,value,opts){
+  opts = opts || {};
+  const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
+  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(value || '')+"'"+step+min+placeholder+">", opts.note || '');
+}
+function stratText(id,label,value,note){
+  return setupField(label, "<input id='strat-"+id+"' type='text' value='"+setupEsc(value || '')+"'>", note || '');
+}
+function stratSelect(id,label,value,options,note){
+  return setupField(label, "<select id='strat-"+id+"'>"+options.map(o=>{const val=Array.isArray(o)?o[0]:o;const txt=Array.isArray(o)?o[1]:o;return "<option value='"+setupEsc(val)+"' "+(String(value||'')===String(val)?'selected':'')+">"+setupEsc(txt)+"</option>";}).join('')+"</select>", note || '');
+}
+function renderStrategyForm(){
+  const yr = setupYear();
+  const end = S.endYear || yr;
+  let fields = '';
+  if (setupStrategyType === 'spending-onetime') fields = stratInput('year','Year',yr,{min:yr})+stratInput('amount','Total Spending for Year ($)','',{min:0,note:'Use the total spending amount for that year. This is marked one-year only, so it will not reset the future inflation base.'})+stratText('notes','Notes','One-year spending change');
+  else if (setupStrategyType === 'tax-funding') fields = stratInput('year','Year',yr,{min:yr})+stratInput('tax','Tax Funding Amount ($)','',{min:0,note:'Cash-flow timing only. Use this when you intentionally fund less or more income tax than the calculated liability in a year, such as deferring tax payments after a prior low-income year and catching up later.'})+stratText('notes','Notes','Tax funding timing');
+  else if (setupStrategyType === 'spending-reset') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('amount','Spending Amount ($)','',{min:0,note:'A dollar amount resets the spending base for future inflated years unless the row is one-year only.'})+stratInput('pct','Percent Change (%)','',{step:'0.1',note:'Optional percent adjustment against the inflated spending base.'})+stratText('notes','Notes','Ongoing spending change');
+  else if (setupStrategyType === 'retirement') fields = stratSelect('person','Person','both',[['1',p1()],...(hasP2()?[['2',p2()],['both','Both people']]:[])])+stratInput('year','Last Wage Year',yr,{min:yr,note:'The model treats this as the final year with wages or self-employment income.'})+stratText('notes','Notes','Retirement timing');
+  else if (setupStrategyType === 'deductions') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('fed','Federal Itemized Deductions ($)','',{min:0})+stratInput('ca','CA Itemized Deductions ($)','',{min:0})+stratSelect('charityOn','Use Non-itemizer Charity?','No',[['No','No'],['Yes','Yes']])+stratInput('charity','Eligible Cash Charity ($)','',{min:0})+stratText('notes','Notes','Tax deduction change');
+  else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',9999,{min:yr})+stratSelect('state','State','NONE',[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes','State tax change');
+  else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('level','IRMAA Target Cap','',getIRMAALevelOptions({startYear:yr,level:''}))+stratSelect('fill','Fill Mode','',IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket','',getMaxBracketOptions({startYear:yr,level:''}))+stratInput('headroom','Bracket Headroom ($)',S.irmaaBracketHeadroom||0,{min:0})+stratText('notes','Notes','Roth conversion target');
+  else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('magi','MAGI Target ($)','',{min:0})+stratText('notes','Notes','MAGI ceiling');
+  else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('active','Tax Fill','T',[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)','',{min:0})+stratText('notes','Notes','Tax bracket fill');
+  else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('div','Brokerage Dividend Rate (%)','',{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)','',{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)','',{step:'0.01',min:0})+stratText('notes','Notes','Income rate change');
+  else if (setupStrategyType === 'stock-gain') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Taxable Gain on Stock Sales (%)','',{step:'1',min:0})+stratText('notes','Notes','Stock sale gain change');
+  else if (setupStrategyType === 'cash-floor') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('floor','Cash Floor ($)',S.cashFloor||'',{min:0})+stratText('notes','Notes','Cash floor change');
+  else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('amount','Annual HSA Deposit ($)','',{min:0})+stratText('notes','Notes','HSA deposit');
+  else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Growth Rate (%)','',{step:'0.1',min:-100})+stratText('notes','Notes','Portfolio growth rate');
+  else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Wage Growth (%)','',{step:'0.1',min:0})+stratText('notes','Notes','Wage growth scenario');
+  else fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('draw1','Draw 1',S.fundingOrder1||'SEC',FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',S.fundingOrder2||'IRA',FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',S.fundingOrder3||'ROTH',FUNDING_ORDER_OPTIONS)+stratText('notes','Notes','Funding order change');
+  return '<div class="strategy-card-title">'+setupEsc(setupStrategyLabel(setupStrategyType))+'</div><div class="setup-field-grid">'+fields+'</div><div class="setup-actions"><button class="btn btn-dark" onclick="applySetupStrategy()">Add Strategy</button></div>';
+}
+function stratVal(id){
+  const el = document.getElementById('strat-'+id);
+  return el ? el.value : '';
+}
+function stratInt(id, fallback){
+  const n = parseInt(stratVal(id));
+  return isNaN(n) ? fallback : n;
+}
+function applySetupStrategy(){
+  const yr = setupYear();
+  const notes = stratVal('notes');
+  const start = stratInt('start', stratInt('year', yr));
+  const end = stratInt('end', start);
+  const pushOv = (key, row) => {
+    if (!Array.isArray(S[key])) S[key] = [];
+    S[key].push(row);
+  };
+  if (setupStrategyType === 'spending-onetime') pushOv('ovSpending', {amount:stratVal('amount'), oneYear:'Y', startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
+  else if (setupStrategyType === 'tax-funding') pushOv('ovSpending', {taxOvr:stratVal('tax'), startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
+  else if (setupStrategyType === 'spending-reset') pushOv('ovSpending', {amount:stratVal('amount'), pctChange:stratVal('pct'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'retirement') {
+    const p = stratVal('person');
+    const y = stratInt('year', yr);
+    if (p === '1' || p === 'both') { S.wagesEnd1 = y; S.ptEnd1 = y; }
+    if ((p === '2' || p === 'both') && hasP2()) { S.wagesEnd2 = y; S.ptEnd2 = y; }
+  }
+  else if (setupStrategyType === 'deductions') pushOv('ovDeductions', {fedItemized:stratVal('fed'), caItemized:stratVal('ca'), charityOn:stratVal('charityOn'), charityCash:stratVal('charity'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'state-move') pushOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'irmaa') pushOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), bracketHeadroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'income-level') pushOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'tax-fill') pushOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'income-rates') pushOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'stock-gain') pushOv('ovStkGainPct', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'cash-floor') pushOv('ovCashFloor', {floor:stratVal('floor'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'hsa-deposit') pushOv('ovHSADeposit', {amount:stratVal('amount'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'growth') pushOv('ovGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'wage-growth') pushOv('ovWageGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'funding') {
+    const ord = normalizeFundingOrder(stratVal('draw1'), stratVal('draw2'), stratVal('draw3'));
+    pushOv('ovFundingOrder', {draw1:ord[0], draw2:ord[1], draw3:ord[2], startYear:start, endYear:end, notes:notes});
+  }
+  setupAfterChange(true);
+}
+function setupHasValue(v){
+  return v !== null && v !== undefined && v !== '' && v !== 'off';
+}
+function setupMoneyLabel(v){
+  if (!setupHasValue(v)) return '';
+  const n = parseF(v);
+  if (isNaN(n)) return String.fromCharCode(36) + String(v);
+  return String.fromCharCode(36) + Math.round(n).toLocaleString('en-US');
+}
+function setupPercentLabel(v){
+  if (!setupHasValue(v)) return '';
+  const n = parseF(v);
+  return isNaN(n) ? String(v) : (Math.round(n * 100) / 100) + '%';
+}
+function setupBracketLabel(v){
+  if (!setupHasValue(v)) return '';
+  const n = parseF(v);
+  return isNaN(n) ? String(v) : Math.round(n * 100) + '% bracket';
+}
+function setupRangeLabel(row){
+  if (row && row._rangeLabel) return row._rangeLabel;
+  const start = row && row.startYear ? row.startYear : '?';
+  const end = row && row.endYear ? row.endYear : '?';
+  return String(end) === '9999' ? start + '+' : start + '-' + end;
+}
+function setupIrmTargetLabel(v){
+  const lvl = parseIRMAATargetLevel(v);
+  if (lvl == null) return '';
+  return (IRMAA_TARGET_NAMES[lvl] || ('Tier ' + lvl)) + ' target';
+}
+function setupFillModeLabel(v){
+  if (!setupHasValue(v)) return '';
+  const found = IRMAA_FILL_MODE_OPTIONS.find(o => String(o[0]) === String(v));
+  return found ? found[1] : String(v);
+}
+function setupStateTaxLabel(v){
+  if (!setupHasValue(v)) return '';
+  return String(v) === 'NONE' ? 'No state tax' : String(v);
+}
+function setupPushPart(parts, label, value){
+  if (!setupHasValue(value)) return;
+  parts.push(label + ': ' + value);
+}
+function setupAddStrategyRow(rows, label, row, parts, types){
+  const clean = (parts || []).filter(Boolean);
+  if (!clean.length) clean.push('No field values entered yet');
+  rows.push({label, range:setupRangeLabel(row || {}), parts:clean, notes:(row && row.notes) || '', types:types || []});
+}
+function setupCollectStrategyRows(filterType){
+  const rows = [];
+  const add = (label, row, parts, types) => {
+    const typeList = types || [];
+    if (!filterType || typeList.includes(filterType)) setupAddStrategyRow(rows, label, row, parts, typeList);
+  };
+  (S.ovSpending || []).forEach(row => {
+    const hasSpend = setupHasValue(row.amount) || setupHasValue(row.pctChange);
+    const hasTax = setupHasValue(row.taxOvr);
+    const parts = [];
+    setupPushPart(parts, 'Spending amount', setupMoneyLabel(row.amount));
+    setupPushPart(parts, 'Percent change', setupPercentLabel(row.pctChange));
+    setupPushPart(parts, 'Tax funding amount', setupMoneyLabel(row.taxOvr));
+    if (row.oneYear === 'Y') parts.push('One-year spending only');
+    const types = [];
+    if (hasSpend) types.push(row.oneYear === 'Y' ? 'spending-onetime' : 'spending-reset');
+    if (hasTax) types.push('tax-funding');
+    const label = hasSpend && hasTax ? 'Spending / Tax Funding' : hasTax ? 'Tax Funding Timing' : 'Spending';
+    add(label, row, parts, types.length ? types : ['spending-reset']);
+  });
+  if (!filterType || filterType === 'retirement') {
+    const parts = [];
+    if ((S.wagesEnd1||9999) !== 9999) parts.push(p1() + ' wages end: ' + S.wagesEnd1);
+    if ((S.ptEnd1||9999) !== 9999) parts.push(p1() + ' self-employment ends: ' + S.ptEnd1);
+    if (hasP2() && (S.wagesEnd2||9999) !== 9999) parts.push(p2() + ' wages end: ' + S.wagesEnd2);
+    if (hasP2() && (S.ptEnd2||9999) !== 9999) parts.push(p2() + ' self-employment ends: ' + S.ptEnd2);
+    if (parts.length) add('Retirement / Income Ends', {_rangeLabel:'Current settings'}, parts, ['retirement']);
+  }
+  (S.ovDeductions || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Federal itemized deductions', setupMoneyLabel(row.fedItemized));
+    setupPushPart(parts, 'CA itemized deductions', setupMoneyLabel(row.caItemized));
+    if (row.charityOn === 'Yes' || row.charityOn === 'T') parts.push('Use non-itemizer charity deduction');
+    setupPushPart(parts, 'Eligible cash charity', setupMoneyLabel(row.charityCash));
+    add('Tax Deductions', row, parts, ['deductions']);
+  });
+  (S.ovIRMAA || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'IRMAA cap', setupIrmTargetLabel(row.level));
+    setupPushPart(parts, 'Fill mode', setupFillModeLabel(row.fillMode));
+    setupPushPart(parts, 'Max bracket', setupBracketLabel(row.maxBracket));
+    setupPushPart(parts, 'Bracket headroom', setupMoneyLabel(row.bracketHeadroom));
+    add('IRMAA / Roth Target', row, parts, ['irmaa']);
+  });
+  (S.ovIncomeLevel || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'MAGI ceiling', setupMoneyLabel(row.magiTarget));
+    add('Income Level', row, parts, ['income-level']);
+  });
+  (S.ovTaxFill || []).forEach(row => {
+    const parts = [];
+    if (row.active === 'T') parts.push('Tax bracket fill active');
+    setupPushPart(parts, 'Headroom', setupMoneyLabel(row.headroom));
+    add('Tax Bracket Fill', row, parts, ['tax-fill']);
+  });
+  (S.ovGrowth || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Portfolio growth', setupPercentLabel(row.rate));
+    add('Portfolio Growth Rate', row, parts, ['growth']);
+  });
+  (S.ovIncomeRates || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Brokerage dividend rate', setupPercentLabel(row.divRate));
+    setupPushPart(parts, 'Dividend reinvest', setupPercentLabel(row.divReinvestPct));
+    setupPushPart(parts, 'Cash interest rate', setupPercentLabel(row.intRate));
+    add('Dividend / Interest Rates', row, parts, ['income-rates']);
+  });
+  (S.ovStkGainPct || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Taxable gain on stock sales', setupPercentLabel(row.rate));
+    add('Stock Sale Gain', row, parts, ['stock-gain']);
+  });
+  (S.ovWageGrowth || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Wage growth', setupPercentLabel(row.rate));
+    add('Wage Growth', row, parts, ['wage-growth']);
+  });
+  (S.ovFundingOrder || []).forEach(row => {
+    const ord = normalizeFundingOrder(row.draw1, row.draw2, row.draw3);
+    add('Funding Order', row, ['Draw order: ' + formatFundingOrder(ord)], ['funding']);
+  });
+  (S.ovCashFloor || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Cash floor', setupMoneyLabel(row.floor));
+    add('Cash Floor', row, parts, ['cash-floor']);
+  });
+  (S.ovHSADeposit || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'Annual HSA deposit', setupMoneyLabel(row.amount));
+    add('HSA Deposit', row, parts, ['hsa-deposit']);
+  });
+  (S.ovStateTax || []).forEach(row => {
+    const parts = [];
+    setupPushPart(parts, 'State tax setting', setupStateTaxLabel(row.state));
+    add('State Tax', row, parts, ['state-move']);
+  });
+  return rows;
+}
+function setupRenderStrategyRows(rows, emptyText){
+  if (!rows.length) return '<div class="setup-check warn"><div class="setup-check-title">No current rows</div><div class="setup-check-body">'+setupEsc(emptyText || 'No strategies are active for this selection yet.')+'</div></div>';
+  return rows.map(r => '<div class="strategy-card"><div class="strategy-card-title">'+setupEsc(r.label)+'</div><div class="strategy-card-body"><div style="font-weight:700;margin-bottom:4px">'+setupEsc(r.range)+'</div>'+r.parts.map(p => '<div>'+setupEsc(p)+'</div>').join('')+(r.notes?'<div style="margin-top:5px;font-style:italic;color:#6a5830">Notes: '+setupEsc(r.notes)+'</div>':'')+'</div></div>').join('');
+}
+function renderSelectedStrategyOverrides(){
+  const label = setupStrategyLabel(setupStrategyType);
+  const rows = setupCollectStrategyRows(setupStrategyType);
+  return '<div style="margin-top:14px"><div class="sh">Current '+setupEsc(label)+' Rows</div>'+setupRenderStrategyRows(rows, 'No current rows for '+label+'. Add one above or use the expert Override Tables if needed.')+'</div>';
+}
+function renderActiveStrategies(){
+  const rows = setupCollectStrategyRows();
+  if (!rows.length) return '<div class="setup-check warn"><div class="setup-check-title">No strategies yet</div><div class="setup-check-body">Add only the future changes you want to model. The base plan can remain simple.</div></div>';
+  return setupRenderStrategyRows(rows, 'No strategies are active yet.');
 }
 
 function initApp() {
