@@ -639,28 +639,18 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
       <div class="post2020-intro">Use this section only when the plan includes inherited retirement accounts. Pre-2020 inherited IRAs use beneficiary life-expectancy RMDs; post-2020 lots use death year, required RMD rules when applicable, and the 10-year deadline.</div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">POST-2020 INHERITED IRA LOTS</div>
-        <div class="post2020-intro">Use one row per inherited IRA. Balance and Distributions Begin Year seed the projection; Start of Year can reset active lots later. Death year sets the 10-year deadline. Required RMDs apply when the deceased owner had reached RMD age; draw strategy controls optional withdrawals.</div>
+        <div class="post2020-intro">Use one row per inherited IRA. Starting Balance is the balance at the beginning of the first year this lot is active in the projection, not necessarily the original inherited amount. First Modeled Draw Year controls when the lot begins appearing for projection draws; Annual Check-In can reset active lots later. Death year sets the 10-year deadline.</div>
         <div id="post2020-inh-body" class="post2020-lots"></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addPost2020InhLot()">+ Add Inherited IRA</button>
       </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">PRE-2020 INHERITED IRA RMD</div>
-        <div class="post2020-intro">For inherited IRAs that predate the SECURE Act 10-year rule. Enter the deceased owner's birth/death years so the app can calculate the beneficiary life-expectancy RMD. Initial balances can be seeded here and updated later in Start of Year.</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">PRE-2020 INHERITED IRA LOTS</div>
+        <div class="post2020-intro">Use one row per older inherited IRA RMD schedule. Each lot can have its own beneficiary, balance start year, deceased-owner birth year, and death year; the app calculates the life-expectancy RMD for each lot and totals the results by person.</div>
         <div class="field-row">
-          <div class="field"><label>Use Pre-2020 Inherited IRA for Funding</label><select id="i-preinh-fund" onchange="IC()"><option value="no">RMDs only</option><option value="before">Yes - before regular IRA</option><option value="after">Yes - after regular IRA</option></select><div class="note">Default Funding Order controls when the IRA-side bucket is used. This setting controls where pre-2020 inherited IRA sits inside that IRA-side funding path.</div></div>
+          <div class="field"><label>Use Pre-2020 Inherited IRA for Funding</label><select id="i-preinh-fund" onchange="IC()"><option value="no">RMDs only</option><option value="before">Yes - before regular IRA</option><option value="after">Yes - after regular IRA</option></select><div class="note">Controls whether extra funding draws may use these inherited IRA lots. Required RMDs still happen either way.</div></div>
         </div>
-        <div class="field-row">
-          <div class="field"><label id="l-preinh-startbal1">Primary Person Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal1" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
-          <div class="field"><label id="l-preinh-startyr1">Primary Person Balance Start Year</label><input type="number" id="i-preinh-startyr1" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
-          <div class="field"><label id="l-preinh-ownerby1">Primary Person Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
-          <div class="field"><label id="l-preinh-deathyr1">Primary Person Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
-        </div>
-        <div class="field-row p2-field">
-          <div class="field"><label id="l-preinh-startbal2">Spouse/Partner Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal2" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
-          <div class="field"><label id="l-preinh-startyr2">Spouse/Partner Balance Start Year</label><input type="number" id="i-preinh-startyr2" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
-          <div class="field"><label id="l-preinh-ownerby2">Spouse/Partner Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
-          <div class="field"><label id="l-preinh-deathyr2">Spouse/Partner Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
-        </div>
+        <div id="pre2020-inh-body" class="post2020-lots"></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addPre2020InhLot()">+ Add Pre-2020 Inherited IRA</button>
       </div>
 
     </div>
@@ -1636,6 +1626,83 @@ function getPre2020InheritedRMD(bal, yr, ownerBirthYear, ownerDeathYear, benefic
   const divisor = Math.max(1, startDiv - Math.max(0, yr - firstYear));
   return {draw: bal / divisor, divisor, firstYear, ownerReachedRMD};
 }
+function pre2020LotBeneficiary(lot) {
+  return String(lot && lot.beneficiary) === '2' ? '2' : '1';
+}
+function pre2020LotHasData(lot) {
+  if (!lot) return false;
+  return (parseF(lot.balance) || 0) > 0 ||
+    !!String(lot.startYear || '').trim() ||
+    !!String(lot.ownerBy || '').trim() ||
+    !!String(lot.deathYear || '').trim() ||
+    !!String(lot.notes || '').trim();
+}
+function pre2020LegacyLot(state, beneficiary) {
+  const k = beneficiary === '2' ? '2' : '1';
+  const lot = {
+    beneficiary:k,
+    balance:state['pre2020InhStartBal'+k] || '',
+    startYear:state['pre2020InhStartYear'+k] || '',
+    ownerBy:state['pre2020InhOwnerBy'+k] || '',
+    deathYear:state['pre2020InhDeathYear'+k] || '',
+    notes:''
+  };
+  return pre2020LotHasData(lot) ? lot : null;
+}
+function getPre2020InhLots(state) {
+  const source = Array.isArray(state.pre2020InhLots) && state.pre2020InhLots.length
+    ? state.pre2020InhLots
+    : [pre2020LegacyLot(state,'1'), pre2020LegacyLot(state,'2')].filter(Boolean);
+  return (source || []).map(lot => ({
+    beneficiary:pre2020LotBeneficiary(lot),
+    balance:lot.balance ?? '',
+    startYear:lot.startYear ?? '',
+    ownerBy:lot.ownerBy ?? '',
+    deathYear:lot.deathYear ?? '',
+    notes:lot.notes ?? ''
+  })).filter(pre2020LotHasData);
+}
+function syncLegacyPre2020FromLots(state) {
+  const lots = Array.isArray(state.pre2020InhLots) ? state.pre2020InhLots : [];
+  ['1','2'].forEach(k => {
+    const matches = lots.filter(lot => pre2020LotBeneficiary(lot) === k);
+    const first = matches[0] || {};
+    state['pre2020InhStartBal'+k] = matches.reduce((sum, lot) => sum + (parseF(lot.balance) || 0), 0);
+    state['pre2020InhStartYear'+k] = first.startYear || '';
+    state['pre2020InhOwnerBy'+k] = first.ownerBy || '';
+    state['pre2020InhDeathYear'+k] = first.deathYear || '';
+  });
+  return state;
+}
+function normalizePre2020InhLots(state) {
+  if (!Array.isArray(state.pre2020InhLots) || !state.pre2020InhLots.length) {
+    state.pre2020InhLots = [pre2020LegacyLot(state,'1'), pre2020LegacyLot(state,'2')].filter(Boolean);
+  }
+  state.pre2020InhLots = getPre2020InhLots(state);
+  syncLegacyPre2020FromLots(state);
+  return state.pre2020InhLots;
+}
+function sumPre2020Lots(lots, beneficiary) {
+  return (lots || []).filter(lot => lot.active && pre2020LotBeneficiary(lot) === beneficiary)
+    .reduce((sum, lot) => sum + (lot.bal || 0), 0);
+}
+function resetPre2020LotTotals(lots, beneficiary, targetTotal, year) {
+  const activeLots = (lots || []).filter(lot => lot.active && pre2020LotBeneficiary(lot) === beneficiary);
+  const target = Math.max(0, parseF(targetTotal) || 0);
+  if (!activeLots.length) {
+    if (target > 0) lots.push({idx:lots.length, beneficiary, balance:target, startYear:year, ownerBy:'', deathYear:'', notes:'Annual Check-In balance', bal:target, active:true});
+    return;
+  }
+  const current = activeLots.reduce((sum, lot) => sum + (lot.bal || 0), 0);
+  if (current > 0) activeLots.forEach(lot => { lot.bal = (lot.bal || 0) * target / current; });
+  else activeLots.forEach(lot => { lot.bal = target / activeLots.length; });
+}
+function firstPre2020CalcFor(details, beneficiary) {
+  const rows = (details || []).filter(d => d.beneficiary === beneficiary && (d.firstYear || d.divisor || d.ownerReachedRMD));
+  if (!rows.length) return {firstYear:null, ownerReachedRMD:false, divisor:0};
+  const first = rows[0];
+  return {firstYear:first.firstYear, ownerReachedRMD:!!first.ownerReachedRMD, divisor:first.divisor || 0};
+}
 function getMarginalRate(taxableInc, filing, tables) {
   let bkts;
   if (tables) {
@@ -1712,6 +1779,7 @@ function defaultState() {
     rmdStart2:0,
     inhDrainYear:9999,
     post2020InhLots:[],
+    pre2020InhLots:[],
     pre2020InhOwnerBy1:'', pre2020InhDeathYear1:'',
     pre2020InhOwnerBy2:'', pre2020InhDeathYear2:'',
     pre2020InhUseForFunding:'no',
@@ -1792,8 +1860,8 @@ function runProjection(S) {
   const hp2 = S.householdMode !== 'single' && !!(S.name2 && S.name2.trim());
 
   // Working balances — will be overridden by SOY entries when present
-  let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0, pre2020Inh1=0, pre2020Inh2=0;
-  let pre2020Seeded1=false, pre2020Seeded2=false;
+  let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0;
+  const pre2020Lots = getPre2020InhLots(S).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
   const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
 
   for (let yr = S.startYear; yr <= S.endYear; yr++) {
@@ -1823,12 +1891,15 @@ function runProjection(S) {
     if (soy.roth1 != null && soy.roth1 !== '') roth1 = parseF(soy.roth1);
     if (soy.roth2 != null && soy.roth2 !== '') roth2 = parseF(soy.roth2);
     if (soy.hsa   != null && soy.hsa   !== '') hsa   = parseF(soy.hsa);
-    const pre2020StartYr1 = parseInt(S.pre2020InhStartYear1) || S.startYear;
-    const pre2020StartYr2 = parseInt(S.pre2020InhStartYear2) || S.startYear;
-    if (!pre2020Seeded1 && (S.pre2020InhStartBal1||0) > 0 && yr >= pre2020StartYr1) { pre2020Inh1 = parseF(S.pre2020InhStartBal1)||0; pre2020Seeded1 = true; }
-    if (!pre2020Seeded2 && (S.pre2020InhStartBal2||0) > 0 && yr >= pre2020StartYr2) { pre2020Inh2 = parseF(S.pre2020InhStartBal2)||0; pre2020Seeded2 = true; }
-    if (soy.pre2020Inh1 != null && soy.pre2020Inh1 !== '') { pre2020Inh1 = parseF(soy.pre2020Inh1); pre2020Seeded1 = true; }
-    if (soy.pre2020Inh2 != null && soy.pre2020Inh2 !== '') { pre2020Inh2 = parseF(soy.pre2020Inh2); pre2020Seeded2 = true; }
+    for (const lot of pre2020Lots) {
+      const startYear = parseInt(lot.startYear) || S.startYear;
+      if (!lot.active && yr >= startYear) {
+        lot.bal = parseF(lot.balance) || 0;
+        lot.active = true;
+      }
+    }
+    if (soy.pre2020Inh1 != null && soy.pre2020Inh1 !== '') resetPre2020LotTotals(pre2020Lots, '1', soy.pre2020Inh1, yr);
+    if (soy.pre2020Inh2 != null && soy.pre2020Inh2 !== '') resetPre2020LotTotals(pre2020Lots, '2', soy.pre2020Inh2, yr);
     for (const lot of post2020Lots) {
       const startYear = parseInt(lot.startYear) || parseInt(lot.deathYear) + 1 || S.startYear;
       if (!lot.active && yr >= startYear) {
@@ -1852,13 +1923,16 @@ function runProjection(S) {
       if (p1Survivor) {
         ira1 += ira2; ira2 = 0;
         roth1 += roth2; roth2 = 0;
-        pre2020Inh1 += pre2020Inh2; pre2020Inh2 = 0;
+        pre2020Lots.forEach(lot => { if (pre2020LotBeneficiary(lot) === '2') lot.beneficiary = '1'; });
       } else if (p2Survivor) {
         ira2 += ira1; ira1 = 0;
         roth2 += roth1; roth1 = 0;
-        pre2020Inh2 += pre2020Inh1; pre2020Inh1 = 0;
+        pre2020Lots.forEach(lot => { if (pre2020LotBeneficiary(lot) === '1') lot.beneficiary = '2'; });
       }
     }
+
+    let pre2020Inh1 = sumPre2020Lots(pre2020Lots, '1');
+    let pre2020Inh2 = sumPre2020Lots(pre2020Lots, '2');
 
     // Record start-of-year balances (before growth)
     const startCashBal = cash;
@@ -1986,15 +2060,33 @@ function runProjection(S) {
     const rmdStart2 = afterDeathYear && p1Survivor ? rmdStartYearForBirthYear(by1Eff) : S.rmdStart2;
     const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
     const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
-    const pre2020OwnerBy1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhOwnerBy1 && S.pre2020InhOwnerBy2) ? S.pre2020InhOwnerBy2 : S.pre2020InhOwnerBy1;
-    const pre2020DeathYr1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhDeathYear1 && S.pre2020InhDeathYear2) ? S.pre2020InhDeathYear2 : S.pre2020InhDeathYear1;
-    const pre2020OwnerBy2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhOwnerBy2 && S.pre2020InhOwnerBy1) ? S.pre2020InhOwnerBy1 : S.pre2020InhOwnerBy2;
-    const pre2020DeathYr2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhDeathYear2 && S.pre2020InhDeathYear1) ? S.pre2020InhDeathYear1 : S.pre2020InhDeathYear2;
-    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, pre2020OwnerBy1Eff, pre2020DeathYr1Eff, by1Eff);
-    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, pre2020OwnerBy2Eff, pre2020DeathYr2Eff, by2Eff) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
-    const pre2020InhDraw1 = pre2020Calc1.draw;
-    const pre2020InhDraw2 = pre2020Calc2.draw;
+    pre2020Lots.forEach(lot => {
+      lot._pre2020Required = 0;
+      lot._pre2020Calc = {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
+    });
+    let pre2020InhDraw1 = 0, pre2020InhDraw2 = 0;
+    const pre2020LotDetails = [];
+    for (const lot of pre2020Lots) {
+      if (!lot.active || (lot.bal || 0) <= 0) continue;
+      const beneficiary = pre2020LotBeneficiary(lot);
+      if (beneficiary === '2' && !hp2) continue;
+      const benefBy = beneficiary === '2' ? by2Eff : by1Eff;
+      const calc = getPre2020InheritedRMD(lot.bal, yr, lot.ownerBy, lot.deathYear, benefBy);
+      const required = Math.min(lot.bal || 0, Math.max(0, calc.draw || 0));
+      lot._pre2020Required = required;
+      lot._pre2020Calc = calc;
+      if (beneficiary === '2') pre2020InhDraw2 += required;
+      else pre2020InhDraw1 += required;
+      pre2020LotDetails.push({
+        idx:lot.idx, beneficiary, label:lot.notes || ('Pre-2020 lot '+(lot.idx+1)),
+        startBal:lot.bal || 0, required, addl:0, draw:required,
+        firstYear:calc.firstYear, divisor:calc.divisor, ownerReachedRMD:calc.ownerReachedRMD,
+        ownerBy:lot.ownerBy || '', deathYear:lot.deathYear || '', endBal:lot.bal || 0
+      });
+    }
     const pre2020InhDraw = pre2020InhDraw1 + pre2020InhDraw2;
+    const pre2020Calc1 = firstPre2020CalcFor(pre2020LotDetails, '1');
+    const pre2020Calc2 = firstPre2020CalcFor(pre2020LotDetails, '2');
 
     // ── Post-2020 inherited IRA lots ──────────────────────────────────────
     let post2020InhRMD = 0, post2020InhExtra = 0, post2020InhFinal = 0;
@@ -2234,6 +2326,7 @@ function runProjection(S) {
     let rothModeWith1_f=0, rothModeWith2_f=0;
     let ira1Draw_f=0, ira2Draw_f=0, secDraw_f=0, cashDraw_f=0;
     let pre2020InhAddl1_f=0, pre2020InhAddl2_f=0;
+    let pre2020AddlByLot_f={};
     let rothDraw1_f=0, rothDraw2_f=0;
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
@@ -2252,18 +2345,23 @@ function runProjection(S) {
     const fundingOrder = getFundingOrderForYear(S, yr);
     const fundingChoice = fundingOrder[0] || 'SEC';
     let cashDraw_inner=0, secDraw_inner=0, ira1Draw_inner=0, ira2Draw_inner=0, pre2020InhAddl1_inner=0, pre2020InhAddl2_inner=0, rothDraw1_inner=0, rothDraw2_inner=0;
+    const pre2020AddlByLot_inner = {};
     const pre2020FundingMode = S.pre2020InhUseForFunding === true ? 'before' : (S.pre2020InhUseForFunding || 'no');
     const drawPre2020ForFunding = (slot) => {
       if (pre2020FundingMode !== slot || remainingShortfall <= 0) return;
-      const buckets = [
-        {i:1, avail:Math.max(0, pre2020Inh1 - pre2020InhDraw1 - pre2020InhAddl1_inner)},
-        ...(hp2 ? [{i:2, avail:Math.max(0, pre2020Inh2 - pre2020InhDraw2 - pre2020InhAddl2_inner)}] : [])
-      ].sort((a,b)=>b.avail-a.avail);
+      const buckets = pre2020Lots.map(lot => {
+        const beneficiary = pre2020LotBeneficiary(lot);
+        if (!lot.active || (lot.bal || 0) <= 0 || (beneficiary === '2' && !hp2)) return null;
+        const already = pre2020AddlByLot_inner[lot.idx] || 0;
+        const required = lot._pre2020Required || 0;
+        return {idx:lot.idx, beneficiary, avail:Math.max(0, (lot.bal || 0) - required - already)};
+      }).filter(Boolean).sort((a,b)=>b.avail-a.avail);
       for (const b of buckets) {
         if (remainingShortfall <= 0 || b.avail <= 0) continue;
         const d = Math.min(remainingShortfall, b.avail);
-        if (b.i === 1) pre2020InhAddl1_inner += d;
-        else pre2020InhAddl2_inner += d;
+        pre2020AddlByLot_inner[b.idx] = (pre2020AddlByLot_inner[b.idx] || 0) + d;
+        if (b.beneficiary === '2') pre2020InhAddl2_inner += d;
+        else pre2020InhAddl1_inner += d;
         remainingShortfall -= d;
       }
     };
@@ -2505,7 +2603,7 @@ function runProjection(S) {
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
     rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
     ira1Draw_f=ira1Draw_inner; ira2Draw_f=ira2Draw_inner; secDraw_f=secDraw_inner; cashDraw_f=cashDraw_inner;
-    pre2020InhAddl1_f=pre2020InhAddl1_inner; pre2020InhAddl2_f=pre2020InhAddl2_inner;
+    pre2020InhAddl1_f=pre2020InhAddl1_inner; pre2020InhAddl2_f=pre2020InhAddl2_inner; pre2020AddlByLot_f=Object.assign({}, pre2020AddlByLot_inner);
     rothDraw1_f=rothDraw1_inner; rothDraw2_f=rothDraw2_inner;
     excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
     unfunded_f=unfunded; fundingChoice_f=fundingChoice; fundingOrder_f=fundingOrder; irmaaMagi_f=irmaaMagi;
@@ -2521,6 +2619,11 @@ function runProjection(S) {
     const rothModeWith1=rothModeWith1_f, rothModeWith2=rothModeWith2_f;
     const ira1Draw=ira1Draw_f, ira2Draw=ira2Draw_f, secDraw=secDraw_f, cashDraw=cashDraw_f;
     const pre2020InhAddl1=pre2020InhAddl1_f, pre2020InhAddl2=pre2020InhAddl2_f, pre2020InhAddl=pre2020InhAddl1+pre2020InhAddl2;
+    const pre2020AddlByLot=pre2020AddlByLot_f || {};
+    pre2020LotDetails.forEach(detail => {
+      detail.addl = pre2020AddlByLot[detail.idx] || 0;
+      detail.draw = (detail.required || 0) + detail.addl;
+    });
     const rothDraw1=rothDraw1_f, rothDraw2=rothDraw2_f;
     const excessFunds=excessFunds_f, shortfall=shortfall_f;
     const fedRes=fedRes_f, stTax=stTax_f, irmaaTx=irmaaTx_f, agi=agi_f;
@@ -2565,8 +2668,16 @@ function runProjection(S) {
     roth2 = Math.max(0, roth2 + roth2Growth + rothConvDraw2 + k401Contrib2Roth
                         - rothDraw2 - rothModeWith2);
 
-    pre2020Inh1 = Math.max(0, (pre2020Inh1 - pre2020InhDraw1 - pre2020InhAddl1) * (1 + gRate));
-    pre2020Inh2 = Math.max(0, (pre2020Inh2 - pre2020InhDraw2 - pre2020InhAddl2) * (1 + gRate));
+    for (const lot of pre2020Lots) {
+      if (!lot.active) continue;
+      const required = lot._pre2020Required || 0;
+      const addl = pre2020AddlByLot[lot.idx] || 0;
+      lot.bal = Math.max(0, ((lot.bal || 0) - required - addl) * (1 + gRate));
+      const detail = pre2020LotDetails.find(d => d.idx === lot.idx);
+      if (detail) detail.endBal = lot.bal;
+    }
+    pre2020Inh1 = sumPre2020Lots(pre2020Lots, '1');
+    pre2020Inh2 = sumPre2020Lots(pre2020Lots, '2');
 
     // Securities: prior * (1+g) - secDraw + excess mandatory funding + employer 401K
     // (excess goes to brokerage, not cash)
@@ -2603,7 +2714,7 @@ function runProjection(S) {
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
       rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
-      post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails,
+      post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails, pre2020LotDetails,
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
       pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
       pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, ira1Addl, ira2Addl,
@@ -3190,6 +3301,7 @@ function applyMigrations(merged) {
       r.draw1 = ord[0]; r.draw2 = ord[1]; r.draw3 = ord[2];
     }
   });
+  normalizePre2020InhLots(merged);
   if (!Array.isArray(merged.ovIncomeRates)) merged.ovIncomeRates = [];
   if (!merged.ovIncomeRates.length) {
     const migratedRateRows = [];
@@ -3487,7 +3599,8 @@ function loadUI(){
   sv('i-cola',pct(S.ssCola));
   sv('i-wagegrowth',pct(S.wageGrowth ?? S.ssCola));
   // RMD years auto-calculated, shown via updateLabels
-  sv('i-preinh-fund',S.pre2020InhUseForFunding===true?'before':(S.pre2020InhUseForFunding||'no'));sv('i-preinh-startbal1',S.pre2020InhStartBal1||'');sv('i-preinh-startyr1',S.pre2020InhStartYear1||'');sv('i-preinh-startbal2',S.pre2020InhStartBal2||'');sv('i-preinh-startyr2',S.pre2020InhStartYear2||'');sv('i-preinh-ownerby1',S.pre2020InhOwnerBy1||'');sv('i-preinh-deathyr1',S.pre2020InhDeathYear1||'');sv('i-preinh-ownerby2',S.pre2020InhOwnerBy2||'');sv('i-preinh-deathyr2',S.pre2020InhDeathYear2||'');sv('i-stkgain',pct(S.stkGainPct));
+  normalizePre2020InhLots(S);
+  sv('i-preinh-fund',S.pre2020InhUseForFunding===true?'before':(S.pre2020InhUseForFunding||'no'));sv('i-stkgain',pct(S.stkGainPct));
   sv('i-growth',pct(S.growthRate));sv('i-divr',pct(S.divRate));sv('i-divreinv',pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0)));sv('i-intr',pct(S.intRate||0));
   sv('i-qualdivsmode',S.qualDivsMode||'ordinary');
   sv('i-spinfl',pct(S.spendInfl));
@@ -3510,6 +3623,7 @@ function loadUI(){
   // Starting balances now entered via Start of Year tab
   renderOVAll();
   renderPost2020InhLots();
+  renderPre2020InhLots();
   toggleP2Fields();
 }
 
@@ -3524,8 +3638,8 @@ function renderPost2020InhLots(){
           <option value="1" ${String(lot.beneficiary||'1')==='1'?'selected':''}>${p1()}</option>
           ${hasP2()?`<option value="2" ${String(lot.beneficiary)==='2'?'selected':''}>${p2()}</option>`:''}
         </select></label>
-        <label>Balance ($)<input type="number" data-postlot="${i}" data-k="balance" value="${lot.balance||''}" oninput="readPost2020InhLots();IC()"></label>
-        <label>Distributions Begin Year<input type="number" data-postlot="${i}" data-k="startYear" value="${lot.startYear||''}" placeholder="${S.startYear}" oninput="readPost2020InhLots();IC()"><span class="note">Usually year after death, or plan start if this inherited IRA already exists.</span></label>
+        <label>Starting Balance ($)<input type="number" data-postlot="${i}" data-k="balance" value="${lot.balance||''}" oninput="readPost2020InhLots();IC()"><span class="note">Use the balance at the beginning of the first modeled draw year. Example: if death was 2020 and this lot starts in 2026, enter the 2026 balance.</span></label>
+        <label>First Modeled Draw Year<input type="number" data-postlot="${i}" data-k="startYear" value="${lot.startYear||''}" placeholder="${S.startYear}" oninput="readPost2020InhLots();IC()"><span class="note">Choose when this lot should begin appearing for projection draws. If it already exists when the plan starts, this is often the plan start year. Use a later year only when you want the model to delay draws until then.</span></label>
         <label>Owner Birth Year<input type="number" data-postlot="${i}" data-k="ownerBy" value="${lot.ownerBy||''}" oninput="readPost2020InhLots();IC()"></label>
         <label>Death Year<input type="number" data-postlot="${i}" data-k="deathYear" value="${lot.deathYear||''}" oninput="readPost2020InhLots();IC()"></label>
         <label>Draw Strategy<select data-postlot="${i}" data-k="strategy" onchange="readPost2020InhLots();IC()">
@@ -3547,6 +3661,55 @@ function readPost2020InhLots(){
     lots[i][k]=el.value;
   });
   S.post2020InhLots=lots;
+}
+function renderPre2020InhLots(){
+  const body=document.getElementById('pre2020-inh-body'); if(!body)return;
+  normalizePre2020InhLots(S);
+  const lots=S.pre2020InhLots||[];
+  body.innerHTML=lots.map((lot,i)=>{
+    const p2Option = hasP2() ? '<option value="2" '+(String(lot.beneficiary)==='2'?'selected':'')+'>'+p2()+'</option>' : '';
+    return '<div class="post2020-lot">'+
+      '<div class="post2020-lot-head">Pre-2020 Inherited IRA Lot '+(i+1)+'<button class="btn btn-danger btn-sm" onclick="deletePre2020InhLot('+i+')">×</button></div>'+
+      '<div class="post2020-grid">'+
+        '<label>Beneficiary<select data-prelot="'+i+'" data-k="beneficiary" onchange="readPre2020InhLots();IC()">'+
+          '<option value="1" '+(String(lot.beneficiary||'1')==='1'?'selected':'')+'>'+p1()+'</option>'+
+          p2Option+
+        '</select><span class="note">Whose inherited IRA rules and age should apply.</span></label>'+
+        '<label>Starting Balance ($)<input type="number" data-prelot="'+i+'" data-k="balance" value="'+(lot.balance||'')+'" oninput="readPre2020InhLots();IC()"><span class="note">Use the balance at the beginning of the Balance Start Year. If the account already exists when the plan starts, enter the plan-start balance.</span></label>'+
+        '<label>Balance Start Year<input type="number" data-prelot="'+i+'" data-k="startYear" value="'+(lot.startYear||'')+'" placeholder="'+S.startYear+'" oninput="readPre2020InhLots();IC()"><span class="note">First projection year that should include this lot. Usually the plan start year for an account already in place.</span></label>'+
+        '<label>Deceased Owner Birth Year<input type="number" data-prelot="'+i+'" data-k="ownerBy" value="'+(lot.ownerBy||'')+'" placeholder="Required" oninput="readPre2020InhLots();IC()"><span class="note">Used with the beneficiary birth year to calculate the life-expectancy divisor.</span></label>'+
+        '<label>Deceased Owner Death Year<input type="number" data-prelot="'+i+'" data-k="deathYear" value="'+(lot.deathYear||'')+'" placeholder="Required" oninput="readPre2020InhLots();IC()"><span class="note">The first RMD year is modeled as the year after death.</span></label>'+
+        '<label>Notes<input type="text" data-prelot="'+i+'" data-k="notes" value="'+(lot.notes||'')+'" placeholder="Optional label" oninput="readPre2020InhLots();IC()"></label>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function readPre2020InhLots(){
+  const body=document.getElementById('pre2020-inh-body'); if(!body)return;
+  const lots=(S.pre2020InhLots||[]).map(l=>Object.assign({},l));
+  body.querySelectorAll('[data-prelot]').forEach(el=>{
+    const i=parseInt(el.dataset.prelot), k=el.dataset.k;
+    if(!lots[i])lots[i]={};
+    lots[i][k]=el.value;
+  });
+  S.pre2020InhLots=lots.filter(pre2020LotHasData);
+  syncLegacyPre2020FromLots(S);
+}
+function addPre2020InhLot(){
+  readPre2020InhLots();
+  if(!Array.isArray(S.pre2020InhLots))S.pre2020InhLots=[];
+  S.pre2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',notes:''});
+  syncLegacyPre2020FromLots(S);
+  saveState(S);renderPre2020InhLots();IC();
+}
+function deletePre2020InhLot(i){
+  readPre2020InhLots();
+  const lot = (S.pre2020InhLots||[])[i] || {};
+  const label = lot.notes ? 'Pre-2020 inherited IRA lot "'+lot.notes+'"' : 'Pre-2020 Inherited IRA Lot '+(i+1);
+  if(!confirm('Delete '+label+'?')) return;
+  S.pre2020InhLots.splice(i,1);
+  syncLegacyPre2020FromLots(S);
+  saveState(S);renderPre2020InhLots();IC();
 }
 function addPost2020InhLot(){
   readPost2020InhLots();
@@ -3586,7 +3749,7 @@ function readUI(){
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
   // RMD start years auto-calculated in updateLabels — not read from inputs
-  S.pre2020InhUseForFunding=gv('i-preinh-fund')||'no';S.pre2020InhStartBal1=gf('i-preinh-startbal1');S.pre2020InhStartYear1=gv('i-preinh-startyr1')||'';S.pre2020InhStartBal2=gf('i-preinh-startbal2');S.pre2020InhStartYear2=gv('i-preinh-startyr2')||'';S.pre2020InhOwnerBy1=gv('i-preinh-ownerby1')||'';S.pre2020InhDeathYear1=gv('i-preinh-deathyr1')||'';S.pre2020InhOwnerBy2=gv('i-preinh-ownerby2')||'';S.pre2020InhDeathYear2=gv('i-preinh-deathyr2')||'';S.stkGainPct=gf('i-stkgain')/100;
+  S.pre2020InhUseForFunding=gv('i-preinh-fund')||'no';readPre2020InhLots();syncLegacyPre2020FromLots(S);S.stkGainPct=gf('i-stkgain')/100;
   S.growthRate=gf('i-growth')/100;S.divRate=gf('i-divr')/100;S.divReinvestPct=Math.max(0,Math.min(1,gf('i-divreinv')/100));
   S.intRate=gf('i-intr')/100;S.reinvestDivs=S.divReinvestPct>=0.999?'yes':S.divReinvestPct<=0.001?'no':'partial';
   S.qualDivsMode=document.getElementById('i-qualdivsmode')?.value||'ordinary';
@@ -3646,8 +3809,9 @@ function updateLabels(){
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
   setTxt('l-rmd1',n1+' RMD Start Year');setTxt('l-rmd2',n2+' RMD Start Year');
-  setTxt('l-preinh-startbal1',n1+' Initial Pre-2020 Inh IRA ($)');setTxt('l-preinh-startyr1',n1+' Balance Start Year');
-  setTxt('l-preinh-startbal2',n2+' Initial Pre-2020 Inh IRA ($)');setTxt('l-preinh-startyr2',n2+' Balance Start Year');
+  setTxt('l-preinh-startbal1',n1+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr1',n1+' Balance Start Year');
+  setTxt('l-preinh-startbal2',n2+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr2',n2+' Balance Start Year');
+  renderPre2020InhLots();
   setTxt('l-preinh-ownerby1',n1+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr1',n1+' Deceased Owner Death Year');
   setTxt('l-preinh-ownerby2',n2+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr2',n2+' Deceased Owner Death Year');
   setTxt('l-ira1',n1+' IRA');setTxt('l-ira2',n2+' IRA');
@@ -4639,8 +4803,8 @@ function editSOY(yr){
       ${hasP2()?fld('roth2',p2()+' Roth ($)'):''}
       ${fld('hsa','HSA ($)')}
 
-      ${fld('pre2020Inh1',p1()+' Pre-2020 Inherited IRA ($)','Uses the person-specific inherited IRA RMD settings from Inputs')}
-      ${hasP2()?fld('pre2020Inh2',p2()+' Pre-2020 Inherited IRA ($)','Uses the person-specific inherited IRA RMD settings from Inputs'):''}
+      ${fld('pre2020Inh1',p1()+' Pre-2020 Inherited IRA(s) ($)','Uses the person-specific inherited IRA RMD settings from Inputs')}
+      ${hasP2()?fld('pre2020Inh2',p2()+' Pre-2020 Inherited IRA(s) ($)','Uses the person-specific inherited IRA RMD settings from Inputs'):''}
       ${fld('post2020Inh','Post-2020 Inherited IRA Lots Total ($)','Optional total reset for active post-2020 lots; allocated proportionally across active lots')}
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
@@ -5931,6 +6095,7 @@ function buildReportPayload(){
     pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
     pre2020InhOwnerBy2: S.pre2020InhOwnerBy2||'', pre2020InhDeathYear2: S.pre2020InhDeathYear2||'',
     pre2020InhUseForFunding: S.pre2020InhUseForFunding||'no',
+    pre2020InhLots:getPre2020InhLots(S),
     pre2020InhStartBal1:S.pre2020InhStartBal1||0, pre2020InhStartYear1:S.pre2020InhStartYear1||'',
     pre2020InhStartBal2:S.pre2020InhStartBal2||0, pre2020InhStartYear2:S.pre2020InhStartYear2||'',
     k401Trad1: S.k401Trad1, k401Roth1: S.k401Roth1,
@@ -5949,6 +6114,7 @@ function buildReportPayload(){
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
     pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0, pre2020InhAddl1:r.pre2020InhAddl1||0, pre2020InhAddl2:r.pre2020InhAddl2||0, pre2020InhAddl:r.pre2020InhAddl||0,
     post2020InhRMD:r.post2020InhRMD||0, post2020InhExtra:r.post2020InhExtra||0, post2020InhFinal:r.post2020InhFinal||0, post2020InhDiscretionary:r.post2020InhDiscretionary||0, post2020InhDraw:r.post2020InhDraw||0,
+    pre2020LotDetails:r.pre2020LotDetails||[],
     pre2020InhStartYear1:r.pre2020InhStartYear1||0, pre2020InhStartYear2:r.pre2020InhStartYear2||0,
     pre2020InhOwnerReachedRMD1:!!r.pre2020InhOwnerReachedRMD1, pre2020InhOwnerReachedRMD2:!!r.pre2020InhOwnerReachedRMD2,
     pre2020InhDivisor1:r.pre2020InhDivisor1||0, pre2020InhDivisor2:r.pre2020InhDivisor2||0,
@@ -6248,7 +6414,7 @@ function generateReport(){
     <tr><td>SS Monthly Benefit</td><td>${fd(A.ssmo1)}</td>${has2?`<td>${fd(A.ssmo2)}</td>`:''}</tr>
     <tr><td>Wages End Year</td><td>${wend(A.wagesEnd1)}</td>${has2?`<td>${wend(A.wagesEnd2)}</td>`:''}</tr>
     <tr><td>RMD Start Year</td><td>${A.rmdStart1||'—'}</td>${has2?`<td>${A.rmdStart2||'—'}</td>`:''}</tr>
-    <tr><td>Pre-2020 Inh IRA Owner Birth / Death</td><td>${A.pre2020InhOwnerBy1||'—'} / ${A.pre2020InhDeathYear1||'—'}</td>${has2?`<td>${A.pre2020InhOwnerBy2||'—'} / ${A.pre2020InhDeathYear2||'—'}</td>`:''}</tr>
+    <tr><td>Pre-2020 Inh IRA Lots</td><td>${(A.pre2020InhLots||[]).filter(l=>String(l.beneficiary||'1')==='1').length || '—'}</td>${has2?`<td>${(A.pre2020InhLots||[]).filter(l=>String(l.beneficiary)==='2').length || '—'}</td>`:''}</tr>
     <tr><td>Pre-2020 Inh IRA Funding</td><td>${A.pre2020InhUseForFunding==='before'?'Use before regular IRA':A.pre2020InhUseForFunding==='after'?'Use after regular IRA':'RMDs only'}</td>${has2?'<td></td>':''}</tr>
     <tr><td>401k Trad/Roth</td><td>${fp(A.k401Trad1)} / ${fp(A.k401Roth1)}</td>${has2?`<td>${fp(A.k401Trad2)} / ${fp(A.k401Roth2)}</td>`:''}</tr>
     </tbody></table>`;
@@ -7295,9 +7461,11 @@ function setupReadiness(){
   const items = [];
   const add = (status, title, body, action, view) => items.push({status, title, body, action, view});
   const postLots = S.post2020InhLots || [];
+  const preLots = getPre2020InhLots(S);
   const hasConfiguredPostLot = postLots.some(l => parseF(l.balance) > 0 || parseInt(l.deathYear) || parseInt(l.ownerBy) || String(l.notes || '').trim());
+  const hasConfiguredPreLot = preLots.some(l => parseF(l.balance) > 0 || parseInt(l.deathYear) || parseInt(l.ownerBy) || String(l.notes || '').trim());
   const hasInheritedBalance = ['pre2020Inh1','pre2020Inh2','post2020Inh'].some(k => parseF(soy[k]) > 0) ||
-    parseF(S.pre2020InhStartBal1) > 0 || parseF(S.pre2020InhStartBal2) > 0 || postLots.some(l => parseF(l.balance) > 0);
+    preLots.some(l => parseF(l.balance) > 0) || postLots.some(l => parseF(l.balance) > 0);
   const hasOpeningBalance = ['cash','sec','ira1','ira2','roth1','roth2','hsa'].some(k => parseF(soy[k]) > 0) || hasInheritedBalance;
   const hasIncome = ['grossWages','ptWages','grossWages2','ptWages2','ss1','ss2'].some(k => parseF(soy[k]) > 0) || parseF(S.ssmo1) > 0 || parseF(S.ssmo2) > 0;
   const p1Age = yr - (parseInt(S.by1) || yr) - 1;
@@ -7324,12 +7492,12 @@ function setupReadiness(){
   if (p1Age >= 63 || (has2 && p2Age >= 63)) {
     add((S.medicareMagi1 || S.medicareMagi2) ? 'done' : 'warn', 'Medicare lookback', 'Prior MAGI helps year-one and year-two IRMAA estimates for Medicare-age households.', 'Open Medicare Interview', 'interview-medicare');
   }
-  if (hasInheritedBalance || hasConfiguredPostLot) {
-    const pre1NeedsRules = (parseF(soy.pre2020Inh1) > 0 || parseF(S.pre2020InhStartBal1) > 0) && (!S.pre2020InhOwnerBy1 || !S.pre2020InhDeathYear1);
-    const pre2NeedsRules = has2 && (parseF(soy.pre2020Inh2) > 0 || parseF(S.pre2020InhStartBal2) > 0) && (!S.pre2020InhOwnerBy2 || !S.pre2020InhDeathYear2);
+  if (hasInheritedBalance || hasConfiguredPostLot || hasConfiguredPreLot) {
+    const preNeedsRows = (parseF(soy.pre2020Inh1) > 0 || parseF(soy.pre2020Inh2) > 0) && !preLots.length;
+    const preNeedsRules = preLots.some(l => parseF(l.balance) > 0 && (!parseInt(l.deathYear) || !parseInt(l.ownerBy)));
     const postNeedsRows = parseF(soy.post2020Inh) > 0 && !postLots.length;
     const postNeedsRules = postLots.some(l => parseF(l.balance) > 0 && (!parseInt(l.deathYear) || !parseInt(l.ownerBy)));
-    add(!(pre1NeedsRules || pre2NeedsRules || postNeedsRows || postNeedsRules) ? 'done' : 'warn',
+    add(!(preNeedsRows || preNeedsRules || postNeedsRows || postNeedsRules) ? 'done' : 'warn',
       'Inherited IRA rules',
       'Inherited IRAs need more than a balance: death year, owner birth year, beneficiary, and draw strategy determine required distributions.',
       'Open Inherited IRA Setup',
@@ -7482,9 +7650,9 @@ function renderSetupBalancesStep(){
     setupSOYInput(p1()+' Roth IRA / Roth 401k ($)',yr,'roth1','number',{min:0,note:'Combine Roth retirement accounts for '+p1()+'. Roth money is modeled separately because qualified withdrawals are tax-free.'}),
     has2 ? setupSOYInput(p2()+' Roth IRA / Roth 401k ($)',yr,'roth2','number',{min:0,note:'Combine Roth retirement accounts for '+p2()+'. Roth money is modeled separately because qualified withdrawals are tax-free.'}) : '',
     setupSOYInput('HSA / Health Savings Account ($)',yr,'hsa','number',{min:0,note:'Only use this if there is a Health Savings Account. Leave blank or zero if there is no HSA; most households can ignore it.'}),
-    setupSOYInput(p1()+' Pre-2020 Inherited IRA Reset ($)',yr,'pre2020Inh1','number',{min:0,note:'Optional balance reset for an inherited IRA that uses old life-expectancy RMD rules. The Inherited IRAs step holds the rule details.'}),
-    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA Reset ($)',yr,'pre2020Inh2','number',{min:0,note:'Optional balance reset for an inherited IRA that uses old life-expectancy RMD rules. The Inherited IRAs step holds the rule details.'}) : '',
-    setupSOYInput('Post-2020 Inherited IRA Total Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for active post-2020 inherited IRA lots. Add each actual lot in the Inherited IRAs step so the model has deadline and draw rules.'}),
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA(s) Reset ($)',yr,'pre2020Inh1','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p1()+'. The app allocates the reset across that person\'s active lots; the Inherited IRAs step holds the rule details.'}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA(s) Reset ($)',yr,'pre2020Inh2','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p2()+'. The app allocates the reset across that person\'s active lots; the Inherited IRAs step holds the rule details.'}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Active-Lot Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for post-2020 lots that are active in this check-in year. Add each actual lot in the Inherited IRAs step so the model has deadline and draw rules.'}),
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Inherited IRA setup</div><div class="setup-check-body">Inherited accounts need rule details, not just balances. If inherited accounts exist, open the next step to enter death year, beneficiary, owner birth year, and draw strategy.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRAs</button></div></div>'
   ].join('');
 }
@@ -7601,6 +7769,76 @@ function renderSetupMedicareStep(){
     setupInput('Medicare MAGI - 1 Year Before Start ($)','medicareMagi1','number',S.medicareMagi1,{min:0,note:'This estimates IRMAA for the second plan year. After that, the model uses projected income from two years earlier.'})
   ].join('');
 }
+function setupPre2020LotInput(i, key, label, value, opts){
+  opts = opts || {};
+  const type = opts.type || 'number';
+  const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
+  const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
+  const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
+  const rerender = opts.rerender ? 'true' : 'false';
+  const control = "<input type='"+setupEsc(type)+"' value='"+setupEsc(value || '')+"'"+step+min+max+placeholder+" onchange=\"setupUpdatePre2020Lot("+i+",'"+key+"',this.value,"+rerender+")\">";
+  return setupField(label, control, opts.note || '');
+}
+function setupPre2020LotSelect(i, key, label, value, options, note){
+  const body = "<select onchange=\"setupUpdatePre2020Lot("+i+",'"+key+"',this.value,true)\">" +
+    options.map(o => {
+      const val = Array.isArray(o) ? o[0] : o;
+      const txt = Array.isArray(o) ? o[1] : o;
+      return "<option value='"+setupEsc(val)+"' "+(String(value || '') === String(val) ? 'selected' : '')+">"+setupEsc(txt)+"</option>";
+    }).join('') + "</select>";
+  return setupField(label, body, note || '');
+}
+function setupUpdatePre2020Lot(i, key, value, rerender){
+  if (!Array.isArray(S.pre2020InhLots)) normalizePre2020InhLots(S);
+  if (!S.pre2020InhLots[i]) S.pre2020InhLots[i] = {};
+  S.pre2020InhLots[i][key] = value;
+  S.pre2020InhLots = S.pre2020InhLots.filter(pre2020LotHasData);
+  syncLegacyPre2020FromLots(S);
+  setupAfterChange(!!rerender);
+}
+function setupAddPre2020InhLot(){
+  normalizePre2020InhLots(S);
+  S.pre2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',notes:''});
+  syncLegacyPre2020FromLots(S);
+  setupAfterChange(true);
+}
+function setupDeletePre2020InhLot(i){
+  normalizePre2020InhLots(S);
+  const lot = (S.pre2020InhLots || [])[i] || {};
+  const label = lot.notes ? 'Pre-2020 inherited IRA lot "'+lot.notes+'"' : 'Pre-2020 Inherited IRA Lot '+(i+1);
+  if (!confirm('Delete '+label+'?')) return;
+  S.pre2020InhLots.splice(i, 1);
+  syncLegacyPre2020FromLots(S);
+  setupAfterChange(true);
+}
+function setupPre2020StartYearOptions(lot){
+  const start = parseInt(S.startYear) || setupYear();
+  const end = parseInt(S.endYear) || start + 25;
+  const current = lot && lot.startYear ? String(lot.startYear) : String(start);
+  const out = [];
+  for (let y = start; y <= end; y++) out.push([String(y), y === start ? String(y)+' - plan start' : String(y)]);
+  if (!out.some(o => String(o[0]) === current)) out.unshift([current, current+' - current value']);
+  return out;
+}
+function renderSetupPre2020Lots(){
+  normalizePre2020InhLots(S);
+  const lots = S.pre2020InhLots || [];
+  if (!lots.length) {
+    return '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">No pre-2020 lots</div><div class="setup-check-body">If there are older inherited IRAs, add one row per RMD schedule. If there are none, leave this section empty.</div></div>';
+  }
+  return lots.map((lot, i) => {
+    const beneficiaryOptions = [['1',p1()], ...(hasP2() ? [['2',p2()]] : [])];
+    return '<div class="strategy-card" style="grid-column:1/-1"><div class="strategy-card-title">Pre-2020 Inherited IRA Lot '+(i+1)+' <button class="btn btn-danger btn-sm" style="float:right" onclick="setupDeletePre2020InhLot('+i+')">Delete</button></div><div class="setup-field-grid">' +
+      setupPre2020LotSelect(i,'beneficiary','Beneficiary',lot.beneficiary || '1',beneficiaryOptions,'Whose birth year should be used for the inherited IRA life-expectancy schedule.') +
+      setupPre2020LotInput(i,'balance','Starting Balance ($)',lot.balance,{min:0,note:'Use the balance at the beginning of the Balance Start Year. For an account already in place when the plan starts, enter the plan-start balance.'}) +
+      setupPre2020LotSelect(i,'startYear','Balance Start Year',lot.startYear || S.startYear,setupPre2020StartYearOptions(lot),'First projection year this lot should exist in the model. Usually the plan start year if the account already exists.') +
+      setupPre2020LotInput(i,'ownerBy','Deceased Owner Birth Year',lot.ownerBy,{min:1900,placeholder:'Required for RMD rules',note:'Used to calculate the inherited IRA life-expectancy divisor.'}) +
+      setupPre2020LotInput(i,'deathYear','Deceased Owner Death Year',lot.deathYear,{min:1900,placeholder:'Required',note:'The first modeled RMD year is the year after death.'}) +
+      setupPre2020LotInput(i,'notes','Notes',lot.notes,{type:'text',placeholder:'Optional label'}) +
+    '</div></div>';
+  }).join('');
+}
 function setupPost2020LotInput(i, key, label, value, opts){
   opts = opts || {};
   const type = opts.type || 'number';
@@ -7670,8 +7908,8 @@ function renderSetupPost2020Lots(){
     const beneficiaryOptions = [['1',p1()], ...(hasP2() ? [['2',p2()]] : [])];
     return '<div class="strategy-card" style="grid-column:1/-1"><div class="strategy-card-title">Post-2020 Inherited IRA Lot '+(i+1)+' <button class="btn btn-danger btn-sm" style="float:right" onclick="setupDeletePost2020InhLot('+i+')">Delete</button></div><div class="setup-field-grid">' +
       setupPost2020LotSelect(i,'beneficiary','Beneficiary',lot.beneficiary || '1',beneficiaryOptions,'Whose inherited IRA rules and age should apply.') +
-      setupPost2020LotInput(i,'balance','Starting Balance ($)',lot.balance,{min:0,note:'Balance when this lot becomes active.'}) +
-      setupPost2020LotSelect(i,'startYear','Distributions Begin Year',lot.startYear || setupPost2020DefaultActiveYear(lot),setupPost2020ActiveYearOptions(lot),'First year this inherited IRA lot should be active for projection draws. Usually the year after death; if it already existed before the plan starts, use the plan start year. The dropdown shows death year through the 10-year deadline.') +
+      setupPost2020LotInput(i,'balance','Starting Balance ($)',lot.balance,{min:0,note:'Use the balance at the beginning of the First Modeled Draw Year. If death was 2020 and this lot starts in 2026, enter the 2026/current balance, not the original inherited amount.'}) +
+      setupPost2020LotSelect(i,'startYear','First Modeled Draw Year',lot.startYear || setupPost2020DefaultActiveYear(lot),setupPost2020ActiveYearOptions(lot),'Choose the first year this lot should appear for projection draws. It is not automatically the year after death. If the account already exists when the plan starts, this is often the plan start year. Use a later year only when you intentionally want draws to begin later. The dropdown shows death year through the 10-year deadline.') +
       setupPost2020LotInput(i,'ownerBy','Deceased Owner Birth Year',lot.ownerBy,{min:1900,placeholder:'Required for RMD rules'}) +
       setupPost2020LotInput(i,'deathYear','Death Year',lot.deathYear,{min:1900,placeholder:'Required',rerender:true,note:'Sets the 10-year deadline. Changing this refreshes the distribution-year choices.'}) +
       setupPost2020LotSelect(i,'strategy','Draw Strategy',lot.strategy || 'none',[['none','RMD only / final year'],['even','Even to year 10'],['pct','Percent of balance']],'RMD only takes required withdrawals and empties by the deadline. Even spreads optional draws across remaining years. Percent uses the Draw % field below.') +
@@ -7685,20 +7923,14 @@ function renderSetupInheritedStep(){
   return [
     '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">When to use this</div><div class="setup-check-body">Use this only for inherited retirement accounts. Regular IRA and Roth balances stay in Opening Year. Annual Check-In can reset inherited IRA balances later, but this step supplies the rule details.</div></div>',
     '<div class="sh" style="grid-column:1/-1">Post-2020 Inherited IRA Lots</div>',
-    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">Use one row per inherited IRA. Death year sets the 10-year deadline. Distributions Begin Year tells the model when this lot starts being drawn in the projection. Owner birth year tells the model whether annual RMDs are required before the final year.</div>',
+    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">Use one row per inherited IRA. Death year sets the 10-year deadline. First Modeled Draw Year tells the model when this lot starts appearing for projection draws; it is not automatically the year after death. Starting Balance should match that first modeled year. Owner birth year tells the model whether annual RMDs are required before the final year.</div>',
     renderSetupPost2020Lots(),
     '<div class="setup-mini-actions" style="grid-column:1/-1"><button class="btn btn-add btn-sm" onclick="setupAddPost2020InhLot()">+ Add Post-2020 Inherited IRA</button></div>',
-    '<div class="sh" style="grid-column:1/-1">Pre-2020 Inherited IRA RMD</div>',
-    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">For inherited IRAs that predate the SECURE Act 10-year rule. The app uses the deceased owner birth/death years and beneficiary birth year to calculate life-expectancy RMDs.</div>',
-    setupSelect('Use Pre-2020 Inherited IRA for Funding','pre2020InhUseForFunding',S.pre2020InhUseForFunding || 'no',[['no','RMDs only'],['before','Use before regular IRA'],['after','Use after regular IRA']],{note:'Controls whether extra funding draws can use this inherited IRA, and where it sits inside the IRA-side funding path.'}),
-    setupInput(p1()+' Initial Pre-2020 Inherited IRA ($)','pre2020InhStartBal1','number',setupNum(S.pre2020InhStartBal1),{min:0,note:'Seed balance. Annual Check-In can update this later.'}),
-    setupInput(p1()+' Balance Start Year','pre2020InhStartYear1','optional-int',S.pre2020InhStartYear1 || '',{min:S.startYear,placeholder:'Plan start',note:'Blank means plan start year.'}),
-    setupInput(p1()+' Deceased Owner Birth Year','pre2020InhOwnerBy1','optional-int',S.pre2020InhOwnerBy1 || '',{min:1900,placeholder:'Required if balance exists'}),
-    setupInput(p1()+' Deceased Owner Death Year','pre2020InhDeathYear1','optional-int',S.pre2020InhDeathYear1 || '',{min:1900,placeholder:'Required if balance exists'}),
-    has2 ? setupInput(p2()+' Initial Pre-2020 Inherited IRA ($)','pre2020InhStartBal2','number',setupNum(S.pre2020InhStartBal2),{min:0,note:'Seed balance. Annual Check-In can update this later.'}) : '',
-    has2 ? setupInput(p2()+' Balance Start Year','pre2020InhStartYear2','optional-int',S.pre2020InhStartYear2 || '',{min:S.startYear,placeholder:'Plan start',note:'Blank means plan start year.'}) : '',
-    has2 ? setupInput(p2()+' Deceased Owner Birth Year','pre2020InhOwnerBy2','optional-int',S.pre2020InhOwnerBy2 || '',{min:1900,placeholder:'Required if balance exists'}) : '',
-    has2 ? setupInput(p2()+' Deceased Owner Death Year','pre2020InhDeathYear2','optional-int',S.pre2020InhDeathYear2 || '',{min:1900,placeholder:'Required if balance exists'}) : ''
+    '<div class="sh" style="grid-column:1/-1">Pre-2020 Inherited IRA Lots</div>',
+    '<div class="setup-section-copy" style="grid-column:1/-1;margin-bottom:0">Use one row per older inherited IRA RMD schedule. Different original owners, different death years, or different beneficiaries can each have their own lot. The model calculates each life-expectancy RMD separately, then totals them in the report.</div>',
+    setupSelect('Use Pre-2020 Inherited IRA for Funding','pre2020InhUseForFunding',S.pre2020InhUseForFunding || 'no',[['no','RMDs only'],['before','Use before regular IRA'],['after','Use after regular IRA']],{note:'Required RMDs always happen. This only controls whether extra funding draws may also use pre-2020 inherited IRA balances.'}),
+    renderSetupPre2020Lots(),
+    '<div class="setup-mini-actions" style="grid-column:1/-1"><button class="btn btn-add btn-sm" onclick="setupAddPre2020InhLot()">+ Add Pre-2020 Inherited IRA</button></div>'
   ].join('');
 }
 
@@ -7741,9 +7973,9 @@ function renderSetupAnnualView(){
     setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' Roth ($)',yr,'roth2','number',{min:0}) : '',
     setupSOYInput('HSA ($)',yr,'hsa','number',{min:0}),
-    setupSOYInput(p1()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh1','number',{min:0,note:'Balance reset for this year; rule details live in Inherited IRA Setup.'}),
-    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA ($)',yr,'pre2020Inh2','number',{min:0,note:'Balance reset for this year; rule details live in Inherited IRA Setup.'}) : '',
-    setupSOYInput('Post-2020 Inherited IRA Total Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for active lots; add new lots in Inherited IRA Setup.'})
+    setupSOYInput(p1()+' Pre-2020 Inherited IRA(s) ($)',yr,'pre2020Inh1','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p1()+'. The app allocates the reset across that person\'s active lots.'}),
+    has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA(s) ($)',yr,'pre2020Inh2','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p2()+'. The app allocates the reset across that person\'s active lots.'}) : '',
+    setupSOYInput('Post-2020 Inherited IRA Active-Lot Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for lots active in this check-in year; add new lots in Inherited IRA Setup.'})
   ].join('');
   const inheritedNote = '<div class="setup-check warn" style="margin:12px 0"><div class="setup-check-title">Inherited IRA changes</div><div class="setup-check-body">If a new inherited IRA appears, or if the death year / beneficiary / draw strategy needs correction, update the Inherited IRAs setup. This Annual Check-In only resets balances.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRA Setup</button></div></div>';
   return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';

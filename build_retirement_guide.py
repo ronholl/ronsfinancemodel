@@ -296,8 +296,8 @@ story += [
         ("IRA / 401k", "Traditional retirement money. This includes traditional IRA, rollover IRA, and traditional 401k money. Withdrawals are usually taxable."),
         ("Roth", "Roth IRA or Roth 401k money. Qualified withdrawals are usually tax-free."),
         ("HSA", "Health Savings Account. If you do not have one, leave it blank or zero. The model includes it because some retirees use HSAs for medical spending."),
-        ("Pre-2020 Inherited IRA", "Only for older inherited IRAs that use beneficiary life-expectancy RMD rules. Use the Inherited IRAs screen for the rule details."),
-        ("Post-2020 Inherited IRA Total Reset", "Optional yearly balance reset for active post-2020 inherited IRA lots. Use the Inherited IRAs screen to enter the actual lots and rules."),
+        ("Pre-2020 Inherited IRA(s)", "Only for older inherited IRAs that use beneficiary life-expectancy RMD rules. The Inherited IRAs screen now supports separate lots when accounts have different owners, death years, or beneficiaries."),
+        ("Post-2020 Inherited IRA Active-Lot Reset", "Optional yearly balance reset for post-2020 inherited IRA lots that are active in that check-in year. Use the Inherited IRAs screen to enter the actual lots and rules."),
     ]),
     p("If someone has a 401k and an IRA, this model treats traditional IRA and traditional 401k as one traditional retirement bucket for planning. Same idea for Roth IRA and Roth 401k.", "Callout"),
 ]
@@ -307,18 +307,19 @@ story += section("8. Inherited IRAs")
 story += [
     p("Use this screen only when the plan includes inherited retirement accounts. Regular IRAs, 401ks, and Roth accounts belong on Opening Year, not here."),
     p("Inherited IRAs need rule details. A balance alone is not enough because the required withdrawal depends on when the person died, who inherited the account, and sometimes the age of the original owner."),
+    p("For pre-2020 inherited IRAs, use one row per old life-expectancy RMD schedule. If two accounts have the same beneficiary and same original-owner birth/death years, you may combine them. If they came from different owners, different death years, or different beneficiaries, add separate lots so the model can calculate each RMD separately.", "Callout"),
     info_table(("Field", "Plain-English Meaning"), [
         ("Beneficiary", "Whose inherited IRA rules and age apply."),
-        ("Starting Balance", "The balance when this inherited IRA lot begins in the plan."),
-        ("Active Year", "The year withdrawals begin in the model. Usually this is the first plan year or the year after the original owner died."),
+        ("Starting Balance", "The balance at the beginning of the first year this lot is active in the projection. If the owner died in 2020 and the lot starts in 2026, use the 2026/current balance, not the original inherited amount."),
+        ("First Modeled Draw Year", "The first year this lot appears for projection draws. It is not automatically the year after death. If the account already exists when the plan starts, this is often the plan start year. Use a later year only when you intentionally want draws to begin later."),
         ("Deceased Owner Birth Year", "Used to tell whether annual required withdrawals apply before the 10-year deadline."),
-        ("Death Year", "Sets the 10-year deadline for post-2020 inherited IRAs."),
+        ("Death Year", "For post-2020 lots, this sets the 10-year deadline. For pre-2020 lots, this helps calculate the life-expectancy RMD schedule."),
         ("Draw Strategy", "How much extra to take before the deadline, beyond anything required."),
         ("Draw Percent", "Used only when the draw strategy is Percent of balance."),
         ("Notes", "A place to write whose account it was or why the strategy was chosen."),
     ]),
-    p("For post-2020 inherited IRAs, the account usually must be emptied by the end of year 10 after death. The model can also handle required annual withdrawals when they apply.", "WarnCallout"),
-    p("For pre-2020 inherited IRAs, the model uses beneficiary life-expectancy RMD rules. Start of Year or Annual Check-In can update the balance later.", "Callout"),
+    p("For post-2020 inherited IRAs, the account usually must be emptied by the end of year 10 after death. The First Modeled Draw Year is a modeling choice: it controls when this lot starts appearing for projection draws. If required annual RMDs should be modeled before that year, choose the earlier year.", "WarnCallout"),
+    p("For pre-2020 inherited IRAs, the model uses beneficiary life-expectancy RMD rules for each lot. Annual Check-In can still stay simple: enter the total current pre-2020 inherited IRA balance for a person, and the app allocates that reset across that person's active lots.", "Callout"),
 ]
 story.append(PageBreak())
 
