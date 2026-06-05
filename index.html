@@ -40,15 +40,15 @@
 <meta property="og:title" content="Ron's Retirement Finance Model">
 <meta property="og:description" content="Interactive retirement planning dashboard and financial model.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="share-preview.png">
+<meta property="og:image" content="share-preview.png?v=20260605-espresso">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Blue bear finance app icon">
+<meta property="og:image:alt" content="Blue bear finance app icon on a dark gold retirement finance background">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Ron's Retirement Finance Model">
 <meta name="twitter:description" content="Interactive retirement planning dashboard and financial model.">
-<meta name="twitter:image" content="share-preview.png">
+<meta name="twitter:image" content="share-preview.png?v=20260605-espresso">
 <script>
 (function(){
   const params = new URLSearchParams(location.search || '');
@@ -474,7 +474,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <button type="button" onclick="addPerson2()"
             style="padding:5px 14px;background:transparent;border:1px dashed var(--gold);color:var(--gold);
             border-radius:3px;font-size:11px;cursor:pointer;font-family:inherit">
-            + Add Person 2 (spouse / partner)
+            + Add Spouse/Partner
           </button>
         </div>
         <input type="text" id="i-n2" oninput="IC()" placeholder="Leave blank for single filer">
@@ -568,8 +568,8 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <label>Scenario</label>
         <select id="i-widow-mode" onchange="IC()">
           <option value="off">Off</option>
-          <option value="p1Survives">Person 1 survives Person 2</option>
-          <option value="p2Survives">Person 2 survives Person 1</option>
+          <option value="p1Survives">Primary Person survives Spouse/Partner</option>
+          <option value="p2Survives">Spouse/Partner survives Primary Person</option>
         </select>
         <div class="note">Models one spouse dying while the survivor keeps retirement balances and, when selected below, the higher Social Security benefit.</div>
       </div>
@@ -648,23 +648,23 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <div class="field"><label>Use Pre-2020 Inherited IRA for Funding</label><select id="i-preinh-fund" onchange="IC()"><option value="no">RMDs only</option><option value="before">Yes - before regular IRA</option><option value="after">Yes - after regular IRA</option></select><div class="note">Default Funding Order controls when the IRA-side bucket is used. This setting controls where pre-2020 inherited IRA sits inside that IRA-side funding path.</div></div>
         </div>
         <div class="field-row">
-          <div class="field"><label id="l-preinh-startbal1">Person 1 Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal1" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
-          <div class="field"><label id="l-preinh-startyr1">Person 1 Balance Start Year</label><input type="number" id="i-preinh-startyr1" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
-          <div class="field"><label id="l-preinh-ownerby1">Person 1 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
-          <div class="field"><label id="l-preinh-deathyr1">Person 1 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
+          <div class="field"><label id="l-preinh-startbal1">Primary Person Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal1" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
+          <div class="field"><label id="l-preinh-startyr1">Primary Person Balance Start Year</label><input type="number" id="i-preinh-startyr1" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
+          <div class="field"><label id="l-preinh-ownerby1">Primary Person Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby1" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
+          <div class="field"><label id="l-preinh-deathyr1">Primary Person Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr1" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
         </div>
         <div class="field-row p2-field">
-          <div class="field"><label id="l-preinh-startbal2">Person 2 Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal2" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
-          <div class="field"><label id="l-preinh-startyr2">Person 2 Balance Start Year</label><input type="number" id="i-preinh-startyr2" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
-          <div class="field"><label id="l-preinh-ownerby2">Person 2 Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
-          <div class="field"><label id="l-preinh-deathyr2">Person 2 Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
+          <div class="field"><label id="l-preinh-startbal2">Spouse/Partner Initial Pre-2020 Inh IRA ($)</label><input type="number" id="i-preinh-startbal2" placeholder="0" oninput="IC()"><div class="note">Optional seed balance. Start of Year entries override and update the balance later.</div></div>
+          <div class="field"><label id="l-preinh-startyr2">Spouse/Partner Balance Start Year</label><input type="number" id="i-preinh-startyr2" placeholder="Plan start" oninput="IC()"><div class="note">Blank = plan start year.</div></div>
+          <div class="field"><label id="l-preinh-ownerby2">Spouse/Partner Deceased Owner Birth Year</label><input type="number" id="i-preinh-ownerby2" placeholder="Optional" oninput="IC()"><div class="note">Used to identify whether the deceased owner had reached RMD age.</div></div>
+          <div class="field"><label id="l-preinh-deathyr2">Spouse/Partner Deceased Owner Death Year</label><input type="number" id="i-preinh-deathyr2" placeholder="Blank = N/A" oninput="IC()"><div class="note">Blank = not applicable. First inherited distribution year is modeled as the year after death; divisor uses this person's birth year.</div></div>
         </div>
       </div>
 
     </div>
 
     <div class="panel">
-      <div class="sh">Employee Inputs — <span id="l-p1name">Person 1</span></div>
+      <div class="sh">Employee Inputs — <span id="l-p1name">Primary Person</span></div>
       <div class="field-row">
         <div class="field"><label>% Net Pay → Trad 401K</label><input type="number" id="i-k1t" step="0.1" min="0" max="100" oninput="IC()"><div class="note">e.g. 6 = 6% — global default</div></div>
         <div class="field"><label>% Net Pay → Roth 401K</label><input type="number" id="i-k1r" step="0.1" min="0" max="100" oninput="IC()"></div>
@@ -674,7 +674,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="field"><label>Year Wages End</label><input type="number" id="i-we1" oninput="IC()"><div class="note">9999 = ongoing</div></div>
         <div class="field"><label>Year Self-Employ Ends</label><input type="number" id="i-pte1" oninput="IC()"><div class="note">1099/consulting end year · 9999 = ongoing</div></div>
       </div>
-      <div class="sh p2-field">Employee Inputs — <span id="l-p2name">Person 2</span></div>
+      <div class="sh p2-field">Employee Inputs — <span id="l-p2name">Spouse/Partner</span></div>
       <div class="field-row p2-field">
         <div class="field"><label>% Net Pay → Trad 401K</label><input type="number" id="i-k2t" step="0.1" min="0" max="100" oninput="IC()"></div>
         <div class="field"><label>% Net Pay → Roth 401K</label><input type="number" id="i-k2r" step="0.1" min="0" max="100" oninput="IC()"></div>
@@ -1608,6 +1608,19 @@ function singleLifeFactor(age) {
   const a = Math.max(0, Math.min(120, Math.floor(age)));
   return SINGLE_LIFE_EXPECTANCY_TABLE[a] || 1.0;
 }
+function calcBirthYearForPlan(by, yr) {
+  const b = parseInt(by);
+  return b && b > 1900 ? b : ((parseInt(yr) || new Date().getFullYear()) - 1);
+}
+function calcAgeForPlanYear(by, yr) {
+  const b = parseInt(by);
+  return b && b > 1900 ? Math.max(0, yr - b - 1) : 0;
+}
+function hasRealBirthYear(by, yr) {
+  const b = parseInt(by);
+  const y = parseInt(yr) || new Date().getFullYear();
+  return !!(b && b > 1900 && b < y);
+}
 function getPre2020InheritedRMD(bal, yr, ownerBirthYear, ownerDeathYear, beneficiaryBirthYear) {
   if (bal <= 0) return {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
   const deathYear = parseInt(ownerDeathYear);
@@ -1679,8 +1692,8 @@ function findLayeredOverrides(table) {
 function defaultState() {
   return {
     // Personal
-    name1:'', name2:'',
-    by1:2000, by2:2000,
+    name1:'', name2:'', householdMode:'',
+    by1:'', by2:'',
     filing:'MFJ', state:'CA',
     startYear:new Date().getFullYear(), endYear:new Date().getFullYear()+25,
     // SS
@@ -1693,8 +1706,8 @@ function defaultState() {
     widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true,
     wageGrowth:0.030,
     // RMD
-    rmdStart1: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
-    rmdStart2: (()=>{ const by=2000; return by>=1960 ? by+75 : by+73; })(),
+    rmdStart1:0,
+    rmdStart2:0,
     inhDrainYear:9999,
     post2020InhLots:[],
     pre2020InhOwnerBy1:'', pre2020InhDeathYear1:'',
@@ -1774,7 +1787,7 @@ function defaultState() {
 // ── Projection engine ────────────────────────────────────────────────────────
 function runProjection(S) {
   const rows = [];
-  const hp2 = !!(S.name2 && S.name2.trim());
+  const hp2 = S.householdMode !== 'single' && !!(S.name2 && S.name2.trim());
 
   // Working balances — will be overridden by SOY entries when present
   let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0, pre2020Inh1=0, pre2020Inh2=0;
@@ -1782,7 +1795,8 @@ function runProjection(S) {
   const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
 
   for (let yr = S.startYear; yr <= S.endYear; yr++) {
-    const age1 = yr - S.by1 - 1, age2 = yr - S.by2 - 1; // age during the year (before birthday)
+    const by1Eff = calcBirthYearForPlan(S.by1, yr), by2Eff = calcBirthYearForPlan(S.by2, yr);
+    const age1 = calcAgeForPlanYear(S.by1, yr), age2 = calcAgeForPlanYear(S.by2, yr); // age during the year (before birthday)
     const soy  = S.soy[yr] || {};
     const tables = getScaledTables(S, yr); // inflation-scaled tax tables for this year
     const widowMode = S.widowMode || 'off';
@@ -1934,7 +1948,7 @@ function runProjection(S) {
 
     // ── Social Security ───────────────────────────────────────────────────
     // SS starts the year person IS ssAge at start of year: age = yr - by - 1 = ssAge → yr = by + ssAge + 1
-    const ss1Start = S.by1 + S.ssAge1 + 1, ss2Start = S.by2 + S.ssAge2 + 1;
+    const ss1Start = by1Eff + S.ssAge1 + 1, ss2Start = by2Eff + S.ssAge2 + 1;
     // SOY ss1/ss2 entries are MONTHLY amounts — multiply by 12.
     // When entered in a year, use that as the new COLA base going forward.
     // Find the most recent SOY ss entry at or before this year for each person.
@@ -1966,16 +1980,16 @@ function runProjection(S) {
     // RMD uses START-of-year (prior EOY) balance divided by IRS factor
     const rmdAge1 = afterDeathYear && p2Survivor ? survivorAge : age1;
     const rmdAge2 = afterDeathYear && p1Survivor ? survivorAge : age2;
-    const rmdStart1 = afterDeathYear && p2Survivor ? (S.by2 + ((S.by2 >= 1960) ? 76 : 74)) : S.rmdStart1;
-    const rmdStart2 = afterDeathYear && p1Survivor ? (S.by1 + ((S.by1 >= 1960) ? 76 : 74)) : S.rmdStart2;
+    const rmdStart1 = afterDeathYear && p2Survivor ? rmdStartYearForBirthYear(by2Eff) : S.rmdStart1;
+    const rmdStart2 = afterDeathYear && p1Survivor ? rmdStartYearForBirthYear(by1Eff) : S.rmdStart2;
     const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
     const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
     const pre2020OwnerBy1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhOwnerBy1 && S.pre2020InhOwnerBy2) ? S.pre2020InhOwnerBy2 : S.pre2020InhOwnerBy1;
     const pre2020DeathYr1Eff = (afterDeathYear && p1Survivor && !S.pre2020InhDeathYear1 && S.pre2020InhDeathYear2) ? S.pre2020InhDeathYear2 : S.pre2020InhDeathYear1;
     const pre2020OwnerBy2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhOwnerBy2 && S.pre2020InhOwnerBy1) ? S.pre2020InhOwnerBy1 : S.pre2020InhOwnerBy2;
     const pre2020DeathYr2Eff = (afterDeathYear && p2Survivor && !S.pre2020InhDeathYear2 && S.pre2020InhDeathYear1) ? S.pre2020InhDeathYear1 : S.pre2020InhDeathYear2;
-    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, pre2020OwnerBy1Eff, pre2020DeathYr1Eff, S.by1);
-    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, pre2020OwnerBy2Eff, pre2020DeathYr2Eff, S.by2) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
+    const pre2020Calc1 = getPre2020InheritedRMD(pre2020Inh1, yr, pre2020OwnerBy1Eff, pre2020DeathYr1Eff, by1Eff);
+    const pre2020Calc2 = hp2 ? getPre2020InheritedRMD(pre2020Inh2, yr, pre2020OwnerBy2Eff, pre2020DeathYr2Eff, by2Eff) : {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
     const pre2020InhDraw1 = pre2020Calc1.draw;
     const pre2020InhDraw2 = pre2020Calc2.draw;
     const pre2020InhDraw = pre2020InhDraw1 + pre2020InhDraw2;
@@ -1991,7 +2005,7 @@ function runProjection(S) {
       const firstYear = deathYear + 1;
       const ownerStart = rmdStartYearForBirthYear(lot.ownerBy);
       const ownerReachedRMD = ownerStart ? deathYear >= ownerStart : false;
-      const benefBy = String(lot.beneficiary||'1') === '2' ? S.by2 : S.by1;
+      const benefBy = String(lot.beneficiary||'1') === '2' ? by2Eff : by1Eff;
       const firstAge = firstYear - benefBy - 1;
       const divisor = Math.max(1, singleLifeFactor(firstAge) - Math.max(0, yr - firstYear));
       const required = ownerReachedRMD && yr >= firstYear && yr < finalYear ? lot.bal / divisor : 0;
@@ -2040,7 +2054,7 @@ function runProjection(S) {
     // Wage growth: per-year override (stored as %) → global wageGrowth (stored as decimal) → fallback
     const wGrowthRate = parseF(resolveOverrideNonBlank(S.ovWageGrowth, yr, 'rate'));
     const wCola = 1 + (wGrowthRate != null ? wGrowthRate/100 : (S.wageGrowth ?? S.ssCola ?? 0.03));
-    // Person 1 wages
+    // Primary Person wages
     // grossWages = W-2 salary; withholdPct = optional total paycheck tax withholding override %
     // take-home (atWages) = grossWages * (1 - withholdPct/100)
     // ptWages = pre-tax / self-employment income (counts in AGI, no withholding)
@@ -2078,7 +2092,7 @@ function runProjection(S) {
         ptWages1 = priorPT > 0 ? priorPT * wCola : 0;
       }
     }
-    // Person 2 wages
+    // Spouse/Partner wages
     let atWages2 = 0, ptWages2 = 0, grossWages2 = 0;
     if (working2) {
       if (soy.grossWages2 != null && soy.grossWages2 !== '') {
@@ -2859,7 +2873,7 @@ async function localFingerprintWrite(S) {
     const fp = {
       savedAt:  new Date().toISOString(),
       dataSize: JSON.stringify(S).length,
-      name1:    S.name1 || 'Person 1',
+      name1:    S.name1 || 'Primary Person',
       startYear: S.startYear
     };
     const db = await fpOpenDB();
@@ -2911,7 +2925,7 @@ function showWipeModal(fp) {
   const savedDate = fp.savedAt ? new Date(fp.savedAt).toLocaleDateString('en-US',
     {year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'}) : 'unknown date';
   const sizeKB = fp.dataSize ? Math.round(fp.dataSize / 1024) + ' KB' : 'unknown size';
-  const name   = fp.name1 && fp.name1 !== 'Person 1' ? fp.name1 + "'s plan" : 'your retirement plan';
+  const name   = fp.name1 && fp.name1 !== 'Primary Person' ? fp.name1 + "'s plan" : 'your retirement plan';
 
   const modal = document.createElement('div');
   modal.id = 'wipe-modal';
@@ -3209,6 +3223,17 @@ function applyMigrations(merged) {
     if (tier1 > 0 && tier1 <= 974.40) return true;
     return false;
   };
+  const looksBlankPlan = (!merged.name1 || !String(merged.name1).trim()) &&
+    (!merged.name2 || !String(merged.name2).trim()) &&
+    !merged.startCash && !merged.startSec && !merged.startIRA1 && !merged.startIRA2 &&
+    !merged.startRoth1 && !merged.startRoth2 &&
+    (!merged.soy || Object.keys(merged.soy).length === 0);
+  if (looksBlankPlan) {
+    if (merged.by1 === 2000) merged.by1 = '';
+    if (merged.by2 === 2000) merged.by2 = '';
+    if (merged.rmdStart1 === 2076 || merged.rmdStart1 === 2075) merged.rmdStart1 = 0;
+    if (merged.rmdStart2 === 2076 || merged.rmdStart2 === 2075) merged.rmdStart2 = 0;
+  }
   if (!merged._m_irmaaPartDIncluded) {
     if (updatePartBOnlyIRMAA(merged.irmaaSurch)) merged.irmaaSurch = [...D2.irmaaSurch];
     merged._m_irmaaPartDIncluded = true;
@@ -3267,9 +3292,9 @@ function showDemoBanner(show) {
 }
 
 // ── Name helpers ──────────────────────────────────────────────────────────
-function p1(){ return S.name1||'Person 1'; }
-function p2(){ return S.name2&&S.name2.trim()?S.name2:'Person 2'; }
-function hasP2(){ return !!(S.name2&&S.name2.trim()); }
+function p1(){ return S.name1||'Primary Person'; }
+function p2(){ return S.name2&&S.name2.trim()?S.name2:'Spouse/Partner'; }
+function hasP2(){ return S.householdMode !== 'single' && !!(S.name2&&S.name2.trim()); }
 function isWidowAfterDeathYear(row) {
   const yr = row && row.yr != null ? row.yr : row;
   return hasP2() && (S.widowMode||'off') !== 'off' && (parseInt(S.widowDeathYear)||0) > 0 && yr > (parseInt(S.widowDeathYear)||0);
@@ -3333,8 +3358,8 @@ function updatePlanPreview(){
   const yrs = ey - sy + 1;
   const preview = document.getElementById('plan-length-preview');
   if(!preview) return;
-  const age1end = S.by1 ? (ey - S.by1) : null;
-  const age2end = (S.by2 && hasP2()) ? (ey - S.by2) : null;
+  const age1end = hasRealBirthYear(S.by1, ey) ? (ey - S.by1) : null;
+  const age2end = (hasRealBirthYear(S.by2, ey) && hasP2()) ? (ey - S.by2) : null;
   let txt = `Through ${ey} · ${yrs} years`;
   if(age1end) txt += ` · ${S.name1||'P1'} age ${age1end}`;
   if(age2end) txt += ` · ${S.name2||'P2'} age ${age2end}`;
@@ -3377,7 +3402,7 @@ function toggleP2Fields() {
   document.querySelectorAll('.p2-field').forEach(el => {
     el.classList.toggle('p2-hidden', !hasP);
   });
-  // Show "Add Person 2" button when no P2, hide the input when blank (show button instead)
+  // Show "Add Spouse/Partner" button when no P2, hide the input when blank (show button instead)
   const n2input = document.getElementById('i-n2');
   const n2btn   = document.getElementById('n2-add-btn');
   if (n2input && n2btn) {
@@ -3509,8 +3534,9 @@ function readUI(){
   const gf=(id)=>{const v=parseFloat(gv(id));return isNaN(v)?0:v;};
   const gi=(id)=>{const v=parseInt(gv(id));return isNaN(v)?9999:v;};
   const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
+  const birthVal=(id)=>{ const v=gv(id); return v === null || v === '' ? '' : gi(id); };
   S.name1=gv('i-n1')||'';S.name2=gv('i-n2')||'';
-  S.by1=gi('i-by1');S.by2=gi('i-by2');
+  S.by1=birthVal('i-by1');S.by2=birthVal('i-by2');
   S.filing=gv('i-filing');S.state=gv('i-state');
   S.startYear=gi('i-sy');S.endYear=gi('i-ey');
   S.ssAge1=gf('i-ssa1');S.ssAge2=gf('i-ssa2');
@@ -3601,8 +3627,8 @@ function updateLabels(){
   S.rmdStart2 = rmd2yr;
   const rmd1el = document.getElementById('i-rmd1-disp');
   const rmd2el = document.getElementById('i-rmd2-disp');
-  if(rmd1el) rmd1el.textContent = rmd1yr + ' (age '+rmdAge(S.by1)+' at start)';
-  if(rmd2el) rmd2el.textContent = rmd2yr + ' (age '+rmdAge(S.by2)+' at start)';
+  if(rmd1el) rmd1el.textContent = rmd1yr ? (rmd1yr + ' (age '+rmdAge(S.by1)+' at start)') : '— enter birth year';
+  if(rmd2el) rmd2el.textContent = rmd2yr ? (rmd2yr + ' (age '+rmdAge(S.by2)+' at start)') : '— enter birth year';
   // Update start year reference in balances panel
   const syRef = document.getElementById('start-year-ref');
   if(syRef) syRef.textContent = S.startYear || 2026;
@@ -5785,7 +5811,7 @@ function renderExport() {
       const d = JSON.parse(raw);
       // Only consider "real" data if user has changed the default name or entered balances
       return d && (
-        (d.name1 && d.name1 !== 'Person 1') ||
+        (d.name1 && d.name1 !== 'Primary Person') ||
         (d.startIRA1 && d.startIRA1 > 0) ||
         (d.startSec && d.startSec > 0) ||
         false // baseSpend removed — spending set via SOY
@@ -5851,7 +5877,7 @@ function exportJSON(){
 }
 
 function buildReportPayload(){
-  const name1 = S.name1||'Person 1', name2 = S.name2||'';
+  const name1 = S.name1||'Primary Person', name2 = S.name2||'';
   const assumptions = {
     name1, name2, filing: S.filing, state: S.state||'Federal',
     by1: S.by1, by2: S.by2,
@@ -6253,13 +6279,13 @@ function generateReport(){
     if(divs)   funds.push(['Dividends & Interest',divs]);
     if(rmds)   funds.push(['RMDs',rmds]);
     if(ira1a)  funds.push([A.name1+' IRA Draw',ira1a]);
-    if(ira2a)  funds.push([(A.name2||'Person 2')+' IRA Draw',ira2a]);
+    if(ira2a)  funds.push([(A.name2||'Spouse/Partner')+' IRA Draw',ira2a]);
     if(stkS)   funds.push(['Securities Draw',stkS]);
     if(cashD)  funds.push(['Cash Draw (to raise to cash floor)',cashD]);
     if(hsaW)   funds.push(['HSA Withdrawal',hsaW]);
     if(preInhA) funds.push(['Pre-2020 Inh IRA Draw',preInhA]);
     if(rDraw1) funds.push([A.name1+' Roth Withdrawal',rDraw1]);
-    if(rDraw2) funds.push([(A.name2||'Person 2')+' Roth Withdrawal',rDraw2]);
+    if(rDraw2) funds.push([(A.name2||'Spouse/Partner')+' Roth Withdrawal',rDraw2]);
     const totalFunded = full.totalFunding || (wages+pt+ss+divs+rmds+ira1a+ira2a+preInhA+stkS+cashD+hsaW+inhD+rDraw1+rDraw2);
     funds.push(['Total Funding',totalFunded]);
     funds.push(['Annual Spending',spending]);
@@ -6305,19 +6331,19 @@ function generateReport(){
     // Actions Required — matches dashboard exactly, full dollar amounts
     const acts=[];
     if(full.rmd1>0) acts.push(`${A.name1} RMD — Withdraw from IRA: ${fd(full.rmd1)}`);
-    if(full.rmd2>0) acts.push(`${A.name2||'Person 2'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
+    if(full.rmd2>0) acts.push(`${A.name2||'Spouse/Partner'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
     if(full.pre2020InhDraw1>0) acts.push(`${A.name1} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw1)}`);
-    if(full.pre2020InhDraw2>0) acts.push(`${A.name2||'Person 2'} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw2)}`);
+    if(full.pre2020InhDraw2>0) acts.push(`${A.name2||'Spouse/Partner'} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw2)}`);
     if(full.post2020InhRMD>0) acts.push(`Post-2020 Inherited IRA Required RMD: ${fd(full.post2020InhRMD)}`);
     if((full.post2020InhExtra||0)>0) acts.push(`Post-2020 Inherited IRA Draw: ${fd(full.post2020InhExtra)}`);
     if(preInhA) acts.push(`Pre-2020 Inherited IRA Draw: ${fd(preInhA)}`);
     if(ira1a)  acts.push(`${A.name1} IRA Draw: ${fd(ira1a)}`);
-    if(ira2a)  acts.push(`${A.name2||'Person 2'} IRA Draw: ${fd(ira2a)}`);
+    if(ira2a)  acts.push(`${A.name2||'Spouse/Partner'} IRA Draw: ${fd(ira2a)}`);
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
     if(cashD)  acts.push(`Cash Draw: ${fd(cashD)}`);
     if(hsaW)   acts.push(`HSA Withdrawal: ${fd(hsaW)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
-    if(rDraw2) acts.push(`${A.name2||'Person 2'} Roth Withdrawal: ${fd(rDraw2)}`);
+    if(rDraw2) acts.push(`${A.name2||'Spouse/Partner'} Roth Withdrawal: ${fd(rDraw2)}`);
     if((full.excessFunds||0)>50) acts.push(`Invest Surplus → Securities: ${fd(full.excessFunds)}`);
     if((full.cashSweep||0)>50) acts.push(`Cash Sweep → Securities: ${fd(full.cashSweep)}`);
     if((full.margRate||0)>=0.32) acts.push(`Marginal rate ${fp(full.margRate)} — consider pre-tax deductions`);
@@ -6714,6 +6740,17 @@ function isUnconfigured() {
          Object.keys(S.soy||{}).length === 0;
 }
 
+function closeWelcomeModal(nextView) {
+  const modal = document.getElementById('welcome-modal');
+  if (modal) modal.remove();
+  if (nextView) {
+    ST(nextView);
+    return;
+  }
+  // If there is no plan data yet, closing welcome should still land at setup.
+  if (isUnconfigured()) ST('setup');
+}
+
 function showWelcomePage1() {
   // Re-show page 1 bypassing the unconfigured check (used by Back button on page 2)
   const existing = document.getElementById('welcome-modal');
@@ -6797,7 +6834,7 @@ function showWelcomeModal() {
   const page1 = `
     <div style="background:#1a1208;border:2px solid #c8960c;border-radius:10px;
       max-width:620px;width:100%;padding:32px 36px;font-family:inherit;box-shadow:0 8px 40px rgba(0,0,0,0.9);position:relative">
-      <button onclick="document.getElementById('welcome-modal').remove()"
+      <button onclick="closeWelcomeModal()"
         style="position:absolute;top:14px;right:16px;background:none;border:none;color:#6a5a3a;
         font-size:20px;cursor:pointer;line-height:1;padding:4px 6px;font-family:inherit"
         title="Close">✕</button>
@@ -6842,7 +6879,7 @@ function showWelcomeModal() {
       </div>
 
       <div style="text-align:center">
-        <button onclick="document.getElementById('welcome-modal').remove();ST('setup')"
+        <button onclick="closeWelcomeModal('setup')"
           style="padding:11px 28px;background:#c8960c;color:#1a1208;border:none;border-radius:6px;
           font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin:4px">
           Start Setup Guide
@@ -6853,13 +6890,13 @@ function showWelcomeModal() {
           How It Works →
         </button>
         <a href="rons_retirement_guide.pdf" target="_blank"
-          onclick="document.getElementById('welcome-modal').remove()"
+          onclick="closeWelcomeModal()"
           style="display:inline-block;padding:11px 20px;background:#2a3a1a;color:#8ac88a;
           border:1px solid #3a6a2a;border-radius:6px;font-size:13px;cursor:pointer;
           margin:4px;font-family:inherit;text-decoration:none;font-weight:600">
           📖 User Guide
         </a>
-        <button onclick="document.getElementById('welcome-modal').remove()"
+        <button onclick="closeWelcomeModal()"
           style="padding:11px 18px;background:transparent;color:#8a7a5a;border:1px solid #4a3810;
           border-radius:6px;font-size:13px;cursor:pointer;margin:4px;font-family:inherit">
           Skip
@@ -6880,7 +6917,7 @@ function showWelcomePage2() {
   const card = `
     <div style="background:#1a1208;border:2px solid #c8960c;border-radius:10px;
       max-width:620px;width:100%;padding:32px 36px;font-family:inherit;box-shadow:0 8px 40px rgba(0,0,0,0.9);position:relative">
-      <button onclick="document.getElementById('welcome-modal').remove()"
+      <button onclick="closeWelcomeModal()"
         style="position:absolute;top:14px;right:16px;background:none;border:none;color:#6a5a3a;
         font-size:20px;cursor:pointer;line-height:1;padding:4px 6px;font-family:inherit"
         title="Close">✕</button>
@@ -6930,7 +6967,7 @@ function showWelcomePage2() {
       </div>
 
       <div style="text-align:center">
-        <button onclick="document.getElementById('welcome-modal').remove();ST('setup')"
+        <button onclick="closeWelcomeModal('setup')"
           style="padding:11px 28px;background:#c8960c;color:#1a1208;border:none;border-radius:6px;
           font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin:4px">
           Start Setup Guide
@@ -6966,6 +7003,28 @@ const SETUP_STEPS = [
   {id:'medicare', title:'Medicare & IRMAA', copy:'This section estimates Medicare surcharges and sets guardrails for Roth conversions. It is optional, but important when Medicare income thresholds matter.'},
   {id:'review', title:'Review', copy:'Check what is complete, what is assumed, and where the plan may need attention before generating a report.'}
 ];
+
+function setupHouseholdIntent(){
+  const mode = String(S.householdMode || '');
+  if (mode === 'single' || mode === 'couple') return mode;
+  if (S.householdMode !== 'single' && S.name2 && String(S.name2).trim()) return 'couple';
+  if ((S.name1 || '').trim() && (S.filing === 'SINGLE' || S.filing === 'HOH')) return 'single';
+  return '';
+}
+function setupShowsSecondPersonFields(){
+  return setupHouseholdIntent() !== 'single' || !!(S.name2 && S.name2.trim());
+}
+function setupShowSurvivorStep(){
+  return setupHouseholdIntent() !== 'single';
+}
+function setupVisibleSteps(){
+  return SETUP_STEPS.filter(st => st.id !== 'survivor' || setupShowSurvivorStep());
+}
+function setupNormalizeStep(){
+  const steps = setupVisibleSteps();
+  setupStep = Math.max(0, Math.min(steps.length - 1, setupStep));
+  return steps;
+}
 
 function setupEsc(v){
   return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -7043,7 +7102,7 @@ function setupYearOptionPairs(start, end){
 function setupBirthYearOptions(current){
   const thisYear = new Date().getFullYear();
   const first = Math.min(1900, parseInt(current) || thisYear);
-  const out = [];
+  const out = [['','Select birth year']];
   for (let y = thisYear; y >= first; y--) out.push([String(y), String(y)]);
   return out;
 }
@@ -7061,12 +7120,12 @@ function setupAgePreview(){
   const start = parseInt(S.startYear) || setupYear();
   const end = parseInt(S.endYear) || start;
   const parts = [];
-  const n1 = setupNamedPersonLabel(S.name1, 'Person 1');
+  const n1 = setupNamedPersonLabel(S.name1, 'Primary Person');
   const a1s = setupAgeForYear(S.by1, start);
   const a1e = setupAgeForYear(S.by1, end);
   if (a1s && a1e) parts.push(n1+' is about '+a1s+' in '+start+' and '+a1e+' in '+end);
   if (hasP2()) {
-    const n2 = setupNamedPersonLabel(S.name2, 'Person 2');
+    const n2 = setupNamedPersonLabel(S.name2, 'Spouse/Partner');
     const a2s = setupAgeForYear(S.by2, start);
     const a2e = setupAgeForYear(S.by2, end);
     if (a2s && a2e) parts.push(n2+' is about '+a2s+' in '+start+' and '+a2e+' in '+end);
@@ -7132,6 +7191,16 @@ function setupSetState(key, kind, value, rerender){
     S.endYear = (parseInt(S.startYear) || new Date().getFullYear()) + yrs - 1;
     setupCheckYear = S.startYear;
   }
+  if (key === 'householdMode') {
+    if (S.householdMode === 'single') {
+      S.widowMode = 'off';
+      S.filing = 'SINGLE';
+    } else if (S.householdMode === 'couple') {
+      S.filing = 'MFJ';
+    }
+  }
+  if (key === 'name2' && String(S.name2 || '').trim() && !S.householdMode) { S.householdMode = 'couple'; S.filing = 'MFJ'; }
+  if (key === 'filing' && !S.householdMode && !String(S.name2 || '').trim() && (S.filing === 'SINGLE' || S.filing === 'HOH')) S.householdMode = 'single';
   if (['fundingOrder1','fundingOrder2','fundingOrder3'].includes(key)) {
     const ord = normalizeFundingOrder(S.fundingOrder1, S.fundingOrder2, S.fundingOrder3);
     S.fundingOrder1 = ord[0]; S.fundingOrder2 = ord[1]; S.fundingOrder3 = ord[2];
@@ -7170,13 +7239,15 @@ function setupSetView(view){
   renderSetupGuide();
 }
 function setupSetStep(step){
-  setupStep = Math.max(0, Math.min(SETUP_STEPS.length - 1, step));
+  const steps = setupVisibleSteps();
+  setupStep = Math.max(0, Math.min(steps.length - 1, step));
   renderSetupGuide();
 }
 function setupOpenInterviewStep(id){
-  const idx = SETUP_STEPS.findIndex(st => st.id === id);
+  const steps = setupVisibleSteps();
+  const idx = steps.findIndex(st => st.id === id);
   setupView = 'interview';
-  setupStep = idx >= 0 ? idx : setupStep;
+  setupStep = idx >= 0 ? idx : Math.min(setupStep, steps.length - 1);
   renderSetupGuide();
 }
 
@@ -7184,6 +7255,7 @@ function setupReadiness(){
   const yr = setupYear();
   const soy = setupFirstYearSOY();
   const has2 = hasP2();
+  const householdIntent = setupHouseholdIntent();
   const items = [];
   const add = (status, title, body, action, view) => items.push({status, title, body, action, view});
   const postLots = S.post2020InhLots || [];
@@ -7194,9 +7266,11 @@ function setupReadiness(){
   const hasIncome = ['grossWages','ptWages','grossWages2','ptWages2','ss1','ss2'].some(k => parseF(soy[k]) > 0) || parseF(S.ssmo1) > 0 || parseF(S.ssmo2) > 0;
   const p1Age = yr - (parseInt(S.by1) || yr) - 1;
   const p2Age = yr - (parseInt(S.by2) || yr) - 1;
-  add(S.name1 && String(S.name1).trim() ? 'done' : 'missing', 'Household name', S.name1 ? 'Person 1 is named.' : 'Enter at least Person 1 name so reports and labels make sense.', 'Open Household Interview', 'interview-household');
-  add(S.by1 && S.by1 > 1900 && S.by1 < yr ? 'done' : 'missing', 'Person 1 birth year', 'Needed for age, RMD, Social Security, Medicare, and senior deduction calculations.', 'Open Household Interview', 'interview-household');
-  if (has2) add(S.by2 && S.by2 > 1900 && S.by2 < yr ? 'done' : 'missing', 'Person 2 birth year', 'Needed because Person 2 is active in this plan.', 'Open Household Interview', 'interview-household');
+  add(householdIntent ? 'done' : 'missing', 'Household type', householdIntent === 'single' ? 'This is set as a one-person plan.' : householdIntent === 'couple' ? 'This is set as a two-person plan.' : 'Choose whether this plan is for one person or two people.', 'Open Household Interview', 'interview-household');
+  add(S.name1 && String(S.name1).trim() ? 'done' : 'missing', 'Primary Person name', S.name1 ? 'Primary Person is named.' : 'Enter at least the Primary Person name so reports and labels make sense.', 'Open Household Interview', 'interview-household');
+  add(hasRealBirthYear(S.by1, yr) ? 'done' : 'missing', 'Primary Person birth year', 'Needed for age, RMD, Social Security, Medicare, and senior deduction calculations.', 'Open Household Interview', 'interview-household');
+  if (householdIntent === 'couple' && !String(S.name2 || '').trim()) add('missing', 'Spouse/Partner name', 'Enter the Spouse/Partner name, or change Plan Includes to One person.', 'Open Household Interview', 'interview-household');
+  if (has2 || householdIntent === 'couple') add(hasRealBirthYear(S.by2, yr) ? 'done' : 'missing', 'Spouse/Partner birth year', 'Needed because Spouse/Partner is active in this plan.', 'Open Household Interview', 'interview-household');
   add(S.startYear <= S.endYear ? 'done' : 'missing', 'Plan horizon', 'Start year and end year must form a valid projection range.', 'Open Household Interview', 'interview-household');
   add(hasOpeningBalance ? 'done' : 'missing', 'Opening balances', 'Enter the account balances that exist at the start of '+yr+'.', 'Open Opening Year', 'interview-balances');
   add(parseF(soy.spending) > 0 ? 'done' : 'missing', 'Annual spending', 'Enter first-year spending so the funding waterfall has a real target.', 'Open Opening Year', 'interview-balances');
@@ -7295,16 +7369,18 @@ function setupTopTab(id, label){
   return '<button class="setup-tab '+(setupView === id ? 'active' : '')+'" onclick="setupSetView(\''+id+'\')">'+setupEsc(label)+'</button>';
 }
 function renderSetupInterviewView(){
-  const step = SETUP_STEPS[setupStep] || SETUP_STEPS[0];
+  const steps = setupNormalizeStep();
+  const step = steps[setupStep] || steps[0];
+  const isLast = setupStep >= steps.length - 1;
   return '<div class="setup-grid"><div class="setup-main">' +
-    '<div class="setup-stepper">'+SETUP_STEPS.map((st,i)=>'<button class="setup-step '+(i===setupStep?'active':'')+'" onclick="setupSetStep('+i+')">'+(i+1)+'. '+setupEsc(st.title)+'</button>').join('')+'</div>' +
+    '<div class="setup-stepper">'+steps.map((st,i)=>'<button class="setup-step '+(i===setupStep?'active':'')+'" onclick="setupSetStep('+i+')">'+(i+1)+'. '+setupEsc(st.title)+'</button>').join('')+'</div>' +
     '<div class="setup-section-title">'+setupEsc(step.title)+'</div><div class="setup-section-copy">'+setupEsc(step.copy)+'</div>' +
     '<div class="setup-field-grid">'+renderSetupStepFields(step.id)+'</div>' +
     '<div class="setup-actions">' +
       '<button class="btn btn-light" onclick="setupSetStep('+(setupStep-1)+')" '+(setupStep===0?'disabled':'')+'>Back</button>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        (setupStep >= SETUP_STEPS.length-1 ? '' : '<button class="btn btn-light" onclick="ST(\'dashboard\')">Dashboard</button>') +
-        '<button class="btn btn-dark" onclick="'+(setupStep >= SETUP_STEPS.length-1 ? "ST('dashboard')" : 'setupSetStep('+(setupStep+1)+')')+'">'+(setupStep >= SETUP_STEPS.length-1 ? 'Dashboard' : 'Next')+'</button>' +
+        (isLast ? '' : '<button class="btn btn-light" onclick="ST(\'dashboard\')">Dashboard</button>') +
+        '<button class="btn btn-dark" onclick="'+(isLast ? "ST('dashboard')" : 'setupSetStep('+(setupStep+1)+')')+'">'+(isLast ? 'Dashboard' : 'Next')+'</button>' +
       '</div>' +
     '</div></div>' +
     '<div class="setup-side"><div class="setup-section-title" style="font-size:18px">Needs Attention</div>'+setupReadinessList(5)+'</div></div>';
@@ -7312,15 +7388,18 @@ function renderSetupInterviewView(){
 function renderSetupHouseholdStep(){
   const yr = setupYear();
   const has2 = hasP2();
-  const n1 = setupNamedPersonLabel(S.name1, 'Person 1');
-  const n2 = setupNamedPersonLabel(S.name2, 'Person 2');
+  const householdIntent = setupHouseholdIntent();
+  const showSecond = setupShowsSecondPersonFields();
+  const n1 = setupNamedPersonLabel(S.name1, 'Primary Person');
+  const n2 = setupNamedPersonLabel(S.name2, 'Spouse/Partner');
   return [
     setupInfoCard('What this step does', 'This tells the model who is in the household, which tax rules apply, and how long the projection should run. Names entered here are used throughout the setup so later screens read naturally.', 'done'),
+    setupSelect('Plan Includes','householdMode',householdIntent,[['','Not sure yet - keep both options visible'],['single','One person'],['couple','Two people / spouse or partner']],{rerender:true,note:'Choose One person to hide spouse and survivor setup. Choose Two people to keep survivor planning available.'}),
     setupInput('Primary Person Name','name1','text',S.name1,{type:'text',rerender:true,note:'Used for labels and report headings.'}),
-    setupInput('Spouse / Partner Name','name2','text',S.name2,{type:'text',rerender:true,placeholder:'Blank for single filer',note:'Leave blank for a single-person plan.'}),
-    setupStateSelect(n1+' Birth Year','by1','int',S.by1,setupBirthYearOptions(S.by1),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}),
-    has2 ? setupStateSelect(n2+' Birth Year','by2','int',S.by2,setupBirthYearOptions(S.by2),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}) : '',
-    setupSelect('Tax Filing Status','filing',S.filing,[['MFJ','Married Filing Jointly'],['SINGLE','Single'],['HOH','Head of Household']],{rerender:true,note:'Controls federal brackets, standard deduction, Medicare IRMAA thresholds, and the report filing label.'}),
+    showSecond ? setupInput('Spouse / Partner Name','name2','text',S.name2,{type:'text',rerender:true,placeholder:'Leave blank until known',note:'Enter a name for a two-person plan. If this is a one-person plan, set Plan Includes to One person.'}) : '',
+    setupStateSelect(n1+' Birth Year','by1','optional-int',S.by1,setupBirthYearOptions(S.by1),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}),
+    showSecond ? setupStateSelect(n2+' Birth Year','by2','optional-int',S.by2,setupBirthYearOptions(S.by2),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}) : '',
+    setupSelect('Tax Filing Status','filing',S.filing,[['MFJ','Married Filing Jointly'],['SINGLE','Single'],['HOH','Head of Household']],{rerender:true,note:'Controls federal brackets, standard deduction, Medicare IRMAA thresholds, and the report filing label. For a one-person plan this is usually Single or Head of Household.'}),
     setupSelect('State Tax Setting','state',S.state,[['CA','California'],['','Federal Only']],{note:'California turns on California tax estimates. Federal Only skips state income tax.'}),
     setupPlanStartField(),
     setupPlanLengthField(),
