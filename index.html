@@ -126,6 +126,7 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 }
 .tab:hover{color:var(--gold2)}
 .tab.active{color:var(--gold3);border-bottom-color:var(--gold3)}
+body:not(.advanced-on) .advanced-tab{display:none}
 
 /* ── CONTENT ── */
 #content{padding:24px 28px;max-width:1600px;margin:0 auto}
@@ -378,6 +379,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
   <div id="hdr-right">
     <span id="save-indicator">✓ Saved</span>
     <span id="sync-status" style="font-size:10px;font-family:'JetBrains Mono',monospace"></span>
+    <button id="advanced-toggle-btn" onclick="toggleAdvancedMode()" title="Show expert editing tabs for this session" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:transparent;color:var(--gold2);border:1px solid var(--gold);border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.05em">ADVANCED</button>
     <a href="rons_retirement_guide.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gold);color:var(--dark);border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;font-family:inherit;letter-spacing:.05em">&#128214; GUIDE</a>
     <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gold);color:var(--dark);border-radius:4px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:inherit;letter-spacing:.05em">&#128196; REPORT</button>
     <span id="hdr-meta">MFJ · CA</span>
@@ -387,9 +389,9 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 <div id="tabs">
   <button class="tab active" onclick="ST('dashboard')">Dashboard</button>
   <button class="tab" onclick="ST('setup')">Setup Guide</button>
-  <button class="tab" onclick="ST('inputs')">Inputs</button>
-  <button class="tab" onclick="ST('soy')">Start of Year</button>
-  <button class="tab" onclick="ST('overrides')">Override Tables</button>
+  <button class="tab advanced-tab" onclick="ST('inputs')">Inputs</button>
+  <button class="tab advanced-tab" onclick="ST('soy')">Start of Year</button>
+  <button class="tab advanced-tab" onclick="ST('overrides')">Override Tables</button>
   <button class="tab" onclick="ST('yeardetail')">Year Detail</button>
   <button class="tab" onclick="ST('cashflow')">Cash Flow</button>
   <button class="tab" onclick="ST('taxes')">Tax Summary</button>
@@ -3322,7 +3324,30 @@ function displayAgeText(row) {
 }
 
 // ── Tab switcher ──────────────────────────────────────────────────────────
+function isAdvancedView(name){
+  return ['inputs','soy','overrides'].includes(name);
+}
+function applyAdvancedMode(){
+  document.body.classList.toggle('advanced-on', !!advancedMode);
+  const btn = document.getElementById('advanced-toggle-btn');
+  if (btn) {
+    btn.textContent = advancedMode ? 'ADVANCED ON' : 'ADVANCED';
+    btn.style.background = advancedMode ? 'var(--gold)' : 'transparent';
+    btn.style.color = advancedMode ? 'var(--dark)' : 'var(--gold2)';
+  }
+}
+function toggleAdvancedMode(){
+  advancedMode = !advancedMode;
+  applyAdvancedMode();
+  const active = document.querySelector('.pane.active');
+  const current = active ? active.id.replace('pane-','') : '';
+  if (!advancedMode && isAdvancedView(current)) ST('setup');
+}
 function ST(name){
+  if (isAdvancedView(name) && !advancedMode) {
+    advancedMode = true;
+    applyAdvancedMode();
+  }
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   const pane=document.getElementById('pane-'+name);
@@ -3398,7 +3423,8 @@ function showSaved(){
 
 // ── Load UI from state ────────────────────────────────────────────────────
 function toggleP2Fields() {
-  const hasP = S.name2 && S.name2.trim() !== '';
+  const nameHasP = !!(S.name2 && S.name2.trim() !== '');
+  const hasP = S.householdMode === 'couple' || (S.householdMode !== 'single' && nameHasP);
   document.querySelectorAll('.p2-field').forEach(el => {
     el.classList.toggle('p2-hidden', !hasP);
   });
@@ -3409,26 +3435,35 @@ function toggleP2Fields() {
     n2input.style.display = hasP ? '' : 'none';
     n2btn.style.display   = hasP ? 'none' : '';
   }
-  // Auto-set filing status
-  if (!hasP && S.filing === 'MFJ') {
+  // Plan Includes owns the default filing choice.
+  const sel = document.getElementById('i-filing');
+  if (S.householdMode === 'single') {
     S.filing = 'SINGLE';
-    const sel = document.getElementById('i-filing');
+    if (sel) sel.value = 'SINGLE';
+  } else if (S.householdMode === 'couple') {
+    S.filing = 'MFJ';
+    if (sel) sel.value = 'MFJ';
+  } else if (!hasP && S.filing === 'MFJ') {
+    S.filing = 'SINGLE';
     if (sel) sel.value = 'SINGLE';
   } else if (hasP && S.filing === 'SINGLE') {
     S.filing = 'MFJ';
-    const sel = document.getElementById('i-filing');
     if (sel) sel.value = 'MFJ';
   }
 }
 
 function addPerson2() {
+  S.householdMode = 'couple';
+  S.filing = 'MFJ';
   const n2input = document.getElementById('i-n2');
   const n2btn   = document.getElementById('n2-add-btn');
   if (n2input) { n2input.style.display = ''; n2input.focus(); }
   if (n2btn)   n2btn.style.display = 'none';
   document.querySelectorAll('.p2-field').forEach(el => el.classList.remove('p2-hidden'));
   const sel = document.getElementById('i-filing');
-  if (sel && sel.value === 'SINGLE') sel.value = 'MFJ';
+  if (sel) sel.value = 'MFJ';
+  saveState(S);
+  updateHeader();
 }
 
 function loadUI(){
@@ -6991,6 +7026,7 @@ let setupView = 'interview';
 let setupStep = 0;
 let setupCheckYear = null;
 let setupStrategyType = 'spending-onetime';
+let advancedMode = false;
 
 const SETUP_STEPS = [
   {id:'household', title:'Household', copy:'Start with the people, filing setup, and plan timeline. The app uses this to calculate ages, tax filing, RMD timing, Social Security, and Medicare logic.'},
@@ -8054,6 +8090,7 @@ function initApp() {
   try {
     S = loadState();       // instant load from localStorage
     loadUI();
+    applyAdvancedMode();
     updateHeader();
     updateLabels();
     proj = runProjection(S);
@@ -8107,7 +8144,7 @@ window.onload = () => {
       } else if (attempts > 20) {
         clearInterval(wait);
         // Init without charts
-        try { S=loadState(); loadUI(); updateHeader(); updateLabels(); proj=runProjection(S); initGitHubLoad(); } catch(e){}
+        try { S=loadState(); loadUI(); applyAdvancedMode(); updateHeader(); updateLabels(); proj=runProjection(S); initGitHubLoad(); } catch(e){}
         document.getElementById('hdr-sub').textContent = 'Charts unavailable (CDN blocked) — data still works';
       }
     }, 100);
