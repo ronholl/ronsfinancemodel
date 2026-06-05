@@ -24,7 +24,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ron's Retirement Finance Model V1</title>
-<link rel="icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="shortcut icon" type="image/png" href="favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="site.webmanifest">
@@ -38,6 +39,15 @@
 <meta property="og:title" content="Ron's Retirement Finance Model">
 <meta property="og:description" content="Interactive retirement planning dashboard and financial model.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="share-preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Blue bear finance app icon">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ron's Retirement Finance Model">
+<meta name="twitter:description" content="Interactive retirement planning dashboard and financial model.">
+<meta name="twitter:image" content="share-preview.png">
 <script>
 (function(){
   const params = new URLSearchParams(location.search || '');
@@ -7183,25 +7193,25 @@ function setupReadiness(){
   const hasIncome = ['grossWages','ptWages','grossWages2','ptWages2','ss1','ss2'].some(k => parseF(soy[k]) > 0) || parseF(S.ssmo1) > 0 || parseF(S.ssmo2) > 0;
   const p1Age = yr - (parseInt(S.by1) || yr) - 1;
   const p2Age = yr - (parseInt(S.by2) || yr) - 1;
-  add(S.name1 && String(S.name1).trim() ? 'done' : 'missing', 'Household name', S.name1 ? 'Person 1 is named.' : 'Enter at least Person 1 name so reports and labels make sense.', 'Open interview', 'interview');
-  add(S.by1 && S.by1 > 1900 && S.by1 < yr ? 'done' : 'missing', 'Person 1 birth year', 'Needed for age, RMD, Social Security, Medicare, and senior deduction calculations.', 'Open interview', 'interview');
-  if (has2) add(S.by2 && S.by2 > 1900 && S.by2 < yr ? 'done' : 'missing', 'Person 2 birth year', 'Needed because Person 2 is active in this plan.', 'Open interview', 'interview');
-  add(S.startYear <= S.endYear ? 'done' : 'missing', 'Plan horizon', 'Start year and end year must form a valid projection range.', 'Open interview', 'interview');
-  add(hasOpeningBalance ? 'done' : 'missing', 'Opening balances', 'Enter the account balances that exist at the start of '+yr+'.', 'Annual check-in', 'annual');
-  add(parseF(soy.spending) > 0 ? 'done' : 'missing', 'Annual spending', 'Enter first-year spending so the funding waterfall has a real target.', 'Annual check-in', 'annual');
-  add(hasIncome ? 'done' : 'warn', 'Income sources', hasIncome ? 'First-year wages, self-employment, or Social Security are present.' : 'This may be fine for an asset-only plan, but confirm there is no wage or Social Security income to model.', 'Annual check-in', 'annual');
-  if (S.ssAge1 || S.ssmo1) add(S.ssAge1 && S.ssmo1 ? 'done' : 'warn', p1()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
-  if (has2 && (S.ssAge2 || S.ssmo2)) add(S.ssAge2 && S.ssmo2 ? 'done' : 'warn', p2()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open interview', 'interview');
+  add(S.name1 && String(S.name1).trim() ? 'done' : 'missing', 'Household name', S.name1 ? 'Person 1 is named.' : 'Enter at least Person 1 name so reports and labels make sense.', 'Open Household Interview', 'interview-household');
+  add(S.by1 && S.by1 > 1900 && S.by1 < yr ? 'done' : 'missing', 'Person 1 birth year', 'Needed for age, RMD, Social Security, Medicare, and senior deduction calculations.', 'Open Household Interview', 'interview-household');
+  if (has2) add(S.by2 && S.by2 > 1900 && S.by2 < yr ? 'done' : 'missing', 'Person 2 birth year', 'Needed because Person 2 is active in this plan.', 'Open Household Interview', 'interview-household');
+  add(S.startYear <= S.endYear ? 'done' : 'missing', 'Plan horizon', 'Start year and end year must form a valid projection range.', 'Open Household Interview', 'interview-household');
+  add(hasOpeningBalance ? 'done' : 'missing', 'Opening balances', 'Enter the account balances that exist at the start of '+yr+'.', 'Open Opening Year', 'interview-balances');
+  add(parseF(soy.spending) > 0 ? 'done' : 'missing', 'Annual spending', 'Enter first-year spending so the funding waterfall has a real target.', 'Open Opening Year', 'interview-balances');
+  add(hasIncome ? 'done' : 'warn', 'Income sources', hasIncome ? 'First-year wages, self-employment, or Social Security are present.' : 'This may be fine for an asset-only plan, but confirm there is no wage or Social Security income to model.', 'Open Income Interview', 'interview-income');
+  if (S.ssAge1 || S.ssmo1) add(S.ssAge1 && S.ssmo1 ? 'done' : 'warn', p1()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open Income Interview', 'interview-income');
+  if (has2 && (S.ssAge2 || S.ssmo2)) add(S.ssAge2 && S.ssmo2 ? 'done' : 'warn', p2()+' Social Security', 'Set both start age and monthly benefit when modeling Social Security.', 'Open Income Interview', 'interview-income');
   if (has2) {
     const survivorActive = (S.widowMode || 'off') !== 'off';
     add(!survivorActive || parseInt(S.widowDeathYear) ? 'done' : 'warn',
       'Survivor plan',
       survivorActive ? 'A survivor scenario is active. Confirm death year, filing switch, Social Security, and spending assumptions.' : 'Default assumption: both people live through the end of the plan.',
-      'Review survivor plan',
+      'Open Survivor Interview',
       'interview-survivor');
   }
   if (p1Age >= 63 || (has2 && p2Age >= 63)) {
-    add((S.medicareMagi1 || S.medicareMagi2) ? 'done' : 'warn', 'Medicare lookback', 'Prior MAGI helps year-one and year-two IRMAA estimates for Medicare-age households.', 'Open interview', 'interview');
+    add((S.medicareMagi1 || S.medicareMagi2) ? 'done' : 'warn', 'Medicare lookback', 'Prior MAGI helps year-one and year-two IRMAA estimates for Medicare-age households.', 'Open Medicare Interview', 'interview-medicare');
   }
   if (hasInheritedBalance || hasConfiguredPostLot) {
     const pre1NeedsRules = (parseF(soy.pre2020Inh1) > 0 || parseF(S.pre2020InhStartBal1) > 0) && (!S.pre2020InhOwnerBy1 || !S.pre2020InhDeathYear1);
@@ -7211,15 +7221,15 @@ function setupReadiness(){
     add(!(pre1NeedsRules || pre2NeedsRules || postNeedsRows || postNeedsRules) ? 'done' : 'warn',
       'Inherited IRA rules',
       'Inherited IRAs need more than a balance: death year, owner birth year, beneficiary, and draw strategy determine required distributions.',
-      'Open inherited setup',
+      'Open Inherited IRA Setup',
       'interview-inherited');
   }
   const hasW2Wages = ['grossWages','grossWages2'].some(k => parseF(soy[k]) > 0);
   if (hasW2Wages) {
     const has401kDefault = (S.k401Trad1||0) || (S.k401Roth1||0) || (S.k401Emp1||0) || (S.k401Trad2||0) || (S.k401Roth2||0) || (S.k401Emp2||0);
-    add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k defaults', 'interview-savings');
+    add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k Defaults', 'interview-savings');
   }
-  add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open interview', 'interview');
+  add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open Assumptions', 'interview-assumptions');
   const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
   add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
   const done = items.filter(i => i.status === 'done').length;
@@ -7248,12 +7258,12 @@ function setupReadinessList(limit){
   const r = setupReadiness();
   const rows = (limit ? r.items.slice(0, limit) : r.items).map(item => {
     const label = item.status === 'done' ? 'Complete' : item.status === 'missing' ? 'Missing' : 'Review';
-    const click = item.view === 'interview-inherited'
-      ? "setupOpenInterviewStep('inherited')"
-      : item.view === 'interview-savings'
-        ? "setupOpenInterviewStep('savings')"
-        : item.view === 'interview-survivor'
-          ? "setupOpenInterviewStep('survivor')"
+    const click = item.view && item.view.indexOf('interview-') === 0
+      ? "setupOpenInterviewStep('"+item.view.replace('interview-','')+"')"
+      : item.view === 'annual'
+        ? "setupSetView('annual')"
+        : item.view === 'strategy'
+          ? "setupSetView('strategy')"
           : "setupSetView('"+item.view+"')";
     const action = item.view ? '<div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="'+click+'">'+setupEsc(item.action || 'Open')+'</button></div>' : '';
     return '<div class="setup-check '+item.status+'"><div class="setup-check-title">'+label+' · '+setupEsc(item.title)+'</div><div class="setup-check-body">'+setupEsc(item.body)+'</div>'+action+'</div>';
@@ -7577,7 +7587,7 @@ function renderSetupInheritedStep(){
 }
 
 function renderSetupReadinessView(){
-  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Readiness Checks</div><div class="setup-section-copy">This does not judge the plan. It checks whether the model has enough information to produce a projection a new user can trust.</div>'+setupReadinessList()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Next Best Steps</div><div class="setup-list"><div class="setup-check warn"><div class="setup-check-title">Start here</div><div class="setup-check-body">Fix missing items first, then review warnings. Defaults are acceptable when they are intentional.</div></div></div><div class="setup-mini-actions"><button class="btn btn-dark" onclick="setupSetView(\'interview\')">Open Interview</button><button class="btn btn-light" onclick="generateReport()">Report</button></div></div></div>';
+  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Readiness Checks</div><div class="setup-section-copy">This does not judge the plan. It checks whether the model has enough information to produce a projection a new user can trust.</div>'+setupReadinessList()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Next Best Steps</div><div class="setup-list"><div class="setup-check warn"><div class="setup-check-title">Start here</div><div class="setup-check-body">Fix missing items first, then review warnings. Defaults are acceptable when they are intentional.</div></div></div><div class="setup-mini-actions"><button class="btn btn-dark" onclick="setupOpenInterviewStep(\'review\')">Open Review Interview</button><button class="btn btn-light" onclick="generateReport()">Report</button></div></div></div>';
 }
 function renderSetupAnnualView(){
   const yr = setupCheckYearValue();
