@@ -118,13 +118,13 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 }
 #tabs::-webkit-scrollbar{display:none}
 .tab{
-  padding:10px 18px;font-size:10px;font-weight:600;letter-spacing:.1em;
+  padding:10px 18px;font-size:10px;font-weight:700;letter-spacing:.1em;
   text-transform:uppercase;cursor:pointer;border:none;background:transparent;
-  color:#6a5830;border-bottom:3px solid transparent;
+  color:#b8944a;border-bottom:3px solid transparent;
   font-family:'JetBrains Mono',monospace;white-space:nowrap;
-  transition:color .15s,border-color .15s;
+  transition:color .15s,border-color .15s,background .15s;
 }
-.tab:hover{color:var(--gold2)}
+.tab:hover{color:#f5d87a;background:rgba(214,168,44,.08)}
 .tab.active{color:var(--gold3);border-bottom-color:var(--gold3)}
 body:not(.advanced-on) .advanced-tab{display:none}
 
@@ -397,7 +397,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
   <button class="tab" onclick="ST('taxes')">Tax Summary</button>
   <button class="tab" onclick="ST('charts')">Charts</button>
   <button class="tab" onclick="ST('taxtables')">Tax Tables</button>
-  <button class="tab" onclick="ST('export')">Export</button>
+  <button class="tab" onclick="ST('export')">Export/Import</button>
 </div>
 
 <div id="content">
@@ -534,7 +534,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="field"><label>SS COLA (%)</label><input type="number" id="i-cola" step="0.1" min="0" oninput="IC()"><div class="note">Annual Social Security cost-of-living adjustment</div></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Wage Growth (%/yr)</label><input type="number" id="i-wagegrowth" step="0.1" min="0" oninput="IC()"><div class="note">Default annual wage &amp; self-employment income growth. <strong>Can be overridden by year range in Override Tables.</strong></div></div>
+        <div class="field"><label>Wage Growth (%/yr)</label><input type="number" id="i-wagegrowth" step="0.1" min="0" oninput="IC()"><div class="note">Default annual wage &amp; non-wage taxable income growth. <strong>Can be overridden by year range in Override Tables.</strong></div></div>
         <div class="field"><label>Stock Sales Taxable Gain (%)</label><input type="number" id="i-stkgain" step="1" min="0" max="100" oninput="IC()"><div class="note">e.g. 30 = 30% of security sale proceeds is taxable gain. <strong>Can be overridden by year range.</strong></div></div>
         <div class="field"><label>Cash Floor ($)</label><input type="number" id="i-cfloor" oninput="IC()"><div class="note">Minimum cash balance to maintain. <strong>Can be overridden by year range.</strong></div></div>
       </div>
@@ -839,7 +839,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
       <div class="ov-section-inner">
         <div class="ov-section-label">Wage Growth Rate <span id="ovpill-wagegrowth"></span></div>
-        <div class="ov-intent">Override the annual wage &amp; self-employment income growth rate for a year range. Useful for modeling career stages — e.g. 6% during rapid advancement, 3% at mid-career, 2% near retirement. SOY entries always take priority over this rate.</div>
+        <div class="ov-intent">Override the annual wage &amp; non-wage taxable income growth rate for a year range. Useful for modeling career stages — e.g. 6% during rapid advancement, 3% at mid-career, 2% near retirement. SOY entries always take priority over this rate.</div>
         <div id="conf-wagegrowth" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-wagegrowth">
           <thead><tr><th>Growth (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
@@ -2151,7 +2151,7 @@ function runProjection(S) {
     // Primary Person wages
     // grossWages = W-2 salary; withholdPct = optional total paycheck tax withholding override %
     // take-home (atWages) = grossWages * (1 - withholdPct/100)
-    // ptWages = pre-tax / self-employment income (counts in AGI, no withholding)
+    // ptWages = pre-tax / non-wage taxable income (counts in AGI, no withholding)
     let atWages1 = 0, ptWages1 = 0, grossWages1 = 0;
     if (working1) {
       // Derive take-home from gross wages if entered
@@ -2295,7 +2295,7 @@ function runProjection(S) {
     const k401e2 = working2 ? (soy.k401Emp2 !=null&&soy.k401Emp2 !=='' ? parseF(soy.k401Emp2)  : S.k401Emp2)  : 0;
 
     // 401K: W-2 contributions come from gross wages (before withholding).
-    // ptWages is self-employment income — use grossWages for W-2 401k.
+    // ptWages is non-wage taxable income — use grossWages for W-2 401k.
     // If no grossWages entered (legacy atWages mode), fall back to atWages as proxy.
     const w2Base1 = grossWages1 > 0 ? grossWages1 : atWages1;
     const w2Base2 = grossWages2 > 0 ? grossWages2 : atWages2;
@@ -6972,7 +6972,7 @@ const UPDATE_MSG_TEXT = {
     ['📊','Print Report','Click the <strong>REPORT</strong> button (top bar, next to GUIDE) to open a printable report with your full plan — use File → Print → Save as PDF.'],
     ['⚙️','Override Priority Fixed','Income Level override now correctly takes precedence over both IRMAA override rows and the global IRMAA input setting.'],
     ['📅','Start of Year Pre-Fill','The Start of Year edit form now pre-fills wages, SS, balances, and spending from the prior year\'s projection — shown in blue. Green = values you entered.'],
-    ['🔄','Reset Now Works Immediately','Reset All Data in the Export tab now clears all data and re-renders immediately without requiring a page refresh.'],
+    ['🔄','Reset Now Works Immediately','Reset All Data in the Export/Import tab now clears all data and re-renders immediately without requiring a page refresh.'],
     ['💊','Medicare Part B','Medicare Part B base premium is now tracked separately in Cash Flow, Tax Summary, and the Print Report.'],
   ]
 };
@@ -7074,7 +7074,7 @@ function showWelcomeModal() {
         margin-bottom:18px;font-size:11.5px;color:#8ac88a;line-height:1.9">
         <strong style="color:#c8960c">💡 Important:</strong>
         &nbsp;Your data may be stored in this browser, and browser storage can be cleared by updates, settings, cleanup tools, or using a different device.
-        &nbsp;Export a JSON backup regularly from the Export tab.
+        &nbsp;Export a JSON backup regularly from the Export/Import tab.
         &nbsp;GitHub sync helps, but keep JSON backups too because they include the GitHub setup information.
         &nbsp;Setup Guide is the easiest place to start; expert tabs remain available when you want the full sheet-style controls.
       </div>
@@ -7192,6 +7192,7 @@ let setupView = 'interview';
 let setupStep = 0;
 let setupCheckYear = null;
 let setupStrategyType = 'spending-onetime';
+let setupEditingStrategy = null;
 let advancedMode = false;
 
 const SETUP_STEPS = [
@@ -7619,7 +7620,7 @@ function renderSetupAssumptionsStep(){
     setupSelect('Dividend Tax Treatment','qualDivsMode',S.qualDivsMode || 'ordinary',[['ordinary','Ordinary Income'],['qualified','Qualified / LTCG Rate']],{note:'Choose Ordinary unless you know the dividends are mostly qualified for lower capital-gain tax rates.'}),
     setupInput('Annual Spending Inflation (%)','spendInfl','pct',setupPct(S.spendInfl),{step:'0.1',min:0,note:'How normal spending grows after the opening year unless a Spending strategy overrides it.'}),
     setupInput('Social Security COLA (%)','ssCola','pct',setupPct(S.ssCola),{step:'0.1',min:0,note:'How Social Security benefits grow each year after they start.'}),
-    setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0,note:'How W-2 and self-employment income grows before it ends. Strategy Builder can override this for selected years.'}),
+    setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0,note:'How W-2 and non-wage taxable income grows before it ends. Strategy Builder can override this for selected years.'}),
     setupInput('Taxable Gain on Brokerage Sales (%)','stkGainPct','pct',setupPct(S.stkGainPct),{step:'1',min:0,max:100,note:'When brokerage investments are sold, this estimates how much of the sale is taxable gain instead of return of principal. Lower numbers mean higher cost basis.'}),
     setupInput('Cash Reserve Target ($)','cashFloor','number',setupNum(S.cashFloor),{min:0,note:'The minimum non-retirement cash/near-cash balance the model tries to keep before drawing from cash. A Cash Floor strategy can change this later.'})
   ].join('');
@@ -7682,20 +7683,20 @@ function renderSetupStepFields(id){
 function renderSetupIncomeStep(){
   const yr = setupYear();
   const has2 = hasP2();
-  const workIntro = '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Work income is optional</div><div class="setup-check-body">Use this section only for W-2 wages, optional W-2 withholding overrides, or self-employment/1099 income. If there is no work income in the plan start year, leave the dollar fields blank or zero and move to Social Security.</div></div>';
+  const workIntro = '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Work income is optional</div><div class="setup-check-body">Use W-2 wages for paychecks. Use Non-Wage Taxable Income for self-employment, consulting, 1099, pension, gambling, or other taxable income outside a paycheck. If neither applies, skip to Social Security.</div></div>';
   const workFields = [
     setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Annual W-2 salary before withholding, payroll taxes, and 401k contributions.'}),
-    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}),
-    setupInput(p1()+' Last W-2 Wage Year','wagesEnd1','int',S.wagesEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. If wages already ended before the plan starts, a prior year is fine.'}),
-    setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0,note:'Annual self-employment or consulting income. There is no paycheck withholding field here; the model includes this income in the tax calculation.'}),
-    setupInput(p1()+' Last Self-Employment Year','ptEnd1','int',S.ptEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Use a prior year if this income already ended.'}),
+    setupInput(p1()+' Last W-2 Wage Year','wagesEnd1','int',S.wagesEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}),
+    setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}),
+    setupInput(p1()+' Last Non-Wage Income Year','ptEnd1','int',S.ptEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}),
     has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Annual W-2 salary before withholding, payroll taxes, and 401k contributions.'}) : '',
-    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}) : '',
-    has2 ? setupInput(p2()+' Last W-2 Wage Year','wagesEnd2','int',S.wagesEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. If wages already ended before the plan starts, a prior year is fine.'}) : '',
-    has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0,note:'Annual self-employment or consulting income. There is no paycheck withholding field here; the model includes this income in the tax calculation.'}) : '',
-    has2 ? setupInput(p2()+' Last Self-Employment Year','ptEnd2','int',S.ptEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Use a prior year if this income already ended.'}) : ''
+    has2 ? setupInput(p2()+' Last W-2 Wage Year','wagesEnd2','int',S.wagesEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}) : '',
+    has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}) : '',
+    has2 ? setupInput(p2()+' Last Non-Wage Income Year','ptEnd2','int',S.ptEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}) : ''
   ].join('');
   const ssIntro = '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Social Security is separate</div><div class="setup-check-body">Use planned claiming fields if benefits start later. Use current monthly Social Security only if already receiving benefits in the plan start year.</div></div>';
   const ssFields = [
@@ -7944,13 +7945,13 @@ function renderSetupAnnualView(){
   const has2 = hasP2();
   const income = [
     setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
-    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}),
-    setupSOYInput(p1()+' Self-Employment / 1099 ($)',yr,'ptWages','number',{min:0}),
+    setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}),
     has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
-    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}) : '',
-    has2 ? setupSOYInput(p2()+' Self-Employment / 1099 ($)',yr,'ptWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}) : '',
     setupSOYInput(p1()+' Monthly SS ($)',yr,'ss1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' Monthly SS ($)',yr,'ss2','number',{min:0}) : '',
     setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0}),
@@ -8020,11 +8021,11 @@ function setupStrategyDescription(){
     },
     'retirement': {
       title:'Retirement / income ends',
-      body:'Use this to tell the model when wages or self-employment income stops. This keeps the plan from assuming paychecks continue forever and helps the account draw plan start in the right year.'
+      body:'Use this to tell the model when wages or non-wage taxable income stops. This keeps the plan from assuming paychecks continue forever and helps the account draw plan start in the right year.'
     },
     'deductions': {
       title:'Tax deductions',
-      body:'Use this for years where deductible expenses are different from normal, such as large charitable gifts, mortgage interest, property taxes, or itemized deductions. The model compares these with standard deduction rules when calculating taxes.'
+      body:'Use this when deductible expenses are different from normal. Federal itemized deductions and California itemized deductions are separate because CA does not always follow the federal return. Non-itemizer charity is a small federal cash-charity deduction that may apply even when you do not itemize; choose Yes only if that rule applies.'
     },
     'state-move': {
       title:'Move / state tax change',
@@ -8064,7 +8065,7 @@ function setupStrategyDescription(){
     },
     'wage-growth': {
       title:'Wage growth change',
-      body:'Use this when wages or self-employment income should grow differently than the global default. This can model promotions, slowing work, consulting income changes, or flat income years.'
+      body:'Use this when wages or non-wage taxable income should grow differently than the global default. This can model promotions, slowing work, consulting income changes, or flat income years.'
     },
     'funding': {
       title:'Funding order change',
@@ -8076,7 +8077,7 @@ function setupStrategyDescription(){
 }
 function renderSetupStrategyView(){
   const options = setupStrategyOptions();
-  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
+  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupEditingStrategy=null;setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
   return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Strategy Builder</div><div class="setup-section-copy">Add future changes without touching override tables. The builder creates the same override rows the expert view uses, so advanced users can still inspect and edit everything later.</div>'+selector+'<div class="strategy-card">'+renderStrategyForm()+'</div>'+renderSelectedStrategyOverrides()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Active Strategies</div>'+renderActiveStrategies()+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'overrides\')">Open Override Tables</button></div></div></div>';
 }
 function stratInput(id,label,value,opts){
@@ -8084,35 +8085,75 @@ function stratInput(id,label,value,opts){
   const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
   const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
   const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
-  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(value || '')+"'"+step+min+placeholder+">", opts.note || '');
+  const v = value == null ? '' : value;
+  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(v)+"'"+step+min+placeholder+">", opts.note || '');
 }
 function stratText(id,label,value,note){
-  return setupField(label, "<input id='strat-"+id+"' type='text' value='"+setupEsc(value || '')+"'>", note || '');
+  const v = value == null ? '' : value;
+  return setupField(label, "<input id='strat-"+id+"' type='text' value='"+setupEsc(v)+"'>", note || '');
 }
 function stratSelect(id,label,value,options,note){
   return setupField(label, "<select id='strat-"+id+"'>"+options.map(o=>{const val=Array.isArray(o)?o[0]:o;const txt=Array.isArray(o)?o[1]:o;return "<option value='"+setupEsc(val)+"' "+(String(value||'')===String(val)?'selected':'')+">"+setupEsc(txt)+"</option>";}).join('')+"</select>", note || '');
 }
+function setupToggleStrategyCharity(value){
+  const w = document.getElementById('strat-charity-wrap');
+  if (w) w.style.display = String(value || 'No') === 'Yes' ? '' : 'none';
+}
+function stratCharitySelect(value){
+  const val = String(value || 'No') === 'T' ? 'Yes' : String(value || 'No');
+  const opts = [['No','No'],['Yes','Yes']].map(o => "<option value='"+setupEsc(o[0])+"' "+(val===o[0]?'selected':'')+">"+setupEsc(o[1])+"</option>").join('');
+  return setupField('Use Non-itemizer Charity?', '<select id="strat-charityOn" onchange="setupToggleStrategyCharity(this.value)">'+opts+'</select>', 'Usually No. Choose Yes only when the federal rules allow a small cash-charity deduction even without itemizing; the model caps it by filing status.');
+}
+function setupStrategyEditRow(){
+  if (!setupEditingStrategy) return null;
+  if (setupEditingStrategy.tableKey === 'retirement') {
+    const vals = [S.wagesEnd1, S.ptEnd1, hasP2()?S.wagesEnd2:9999, hasP2()?S.ptEnd2:9999].map(v => parseInt(v || 9999)).filter(v => v && v !== 9999);
+    const y = vals.length ? vals[0] : setupYear();
+    return {_retirement:true, startYear:y, endYear:y, person:hasP2()?'both':'1', notes:'Retirement timing'};
+  }
+  const arr = S[setupEditingStrategy.tableKey];
+  if (!Array.isArray(arr)) return null;
+  return arr[setupEditingStrategy.rowIndex] || null;
+}
+function setupStrategyEditing(){
+  return !!(setupEditingStrategy && setupStrategyEditRow());
+}
+function setupStrategyFieldValue(row, key, fallback){
+  return row && row[key] !== undefined && row[key] !== null ? row[key] : fallback;
+}
+function setupStrategySingleYear(row, fallback){
+  return setupStrategyFieldValue(row, 'startYear', setupStrategyFieldValue(row, 'year', fallback));
+}
 function renderStrategyForm(){
   const yr = setupYear();
   const end = S.endYear || yr;
+  const row = setupStrategyEditRow();
+  const editing = setupStrategyEditing();
+  const val = (key, fallback) => setupStrategyFieldValue(row, key, fallback);
+  const oneYear = setupStrategySingleYear(row, yr);
   let fields = '';
-  if (setupStrategyType === 'spending-onetime') fields = stratInput('year','Year',yr,{min:yr})+stratInput('amount','Total Spending for Year ($)','',{min:0,note:'Use the total spending amount for that year. This is marked one-year only, so it will not reset the future inflation base.'})+stratText('notes','Notes','One-year spending change');
-  else if (setupStrategyType === 'tax-funding') fields = stratInput('year','Year',yr,{min:yr})+stratInput('tax','Tax Funding Amount ($)','',{min:0,note:'Cash-flow timing only. Use this when you intentionally fund less or more income tax than the calculated liability in a year, such as deferring tax payments after a prior low-income year and catching up later.'})+stratText('notes','Notes','Tax funding timing');
-  else if (setupStrategyType === 'spending-reset') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('amount','Spending Amount ($)','',{min:0,note:'A dollar amount resets the spending base for future inflated years unless the row is one-year only.'})+stratInput('pct','Percent Change (%)','',{step:'0.1',note:'Optional percent adjustment against the inflated spending base.'})+stratText('notes','Notes','Ongoing spending change');
-  else if (setupStrategyType === 'retirement') fields = stratSelect('person','Person','both',[['1',p1()],...(hasP2()?[['2',p2()],['both','Both people']]:[])])+stratInput('year','Last Wage Year',yr,{min:yr,note:'The model treats this as the final year with wages or self-employment income.'})+stratText('notes','Notes','Retirement timing');
-  else if (setupStrategyType === 'deductions') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('fed','Federal Itemized Deductions ($)','',{min:0})+stratInput('ca','CA Itemized Deductions ($)','',{min:0})+stratSelect('charityOn','Use Non-itemizer Charity?','No',[['No','No'],['Yes','Yes']])+stratInput('charity','Eligible Cash Charity ($)','',{min:0})+stratText('notes','Notes','Tax deduction change');
-  else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',9999,{min:yr})+stratSelect('state','State','NONE',[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes','State tax change');
-  else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('level','IRMAA Target Cap','',getIRMAALevelOptions({startYear:yr,level:''}))+stratSelect('fill','Fill Mode','',IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket','',getMaxBracketOptions({startYear:yr,level:''}))+stratInput('headroom','Bracket Headroom ($)',S.irmaaBracketHeadroom||0,{min:0})+stratText('notes','Notes','Roth conversion target');
-  else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('magi','MAGI Target ($)','',{min:0})+stratText('notes','Notes','MAGI ceiling');
-  else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('active','Tax Fill','T',[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)','',{min:0})+stratText('notes','Notes','Tax bracket fill');
-  else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('div','Brokerage Dividend Rate (%)','',{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)','',{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)','',{step:'0.01',min:0})+stratText('notes','Notes','Income rate change');
-  else if (setupStrategyType === 'stock-gain') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Taxable Gain on Stock Sales (%)','',{step:'1',min:0})+stratText('notes','Notes','Stock sale gain change');
-  else if (setupStrategyType === 'cash-floor') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('floor','Cash Floor ($)',S.cashFloor||'',{min:0})+stratText('notes','Notes','Cash floor change');
-  else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('amount','Annual HSA Deposit ($)','',{min:0})+stratText('notes','Notes','HSA deposit');
-  else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Growth Rate (%)','',{step:'0.1',min:-100})+stratText('notes','Notes','Portfolio growth rate');
-  else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratInput('rate','Wage Growth (%)','',{step:'0.1',min:0})+stratText('notes','Notes','Wage growth scenario');
-  else fields = stratInput('start','Start Year',yr,{min:yr})+stratInput('end','End Year',end,{min:yr})+stratSelect('draw1','Draw 1',S.fundingOrder1||'SEC',FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',S.fundingOrder2||'IRA',FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',S.fundingOrder3||'ROTH',FUNDING_ORDER_OPTIONS)+stratText('notes','Notes','Funding order change');
-  return '<div class="strategy-card-title">'+setupEsc(setupStrategyLabel(setupStrategyType))+'</div><div class="setup-field-grid">'+fields+'</div><div class="setup-actions"><button class="btn btn-dark" onclick="applySetupStrategy()">Add Strategy</button></div>';
+  if (setupStrategyType === 'spending-onetime') fields = stratInput('year','Year',oneYear,{min:yr})+stratInput('amount','Total Spending for Year ($)',val('amount',''),{min:0,note:'Use the total spending amount for that year. This is marked one-year only, so it will not reset the future inflation base.'})+stratText('notes','Notes',val('notes','One-year spending change'));
+  else if (setupStrategyType === 'tax-funding') fields = stratInput('year','Year',oneYear,{min:yr})+stratInput('tax','Tax Funding Amount ($)',val('taxOvr',''),{min:0,note:'Cash-flow timing only. Use this when you intentionally fund less or more income tax than the calculated liability in a year, such as deferring tax payments after a prior low-income year and catching up later.'})+stratText('notes','Notes',val('notes','Tax funding timing'));
+  else if (setupStrategyType === 'spending-reset') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Spending Amount ($)',val('amount',''),{min:0,note:'A dollar amount resets the spending base for future inflated years unless the row is one-year only.'})+stratInput('pct','Percent Change (%)',val('pctChange',''),{step:'0.1',note:'Optional percent adjustment against the inflated spending base.'})+stratText('notes','Notes',val('notes','Ongoing spending change'));
+  else if (setupStrategyType === 'retirement') fields = stratSelect('person','Person',val('person',hasP2()?'both':'1'),[['1',p1()],...(hasP2()?[['2',p2()],['both','Both people']]:[])])+stratInput('year','Last Income Year',val('startYear',yr),{min:yr,note:'The model treats this as the final year with W-2 wages or non-wage taxable income.'})+stratText('notes','Notes',val('notes','Retirement timing'));
+  else if (setupStrategyType === 'deductions') {
+    const charityOn = String(val('charityOn','No')) === 'T' ? 'Yes' : String(val('charityOn','No') || 'No');
+    fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('fed','Federal Itemized Deductions ($)',val('fedItemized',''),{min:0,note:'Total deductible expenses for the federal return, such as mortgage interest, state/local taxes, and charitable gifts when itemizing.'})+stratInput('ca','California Itemized Deductions ($)',val('caItemized',''),{min:0,note:'California can allow or limit different deductions than federal. Enter the CA amount only when it differs or matters for the plan.'})+stratCharitySelect(charityOn)+'<div id="strat-charity-wrap" style="display:'+(charityOn==='Yes'?'':'none')+'">'+stratInput('charity','Eligible Cash Charity ($)',val('charityCash',''),{min:0,note:'Cash gifts that qualify for the non-itemizer charity rule. Leave blank unless Use Non-itemizer Charity is Yes.'})+'</div>'+stratText('notes','Notes',val('notes','Tax deduction change'));
+  }
+  else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',9999),{min:yr})+stratSelect('state','State',val('state','NONE'),[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes',val('notes','State tax change'));
+  else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('level','IRMAA Target Cap',val('level',''),getIRMAALevelOptions({startYear:yr,level:val('level','')}))+stratSelect('fill','Fill Mode',val('fillMode',''),IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket',val('maxBracket',''),getMaxBracketOptions({startYear:yr,level:val('level','')}))+stratInput('headroom','Bracket Headroom ($)',val('bracketHeadroom',S.irmaaBracketHeadroom||0),{min:0})+stratText('notes','Notes',val('notes','Roth conversion target'));
+  else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('magi','MAGI Target ($)',val('magiTarget',''),{min:0})+stratText('notes','Notes',val('notes','MAGI ceiling'));
+  else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('active','Tax Fill',val('active','T'),[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)',val('headroom',''),{min:0})+stratText('notes','Notes',val('notes','Tax bracket fill'));
+  else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('div','Brokerage Dividend Rate (%)',val('divRate',''),{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)',val('divReinvestPct',''),{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)',val('intRate',''),{step:'0.01',min:0})+stratText('notes','Notes',val('notes','Income rate change'));
+  else if (setupStrategyType === 'stock-gain') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Taxable Gain on Stock Sales (%)',val('rate',''),{step:'1',min:0})+stratText('notes','Notes',val('notes','Stock sale gain change'));
+  else if (setupStrategyType === 'cash-floor') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('floor','Cash Floor ($)',val('floor',S.cashFloor||''),{min:0})+stratText('notes','Notes',val('notes','Cash floor change'));
+  else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Annual HSA Deposit ($)',val('amount',''),{min:0})+stratText('notes','Notes',val('notes','HSA deposit'));
+  else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Growth Rate (%)',val('rate',''),{step:'0.1',min:-100})+stratText('notes','Notes',val('notes','Portfolio growth rate'));
+  else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Wage Growth (%)',val('rate',''),{step:'0.1',min:0})+stratText('notes','Notes',val('notes','Wage growth scenario'));
+  else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
+  const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
+  const buttons = '<button class="btn btn-dark" onclick="applySetupStrategy()">'+(editing?'Update Strategy':'Add Strategy')+'</button>'+(editing?'<button class="btn btn-light" onclick="setupCancelStrategyEdit()">Cancel Edit</button>':'');
+  return '<div class="strategy-card-title">'+setupEsc(setupStrategyLabel(setupStrategyType))+'</div>'+editNote+'<div class="setup-field-grid">'+fields+'</div><div class="setup-actions">'+buttons+'</div>';
 }
 function stratVal(id){
   const el = document.getElementById('strat-'+id);
@@ -8127,34 +8168,43 @@ function applySetupStrategy(){
   const notes = stratVal('notes');
   const start = stratInt('start', stratInt('year', yr));
   const end = stratInt('end', start);
-  const pushOv = (key, row) => {
+  const editing = setupEditingStrategy && setupEditingStrategy.tableKey;
+  const writeOv = (key, row) => {
     if (!Array.isArray(S[key])) S[key] = [];
-    S[key].push(row);
+    if (editing && setupEditingStrategy.tableKey === key && S[key][setupEditingStrategy.rowIndex]) {
+      S[key][setupEditingStrategy.rowIndex] = Object.assign({}, S[key][setupEditingStrategy.rowIndex], row);
+    } else {
+      S[key].push(row);
+    }
   };
-  if (setupStrategyType === 'spending-onetime') pushOv('ovSpending', {amount:stratVal('amount'), oneYear:'Y', startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
-  else if (setupStrategyType === 'tax-funding') pushOv('ovSpending', {taxOvr:stratVal('tax'), startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
-  else if (setupStrategyType === 'spending-reset') pushOv('ovSpending', {amount:stratVal('amount'), pctChange:stratVal('pct'), startYear:start, endYear:end, notes:notes});
+  if (setupStrategyType === 'spending-onetime') writeOv('ovSpending', {amount:stratVal('amount'), oneYear:'Y', startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
+  else if (setupStrategyType === 'tax-funding') writeOv('ovSpending', {taxOvr:stratVal('tax'), startYear:stratInt('year',yr), endYear:stratInt('year',yr), notes:notes});
+  else if (setupStrategyType === 'spending-reset') writeOv('ovSpending', {amount:stratVal('amount'), pctChange:stratVal('pct'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'retirement') {
     const p = stratVal('person');
     const y = stratInt('year', yr);
     if (p === '1' || p === 'both') { S.wagesEnd1 = y; S.ptEnd1 = y; }
     if ((p === '2' || p === 'both') && hasP2()) { S.wagesEnd2 = y; S.ptEnd2 = y; }
   }
-  else if (setupStrategyType === 'deductions') pushOv('ovDeductions', {fedItemized:stratVal('fed'), caItemized:stratVal('ca'), charityOn:stratVal('charityOn'), charityCash:stratVal('charity'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'state-move') pushOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'irmaa') pushOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), bracketHeadroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'income-level') pushOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'tax-fill') pushOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'income-rates') pushOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'stock-gain') pushOv('ovStkGainPct', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'cash-floor') pushOv('ovCashFloor', {floor:stratVal('floor'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'hsa-deposit') pushOv('ovHSADeposit', {amount:stratVal('amount'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'growth') pushOv('ovGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'wage-growth') pushOv('ovWageGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'deductions') {
+    const charityOn = stratVal('charityOn') || 'No';
+    writeOv('ovDeductions', {fedItemized:stratVal('fed'), caItemized:stratVal('ca'), charityOn:charityOn, charityCash:charityOn==='Yes'?stratVal('charity'):'', startYear:start, endYear:end, notes:notes});
+  }
+  else if (setupStrategyType === 'state-move') writeOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'irmaa') writeOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), bracketHeadroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'income-level') writeOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'tax-fill') writeOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'income-rates') writeOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'stock-gain') writeOv('ovStkGainPct', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'cash-floor') writeOv('ovCashFloor', {floor:stratVal('floor'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'hsa-deposit') writeOv('ovHSADeposit', {amount:stratVal('amount'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'growth') writeOv('ovGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'wage-growth') writeOv('ovWageGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'funding') {
     const ord = normalizeFundingOrder(stratVal('draw1'), stratVal('draw2'), stratVal('draw3'));
-    pushOv('ovFundingOrder', {draw1:ord[0], draw2:ord[1], draw3:ord[2], startYear:start, endYear:end, notes:notes});
+    writeOv('ovFundingOrder', {draw1:ord[0], draw2:ord[1], draw3:ord[2], startYear:start, endYear:end, notes:notes});
   }
+  setupEditingStrategy = null;
   setupAfterChange(true);
 }
 function setupHasValue(v){
@@ -8200,18 +8250,28 @@ function setupPushPart(parts, label, value){
   if (!setupHasValue(value)) return;
   parts.push(label + ': ' + value);
 }
-function setupAddStrategyRow(rows, label, row, parts, types){
+function setupAddStrategyRow(rows, label, row, parts, types, meta){
   const clean = (parts || []).filter(Boolean);
+  const m = meta || {};
   if (!clean.length) clean.push('No field values entered yet');
-  rows.push({label, range:setupRangeLabel(row || {}), parts:clean, notes:(row && row.notes) || '', types:types || []});
+  rows.push({
+    label,
+    range:setupRangeLabel(row || {}),
+    parts:clean,
+    notes:(row && row.notes) || '',
+    types:types || [],
+    tableKey:m.tableKey || '',
+    rowIndex:m.rowIndex == null ? -1 : m.rowIndex,
+    editType:m.editType || ((types || [])[0] || '')
+  });
 }
 function setupCollectStrategyRows(filterType){
   const rows = [];
-  const add = (label, row, parts, types) => {
+  const add = (label, row, parts, types, meta) => {
     const typeList = types || [];
-    if (!filterType || typeList.includes(filterType)) setupAddStrategyRow(rows, label, row, parts, typeList);
+    if (!filterType || typeList.includes(filterType)) setupAddStrategyRow(rows, label, row, parts, typeList, meta);
   };
-  (S.ovSpending || []).forEach(row => {
+  (S.ovSpending || []).forEach((row, idx) => {
     const hasSpend = setupHasValue(row.amount) || setupHasValue(row.pctChange);
     const hasTax = setupHasValue(row.taxOvr);
     const parts = [];
@@ -8222,90 +8282,126 @@ function setupCollectStrategyRows(filterType){
     const types = [];
     if (hasSpend) types.push(row.oneYear === 'Y' ? 'spending-onetime' : 'spending-reset');
     if (hasTax) types.push('tax-funding');
+    const typeList = types.length ? types : ['spending-reset'];
     const label = hasSpend && hasTax ? 'Spending / Tax Funding' : hasTax ? 'Tax Funding Timing' : 'Spending';
-    add(label, row, parts, types.length ? types : ['spending-reset']);
+    add(label, row, parts, typeList, {tableKey:'ovSpending', rowIndex:idx, editType:typeList[0]});
   });
   if (!filterType || filterType === 'retirement') {
     const parts = [];
-    if ((S.wagesEnd1||9999) !== 9999) parts.push(p1() + ' wages end: ' + S.wagesEnd1);
-    if ((S.ptEnd1||9999) !== 9999) parts.push(p1() + ' self-employment ends: ' + S.ptEnd1);
-    if (hasP2() && (S.wagesEnd2||9999) !== 9999) parts.push(p2() + ' wages end: ' + S.wagesEnd2);
-    if (hasP2() && (S.ptEnd2||9999) !== 9999) parts.push(p2() + ' self-employment ends: ' + S.ptEnd2);
-    if (parts.length) add('Retirement / Income Ends', {_rangeLabel:'Current settings'}, parts, ['retirement']);
+    if ((S.wagesEnd1||9999) !== 9999) parts.push(p1() + ' W-2 wages end: ' + S.wagesEnd1);
+    if ((S.ptEnd1||9999) !== 9999) parts.push(p1() + ' non-wage taxable income ends: ' + S.ptEnd1);
+    if (hasP2() && (S.wagesEnd2||9999) !== 9999) parts.push(p2() + ' W-2 wages end: ' + S.wagesEnd2);
+    if (hasP2() && (S.ptEnd2||9999) !== 9999) parts.push(p2() + ' non-wage taxable income ends: ' + S.ptEnd2);
+    if (parts.length) add('Retirement / Income Ends', {_rangeLabel:'Current settings'}, parts, ['retirement'], {tableKey:'retirement', rowIndex:0, editType:'retirement'});
   }
-  (S.ovDeductions || []).forEach(row => {
+  (S.ovDeductions || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Federal itemized deductions', setupMoneyLabel(row.fedItemized));
     setupPushPart(parts, 'CA itemized deductions', setupMoneyLabel(row.caItemized));
     if (row.charityOn === 'Yes' || row.charityOn === 'T') parts.push('Use non-itemizer charity deduction');
     setupPushPart(parts, 'Eligible cash charity', setupMoneyLabel(row.charityCash));
-    add('Tax Deductions', row, parts, ['deductions']);
+    add('Tax Deductions', row, parts, ['deductions'], {tableKey:'ovDeductions', rowIndex:idx, editType:'deductions'});
   });
-  (S.ovIRMAA || []).forEach(row => {
+  (S.ovIRMAA || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'IRMAA cap', setupIrmTargetLabel(row.level));
     setupPushPart(parts, 'Fill mode', setupFillModeLabel(row.fillMode));
     setupPushPart(parts, 'Max bracket', setupBracketLabel(row.maxBracket));
     setupPushPart(parts, 'Bracket headroom', setupMoneyLabel(row.bracketHeadroom));
-    add('IRMAA / Roth Target', row, parts, ['irmaa']);
+    add('IRMAA / Roth Target', row, parts, ['irmaa'], {tableKey:'ovIRMAA', rowIndex:idx, editType:'irmaa'});
   });
-  (S.ovIncomeLevel || []).forEach(row => {
+  (S.ovIncomeLevel || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'MAGI ceiling', setupMoneyLabel(row.magiTarget));
-    add('Income Level', row, parts, ['income-level']);
+    add('Income Level', row, parts, ['income-level'], {tableKey:'ovIncomeLevel', rowIndex:idx, editType:'income-level'});
   });
-  (S.ovTaxFill || []).forEach(row => {
+  (S.ovTaxFill || []).forEach((row, idx) => {
     const parts = [];
     if (row.active === 'T') parts.push('Tax bracket fill active');
     setupPushPart(parts, 'Headroom', setupMoneyLabel(row.headroom));
-    add('Tax Bracket Fill', row, parts, ['tax-fill']);
+    add('Tax Bracket Fill', row, parts, ['tax-fill'], {tableKey:'ovTaxFill', rowIndex:idx, editType:'tax-fill'});
   });
-  (S.ovGrowth || []).forEach(row => {
+  (S.ovGrowth || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Portfolio growth', setupPercentLabel(row.rate));
-    add('Portfolio Growth Rate', row, parts, ['growth']);
+    add('Portfolio Growth Rate', row, parts, ['growth'], {tableKey:'ovGrowth', rowIndex:idx, editType:'growth'});
   });
-  (S.ovIncomeRates || []).forEach(row => {
+  (S.ovIncomeRates || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Brokerage dividend rate', setupPercentLabel(row.divRate));
     setupPushPart(parts, 'Dividend reinvest', setupPercentLabel(row.divReinvestPct));
     setupPushPart(parts, 'Cash interest rate', setupPercentLabel(row.intRate));
-    add('Dividend / Interest Rates', row, parts, ['income-rates']);
+    add('Dividend / Interest Rates', row, parts, ['income-rates'], {tableKey:'ovIncomeRates', rowIndex:idx, editType:'income-rates'});
   });
-  (S.ovStkGainPct || []).forEach(row => {
+  (S.ovStkGainPct || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Taxable gain on stock sales', setupPercentLabel(row.rate));
-    add('Stock Sale Gain', row, parts, ['stock-gain']);
+    add('Stock Sale Gain', row, parts, ['stock-gain'], {tableKey:'ovStkGainPct', rowIndex:idx, editType:'stock-gain'});
   });
-  (S.ovWageGrowth || []).forEach(row => {
+  (S.ovWageGrowth || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Wage growth', setupPercentLabel(row.rate));
-    add('Wage Growth', row, parts, ['wage-growth']);
+    add('Wage Growth', row, parts, ['wage-growth'], {tableKey:'ovWageGrowth', rowIndex:idx, editType:'wage-growth'});
   });
-  (S.ovFundingOrder || []).forEach(row => {
+  (S.ovFundingOrder || []).forEach((row, idx) => {
     const ord = normalizeFundingOrder(row.draw1, row.draw2, row.draw3);
-    add('Funding Order', row, ['Draw order: ' + formatFundingOrder(ord)], ['funding']);
+    add('Funding Order', row, ['Draw order: ' + formatFundingOrder(ord)], ['funding'], {tableKey:'ovFundingOrder', rowIndex:idx, editType:'funding'});
   });
-  (S.ovCashFloor || []).forEach(row => {
+  (S.ovCashFloor || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Cash floor', setupMoneyLabel(row.floor));
-    add('Cash Floor', row, parts, ['cash-floor']);
+    add('Cash Floor', row, parts, ['cash-floor'], {tableKey:'ovCashFloor', rowIndex:idx, editType:'cash-floor'});
   });
-  (S.ovHSADeposit || []).forEach(row => {
+  (S.ovHSADeposit || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'Annual HSA deposit', setupMoneyLabel(row.amount));
-    add('HSA Deposit', row, parts, ['hsa-deposit']);
+    add('HSA Deposit', row, parts, ['hsa-deposit'], {tableKey:'ovHSADeposit', rowIndex:idx, editType:'hsa-deposit'});
   });
-  (S.ovStateTax || []).forEach(row => {
+  (S.ovStateTax || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'State tax setting', setupStateTaxLabel(row.state));
-    add('State Tax', row, parts, ['state-move']);
+    add('State Tax', row, parts, ['state-move'], {tableKey:'ovStateTax', rowIndex:idx, editType:'state-move'});
   });
   return rows;
 }
+function setupJsString(v){
+  return JSON.stringify(String(v || ''));
+}
+function setupEditStrategyRow(editType, tableKey, rowIndex){
+  setupStrategyType = editType || setupStrategyType;
+  setupEditingStrategy = {tableKey:tableKey, rowIndex:parseInt(rowIndex, 10) || 0};
+  setupView = 'strategy';
+  renderSetupGuide();
+  setTimeout(() => {
+    const card = document.querySelector('.setup-main .strategy-card');
+    if (card) card.scrollIntoView({block:'start', behavior:'smooth'});
+  }, 0);
+}
+function setupDeleteStrategyRow(tableKey, rowIndex){
+  if (!confirm('Remove this strategy row?')) return;
+  if (tableKey === 'retirement') {
+    S.wagesEnd1 = 9999; S.ptEnd1 = 9999;
+    if (hasP2()) { S.wagesEnd2 = 9999; S.ptEnd2 = 9999; }
+  } else {
+    const arr = S[tableKey];
+    if (Array.isArray(arr)) arr.splice(parseInt(rowIndex, 10) || 0, 1);
+  }
+  setupEditingStrategy = null;
+  setupAfterChange(true);
+}
+function setupCancelStrategyEdit(){
+  setupEditingStrategy = null;
+  renderSetupGuide();
+}
+function setupStrategyRowActions(r){
+  if (!r.tableKey) return '';
+  const editCall = 'setupEditStrategyRow('+setupJsString(r.editType)+','+setupJsString(r.tableKey)+','+Number(r.rowIndex)+')';
+  const deleteCall = 'setupDeleteStrategyRow('+setupJsString(r.tableKey)+','+Number(r.rowIndex)+')';
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-light" style="padding:6px 12px;font-size:10px" onclick=\''+editCall+'\'>Edit</button><button class="btn btn-light" style="padding:6px 12px;font-size:10px" onclick=\''+deleteCall+'\'>Delete</button></div>';
+}
 function setupRenderStrategyRows(rows, emptyText){
   if (!rows.length) return '<div class="setup-check warn"><div class="setup-check-title">No current rows</div><div class="setup-check-body">'+setupEsc(emptyText || 'No strategies are active for this selection yet.')+'</div></div>';
-  return rows.map(r => '<div class="strategy-card"><div class="strategy-card-title">'+setupEsc(r.label)+'</div><div class="strategy-card-body"><div style="font-weight:700;margin-bottom:4px">'+setupEsc(r.range)+'</div>'+r.parts.map(p => '<div>'+setupEsc(p)+'</div>').join('')+(r.notes?'<div style="margin-top:5px;font-style:italic;color:#6a5830">Notes: '+setupEsc(r.notes)+'</div>':'')+'</div></div>').join('');
+  return rows.map(r => '<div class="strategy-card"><div class="strategy-card-title">'+setupEsc(r.label)+'</div><div class="strategy-card-body"><div style="font-weight:700;margin-bottom:4px">'+setupEsc(r.range)+'</div>'+r.parts.map(p => '<div>'+setupEsc(p)+'</div>').join('')+(r.notes?'<div style="margin-top:5px;font-style:italic;color:#6a5830">Notes: '+setupEsc(r.notes)+'</div>':'')+setupStrategyRowActions(r)+'</div></div>').join('');
 }
 function renderSelectedStrategyOverrides(){
   const label = setupStrategyLabel(setupStrategyType);
