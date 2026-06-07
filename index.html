@@ -7451,9 +7451,19 @@ function rothLabBuildScenarios(){
   return {cfg, scenarios};
 }
 function rothLabMoney(v, compact){ return f$(v || 0, !!compact); }
-function rothLabAgeText(r){
+function rothLabAgeText(r, state){
   if (!r) return '';
-  return hasP2() ? (String(r.age1 || '') + '/' + String(r.age2 || '')) : String(r.age1 || '');
+  const A = state || S;
+  const hasSecond = A.householdMode !== 'single' && !!(A.name2 && String(A.name2).trim());
+  if (!hasSecond) return String(r.age1 || '');
+  const deathYear = parseInt(A.widowDeathYear, 10) || 0;
+  const mode = A.widowMode || 'off';
+  const yr = parseInt(r.yr, 10) || 0;
+  if (mode !== 'off' && deathYear > 0 && yr > deathYear) {
+    if (mode === 'p2Survives') return String(r.age2 || '');
+    if (mode === 'p1Survives') return String(r.age1 || '');
+  }
+  return String(r.age1 || '') + '/' + String(r.age2 || '');
 }
 function rothLabIrmaaFromIncome(st, r){
   const filing = r.taxFiling || getFilingForYearForState(st || S, r.yr) || (st || S).filing || 'MFJ';
@@ -7830,9 +7840,9 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
       const endRoth = (r.roth1||0)+(r.roth2||0);
       const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
       const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
-      return '<tr><td>'+r.yr+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
+      return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
     }).join('');
-    return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
   return '<div class="panel roth-advisor-report" id="roth-advisor-report"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth Lab scenarios for advisor discussion. Current Plan is optional here, so you can use a clearer named scenario instead when it better represents the strategy. This is designed as a discussion aid, not a recommendation. Income Tax includes federal plus state. Medicare premiums and IRMAA are shown for planning comparison and are assumed to be paid from annual spending, not added as a second separate withdrawal.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax + Medicare Impact</th><th class="r">Final IRA</th><th class="r">IRA Depleted</th><th class="r">Final Roth</th><th class="r">Final Net Worth</th><th class="r">Avg Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li><li>Would the answer change under lower growth, higher growth, or survivor planning assumptions?</li></ul>'+detailBlocks+'</div>';
 }
@@ -7860,10 +7870,10 @@ function rothLabRenderDetails(scenarios, cfg){
     const endRoth = (r.roth1||0)+(r.roth2||0);
     const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
     const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
-    return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.margRate||0)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
+    return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
   }).join('');
   const emptyNote = shownRows.length ? '' : '<p style="font-size:13px;color:#6a5830">No detail rows match this selection.</p>';
-  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI, with an estimated surcharge two years later in parentheses. IRMAA Paid is the cash-flow tier after the lookback. Income Tax includes federal plus state. IRMAA is shown separately for Medicare planning; Medicare premiums and IRMAA are assumed to be paid from annual spending.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Marginal</th><th class="r">Effective</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. Effective rate is the annual tax load to focus on; peak marginal rate stays in the scorecard as a bracket guardrail. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI, with an estimated surcharge two years later in parentheses. IRMAA Paid is the cash-flow tier after the lookback. Income Tax includes federal plus state. IRMAA is shown separately for Medicare planning; Medicare premiums and IRMAA are assumed to be paid from annual spending.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function renderRothLab(){
   rothLabEnsureSettings();
