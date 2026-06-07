@@ -145,6 +145,58 @@ body:not(.advanced-on) .advanced-tab{display:none}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:18px}
 .panel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
 
+/* Roth Lab readability */
+.roth-scorecards{display:grid;gap:14px;margin-top:12px}
+.roth-card{background:linear-gradient(180deg,rgba(255,250,238,.82),rgba(255,246,225,.55));border:1px solid var(--cream3);border-left:5px solid var(--gold);border-radius:8px;padding:15px 17px;box-shadow:0 8px 22px rgba(40,25,0,.045)}
+.roth-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px}
+.roth-card-title{font-family:'Playfair Display',Georgia,serif;font-size:23px;line-height:1.08;font-weight:800;color:var(--ink)}
+.roth-card-desc{font-family:'Lora',Georgia,serif;font-size:13px;line-height:1.5;color:var(--ink2);max-width:880px;margin-top:4px}
+.roth-card-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.roth-card-meta span{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#6f5d32;background:rgba(214,168,44,.10);border:1px solid var(--cream3);border-radius:999px;padding:5px 8px;white-space:nowrap}
+.roth-card-actions{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.roth-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7c6a3a;background:rgba(214,168,44,.12);border:1px solid var(--cream3);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.roth-report-pick{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--cream3);border-radius:999px;background:rgba(255,252,245,.78);padding:5px 9px;white-space:nowrap;cursor:pointer}
+.roth-report-pick input{accent-color:var(--gold);width:13px;height:13px}
+.roth-report-pick.locked{cursor:default;color:#7c6a3a;background:rgba(214,168,44,.10)}
+.roth-report-launcher{border-left:5px solid var(--green);background:linear-gradient(180deg,rgba(247,252,244,.90),rgba(255,250,238,.80))}
+.roth-report-selected{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 12px}
+.roth-report-chip{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#1f5d2e;background:#eef8ed;border:1px solid #b8d7b4;border-radius:999px;padding:5px 9px}
+.roth-advisor-report{border:2px solid var(--green);background:#fffdf8;margin:16px 0}
+.roth-report-title{font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:800;line-height:1.05;color:var(--ink);margin-bottom:6px}
+.roth-report-sub{font-size:13px;color:#6a5830;line-height:1.5;margin-bottom:14px}
+.roth-report-table-wrap{overflow-x:auto;border:1px solid var(--cream3);border-radius:8px;background:#fffaf0;margin:10px 0 16px}
+.roth-report-table{width:100%;min-width:1060px;border-collapse:separate;border-spacing:0;font-size:12px;font-family:'Lora',Georgia,serif;font-variant-numeric:tabular-nums}
+.roth-report-table th{background:#fff1cf;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid var(--gold2);text-align:left;white-space:nowrap}
+.roth-report-table td{padding:8px 10px;border-bottom:1px solid var(--cream3);vertical-align:top;white-space:nowrap}
+.roth-report-table td:first-child{white-space:normal;min-width:190px}
+.roth-report-table .r{text-align:right}
+.roth-report-table .bold{font-weight:850}
+.roth-report-notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:12px 0}
+.roth-report-note{border:1px solid var(--cream3);border-radius:7px;background:#fffaf0;padding:10px 12px;font-size:12px;line-height:1.45;color:var(--ink2)}
+.roth-report-note strong{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.roth-report-questions{margin:8px 0 0;padding-left:20px;font-size:13px;line-height:1.6;color:var(--ink2)}
+.roth-warning{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--red);line-height:1.25;margin-top:6px}
+.roth-irmaa-amt{color:#7b6842;font-size:.88em;white-space:nowrap}
+.roth-metric-section{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:12px 0 7px}
+.roth-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+.roth-metric{background:rgba(255,252,245,.9);border:1px solid var(--cream3);border-radius:6px;padding:8px 10px;min-width:0}
+.roth-metric-label{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#76643b;line-height:1.25;margin-bottom:4px}
+.roth-metric-value{font-family:'Lora',Georgia,serif;font-size:18px;line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.roth-metric-value.small{font-size:15px;white-space:normal}
+.roth-metric-value.good{color:var(--green)}
+.roth-metric-value.warn{color:var(--red)}
+.roth-detail-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.roth-detail-note{font-size:12px;color:#6a5830;line-height:1.45;margin-top:6px;max-width:860px}
+.roth-table-wrap{overflow-x:auto;margin-top:8px;border:1px solid var(--cream3);border-radius:8px;background:rgba(255,252,245,.72)}
+.roth-table{width:100%;min-width:1180px;border-collapse:separate;border-spacing:0;font-family:'Lora',Georgia,serif;font-size:13px;line-height:1.36;color:var(--ink)}
+.roth-table thead th{position:sticky;top:0;background:#fff7e6;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:10px 11px;border-bottom:2px solid var(--gold2);white-space:nowrap;text-align:left;z-index:1}
+.roth-table tbody td{padding:9px 11px;border-bottom:1px solid var(--cream3);vertical-align:middle;white-space:nowrap;font-variant-numeric:tabular-nums}
+.roth-table tbody tr:nth-child(even){background:rgba(238,226,201,.28)}
+.roth-table tbody tr:hover{background:#fff2c8}
+.roth-table .r,.roth-table .num{text-align:right}
+.roth-table .bold{font-weight:800}
+@media(max-width:760px){.roth-card-head{display:block}.roth-card-actions{margin-top:10px}.roth-card-title{font-size:20px}.roth-metrics{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}}
+
 /* ── FIELDS ── */
 .field{margin-bottom:9px}
 .field label{display:block;font-size:10px;font-weight:600;color:var(--ink2);margin-bottom:3px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
@@ -389,6 +441,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 <div id="tabs">
   <button class="tab active" onclick="ST('dashboard')">Dashboard</button>
   <button class="tab" onclick="ST('setup')">Setup Guide</button>
+  <button class="tab" onclick="ST('rothlab')">Roth Lab</button>
   <button class="tab advanced-tab" onclick="ST('inputs')">Inputs</button>
   <button class="tab advanced-tab" onclick="ST('soy')">Start of Year</button>
   <button class="tab advanced-tab" onclick="ST('overrides')">Override Tables</button>
@@ -460,6 +513,12 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 <!-- ═══════════ SETUP GUIDE ═══════════ -->
 <div id="pane-setup" class="pane">
   <div id="setup-guide-root"></div>
+</div>
+
+
+<!-- ═══════════ ROTH LAB ═══════════ -->
+<div id="pane-rothlab" class="pane">
+  <div id="roth-lab-root"></div>
 </div>
 
 <!-- ═══════════ INPUTS ═══════════ -->
@@ -3468,6 +3527,7 @@ function ST(name){
   if(tab)tab.classList.add('active');
   if(name==='dashboard')  renderDash();
   if(name==='setup')      renderSetupGuide();
+  if(name==='rothlab')    renderRothLab();
   if(name==='taxtables')  renderTaxTables();
   if(name==='cashflow')   renderCF();
   if(name==='taxes')      renderTax();
@@ -3515,6 +3575,7 @@ function IC(){
       const id=active.id.replace('pane-','');
       if(id==='dashboard')renderDash();
   if(id==='taxtables')renderTaxTables();
+  if(id==='rothlab')renderRothLab();
   if(id==='action')renderAP();
       if(id==='cashflow')renderCF();
       if(id==='taxes')renderTax();
@@ -6911,6 +6972,532 @@ function exportCSV(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=exportFileName('finance_projection','csv');a.click();
 }
+
+
+// ── Roth Lab ──────────────────────────────────────────────────────────────
+let rothLabSettings = {
+  startYear:null,
+  endYear:null,
+  irmaaHeadroom:null,
+  bracketHeadroom:null,
+  maxBracket:'',
+  taxFillIrmaaGuard:null,
+  customMagi:'',
+  assumption:'current',
+  detail:'1',
+  detailYears:'10',
+  reportSelections:['No Extra Roth Conversions'],
+  showAdvisorReport:'0'
+};
+let rothLabSettingsLoaded = false;
+const ROTH_LAB_SETTINGS_KEY = STORAGE_KEY + ':rothLabSettings';
+
+function rothLabEnsureSettings(){
+  if (rothLabSettingsLoaded) return;
+  rothLabSettingsLoaded = true;
+  try {
+    const saved = JSON.parse(localStorage.getItem(ROTH_LAB_SETTINGS_KEY) || '{}');
+    if (saved && typeof saved === 'object') rothLabSettings = Object.assign(rothLabSettings, saved);
+  } catch(e) {}
+}
+function rothLabSaveSettings(){
+  try { localStorage.setItem(ROTH_LAB_SETTINGS_KEY, JSON.stringify(rothLabSettings)); } catch(e) {}
+}
+function rothLabDefaultStart(){ return S.startYear || new Date().getFullYear(); }
+function rothLabDefaultEnd(){ return Math.min(S.endYear || rothLabDefaultStart(), rothLabDefaultStart() + 9); }
+function rothLabNumSetting(key, fallback){
+  const raw = rothLabSettings[key];
+  if (raw === null || raw === undefined || raw === '') return fallback;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? fallback : n;
+}
+function rothLabSetting(key, fallback){
+  const raw = rothLabSettings[key];
+  return raw === null || raw === undefined || raw === '' ? fallback : raw;
+}
+function rothLabSet(key, value){
+  rothLabSettings[key] = value;
+  rothLabSaveSettings();
+  renderRothLab();
+}
+function rothLabYearOptions(selected){
+  let html = '';
+  for (let y = S.startYear || new Date().getFullYear(); y <= (S.endYear || y); y++) {
+    html += '<option value="'+y+'" '+(Number(selected)===y?'selected':'')+'>'+y+'</option>';
+  }
+  return html;
+}
+function rothLabCloneState(){
+  return JSON.parse(JSON.stringify(S));
+}
+function rothLabApplyAssumption(st, assumption){
+  if (assumption === 'lower-growth') st.growthRate = Math.max(-0.10, (parseF(st.growthRate)||0) - 0.02);
+  if (assumption === 'higher-growth') st.growthRate = (parseF(st.growthRate)||0) + 0.02;
+  if (assumption === 'frozen-irmaa') st.irmaaInfl = 0;
+  return st;
+}
+function rothLabRemoveOverlapRows(rows, start, end){
+  return (rows || []).filter(row => {
+    const s = parseInt(row.startYear)||0;
+    const e = parseInt(row.endYear)||9999;
+    return e < start || s > end;
+  });
+}
+function rothLabClearConversionWindow(st, start, end){
+  st.ovIRMAA = rothLabRemoveOverlapRows(st.ovIRMAA, start, end);
+  st.ovIncomeLevel = rothLabRemoveOverlapRows(st.ovIncomeLevel, start, end);
+  st.ovTaxFill = rothLabRemoveOverlapRows(st.ovTaxFill, start, end);
+}
+function rothLabSuppressGlobalTargets(st, start, end, notes){
+  st.ovIRMAA.push({level:'', fillMode:'', maxBracket:'', bracketHeadroom:'', headroom:0, startYear:start, endYear:end, notes:notes || 'Roth Lab: suppress global IRMAA target'});
+  st.ovTaxFill.push({active:'off', headroom:0, startYear:start, endYear:end, notes:notes || 'Roth Lab: no tax-fill conversions'});
+}
+function rothLabOverlap(row, start, end){
+  const s = parseInt(row.startYear)||0;
+  const e = parseInt(row.endYear)||9999;
+  return s <= end && e >= start;
+}
+function rothLabRangeText(row){
+  const start = row.startYear || '?';
+  const end = row.endYear || '?';
+  return String(end) === '9999' ? start + '+' : start + '-' + end;
+}
+function rothLabCurrentPlanDescription(start, end){
+  const bits = [];
+  (S.ovIncomeLevel || []).filter(r => rothLabOverlap(r,start,end)).forEach(r => {
+    bits.push(rothLabRangeText(r) + ' MAGI target ' + shortDollar(r.magiTarget));
+  });
+  (S.ovIRMAA || []).filter(r => rothLabOverlap(r,start,end)).forEach(r => {
+    const lvl = parseIRMAATargetLevel(r.level);
+    const parts = [];
+    if (lvl != null) parts.push('IRMAA ' + (IRMAA_TARGET_NAMES[lvl] || ('Tier '+lvl)));
+    else parts.push('IRMAA off');
+    if (r.fillMode) parts.push(setupFillModeLabel(r.fillMode));
+    if (r.maxBracket) parts.push('max bracket ' + Math.round((parseF(r.maxBracket)||0)*100) + '%');
+    if (r.headroom) parts.push('IRMAA cushion ' + shortDollar(r.headroom));
+    if (r.bracketHeadroom) parts.push('bracket cushion ' + shortDollar(r.bracketHeadroom));
+    bits.push(rothLabRangeText(r) + ' ' + parts.join(', '));
+  });
+  (S.ovTaxFill || []).filter(r => rothLabOverlap(r,start,end) && r.active === 'T').forEach(r => {
+    bits.push(rothLabRangeText(r) + ' tax bracket fill' + (r.headroom ? ' with cushion ' + shortDollar(r.headroom) : ''));
+  });
+  if (!bits.length) return 'No saved Roth conversion target rows overlap this analysis window. This is the current plan before adding lab scenarios.';
+  return 'Saved Roth target rows: ' + bits.join('; ') + '.';
+}
+function rothLabScenarioDefs(){
+  const start = rothLabNumSetting('startYear', rothLabDefaultStart());
+  const end = Math.max(start, rothLabNumSetting('endYear', rothLabDefaultEnd()));
+  const irmaaHeadroom = Math.max(0, rothLabNumSetting('irmaaHeadroom', S.irmaaHeadroom || 0));
+  const bracketHeadroom = Math.max(0, rothLabNumSetting('bracketHeadroom', S.irmaaBracketHeadroom || 0));
+  const maxBracket = String(rothLabSetting('maxBracket', '') || '');
+  const defaultGuard = parseIRMAATargetLevel(S.irmaaTarget);
+  const taxFillIrmaaGuard = String(rothLabSetting('taxFillIrmaaGuard', defaultGuard != null ? String(defaultGuard) : '3'));
+  const customMagi = Math.max(0, rothLabNumSetting('customMagi', 0));
+  const defs = [
+    {kind:'current', label:'Current Plan', plain:rothLabCurrentPlanDescription(start, end), save:false},
+    {kind:'none', label:'No Extra Roth Conversions', plain:'Suppresses Roth conversion targets in the analysis window.', save:true}
+  ];
+  for (let lvl = 0; lvl <= 4; lvl++) {
+    const nm = IRMAA_TARGET_NAMES[lvl] || ('Tier '+lvl);
+    defs.push({kind:'irmaa', label:'IRMAA '+nm, plain:'Converts up to the selected Medicare income tier, less cushion. Federal bracket cap also applies if selected.', save:true, level:String(lvl), maxBracket, irmaaHeadroom, bracketHeadroom});
+  }
+  if (taxFillIrmaaGuard !== '') {
+    const guardName = IRMAA_TARGET_NAMES[parseIRMAATargetLevel(taxFillIrmaaGuard)] || ('Tier '+taxFillIrmaaGuard);
+    defs.push({kind:'taxfill-guard', label:'Bracket Fill to '+guardName+' Guard', plain:'Fills the federal bracket you are already in, but stops at the selected IRMAA guardrail when that is lower. This prevents a tax-only fill from accidentally crossing Medicare tiers.', save:true, guardLevel:taxFillIrmaaGuard, irmaaHeadroom, bracketHeadroom});
+  }
+  defs.push({kind:'taxfill', label:'Tax Bracket Fill Only - Ignores IRMAA', plain:'Tax-only stress test. It fills the federal bracket you are already in. If the plan is already in the 35% bracket, that can mean converting up near the top of the 35% bracket before 37% begins, even if Medicare IRMAA becomes expensive later.', save:true, bracketHeadroom});
+  if (maxBracket) {
+    const pct = Math.round((parseF(maxBracket)||0) * 100);
+    defs.push({kind:'bracket-cap', label:'Federal Bracket Cap '+pct+'%', plain:'Targets the selected federal bracket ceiling, less headroom, without using an IRMAA tier target.', save:true, maxBracket, bracketHeadroom});
+  }
+  if (customMagi > 0) {
+    defs.push({kind:'magi', label:'Custom MAGI '+shortDollar(customMagi), plain:'Converts only up to the custom MAGI ceiling entered below.', save:true, customMagi});
+  }
+  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, customMagi, defs};
+}
+function rothLabApplyTaxFillGuard(st, def, start, end){
+  const base = JSON.parse(JSON.stringify(st));
+  rothLabSuppressGlobalTargets(base, start, end, 'Roth Lab: baseline for guarded tax-fill');
+  const baseRows = runProjection(base).filter(r => r.yr >= start && r.yr <= end);
+  const guardLevel = parseIRMAATargetLevel(def.guardLevel);
+  baseRows.forEach(r => {
+    const tables = getScaledTables(base, r.yr);
+    const filing = r.taxFiling || getFilingForYearForState(base, r.yr) || base.filing || 'MFJ';
+    const bracketCeil = getBracketCeiling(r.agi || 0, filing, tables);
+    const bracketTarget = bracketCeil == null ? Infinity : bracketCeil - (def.bracketHeadroom || 0);
+    const thresholds = getIRMAAThresholdsForFiling(filing, tables);
+    const guardIdx = guardLevel == null ? thresholds.length - 1 : Math.min(guardLevel + 1, thresholds.length - 1);
+    const irmaaTarget = (thresholds[guardIdx] || Infinity) - (def.irmaaHeadroom || 0);
+    const target = Math.max(0, Math.min(bracketTarget, irmaaTarget));
+    if (isFinite(target) && target > (r.agi || 0) + 10) {
+      st.ovIncomeLevel.push({
+        magiTarget:Math.round(target),
+        startYear:r.yr,
+        endYear:r.yr,
+        notes:'Roth Lab: fill current bracket with IRMAA guardrail'
+      });
+    }
+  });
+}
+function rothLabApplyScenario(st, def, start, end){
+  if (def.kind === 'current') return st;
+  rothLabClearConversionWindow(st, start, end);
+  if (def.kind === 'none') {
+    rothLabSuppressGlobalTargets(st, start, end, 'Roth Lab: no extra Roth conversions');
+  } else if (def.kind === 'taxfill-guard') {
+    rothLabApplyTaxFillGuard(st, def, start, end);
+  } else if (def.kind === 'taxfill') {
+    st.ovIRMAA.push({level:'', fillMode:'', maxBracket:'', bracketHeadroom:'', headroom:0, startYear:start, endYear:end, notes:'Roth Lab: suppress IRMAA target so tax-fill can run'});
+    st.ovTaxFill.push({active:'T', headroom:def.bracketHeadroom || 0, startYear:start, endYear:end, notes:'Roth Lab: tax bracket fill only - ignores IRMAA'});
+  } else if (def.kind === 'bracket-cap') {
+    st.ovIRMAA.push({level:'', fillMode:'', maxBracket:def.maxBracket || '', bracketHeadroom:def.bracketHeadroom || 0, headroom:0, startYear:start, endYear:end, notes:'Roth Lab: federal bracket cap'});
+  } else if (def.kind === 'irmaa') {
+    st.ovIRMAA.push({level:def.level, fillMode:'', maxBracket:def.maxBracket || '', bracketHeadroom:def.bracketHeadroom || 0, headroom:def.irmaaHeadroom || 0, startYear:start, endYear:end, notes:'Roth Lab: '+def.label});
+  } else if (def.kind === 'magi') {
+    st.ovIncomeLevel.push({magiTarget:def.customMagi || 0, startYear:start, endYear:end, notes:'Roth Lab: custom MAGI target'});
+  }
+  return st;
+}
+function rothLabRunScenario(def, start, end, assumption){
+  const st = rothLabApplyAssumption(rothLabCloneState(), assumption);
+  rothLabApplyScenario(st, def, start, end);
+  const rows = runProjection(st);
+  return {def, state:st, rows, summary:rothLabSummarize(def, rows, start, end)};
+}
+function rothLabTierRank(label){
+  if (!label || label === 'Base') return 0;
+  const m = String(label).match(/\d+/);
+  return m ? parseInt(m[0],10) : 0;
+}
+function rothLabSummarize(def, rows, start, end){
+  const windowRows = rows.filter(r => r.yr >= start && r.yr <= end);
+  const final = rows[rows.length-1] || {};
+  const sum = (arr, fn) => arr.reduce((t, r) => t + (fn(r)||0), 0);
+  const peakMarg = windowRows.reduce((m, r) => Math.max(m, r.margRate || 0), 0);
+  const peakAGI = windowRows.reduce((m, r) => Math.max(m, r.agi || 0), 0);
+  const avgEff = windowRows.length ? windowRows.reduce((m, r) => m + (r.effRate || 0), 0) / windowRows.length : 0;
+  const peakTier = windowRows.reduce((m, r) => rothLabTierRank(r.irmaaTier) > rothLabTierRank(m) ? r.irmaaTier : m, 'Base');
+  const futureRows = rows.filter(r => r.yr > end);
+  const iraDrainYear = rothLabIraDrainYear(rows, start);
+  return {
+    label:def.label,
+    plain:def.plain,
+    windowConv:sum(windowRows, r => r.rothConv),
+    lifetimeConv:sum(rows, r => r.rothConv),
+    incomeTax:sum(rows, r => r.incomeTax),
+    stateTax:sum(rows, r => r.stTax),
+    irmaa:sum(rows, r => r.irmaaTx),
+    medicare:sum(rows, r => r.medicareBase),
+    burden:sum(rows, r => (r.incomeTax||0) + (r.irmaaTx||0) + (r.medicareBase||0)),
+    finalIRA:(final.ira1||0) + (final.ira2||0),
+    iraDrainYear,
+    finalRoth:(final.roth1||0) + (final.roth2||0),
+    finalNetWorth:final.netWorth || 0,
+    futureTaxableIra:sum(futureRows, r => Math.max(0, (r.taxableRMDs||0) - (r.qualDivs||0))),
+    peakAGI,
+    avgEff,
+    peakMarg,
+    peakTier,
+    save:!!def.save
+  };
+}
+function rothLabBuildScenarios(){
+  const cfg = rothLabScenarioDefs();
+  const assumption = rothLabSetting('assumption', 'current');
+  const scenarios = [];
+  cfg.defs.forEach(def => {
+    try { scenarios.push(rothLabRunScenario(def, cfg.start, cfg.end, assumption)); }
+    catch (e) { scenarios.push({def, rows:[], summary:{label:def.label, plain:'Could not run: '+e.message, save:false}}); }
+  });
+  return {cfg, scenarios};
+}
+function rothLabMoney(v, compact){ return f$(v || 0, !!compact); }
+function rothLabAgeText(r){
+  if (!r) return '';
+  return hasP2() ? (String(r.age1 || '') + '/' + String(r.age2 || '')) : String(r.age1 || '');
+}
+function rothLabIrmaaFromIncome(st, r){
+  const filing = r.taxFiling || getFilingForYearForState(st || S, r.yr) || (st || S).filing || 'MFJ';
+  const tables = getScaledTables(st || S, r.yr);
+  return getIRMAATierLabel(r.agi || 0, filing, tables);
+}
+function rothLabDelta(v){
+  if (!v || Math.abs(v) < 1) return '<span style="color:#8a7a5a">--</span>';
+  const good = v > 0;
+  return '<span style="color:'+(good?'#1f7a2e':'#9b1c10')+'">'+(v>0?'+':'')+f$(v,true)+'</span>';
+}
+function rothLabIraDrainYear(rows, start){
+  const fullRows = (rows || []).filter(r => r.yr >= start && r.yr <= (S.endYear || r.yr));
+  const drained = fullRows.find(r => ((r.ira1||0) + (r.ira2||0)) <= 1);
+  return drained ? drained.yr : '';
+}
+function rothLabIraDrainText(year){
+  return year ? String(year) : 'Not in plan';
+}
+function rothLabIrmaaCreatedAmount(st, r){
+  if (!r) return 0;
+  const state = st || S;
+  const filing = r.taxFiling || getFilingForYearForState(state, r.yr) || state.filing || 'MFJ';
+  const tables = getScaledTables(state, r.yr);
+  const hasSecond = !!(state.name2 && String(state.name2).trim()) && filing === 'MFJ';
+  return calcIRMAA(r.agi || 0, filing, r.age1 || 0, r.age2 || 0, hasSecond, tables);
+}
+function rothLabIrmaaLevelWithAmount(label, amount){
+  return setupEsc(label || 'Base') + ' <span class="roth-irmaa-amt">(' + setupEsc(f$(amount || 0, true)) + ')</span>';
+}
+function rothLabMetric(label, value, extraClass){
+  return '<div class="roth-metric"><div class="roth-metric-label">'+setupEsc(label)+'</div><div class="roth-metric-value '+(extraClass||'')+'">'+value+'</div></div>';
+}
+function rothLabFirstYearMeta(sc, cfg){
+  const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
+  const windowText = cfg.start + '-' + cfg.end;
+  const agiText = first.yr ? f$(first.agi || 0, true) : 'n/a';
+  const convText = first.yr ? f$(first.rothConv || 0, true) : 'n/a';
+  return '<div class="roth-card-meta"><span>Window '+setupEsc(windowText)+'</span><span>First-year AGI '+setupEsc(agiText)+'</span><span>First-year Roth conv '+setupEsc(convText)+'</span></div>';
+}
+function rothLabDetailModeLabel(mode){
+  if (mode === 'all') return 'analysis window';
+  if (mode === 'plan') return 'full plan';
+  if (mode === 'drained') return 'until IRA drained';
+  return (parseInt(mode,10) || 10) + ' years';
+}
+function rothLabHtmlJsString(v){
+  return setupEsc(JSON.stringify(String(v || '')));
+}
+function rothLabReportSelections(scenarios){
+  const available = (scenarios || []).map(sc => sc.summary && sc.summary.label).filter(Boolean);
+  const saved = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['No Extra Roth Conversions'];
+  return saved.filter(label => label && label !== 'Current Plan' && available.includes(label)).slice(0, 3);
+}
+function rothLabToggleReportScenario(label, checked){
+  const y = (typeof window !== 'undefined' && window.scrollY != null) ? window.scrollY : null;
+  const restore = () => { if (y != null && typeof window.scrollTo === 'function') setTimeout(() => window.scrollTo(0, y), 0); };
+  let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['No Extra Roth Conversions'];
+  selected = selected.filter(x => x && x !== 'Current Plan' && x !== label);
+  if (checked) {
+    if (selected.length >= 3) {
+      alert('Choose up to 3 comparison scenarios for the advisor report. Current Plan is always included.');
+      renderRothLab();
+      restore();
+      return;
+    }
+    selected.push(label);
+  }
+  rothLabSettings.reportSelections = selected;
+  rothLabSaveSettings();
+  renderRothLab();
+  restore();
+}
+function rothLabSelectedScenarios(scenarios){
+  const picks = rothLabReportSelections(scenarios);
+  const current = scenarios[0] ? [scenarios[0]] : [];
+  const others = scenarios.filter((sc, idx) => idx > 0 && picks.includes(sc.summary && sc.summary.label));
+  return current.concat(others);
+}
+function rothLabPrintAdvisorReport(){
+  const report = document.getElementById('roth-advisor-report');
+  if (!report) {
+    alert('Create the Advisor Report first, then print it.');
+    return;
+  }
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('The print window was blocked. Allow popups for this page, then try again.');
+    return;
+  }
+  const title = 'Roth Conversion Advisor Report';
+  const css = '<style>'+ 
+    '@page{size:landscape;margin:.45in}'+
+    'body{font-family:Georgia,serif;color:#24170b;background:#fffaf0;margin:0;padding:24px}'+
+    '.panel,.roth-advisor-report{border:0!important;background:#fff!important;margin:0!important;padding:0!important}'+
+    '.roth-report-title{font-family:Georgia,serif;font-size:28px;font-weight:800;margin:0 0 6px;color:#24170b}'+
+    '.roth-report-sub{font-size:12px;color:#5e4a28;line-height:1.45;margin:0 0 14px}'+
+    '.sh{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:#a87900;border-bottom:1px solid #c89a21;padding-bottom:4px;margin:18px 0 10px;font-weight:800}'+
+    '.roth-report-notes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}'+
+    '.roth-report-note{border:1px solid #dfd3b7;border-radius:6px;background:#fffdf8;padding:8px 10px;font-size:11px;line-height:1.35;color:#3d2d14}'+
+    '.roth-report-note strong{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#a87900;margin-bottom:3px}'+
+    '.roth-report-table-wrap{overflow:visible;border:1px solid #dfd3b7;border-radius:6px;background:#fff;margin:8px 0 12px}'+
+    '.roth-report-table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}'+
+    '.roth-report-table th{background:#fff1cf;color:#3d2d14;font-size:8px;text-transform:uppercase;letter-spacing:.04em;padding:6px;border-bottom:1px solid #c89a21;text-align:left;white-space:nowrap}'+
+    '.roth-report-table td{padding:6px;border-bottom:1px solid #eee2ca;vertical-align:top;white-space:nowrap}'+
+    '.roth-report-table td:first-child{white-space:normal;min-width:150px}'+
+    '.roth-report-table .r{text-align:right}.roth-report-table .bold{font-weight:800}'+
+    '.roth-report-questions{font-size:11px;line-height:1.45;margin:6px 0 12px;padding-left:18px}'+
+    'button,.btn{display:none!important}'+
+    '</style>';
+  w.document.open();
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title>'+css+'</head><body>'+report.outerHTML+'</body></html>');
+  w.document.close();
+  setTimeout(() => { try { w.focus(); w.print(); } catch(e) {} }, 250);
+}
+function rothLabReportRows(sc, cfg){
+  if (!sc || !sc.rows) return [];
+  const detailSetting = String(rothLabSetting('detailYears','10'));
+  const fullRows = sc.rows.filter(r => r.yr >= cfg.start && r.yr <= (S.endYear || r.yr));
+  const analysisRows = sc.rows.filter(r => r.yr >= cfg.start && r.yr <= cfg.end);
+  if (detailSetting === 'all') return analysisRows;
+  if (detailSetting === 'plan') return fullRows;
+  if (detailSetting === 'drained') {
+    const drainIdx = fullRows.findIndex(r => ((r.ira1||0)+(r.ira2||0)) <= 1);
+    return drainIdx >= 0 ? fullRows.slice(0, drainIdx + 1) : fullRows;
+  }
+  return fullRows.slice(0, parseInt(detailSetting,10) || 10);
+}
+function rothLabSaveScenario(idx){
+  const built = rothLabBuildScenarios();
+  const scenario = built.scenarios[idx];
+  if (!scenario || !scenario.summary || !scenario.summary.save) return;
+  const def = scenario.def;
+  const start = built.cfg.start, end = built.cfg.end;
+  if (!confirm('Save "'+def.label+'" as the Roth strategy for '+start+'-'+end+'? This replaces overlapping Roth conversion target rows in those years.')) return;
+  rothLabClearConversionWindow(S, start, end);
+  rothLabApplyScenario(S, def, start, end);
+  saveState(S);
+  showSaved();
+  proj = runProjection(S);
+  renderRothLab();
+}
+function rothLabBestNotes(scenarios){
+  const valid = scenarios.filter(x => x.rows && x.rows.length);
+  if (!valid.length) return '';
+  const lowBurden = valid.reduce((m,x)=>x.summary.burden < m.summary.burden ? x : m, valid[0]);
+  const highRoth = valid.reduce((m,x)=>x.summary.finalRoth > m.summary.finalRoth ? x : m, valid[0]);
+  const lowIra = valid.reduce((m,x)=>x.summary.finalIRA < m.summary.finalIRA ? x : m, valid[0]);
+  return '<div class="setup-check done" style="margin-top:12px"><div class="setup-check-title">Conversation Starters</div><div class="setup-check-body">Lowest lifetime tax + Medicare burden: <strong>'+setupEsc(lowBurden.summary.label)+'</strong>. Largest ending Roth balance: <strong>'+setupEsc(highRoth.summary.label)+'</strong>. Lowest ending IRA balance: <strong>'+setupEsc(lowIra.summary.label)+'</strong>. These are not recommendations; they are prompts for advisor discussion.</div></div>';
+}
+function rothLabRenderControls(cfg){
+  const bracketOptions = getMaxBracketOptions({startYear:cfg.start, level:''}).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.maxBracket)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
+  const guardOptions = [['','No IRMAA guardrail']].concat(getIRMAALevelOptions({startYear:cfg.start, level:cfg.taxFillIrmaaGuard}).filter(o => String(o[0]) !== '')).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.taxFillIrmaaGuard)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
+  return '<div class="panel" style="margin-bottom:16px"><div class="sh">Roth Analysis Lab</div>'+
+    '<p style="font-size:14px;line-height:1.7;margin:0 0 14px">Compare Roth conversion targets without changing the saved plan. The lab temporarily reruns the projection under each strategy, then you can save only the strategy worth keeping.</p>'+
+    '<div class="setup-check warn" style="margin-bottom:14px"><div class="setup-check-title">Plain-English Goal</div><div class="setup-check-body">This asks: if we intentionally create taxable income by converting IRA money to Roth, where is the useful stopping point? Look at taxes, state tax, IRMAA, future IRA pressure, Roth balance, survivor exposure, and ending net worth together.</div></div>'+
+    '<div class="setup-check done" style="margin-bottom:14px"><div class="setup-check-title">How to Read Tax Bracket Fill</div><div class="setup-check-body">Bracket fill means filling the federal bracket taxable income is already in. If normal income already reaches the 35% bracket, a tax-only fill can target the top of 35%, which may be a very large Roth conversion. Use the IRMAA guardrail or a federal bracket cap when Medicare cliffs matter.</div></div>'+
+    '<div class="setup-check done" style="margin-bottom:14px"><div class="setup-check-title">IRMAA Timing</div><div class="setup-check-body">The scorecard shows IRMAA when paid for cash-flow accuracy. The detail table also shows the IRMAA tier created by each income year, because Medicare usually uses a two-year MAGI lookback.</div></div>'+
+    '<div class="setup-field-grid">'+
+      setupField('Analysis Start Year', '<select onchange="rothLabSet(\'startYear\',this.value)">'+rothLabYearOptions(cfg.start)+'</select>', 'First year to test Roth conversion targets.')+
+      setupField('Analysis End Year', '<select onchange="rothLabSet(\'endYear\',this.value)">'+rothLabYearOptions(cfg.end)+'</select>', 'Last year to test. Later years still show the downstream effect.')+
+      setupField('IRMAA Cushion ($)', '<input type="number" value="'+setupEsc(cfg.irmaaHeadroom)+'" onchange="rothLabSet(\'irmaaHeadroom\',this.value)">', 'Stay this far below the selected Medicare IRMAA tier ceiling.')+
+      setupField('Federal Bracket Cushion ($)', '<input type="number" value="'+setupEsc(cfg.bracketHeadroom)+'" onchange="rothLabSet(\'bracketHeadroom\',this.value)">', 'Stay this far below the selected federal bracket cap.')+
+      setupField('Optional Federal Bracket Cap', '<select onchange="rothLabSet(\'maxBracket\',this.value)">'+bracketOptions+'</select>', 'Optional extra ceiling. When selected, IRMAA scenarios stop at the lower of IRMAA target or this bracket cap.')+
+      setupField('Tax-Fill IRMAA Guardrail', '<select onchange="rothLabSet(\'taxFillIrmaaGuard\',this.value)">'+guardOptions+'</select>', 'Adds a safer tax-fill scenario that fills the current bracket only until this Medicare income guardrail is reached. Use No guardrail to hide that safer scenario.')+
+      setupField('Custom MAGI Target ($)', '<input type="number" value="'+setupEsc(cfg.customMagi || '')+'" placeholder="Optional" onchange="rothLabSet(\'customMagi\',this.value)">', 'Adds one scenario that converts up to this dollar MAGI ceiling.')+
+      setupField('Assumption Lens', '<select onchange="rothLabSet(\'assumption\',this.value)"><option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds</option></select>', 'Rerun every scenario under one stress lens without changing the saved plan.')+
+      setupField('Detail Years', '<select onchange="rothLabSet(\'detailYears\',this.value)"><option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option></select>', 'How many rows to show in the detail table. 5 years is usually best for a concise advisor report; this browser remembers your choice.')+
+    '</div></div>';
+}
+function rothLabRenderReportLauncher(scenarios, cfg){
+  const picks = rothLabReportSelections(scenarios);
+  const selected = rothLabSelectedScenarios(scenarios);
+  const chips = selected.map(sc => '<span class="roth-report-chip">'+setupEsc(sc.summary.label)+'</span>').join('');
+  const shown = rothLabSetting('showAdvisorReport','0') === '1';
+  const action = shown
+    ? '<button class="btn btn-light" onclick="rothLabSet(\'showAdvisorReport\',\'0\')">Hide Advisor Report</button><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button>'
+    : '<button class="btn btn-dark" onclick="rothLabSet(\'showAdvisorReport\',\'1\')">Create Advisor Report</button>';
+  return '<div class="panel roth-report-launcher"><div class="sh">Advisor Report Set</div><p style="font-size:13px;line-height:1.55;margin:0">Current Plan is always included. Choose up to 3 comparison scenarios for a concise advisor discussion.</p><div class="roth-report-selected">'+chips+'</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="roth-badge">'+picks.length+' of 3 comparisons selected</span>'+action+'</div></div>';
+}
+function rothLabRenderSummary(scenarios, cfg){
+  if (!scenarios.length) return '<div class="panel">No Roth scenarios could be run.</div>';
+  const base = scenarios[0].summary || {};
+  const cards = scenarios.map((sc, idx) => {
+    const x = sc.summary || {};
+    const selectedLabels = rothLabReportSelections(scenarios);
+    const reportPick = idx === 0
+      ? '<label class="roth-report-pick locked"><input type="checkbox" checked disabled> Advisor Report</label>'
+      : '<label class="roth-report-pick"><input type="checkbox" '+(selectedLabels.includes(x.label)?'checked':'')+' onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(x.label)+',this.checked)"> Include in Report</label>';
+    const save = x.save ? '<button class="btn btn-light btn-sm" onclick="rothLabSaveScenario('+idx+')">Save Strategy</button>' : '<span class="roth-badge">Baseline</span>';
+    const delta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.finalNetWorth||0)-(base.finalNetWorth||0));
+    const tierWarning = rothLabTierRank(x.peakTier) >= 5 ? '<div class="roth-warning">Crosses top IRMAA tier</div>' : '';
+    return '<div class="roth-card">'+
+      '<div class="roth-card-head"><div><div class="roth-card-title">'+setupEsc(x.label || '')+'</div><div class="roth-card-desc">'+setupEsc(x.plain || '')+'</div>'+rothLabFirstYearMeta(sc, cfg)+'</div><div class="roth-card-actions">'+reportPick+save+'</div></div>'+
+      '<div class="roth-metric-section">Conversions and ending balances</div>'+
+      '<div class="roth-metrics">'+
+        rothLabMetric('Window Roth conv', rothLabMoney(x.windowConv,true))+
+        rothLabMetric('Lifetime Roth conv', rothLabMoney(x.lifetimeConv,true))+
+        rothLabMetric('Final IRA', rothLabMoney(x.finalIRA,true))+
+        rothLabMetric('IRA depleted', setupEsc(rothLabIraDrainText(x.iraDrainYear)), 'small')+
+        rothLabMetric('Final Roth', rothLabMoney(x.finalRoth,true))+
+        rothLabMetric('Final Net Worth', rothLabMoney(x.finalNetWorth,true)+' <span style="font-size:12px">'+delta+'</span>')+
+      '</div>'+
+      '<div class="roth-metric-section">Tax and Medicare impact</div>'+
+      '<div class="roth-metrics">'+
+        rothLabMetric('Income tax', rothLabMoney(x.incomeTax,true))+
+        rothLabMetric('State tax breakout', rothLabMoney(x.stateTax,true))+
+        rothLabMetric('IRMAA', rothLabMoney(x.irmaa,true))+
+        rothLabMetric('Tax + Medicare', rothLabMoney(x.burden,true))+
+        rothLabMetric('Peak AGI', f$(x.peakAGI||0,true))+
+        rothLabMetric('Avg effective rate', fp(x.avgEff||0))+
+        rothLabMetric('Peak marginal', fp(x.peakMarg||0))+
+        rothLabMetric('Peak IRMAA paid', setupEsc(x.peakTier || 'Base')+tierWarning, rothLabTierRank(x.peakTier) >= 5 ? 'warn small' : 'small')+
+      '</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="panel"><div class="sh">Scenario Scorecard</div><div style="font-size:12px;color:#6a5830;line-height:1.45;margin-bottom:10px">Lifetime Income Tax includes federal plus state. State Tax is broken out separately so Roth conversions can be discussed by federal, state, and Medicare impact.</div><div class="roth-scorecards">'+cards+'</div></div>';
+}
+function rothLabRenderAdvisorReport(scenarios, cfg){
+  if (rothLabSetting('showAdvisorReport','0') !== '1') return '';
+  const selected = rothLabSelectedScenarios(scenarios);
+  if (!selected.length) return '';
+  const base = selected[0].summary || {};
+  const scoreRows = selected.map(sc => {
+    const x = sc.summary || {};
+    const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
+    const delta = x.label === 'Current Plan' ? '--' : ((x.finalNetWorth||0) - (base.finalNetWorth||0));
+    return '<tr><td><strong>'+setupEsc(x.label||'')+'</strong><div style="font-size:11px;color:#6a5830;line-height:1.35">'+setupEsc(x.plain||'')+'</div></td><td class="r">'+f$(first.agi||0,true)+'</td><td class="r">'+f$(first.rothConv||0,true)+'</td><td class="r">'+rothLabMoney(x.windowConv,true)+'</td><td class="r">'+rothLabMoney(x.incomeTax,true)+'</td><td class="r">'+rothLabMoney(x.irmaa,true)+'</td><td class="r bold">'+rothLabMoney(x.burden,true)+'</td><td class="r">'+rothLabMoney(x.finalIRA,true)+'</td><td class="r">'+setupEsc(rothLabIraDrainText(x.iraDrainYear))+'</td><td class="r">'+rothLabMoney(x.finalRoth,true)+'</td><td class="r bold">'+rothLabMoney(x.finalNetWorth,true)+'<div style="font-size:10px">'+(delta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(delta))+'</div></td><td class="r">'+fp(x.avgEff||0)+'</td><td class="r">'+fp(x.peakMarg||0)+'</td><td>'+setupEsc(x.peakTier||'Base')+'</td></tr>';
+  }).join('');
+  const notes = selected.map(sc => {
+    const x = sc.summary || {};
+    const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
+    return '<div class="roth-report-note"><strong>'+setupEsc(x.label||'')+'</strong>Window '+cfg.start+'-'+cfg.end+'. First-year AGI '+f$(first.agi||0,true)+'. First-year Roth conversion '+f$(first.rothConv||0,true)+'. '+setupEsc(x.plain||'')+'</div>';
+  }).join('');
+  const detailBlocks = selected.map(sc => {
+    const rows = rothLabReportRows(sc, cfg).map(r => {
+      const endIRA = (r.ira1||0)+(r.ira2||0);
+      const endRoth = (r.roth1||0)+(r.roth2||0);
+      const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
+      const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r);
+      return '<tr><td>'+r.yr+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
+    }).join('');
+    return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  }).join('');
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Current Plan plus up to three selected comparisons. This is designed as a discussion aid, not a recommendation. Income Tax includes federal plus state; IRMAA and Medicare premiums are shown separately.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="roth-report-notes">'+notes+'</div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax + Medicare</th><th class="r">Final IRA</th><th class="r">IRA Depleted</th><th class="r">Final Roth</th><th class="r">Final Net Worth</th><th class="r">Avg Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li><li>Would the answer change under lower growth, higher growth, or survivor planning assumptions?</li></ul>'+detailBlocks+'</div>';
+}
+function rothLabRenderDetails(scenarios, cfg){
+  const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
+  const sc = scenarios[idx] || scenarios[0];
+  if (!sc || !sc.rows || !sc.rows.length) return '';
+  const opts = scenarios.map((x,i)=>'<option value="'+i+'" '+(i===idx?'selected':'')+'>'+setupEsc(x.summary.label)+'</option>').join('');
+  const detailSetting = String(rothLabSetting('detailYears','10'));
+  const fullRows = sc.rows.filter(r=>r.yr>=cfg.start && r.yr <= (S.endYear || r.yr));
+  const analysisRows = sc.rows.filter(r=>r.yr>=cfg.start && r.yr<=cfg.end);
+  let shownRows;
+  if (detailSetting === 'all') {
+    shownRows = analysisRows;
+  } else if (detailSetting === 'plan') {
+    shownRows = fullRows;
+  } else if (detailSetting === 'drained') {
+    const drainIdx = fullRows.findIndex(r => ((r.ira1||0)+(r.ira2||0)) <= 1);
+    shownRows = drainIdx >= 0 ? fullRows.slice(0, drainIdx + 1) : fullRows;
+  } else {
+    shownRows = fullRows.slice(0, parseInt(detailSetting,10) || 10);
+  }
+  const rows = shownRows.map(r => {
+    const endIRA = (r.ira1||0)+(r.ira2||0);
+    const endRoth = (r.roth1||0)+(r.roth2||0);
+    const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
+    const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r);
+    return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.margRate||0)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
+  }).join('');
+  const emptyNote = shownRows.length ? '' : '<p style="font-size:13px;color:#6a5830">No detail rows match this selection.</p>';
+  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI. IRMAA Paid is the cash-flow tier after the lookback. Dollar amounts are shown in parentheses beside each IRMAA tier. Income Tax includes federal plus state; IRMAA is shown separately.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Marginal</th><th class="r">Effective</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function renderRothLab(){
+  rothLabEnsureSettings();
+  const root = document.getElementById('roth-lab-root');
+  if (!root) return;
+  const built = rothLabBuildScenarios();
+  root.innerHTML = rothLabRenderControls(built.cfg) + rothLabBestNotes(built.scenarios) + rothLabRenderReportLauncher(built.scenarios, built.cfg) + rothLabRenderAdvisorReport(built.scenarios, built.cfg) + rothLabRenderSummary(built.scenarios, built.cfg) + rothLabRenderDetails(built.scenarios, built.cfg);
+}
+
 
 // ── renderAll helper ──────────────────────────────────────────────────────
 function renderAll(){
