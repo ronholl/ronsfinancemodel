@@ -7102,7 +7102,7 @@ function rothLabUserScenarioDescription(snap){
   if (!snap) return '';
   const range = (snap.startYear || '?') + '-' + (snap.endYear || '?');
   const saved = snap.savedAt ? new Date(snap.savedAt).toLocaleDateString() : '';
-  return 'Saved user scenario' + (saved ? ' from ' + saved : '') + ' for ' + range + '. ' + (snap.plain || 'It restores the saved Roth conversion target rows and global Roth/IRMAA settings.');
+  return 'Saved snapshot' + (saved ? ' from ' + saved : '') + ' for ' + range + '. It does not update automatically when Current Plan changes. Use Save / Replace User Scenario to refresh it. ' + (snap.plain || 'It restores the saved Roth conversion target rows and global Roth/IRMAA settings.');
 }
 function rothLabApplyUserScenarioSnapshot(st, snap, start, end){
   if (!snap) return st;
@@ -7122,23 +7122,29 @@ function rothLabApplyUserScenarioSnapshot(st, snap, start, end){
   return st;
 }
 function rothLabSaveCurrentAsUserScenario(){
-  const cfg = rothLabScenarioDefs();
-  rothLabSettings.userScenario = rothLabCreateUserScenario(cfg.start, cfg.end);
-  let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : [];
-  selected = selected.filter(x => x && x !== 'User Scenario');
-  if (selected.length < rothLabReportMax()) selected.push('User Scenario');
-  rothLabSettings.reportSelections = selected;
-  rothLabSettings.reportSelectionMode = 'selectable-current-v1';
-  rothLabSaveSettings();
-  renderRothLab();
+  const replacing = !!rothLabSettings.userScenario;
+  if (replacing && !confirm('Replace the saved User Scenario with the Current Plan as it looks now?')) return;
+  appPreserveScroll(() => {
+    const cfg = rothLabScenarioDefs();
+    rothLabSettings.userScenario = rothLabCreateUserScenario(cfg.start, cfg.end);
+    let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : [];
+    selected = selected.filter(x => x && x !== 'User Scenario');
+    if (selected.length < rothLabReportMax()) selected.push('User Scenario');
+    rothLabSettings.reportSelections = selected;
+    rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+    rothLabSaveSettings();
+    renderRothLab();
+  });
 }
 function rothLabClearUserScenario(){
   if (!rothLabSettings.userScenario) return;
   if (!confirm('Clear the saved User Scenario? This does not change the active plan.')) return;
-  rothLabSettings.userScenario = null;
-  rothLabSettings.reportSelections = (rothLabSettings.reportSelections || []).filter(x => x !== 'User Scenario');
-  rothLabSaveSettings();
-  renderRothLab();
+  appPreserveScroll(() => {
+    rothLabSettings.userScenario = null;
+    rothLabSettings.reportSelections = (rothLabSettings.reportSelections || []).filter(x => x !== 'User Scenario');
+    rothLabSaveSettings();
+    renderRothLab();
+  });
 }
 function rothLabApplyAssumption(st, assumption){
   if (assumption === 'lower-growth') st.growthRate = Math.max(-0.10, (parseF(st.growthRate)||0) - 0.02);
@@ -7479,7 +7485,7 @@ function rothLabSaveScenario(idx){
   saveState(S);
   showSaved();
   proj = runProjection(S);
-  renderRothLab();
+  appPreserveScroll(() => renderRothLab());
 }
 function rothLabBestNotes(scenarios){
   const valid = scenarios.filter(x => x.rows && x.rows.length);
@@ -7528,7 +7534,7 @@ function rothLabRenderSummary(scenarios, cfg){
     const reportPick = '<label class="roth-report-pick"><input type="checkbox" '+(selectedLabels.includes(x.label)?'checked':'')+' onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(x.label)+',this.checked)"> Include in Report</label>';
     let save = '';
     if (sc.def && sc.def.kind === 'current') {
-      save = '<button class="btn btn-light btn-sm" onclick="rothLabSaveCurrentAsUserScenario()">Save as User Scenario</button>';
+      save = '<button class="btn btn-light btn-sm" onclick="rothLabSaveCurrentAsUserScenario()">'+(rothLabSettings.userScenario?'Save / Replace User Scenario':'Save as User Scenario')+'</button>';
     } else if (sc.def && sc.def.kind === 'user') {
       save = '<button class="btn btn-light btn-sm" onclick="rothLabSaveScenario('+idx+')">Restore Strategy</button><button class="btn btn-light btn-sm" onclick="rothLabClearUserScenario()">Clear</button>';
     } else {
@@ -8857,7 +8863,7 @@ function renderStrategyForm(){
     fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('fed','Federal Itemized Deductions ($)',val('fedItemized',''),{min:0,note:'Total deductible expenses for the federal return, such as mortgage interest, state/local taxes, and charitable gifts when itemizing.'})+stratInput('ca','California Itemized Deductions ($)',val('caItemized',''),{min:0,note:'California can allow or limit different deductions than federal. Enter the CA amount only when it differs or matters for the plan.'})+stratCharitySelect(charityOn)+'<div id="strat-charity-wrap" style="display:'+(charityOn==='Yes'?'':'none')+'">'+stratInput('charity','Eligible Cash Charity ($)',val('charityCash',''),{min:0,note:'Cash gifts that qualify for the non-itemizer charity rule. Leave blank unless Use Non-itemizer Charity is Yes.'})+'</div>'+stratText('notes','Notes',val('notes','Tax deduction change'));
   }
   else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',9999),{min:yr})+stratSelect('state','State',val('state','NONE'),[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes',val('notes','State tax change'));
-  else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('level','IRMAA Target Cap',val('level',''),getIRMAALevelOptions({startYear:yr,level:val('level','')}))+stratSelect('fill','Fill Mode',val('fillMode',''),IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket',val('maxBracket',''),getMaxBracketOptions({startYear:yr,level:val('level','')}))+stratInput('headroom','Bracket Headroom ($)',val('bracketHeadroom',S.irmaaBracketHeadroom||0),{min:0})+stratText('notes','Notes',val('notes','Roth conversion target'));
+  else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('level','IRMAA Target Cap',val('level',''),getIRMAALevelOptions({startYear:yr,level:val('level','')}))+stratSelect('fill','Fill Mode',val('fillMode',''),IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket',val('maxBracket',''),getMaxBracketOptions({startYear:yr,level:val('level','')}))+stratInput('irmaaHeadroom','IRMAA Cushion ($)',val('headroom',S.irmaaHeadroom||0),{min:0,note:'Stay this far below the selected Medicare IRMAA income ceiling.'})+stratInput('bracketHeadroom','Federal Bracket Cushion ($)',val('bracketHeadroom',S.irmaaBracketHeadroom||0),{min:0,note:'Stay this far below the selected federal bracket cap, when a bracket cap applies.'})+stratText('notes','Notes',val('notes','Roth conversion target'));
   else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('magi','MAGI Target ($)',val('magiTarget',''),{min:0})+stratText('notes','Notes',val('notes','MAGI ceiling'));
   else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('active','Tax Fill',val('active','T'),[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)',val('headroom',''),{min:0})+stratText('notes','Notes',val('notes','Tax bracket fill'));
   else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('div','Brokerage Dividend Rate (%)',val('divRate',''),{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)',val('divReinvestPct',''),{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)',val('intRate',''),{step:'0.01',min:0})+stratText('notes','Notes',val('notes','Income rate change'));
@@ -8907,7 +8913,7 @@ function applySetupStrategy(){
     writeOv('ovDeductions', {fedItemized:stratVal('fed'), caItemized:stratVal('ca'), charityOn:charityOn, charityCash:charityOn==='Yes'?stratVal('charity'):'', startYear:start, endYear:end, notes:notes});
   }
   else if (setupStrategyType === 'state-move') writeOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
-  else if (setupStrategyType === 'irmaa') writeOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), bracketHeadroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'irmaa') writeOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), headroom:stratVal('irmaaHeadroom'), bracketHeadroom:stratVal('bracketHeadroom'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-level') writeOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'tax-fill') writeOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-rates') writeOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
@@ -9023,7 +9029,8 @@ function setupCollectStrategyRows(filterType){
     setupPushPart(parts, 'IRMAA cap', setupIrmTargetLabel(row.level));
     setupPushPart(parts, 'Fill mode', setupFillModeLabel(row.fillMode));
     setupPushPart(parts, 'Max bracket', setupBracketLabel(row.maxBracket));
-    setupPushPart(parts, 'Bracket headroom', setupMoneyLabel(row.bracketHeadroom));
+    setupPushPart(parts, 'IRMAA cushion', setupMoneyLabel(row.headroom));
+    setupPushPart(parts, 'Bracket cushion', setupMoneyLabel(row.bracketHeadroom));
     add('IRMAA / Roth Target', row, parts, ['irmaa'], {tableKey:'ovIRMAA', rowIndex:idx, editType:'irmaa'});
   });
   (S.ovIncomeLevel || []).forEach((row, idx) => {
