@@ -158,6 +158,7 @@ body:not(.advanced-on) .advanced-tab{display:none}
 .roth-report-pick{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--cream3);border-radius:999px;background:rgba(255,252,245,.78);padding:5px 9px;white-space:nowrap;cursor:pointer}
 .roth-report-pick input{accent-color:var(--gold);width:13px;height:13px}
 .roth-report-pick.locked{cursor:default;color:#7c6a3a;background:rgba(214,168,44,.10)}
+#roth-lab-root,.roth-card,.roth-report-launcher,.roth-advisor-report{overflow-anchor:none}
 .roth-report-launcher{border-left:5px solid var(--green);background:linear-gradient(180deg,rgba(247,252,244,.90),rgba(255,250,238,.80))}
 .roth-report-selected{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 12px}
 .roth-report-chip{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#1f5d2e;background:#eef8ed;border:1px solid #b8d7b4;border-radius:999px;padding:5px 9px}
@@ -3264,6 +3265,7 @@ function formatFundingOrder(order) {
 }
 
 // ── Global state & charts ─────────────────────────────────────────────────
+try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
 let S = loadState();   // always load localStorage first (instant, offline-safe)
 let proj = [];
 let CHS = {};
@@ -3514,6 +3516,38 @@ function toggleAdvancedMode(){
   const current = active ? active.id.replace('pane-','') : '';
   if (!advancedMode && isAdvancedView(current)) ST('setup');
 }
+function appDisableScrollRestoration(){
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
+}
+function appScrollToXY(x, y){
+  if (typeof window === 'undefined' || typeof window.scrollTo !== 'function') return;
+  try { window.scrollTo({left:x || 0, top:y || 0, behavior:'auto'}); }
+  catch(e) { try { window.scrollTo(x || 0, y || 0); } catch(_) {} }
+}
+function appScrollTopAfterLoad(){
+  if (typeof window === 'undefined' || window.__REPORT_MODE__) return;
+  appDisableScrollRestoration();
+  const top = () => appScrollToXY(0, 0);
+  top();
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { top(); requestAnimationFrame(top); });
+  [0, 60, 180, 500].forEach(ms => setTimeout(top, ms));
+}
+function appPreserveScroll(fn){
+  const doc = typeof document !== 'undefined' ? document : null;
+  const root = doc && doc.documentElement;
+  const body = doc && doc.body;
+  const x = typeof window !== 'undefined' ? (window.pageXOffset ?? root?.scrollLeft ?? body?.scrollLeft ?? 0) : 0;
+  const y = typeof window !== 'undefined' ? (window.pageYOffset ?? window.scrollY ?? root?.scrollTop ?? body?.scrollTop ?? 0) : 0;
+  const active = doc && doc.activeElement;
+  try { if (active && typeof active.blur === 'function') active.blur(); } catch(e) {}
+  const restore = () => appScrollToXY(x, y);
+  try { fn(); }
+  finally {
+    restore();
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { restore(); requestAnimationFrame(restore); });
+    [0, 60, 180].forEach(ms => setTimeout(restore, ms));
+  }
+}
 function ST(name){
   if (isAdvancedView(name) && !advancedMode) {
     advancedMode = true;
@@ -3536,7 +3570,7 @@ function ST(name){
   if(name==='soy')        { soyEditYear=null; renderSOY(); }
   if(name==='overrides')  renderOVAll();
   if(name==='export')     { renderExport(); showPrivacyStats(); }
-  requestAnimationFrame(() => window.scrollTo({top:0, left:0, behavior:'auto'}));
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => appScrollToXY(0, 0));
 }
 
 // ── Input change handler (debounced) ─────────────────────────────────────
@@ -7357,23 +7391,21 @@ function rothLabReportSelections(scenarios){
   }).slice(0, rothLabReportMax());
 }
 function rothLabToggleReportScenario(label, checked){
-  const y = (typeof window !== 'undefined' && window.scrollY != null) ? window.scrollY : null;
-  const restore = () => { if (y != null && typeof window.scrollTo === 'function') setTimeout(() => window.scrollTo(0, y), 0); };
-  let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['No Extra Roth Conversions'];
-  selected = selected.filter(x => x && x !== 'Current Plan' && x !== label);
-  if (checked) {
-    if (selected.length >= rothLabReportMax()) {
-      alert('Choose up to '+rothLabReportMax()+' scenarios for the advisor report. Current Plan can be unchecked if another scenario tells the story better.');
-      renderRothLab();
-      restore();
-      return;
+  appPreserveScroll(() => {
+    let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['Current Plan','No Extra Roth Conversions'];
+    selected = selected.filter(x => x && x !== label);
+    if (checked) {
+      if (selected.length >= rothLabReportMax()) {
+        alert('Choose up to '+rothLabReportMax()+' scenarios for the advisor report. Current Plan can be unchecked if another scenario tells the story better.');
+        renderRothLab();
+        return;
+      }
+      selected.push(label);
     }
-    selected.push(label);
-  }
-  rothLabSettings.reportSelections = selected;
-  rothLabSaveSettings();
-  renderRothLab();
-  restore();
+    rothLabSettings.reportSelections = selected;
+    rothLabSaveSettings();
+    renderRothLab();
+  });
 }
 function rothLabSelectedScenarios(scenarios){
   const picks = rothLabReportSelections(scenarios);
@@ -9100,6 +9132,7 @@ function renderActiveStrategies(){
 
 function initApp() {
   try {
+    appDisableScrollRestoration();
     S = loadState();       // instant load from localStorage
     loadUI();
     applyAdvancedMode();
@@ -9115,6 +9148,7 @@ function initApp() {
     showWelcomeModal();
     // Show update message to existing users (once per update version)
     setTimeout(showUpdateMessage, 400);
+    appScrollTopAfterLoad();
   } catch(e) {
     console.error('Init error:', e);
     const el = document.getElementById('hdr-sub');
@@ -9141,7 +9175,9 @@ function openStoredReportIfRequested(){
 }
 // Wait for Chart.js then init
 window.onload = () => {
+  appDisableScrollRestoration();
   if(window.__REPORT_MODE__) return;
+  appScrollTopAfterLoad();
   if(openStoredReportIfRequested()) return;
   if (typeof Chart !== 'undefined') {
     initApp();
@@ -9156,7 +9192,7 @@ window.onload = () => {
       } else if (attempts > 20) {
         clearInterval(wait);
         // Init without charts
-        try { S=loadState(); loadUI(); applyAdvancedMode(); updateHeader(); updateLabels(); proj=runProjection(S); initGitHubLoad(); } catch(e){}
+        try { S=loadState(); loadUI(); applyAdvancedMode(); updateHeader(); updateLabels(); proj=runProjection(S); initGitHubLoad(); appScrollTopAfterLoad(); } catch(e){}
         document.getElementById('hdr-sub').textContent = 'Charts unavailable (CDN blocked) — data still works';
       }
     }, 100);
