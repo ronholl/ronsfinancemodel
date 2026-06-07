@@ -6986,7 +6986,9 @@ let rothLabSettings = {
   assumption:'current',
   detail:'1',
   detailYears:'10',
-  reportSelections:['No Extra Roth Conversions'],
+  reportSelections:['Current Plan','No Extra Roth Conversions'],
+  reportSelectionMode:'selectable-current-v1',
+  userScenario:null,
   showAdvisorReport:'0'
 };
 let rothLabSettingsLoaded = false;
@@ -6999,6 +7001,12 @@ function rothLabEnsureSettings(){
     const saved = JSON.parse(localStorage.getItem(ROTH_LAB_SETTINGS_KEY) || '{}');
     if (saved && typeof saved === 'object') rothLabSettings = Object.assign(rothLabSettings, saved);
   } catch(e) {}
+  if (rothLabSettings.reportSelectionMode !== 'selectable-current-v1') {
+    const prior = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : [];
+    rothLabSettings.reportSelections = ['Current Plan'].concat(prior.filter(x => x && x !== 'Current Plan')).slice(0, rothLabReportMax());
+    rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+    rothLabSaveSettings();
+  }
 }
 function rothLabSaveSettings(){
   try { localStorage.setItem(ROTH_LAB_SETTINGS_KEY, JSON.stringify(rothLabSettings)); } catch(e) {}
@@ -7029,6 +7037,74 @@ function rothLabYearOptions(selected){
 }
 function rothLabCloneState(){
   return JSON.parse(JSON.stringify(S));
+}
+function rothLabReportMax(){ return 4; }
+function rothLabCopyRows(rows){ return JSON.parse(JSON.stringify(rows || [])); }
+function rothLabRowsInWindow(rows, start, end){
+  return (rows || []).filter(r => rothLabOverlap(r, start, end));
+}
+function rothLabCreateUserScenario(start, end){
+  return {
+    label:'User Scenario',
+    savedAt:new Date().toISOString(),
+    startYear:start,
+    endYear:end,
+    plain:rothLabCurrentPlanDescription(start, end),
+    globals:{
+      irmaaTarget:S.irmaaTarget || '',
+      irmaaFillMode:S.irmaaFillMode || '',
+      irmaaHeadroom:S.irmaaHeadroom || 0,
+      irmaaMaxBracket:S.irmaaMaxBracket || '',
+      irmaaBracketHeadroom:S.irmaaBracketHeadroom || 0
+    },
+    rows:{
+      ovIRMAA:rothLabCopyRows(rothLabRowsInWindow(S.ovIRMAA, start, end)),
+      ovIncomeLevel:rothLabCopyRows(rothLabRowsInWindow(S.ovIncomeLevel, start, end)),
+      ovTaxFill:rothLabCopyRows(rothLabRowsInWindow(S.ovTaxFill, start, end))
+    }
+  };
+}
+function rothLabUserScenarioDescription(snap){
+  if (!snap) return '';
+  const range = (snap.startYear || '?') + '-' + (snap.endYear || '?');
+  const saved = snap.savedAt ? new Date(snap.savedAt).toLocaleDateString() : '';
+  return 'Saved user scenario' + (saved ? ' from ' + saved : '') + ' for ' + range + '. ' + (snap.plain || 'It restores the saved Roth conversion target rows and global Roth/IRMAA settings.');
+}
+function rothLabApplyUserScenarioSnapshot(st, snap, start, end){
+  if (!snap) return st;
+  const clearStart = Math.min(parseInt(snap.startYear)||start, start);
+  const clearEnd = Math.max(parseInt(snap.endYear)||end, end);
+  rothLabClearConversionWindow(st, clearStart, clearEnd);
+  const g = snap.globals || {};
+  st.irmaaTarget = g.irmaaTarget || '';
+  st.irmaaFillMode = g.irmaaFillMode || '';
+  st.irmaaHeadroom = g.irmaaHeadroom || 0;
+  st.irmaaMaxBracket = g.irmaaMaxBracket || '';
+  st.irmaaBracketHeadroom = g.irmaaBracketHeadroom || 0;
+  const rows = snap.rows || {};
+  st.ovIRMAA = (st.ovIRMAA || []).concat(rothLabCopyRows(rows.ovIRMAA));
+  st.ovIncomeLevel = (st.ovIncomeLevel || []).concat(rothLabCopyRows(rows.ovIncomeLevel));
+  st.ovTaxFill = (st.ovTaxFill || []).concat(rothLabCopyRows(rows.ovTaxFill));
+  return st;
+}
+function rothLabSaveCurrentAsUserScenario(){
+  const cfg = rothLabScenarioDefs();
+  rothLabSettings.userScenario = rothLabCreateUserScenario(cfg.start, cfg.end);
+  let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : [];
+  selected = selected.filter(x => x && x !== 'User Scenario');
+  if (selected.length < rothLabReportMax()) selected.push('User Scenario');
+  rothLabSettings.reportSelections = selected;
+  rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+  rothLabSaveSettings();
+  renderRothLab();
+}
+function rothLabClearUserScenario(){
+  if (!rothLabSettings.userScenario) return;
+  if (!confirm('Clear the saved User Scenario? This does not change the active plan.')) return;
+  rothLabSettings.userScenario = null;
+  rothLabSettings.reportSelections = (rothLabSettings.reportSelections || []).filter(x => x !== 'User Scenario');
+  rothLabSaveSettings();
+  renderRothLab();
 }
 function rothLabApplyAssumption(st, assumption){
   if (assumption === 'lower-growth') st.growthRate = Math.max(-0.10, (parseF(st.growthRate)||0) - 0.02);
@@ -7095,6 +7171,7 @@ function rothLabScenarioDefs(){
   const customMagi = Math.max(0, rothLabNumSetting('customMagi', 0));
   const defs = [
     {kind:'current', label:'Current Plan', plain:rothLabCurrentPlanDescription(start, end), save:false},
+    ...(rothLabSettings.userScenario ? [{kind:'user', label:'User Scenario', plain:rothLabUserScenarioDescription(rothLabSettings.userScenario), save:true, userScenario:rothLabSettings.userScenario}] : []),
     {kind:'none', label:'No Extra Roth Conversions', plain:'Suppresses Roth conversion targets in the analysis window.', save:true}
   ];
   for (let lvl = 0; lvl <= 4; lvl++) {
@@ -7141,6 +7218,7 @@ function rothLabApplyTaxFillGuard(st, def, start, end){
 }
 function rothLabApplyScenario(st, def, start, end){
   if (def.kind === 'current') return st;
+  if (def.kind === 'user') return rothLabApplyUserScenarioSnapshot(st, def.userScenario, start, end);
   rothLabClearConversionWindow(st, start, end);
   if (def.kind === 'none') {
     rothLabSuppressGlobalTargets(st, start, end, 'Roth Lab: no extra Roth conversions');
@@ -7234,13 +7312,17 @@ function rothLabIraDrainYear(rows, start){
 function rothLabIraDrainText(year){
   return year ? String(year) : 'Not in plan';
 }
-function rothLabIrmaaCreatedAmount(st, r){
+function rothLabIrmaaCreatedAmount(st, r, rows){
   if (!r) return 0;
   const state = st || S;
-  const filing = r.taxFiling || getFilingForYearForState(state, r.yr) || state.filing || 'MFJ';
-  const tables = getScaledTables(state, r.yr);
+  const paidYear = (parseInt(r.yr, 10) || 0) + 2;
+  const paidRow = (rows || []).find(x => x.yr === paidYear) || {};
+  const filing = paidRow.taxFiling || getFilingForYearForState(state, paidYear) || state.filing || 'MFJ';
+  const tables = getScaledTables(state, paidYear || r.yr);
+  const age1 = paidRow.age1 != null ? paidRow.age1 : ((r.age1 || 0) + 2);
+  const age2 = paidRow.age2 != null ? paidRow.age2 : ((r.age2 || 0) + 2);
   const hasSecond = !!(state.name2 && String(state.name2).trim()) && filing === 'MFJ';
-  return calcIRMAA(r.agi || 0, filing, r.age1 || 0, r.age2 || 0, hasSecond, tables);
+  return calcIRMAA(r.agi || 0, filing, age1, age2, hasSecond, tables);
 }
 function rothLabIrmaaLevelWithAmount(label, amount){
   return setupEsc(label || 'Base') + ' <span class="roth-irmaa-amt">(' + setupEsc(f$(amount || 0, true)) + ')</span>';
@@ -7266,8 +7348,13 @@ function rothLabHtmlJsString(v){
 }
 function rothLabReportSelections(scenarios){
   const available = (scenarios || []).map(sc => sc.summary && sc.summary.label).filter(Boolean);
-  const saved = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['No Extra Roth Conversions'];
-  return saved.filter(label => label && label !== 'Current Plan' && available.includes(label)).slice(0, 3);
+  const saved = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['Current Plan','No Extra Roth Conversions'];
+  const seen = new Set();
+  return saved.filter(label => {
+    if (!label || seen.has(label) || !available.includes(label)) return false;
+    seen.add(label);
+    return true;
+  }).slice(0, rothLabReportMax());
 }
 function rothLabToggleReportScenario(label, checked){
   const y = (typeof window !== 'undefined' && window.scrollY != null) ? window.scrollY : null;
@@ -7275,8 +7362,8 @@ function rothLabToggleReportScenario(label, checked){
   let selected = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : ['No Extra Roth Conversions'];
   selected = selected.filter(x => x && x !== 'Current Plan' && x !== label);
   if (checked) {
-    if (selected.length >= 3) {
-      alert('Choose up to 3 comparison scenarios for the advisor report. Current Plan is always included.');
+    if (selected.length >= rothLabReportMax()) {
+      alert('Choose up to '+rothLabReportMax()+' scenarios for the advisor report. Current Plan can be unchecked if another scenario tells the story better.');
       renderRothLab();
       restore();
       return;
@@ -7290,9 +7377,7 @@ function rothLabToggleReportScenario(label, checked){
 }
 function rothLabSelectedScenarios(scenarios){
   const picks = rothLabReportSelections(scenarios);
-  const current = scenarios[0] ? [scenarios[0]] : [];
-  const others = scenarios.filter((sc, idx) => idx > 0 && picks.includes(sc.summary && sc.summary.label));
-  return current.concat(others);
+  return scenarios.filter(sc => picks.includes(sc.summary && sc.summary.label));
 }
 function rothLabPrintAdvisorReport(){
   const report = document.getElementById('roth-advisor-report');
@@ -7349,9 +7434,16 @@ function rothLabSaveScenario(idx){
   if (!scenario || !scenario.summary || !scenario.summary.save) return;
   const def = scenario.def;
   const start = built.cfg.start, end = built.cfg.end;
-  if (!confirm('Save "'+def.label+'" as the Roth strategy for '+start+'-'+end+'? This replaces overlapping Roth conversion target rows in those years.')) return;
-  rothLabClearConversionWindow(S, start, end);
-  rothLabApplyScenario(S, def, start, end);
+  if (def.kind === 'user') {
+    const snapStart = (def.userScenario && def.userScenario.startYear) || start;
+    const snapEnd = (def.userScenario && def.userScenario.endYear) || end;
+    if (!confirm('Restore the saved User Scenario as the active Roth strategy? This replaces overlapping Roth conversion target rows for '+snapStart+'-'+snapEnd+' and restores the saved global Roth/IRMAA settings.')) return;
+    rothLabApplyUserScenarioSnapshot(S, def.userScenario, start, end);
+  } else {
+    if (!confirm('Save "'+def.label+'" as the Roth strategy for '+start+'-'+end+'? This replaces overlapping Roth conversion target rows in those years.')) return;
+    rothLabClearConversionWindow(S, start, end);
+    rothLabApplyScenario(S, def, start, end);
+  }
   saveState(S);
   showSaved();
   proj = runProjection(S);
@@ -7393,7 +7485,7 @@ function rothLabRenderReportLauncher(scenarios, cfg){
   const action = shown
     ? '<button class="btn btn-light" onclick="rothLabSet(\'showAdvisorReport\',\'0\')">Hide Advisor Report</button><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button>'
     : '<button class="btn btn-dark" onclick="rothLabSet(\'showAdvisorReport\',\'1\')">Create Advisor Report</button>';
-  return '<div class="panel roth-report-launcher"><div class="sh">Advisor Report Set</div><p style="font-size:13px;line-height:1.55;margin:0">Current Plan is always included. Choose up to 3 comparison scenarios for a concise advisor discussion.</p><div class="roth-report-selected">'+chips+'</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="roth-badge">'+picks.length+' of 3 comparisons selected</span>'+action+'</div></div>';
+  return '<div class="panel roth-report-launcher"><div class="sh">Advisor Report Set</div><p style="font-size:13px;line-height:1.55;margin:0">Current Plan starts selected, but you can uncheck it if a named scenario is clearer. Choose up to '+rothLabReportMax()+' scenarios for a concise advisor discussion.</p><div class="roth-report-selected">'+chips+'</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="roth-badge">'+picks.length+' of '+rothLabReportMax()+' scenarios selected</span>'+action+'</div></div>';
 }
 function rothLabRenderSummary(scenarios, cfg){
   if (!scenarios.length) return '<div class="panel">No Roth scenarios could be run.</div>';
@@ -7401,10 +7493,15 @@ function rothLabRenderSummary(scenarios, cfg){
   const cards = scenarios.map((sc, idx) => {
     const x = sc.summary || {};
     const selectedLabels = rothLabReportSelections(scenarios);
-    const reportPick = idx === 0
-      ? '<label class="roth-report-pick locked"><input type="checkbox" checked disabled> Advisor Report</label>'
-      : '<label class="roth-report-pick"><input type="checkbox" '+(selectedLabels.includes(x.label)?'checked':'')+' onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(x.label)+',this.checked)"> Include in Report</label>';
-    const save = x.save ? '<button class="btn btn-light btn-sm" onclick="rothLabSaveScenario('+idx+')">Save Strategy</button>' : '<span class="roth-badge">Baseline</span>';
+    const reportPick = '<label class="roth-report-pick"><input type="checkbox" '+(selectedLabels.includes(x.label)?'checked':'')+' onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(x.label)+',this.checked)"> Include in Report</label>';
+    let save = '';
+    if (sc.def && sc.def.kind === 'current') {
+      save = '<button class="btn btn-light btn-sm" onclick="rothLabSaveCurrentAsUserScenario()">Save as User Scenario</button>';
+    } else if (sc.def && sc.def.kind === 'user') {
+      save = '<button class="btn btn-light btn-sm" onclick="rothLabSaveScenario('+idx+')">Restore Strategy</button><button class="btn btn-light btn-sm" onclick="rothLabClearUserScenario()">Clear</button>';
+    } else {
+      save = x.save ? '<button class="btn btn-light btn-sm" onclick="rothLabSaveScenario('+idx+')">Save Strategy</button>' : '<span class="roth-badge">Baseline</span>';
+    }
     const delta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.finalNetWorth||0)-(base.finalNetWorth||0));
     const tierWarning = rothLabTierRank(x.peakTier) >= 5 ? '<div class="roth-warning">Crosses top IRMAA tier</div>' : '';
     return '<div class="roth-card">'+
@@ -7454,12 +7551,12 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
       const endIRA = (r.ira1||0)+(r.ira2||0);
       const endRoth = (r.roth1||0)+(r.roth2||0);
       const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
-      const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r);
+      const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
       return '<tr><td>'+r.yr+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
     }).join('');
     return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
-  return '<div class="panel roth-advisor-report" id="roth-advisor-report"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Current Plan plus up to three selected comparisons. This is designed as a discussion aid, not a recommendation. Income Tax includes federal plus state; IRMAA and Medicare premiums are shown separately.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="roth-report-notes">'+notes+'</div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax + Medicare</th><th class="r">Final IRA</th><th class="r">IRA Depleted</th><th class="r">Final Roth</th><th class="r">Final Net Worth</th><th class="r">Avg Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li><li>Would the answer change under lower growth, higher growth, or survivor planning assumptions?</li></ul>'+detailBlocks+'</div>';
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth Lab scenarios for advisor discussion. Current Plan is optional here, so you can use a clearer named scenario instead when it better represents the strategy. This is designed as a discussion aid, not a recommendation. Income Tax includes federal plus state; IRMAA and Medicare premiums are shown separately.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="roth-report-notes">'+notes+'</div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax + Medicare</th><th class="r">Final IRA</th><th class="r">IRA Depleted</th><th class="r">Final Roth</th><th class="r">Final Net Worth</th><th class="r">Avg Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li><li>Would the answer change under lower growth, higher growth, or survivor planning assumptions?</li></ul>'+detailBlocks+'</div>';
 }
 function rothLabRenderDetails(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
@@ -7484,11 +7581,11 @@ function rothLabRenderDetails(scenarios, cfg){
     const endIRA = (r.ira1||0)+(r.ira2||0);
     const endRoth = (r.roth1||0)+(r.roth2||0);
     const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
-    const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r);
+    const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
     return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.margRate||0)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td></tr>';
   }).join('');
   const emptyNote = shownRows.length ? '' : '<p style="font-size:13px;color:#6a5830">No detail rows match this selection.</p>';
-  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI. IRMAA Paid is the cash-flow tier after the lookback. Dollar amounts are shown in parentheses beside each IRMAA tier. Income Tax includes federal plus state; IRMAA is shown separately.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Marginal</th><th class="r">Effective</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI, with an estimated surcharge two years later in parentheses. IRMAA Paid is the cash-flow tier after the lookback. Income Tax includes federal plus state; IRMAA is shown separately.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Marginal</th><th class="r">Effective</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function renderRothLab(){
   rothLabEnsureSettings();
