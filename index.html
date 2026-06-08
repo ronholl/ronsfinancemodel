@@ -161,14 +161,18 @@ body:not(.advanced-on) .advanced-tab{display:none}
 .roth-scenario-step{border:1px solid var(--cream3);border-radius:8px;background:rgba(255,252,245,.86);padding:10px 12px;font-size:12.5px;line-height:1.45;color:var(--ink2)}
 .roth-scenario-step strong{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
 .roth-scenario-actions-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 10px}
-.roth-scenario-action{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--gold);border-radius:7px;padding:10px 13px;background:#1a1006;color:var(--gold3);cursor:pointer;text-decoration:none;box-shadow:0 4px 0 rgba(119,78,0,.24);line-height:1.15}
+.roth-scenario-action{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--gold);border-radius:7px;padding:10px 13px;background:#1a1006;color:var(--gold3);cursor:pointer;text-decoration:none;box-shadow:0 4px 0 rgba(119,78,0,.24);line-height:1.15;text-align:center}
 .roth-scenario-action:hover{transform:translateY(-1px);box-shadow:0 6px 0 rgba(119,78,0,.20)}
+.roth-scenario-action.primary{font-size:11px;padding:13px 16px;background:linear-gradient(180deg,#2a1907,#0f0903);color:#ffe578;border-color:#e0a91b;box-shadow:0 5px 0 rgba(119,78,0,.28),0 0 0 2px rgba(255,227,111,.18)}
 .roth-scenario-action.secondary{background:rgba(255,252,245,.95);color:var(--ink)}
+.roth-scenario-action.use{background:linear-gradient(180deg,#fffdf7,#f6edd8);color:#1f5f2a;border-color:#1f7a2e;box-shadow:0 4px 0 rgba(31,122,46,.18)}
 .roth-scenario-action.danger{border-color:#9b5b16;color:#7b320d;background:#fff8eb}
 .roth-scenario-action[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .roth-scenario-jumps{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--cream3);padding-top:10px;margin-top:8px}
 .roth-scenario-jumps span{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#80632a}
-.roth-scenario-jump{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#1f6b2d;border:1px solid rgba(31,122,46,.28);background:rgba(240,251,238,.88);border-radius:999px;padding:6px 9px;text-decoration:none}
+.roth-scenario-jump{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#1f6b2d;border:1px solid rgba(31,122,46,.28);background:rgba(240,251,238,.88);border-radius:999px;padding:6px 9px;text-decoration:none;cursor:pointer}
+button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
+.roth-custom-anchor{scroll-margin-top:230px}
 .roth-badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7c6a3a;background:rgba(214,168,44,.12);border:1px solid var(--cream3);border-radius:999px;padding:5px 9px;white-space:nowrap}
 .roth-report-pick{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--cream3);border-radius:999px;background:rgba(255,252,245,.78);padding:5px 9px;white-space:nowrap;cursor:pointer}
 .roth-report-pick input{accent-color:var(--gold);width:13px;height:13px}
@@ -200,10 +204,18 @@ body:not(.advanced-on) .advanced-tab{display:none}
 .roth-report-option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--cream3);border-left:5px solid var(--cream3);border-radius:8px;background:rgba(255,252,245,.84);padding:10px 11px;cursor:pointer;min-height:86px}
 .roth-report-option input{accent-color:var(--gold);width:16px;height:16px;margin-top:3px;flex:0 0 auto}
 .roth-report-option.selected{border-left-color:var(--green);background:linear-gradient(180deg,rgba(240,251,238,.92),rgba(255,252,245,.86))}
-.roth-report-option.disabled{opacity:.55;cursor:not-allowed}
+.roth-report-option.disabled{cursor:not-allowed}
+.roth-report-option.disabled input,.roth-report-option.disabled .roth-report-option-title,.roth-report-option.disabled .roth-report-option-desc,.roth-report-option.disabled .roth-report-option-meta{opacity:.48}
+.roth-report-option-main{min-width:0;flex:1}
 .roth-report-option-title{font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:800;line-height:1.1;color:var(--ink)}
 .roth-report-option-desc{font-size:12px;line-height:1.42;color:#6a5830;margin-top:4px}
 .roth-report-option-meta{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#76643b;margin-top:7px}
+.roth-report-option-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.roth-report-option-action{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;border:2px solid var(--gold);border-radius:6px;padding:7px 9px;background:rgba(255,252,245,.94);color:var(--ink);cursor:pointer;line-height:1.1;box-shadow:0 3px 0 rgba(119,78,0,.18)}
+.roth-report-option-action.primary{background:#1a1006;color:#ffe578;border-color:#e0a91b}
+.roth-report-option-action.use{border-color:#1f7a2e;color:#1f5f2a;background:rgba(240,251,238,.96)}
+.roth-report-option-action.danger{border-color:#9b5b16;color:#7b320d;background:#fff8eb}
+.roth-report-option-action:hover{transform:translateY(-1px);box-shadow:0 5px 0 rgba(119,78,0,.14)}
 .roth-discussion-lines{display:grid;gap:8px;margin-top:4px}
 .roth-discussion-lines div{line-height:1.48}
 .roth-discussion-lines strong{color:var(--ink)}
@@ -7624,7 +7636,7 @@ function rothLabApplyUserScenarioSnapshot(st, snap, start, end){
 }
 function rothLabSaveCurrentAsUserScenario(){
   const replacing = !!rothLabSettings.userScenario;
-  if (replacing && !confirm('Replace the saved User Scenario with the Current Plan as it looks now?')) return;
+  if (replacing && !confirm('Replace the saved User Plan with the Current Plan as it looks now?')) return;
   appPreserveScroll(() => {
     const cfg = rothLabScenarioDefs();
     rothLabSettings.userScenario = rothLabCreateUserScenario(cfg.start, cfg.end);
@@ -7639,7 +7651,7 @@ function rothLabSaveCurrentAsUserScenario(){
 }
 function rothLabClearUserScenario(){
   if (!rothLabSettings.userScenario) return;
-  if (!confirm('Clear the saved User Scenario? This does not change the active plan.')) return;
+  if (!confirm('Clear the saved User Plan? This does not change the active plan.')) return;
   appPreserveScroll(() => {
     rothLabSettings.userScenario = null;
     rothLabSettings.reportSelections = (rothLabSettings.reportSelections || []).filter(x => x !== 'User Scenario');
@@ -8059,10 +8071,10 @@ function rothLabSaveScenario(idx){
   if (def.kind === 'user') {
     const snapStart = (def.userScenario && def.userScenario.startYear) || start;
     const snapEnd = (def.userScenario && def.userScenario.endYear) || end;
-    if (!confirm('Restore the saved User Scenario as the active Roth strategy? This replaces overlapping Roth conversion target rows for '+snapStart+'-'+snapEnd+' and restores the saved global Roth/IRMAA settings.')) return;
+    if (!confirm('Restore the saved User Plan as the active Roth strategy? This replaces overlapping Roth conversion target rows for '+snapStart+'-'+snapEnd+' and restores the saved global Roth/IRMAA settings.')) return;
     rothLabApplyUserScenarioSnapshot(S, def.userScenario, start, end);
   } else {
-    if (!confirm('Save "'+def.label+'" as the Roth strategy for '+start+'-'+end+'? This replaces overlapping Roth conversion target rows in those years.')) return;
+    if (!confirm('Use "'+def.label+'" as the active Roth strategy for '+start+'-'+end+'? This replaces overlapping Roth conversion target rows in those years.')) return;
     rothLabClearConversionWindow(S, start, end);
     rothLabApplyScenario(S, def, start, end);
   }
@@ -8093,7 +8105,7 @@ function rothLabRenderControls(cfg){
   const assumptionOptions = '<option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds</option>';
   const detailOptions = '<option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option>';
   const currentPlan = rothLabCurrentPlanDescription(cfg.start, cfg.end);
-  const userScenario = rothLabSettings.userScenario ? rothLabUserScenarioDescription(rothLabSettings.userScenario) : 'No saved User Scenario yet. Use Save as User Scenario on the Current Plan card when you want to freeze the current strategy before trying something else.';
+  const userScenario = rothLabSettings.userScenario ? rothLabUserScenarioDescription(rothLabSettings.userScenario) : 'No saved User Plan yet. Use Save Current as User Plan on the Current Plan card when you want to freeze the current strategy before trying something else.';
   return '<div class="panel roth-lab-setup"><div class="sh">Roth Analysis Lab</div>'+ 
     '<p class="roth-lab-lede">Compare Roth conversion stopping points without changing the saved plan. Pick the years and guardrails once, then use the tabs below to compare scenarios, inspect annual detail, or create an advisor report.</p>'+ 
     '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Plain-English Goal</div><div class="setup-check-body">This asks: if we intentionally create taxable income by moving IRA money into Roth, where is the useful stopping point? The right answer usually balances current taxes, Medicare IRMAA, future IRA pressure, Roth growth, survivor exposure, and ending net worth.</div></div>'+ 
@@ -8109,7 +8121,7 @@ function rothLabRenderControls(cfg){
       setupField('Optional Federal Bracket Cap', rothLabControlSelect('maxBracket', bracketOptions), 'Extra ceiling for Roth scenarios. If an IRMAA guardrail is selected, this list only shows bracket targets below that guardrail. 35% stops before 37%; 37% has no upper ceiling and becomes a no-tax-ceiling stress test.')+
       setupField('Tax-Fill IRMAA Guardrail', rothLabControlSelect('taxFillIrmaaGuard', guardOptions), 'Optional safety rail for the bracket-fill scenario. No guardrail means the tax-fill scenario ignores Medicare tiers; choosing a tier adds a safer guarded version.')+
       setupField('If Income Already Exceeds IRMAA Target', rothLabControlSelect('fillMode', fillModeOptions), 'For generated IRMAA scenarios. No extra fill stops adding Roth conversions; Fill to next tier intentionally uses the next Medicare band; Use Roth above target routes funding needs above the target to Roth withdrawals instead of extra taxable IRA draws.')+
-    '</div><div class="roth-control-section">Optional Custom Target</div><div class="roth-control-grid">'+
+    '</div><div class="roth-control-section roth-custom-anchor" id="roth-scenario-custom-control">Optional Custom Target</div><div class="roth-control-grid">'+
       setupField('Custom MAGI Target ($)', rothLabControlNumber('customMagi', cfg.customMagi || '', 'Optional'), 'Adds one scenario that converts only up to this total income ceiling. Use this when an advisor gives you a specific MAGI target.')+
     '</div></div>';
 }
@@ -8156,27 +8168,38 @@ function rothLabRenderFieldGuide(){
   ];
   return '<div class="panel"><div class="sh">Roth Lab Field Guide</div><p style="font-size:13px;line-height:1.6;margin:0 0 10px;color:#6a5830">Use this when a field name feels technical. The short version: set the years, pick any guardrails you care about, compare scenarios, then print only the few worth discussing.</p><div class="roth-help-grid">'+cards.map(c => '<div class="roth-help-card"><strong>'+setupEsc(c[0])+'</strong>'+setupEsc(c[1])+'</div>').join('')+'</div></div>';
 }
+function rothLabJumpTo(id, fallbackId){
+  const el = document.getElementById(id) || (fallbackId ? document.getElementById(fallbackId) : null);
+  if (!el) return;
+  const hdr = document.getElementById('hdr');
+  const rothTabs = document.querySelector('.roth-tabs-shell');
+  let offset = 16;
+  if (hdr) offset += hdr.getBoundingClientRect().height || 0;
+  if (rothTabs) offset += rothTabs.getBoundingClientRect().height || 0;
+  const top = Math.max(0, window.pageYOffset + el.getBoundingClientRect().top - offset);
+  window.scrollTo({top, behavior:'smooth'});
+}
 function rothLabRestoreUserScenarioFromGuide(){
   const built = rothLabBuildScenarios();
   const idx = (built.scenarios || []).findIndex(sc => sc.def && sc.def.kind === 'user');
-  if (idx < 0) { alert('No User Scenario has been saved yet. Save the Current Plan first, then restore it later after experimenting.'); return; }
+  if (idx < 0) { alert('No User Plan has been saved yet. Save the Current Plan first, then restore it later after experimenting.'); return; }
   rothLabSaveScenario(idx);
 }
 function rothLabRenderScenarioGuide(){
   const hasUser = !!rothLabSettings.userScenario;
-  const saveLabel = hasUser ? 'Save / Replace User Scenario' : 'Save Current as User Scenario';
+  const saveLabel = hasUser ? 'Save / Replace User Plan' : 'Save Current as User Plan';
   const restoreBtn = hasUser
-    ? '<button type="button" class="roth-scenario-action secondary" onclick="rothLabRestoreUserScenarioFromGuide()">Restore User Scenario</button>'
-    : '<button type="button" class="roth-scenario-action secondary" disabled title="Save a user scenario first">Restore User Scenario</button>';
+    ? '<button type="button" class="roth-scenario-action secondary" onclick="rothLabRestoreUserScenarioFromGuide()">Restore User Plan</button>'
+    : '<button type="button" class="roth-scenario-action secondary" disabled title="Save a user plan first">Restore User Plan</button>';
   const clearBtn = hasUser
-    ? '<button type="button" class="roth-scenario-action danger" onclick="rothLabClearUserScenario()">Clear User Scenario</button>'
-    : '<button type="button" class="roth-scenario-action danger" disabled title="Save a user scenario first">Clear User Scenario</button>';
-  const savedJump = hasUser ? '<a class="roth-scenario-jump" href="#roth-scenario-user">Saved user scenario</a>' : '';
+    ? '<button type="button" class="roth-scenario-action danger" onclick="rothLabClearUserScenario()">Clear User Plan</button>'
+    : '<button type="button" class="roth-scenario-action danger" disabled title="Save a user plan first">Clear User Plan</button>';
+  const savedJump = hasUser ? '<button type="button" class="roth-scenario-jump" onclick="rothLabJumpTo(&quot;roth-scenario-user&quot;)">Saved user scenario</button>' : '';
   return '<div class="panel roth-scenario-guide"><h3>Use Scenarios Without Losing Your Plan</h3>'+ 
-    '<p class="roth-scenario-guide-copy">This tab is a sandbox. Save the current Roth setup as a User Scenario, compare other choices, then apply only the strategy you actually want. The Advisor Report checkboxes live on the Advisor Report tab, so this screen can focus on comparing and saving strategies.</p>'+ 
-    '<div class="roth-scenario-steps"><div class="roth-scenario-step"><strong>1. Save a bookmark</strong>Save the current plan before experimenting. That gives you a one-click restore point.</div><div class="roth-scenario-step"><strong>2. Compare families</strong>IRMAA tiers are usually for retirees or near-retirees. Tax bracket fills are usually for working users or anyone not focused on Medicare.</div><div class="roth-scenario-step"><strong>3. Apply carefully</strong>Save Strategy replaces Roth target rows for the lab window. Restore User Scenario puts your saved Roth setup back.</div></div>'+ 
-    '<div class="roth-scenario-actions-top"><button type="button" class="roth-scenario-action" onclick="rothLabSaveCurrentAsUserScenario()">'+setupEsc(saveLabel)+'</button>'+restoreBtn+clearBtn+'</div>'+ 
-    '<div class="roth-scenario-jumps"><span>Jump to</span><a class="roth-scenario-jump" href="#roth-scenario-current">Current plan</a>'+savedJump+'<a class="roth-scenario-jump" href="#roth-scenario-irmaa">IRMAA tiers</a><a class="roth-scenario-jump" href="#roth-scenario-tax">Tax bracket choices</a><a class="roth-scenario-jump" href="#roth-scenario-custom">Custom target</a></div>'+ 
+    '<p class="roth-scenario-guide-copy">This tab is a sandbox. Save the current Roth setup as a User Plan, compare other choices, then use only the strategy you actually want. The Advisor Report checkboxes live on the Advisor Report tab, so this screen can focus on comparing and applying strategies.</p>'+ 
+    '<div class="roth-scenario-steps"><div class="roth-scenario-step"><strong>1. Save a bookmark</strong>Save the current plan before experimenting. That gives you a one-click restore point.</div><div class="roth-scenario-step"><strong>2. Compare families</strong>IRMAA tiers are usually for retirees or near-retirees. Tax bracket fills are usually for working users or anyone not focused on Medicare.</div><div class="roth-scenario-step"><strong>3. Use a strategy</strong>Use This Strategy replaces Roth target rows for the lab window. Restore User Plan puts your saved Roth setup back.</div></div>'+ 
+    '<div class="roth-scenario-actions-top"><button type="button" class="roth-scenario-action primary" onclick="rothLabSaveCurrentAsUserScenario()">'+setupEsc(saveLabel)+'</button>'+restoreBtn+clearBtn+'</div>'+ 
+    '<div class="roth-scenario-jumps"><span>Jump to</span><button type="button" class="roth-scenario-jump" onclick="rothLabJumpTo(&quot;roth-scenario-current&quot;)">Current plan</button>'+savedJump+'<button type="button" class="roth-scenario-jump" onclick="rothLabJumpTo(&quot;roth-scenario-irmaa&quot;)">IRMAA tiers</button><button type="button" class="roth-scenario-jump" onclick="rothLabJumpTo(&quot;roth-scenario-tax&quot;)">Tax bracket choices</button><button type="button" class="roth-scenario-jump" onclick="rothLabJumpTo(&quot;roth-scenario-custom&quot;,&quot;roth-scenario-custom-control&quot;)">Custom target</button></div>'+ 
     '</div>';
 }
 function rothLabScenarioLabelExists(labels, label){
@@ -8206,6 +8229,18 @@ function rothLabSetReportPreset(kind){
     renderRothLab();
   });
 }
+function rothLabReportCardAction(sc, idx){
+  const kind = sc && sc.def && sc.def.kind;
+  if (kind === 'current') {
+    return '<button type="button" class="roth-report-option-action primary" onclick="event.preventDefault();event.stopPropagation();rothLabSaveCurrentAsUserScenario()">'+(rothLabSettings.userScenario?'Save / Replace User Plan':'Save Current as User Plan')+'</button>';
+  }
+  if (kind === 'user') {
+    return '<button type="button" class="roth-report-option-action primary" onclick="event.preventDefault();event.stopPropagation();rothLabSaveScenario('+idx+')">Restore User Plan</button><button type="button" class="roth-report-option-action danger" onclick="event.preventDefault();event.stopPropagation();rothLabClearUserScenario()">Clear</button>';
+  }
+  return sc && sc.summary && sc.summary.save
+    ? '<button type="button" class="roth-report-option-action use" onclick="event.preventDefault();event.stopPropagation();rothLabSaveScenario('+idx+')">Use This Strategy</button>'
+    : '<span class="roth-badge">Baseline</span>';
+}
 function rothLabRenderReportScenarioPicker(scenarios){
   const selectedLabels = rothLabReportSelections(scenarios);
   const max = rothLabReportMax();
@@ -8217,9 +8252,9 @@ function rothLabRenderReportScenarioPicker(scenarios){
     const disabled = !checked && selectedCount >= max;
     const first = (sc.rows || []).find(r => r.yr === ((rothLabScenarioDefs && rothLabScenarioDefs().start) || S.startYear)) || {};
     const meta = first.yr ? 'First AGI '+f$(first.agi||0,true)+' · Roth '+f$(first.rothConv||0,true) : 'Available scenario';
-    return '<label class="roth-report-option '+(checked?'selected ':'')+(disabled?'disabled':'')+'"><input type="checkbox" '+(checked?'checked ':'')+(disabled?'disabled ':'')+'onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(label)+',this.checked)"><div><div class="roth-report-option-title">'+setupEsc(label)+'</div><div class="roth-report-option-desc">'+setupEsc(x.plain || '')+'</div><div class="roth-report-option-meta">'+setupEsc(meta)+'</div></div></label>';
+    return '<label class="roth-report-option '+(checked?'selected ':'')+(disabled?'disabled':'')+'"><input type="checkbox" '+(checked?'checked ':'')+(disabled?'disabled ':'')+'onchange="rothLabToggleReportScenario('+rothLabHtmlJsString(label)+',this.checked)"><div class="roth-report-option-main"><div class="roth-report-option-title">'+setupEsc(label)+'</div><div class="roth-report-option-desc">'+setupEsc(x.plain || '')+'</div><div class="roth-report-option-meta">'+setupEsc(meta)+'</div><div class="roth-report-option-actions">'+rothLabReportCardAction(sc, idx)+'</div></div></label>';
   }).join('');
-  return '<div class="roth-control-section">Choose Report Scenarios</div><p style="font-size:13px;line-height:1.55;margin:0 0 8px;color:#6a5830">Select up to '+max+' scenarios, or start with a preset. Retiree selects IRMAA Base through Tier 4 and clears the optional bracket cap so the tiers compare cleanly. Working / Tax selects Current Plan, No Extra Roth Conversions, tax-fill scenarios, and a federal cap only when you have chosen one.</p><div class="roth-report-option-grid">'+options+'</div>';
+  return '<div class="roth-control-section">Choose Report Scenarios</div><p style="font-size:13px;line-height:1.55;margin:0 0 8px;color:#6a5830">Select up to '+max+' scenarios, or start with a preset. The checkbox includes a scenario in the advisor report; the button on each card applies or restores that strategy for testing.</p><div class="roth-report-option-grid">'+options+'</div>';
 }
 function rothLabRenderReportLauncher(scenarios, cfg){
   const picks = rothLabReportSelections(scenarios);
@@ -8245,11 +8280,11 @@ function rothLabRenderSummary(scenarios, cfg){
     const idAttr = cardId ? ' id="'+cardId+'"' : '';
     let save = '';
     if (sc.def && sc.def.kind === 'current') {
-      save = '<button type="button" class="roth-scenario-action" onclick="rothLabSaveCurrentAsUserScenario()">'+(rothLabSettings.userScenario?'Save / Replace User Scenario':'Save as User Scenario')+'</button>';
+      save = '<button type="button" class="roth-scenario-action primary" onclick="rothLabSaveCurrentAsUserScenario()">'+(rothLabSettings.userScenario?'Save / Replace User Plan':'Save Current as User Plan')+'</button>';
     } else if (sc.def && sc.def.kind === 'user') {
-      save = '<button type="button" class="roth-scenario-action" onclick="rothLabSaveScenario('+idx+')">Restore Strategy</button><button type="button" class="roth-scenario-action danger" onclick="rothLabClearUserScenario()">Clear</button>';
+      save = '<button type="button" class="roth-scenario-action" onclick="rothLabSaveScenario('+idx+')">Restore User Plan</button><button type="button" class="roth-scenario-action danger" onclick="rothLabClearUserScenario()">Clear</button>';
     } else {
-      save = x.save ? '<button type="button" class="roth-scenario-action secondary" onclick="rothLabSaveScenario('+idx+')">Save Strategy</button>' : '<span class="roth-badge">Baseline</span>';
+      save = x.save ? '<button type="button" class="roth-scenario-action use" onclick="rothLabSaveScenario('+idx+')">Use This Strategy</button>' : '<span class="roth-badge">Baseline</span>';
     }
     const delta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.finalNetWorth||0)-(base.finalNetWorth||0));
     const tierWarning = rothLabTierRank(x.peakTier) >= 5 ? '<div class="roth-warning">Crosses top IRMAA tier</div>' : '';
