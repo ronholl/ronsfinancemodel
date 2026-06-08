@@ -7498,10 +7498,23 @@ function rothLabEnsureSettings(){
     if (saved && typeof saved === 'object') rothLabSettings = Object.assign(rothLabSettings, saved);
   } catch(e) {}
   let changed = false;
-  if (rothLabSettings.reportSelectionMode !== 'selectable-current-v1') {
-    const prior = Array.isArray(rothLabSettings.reportSelections) ? rothLabSettings.reportSelections.slice() : [];
-    rothLabSettings.reportSelections = ['Current Plan'].concat(prior.filter(x => x && x !== 'Current Plan')).slice(0, rothLabReportMax());
-    rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+  if (!Array.isArray(rothLabSettings.reportSelections)) {
+    rothLabSettings.reportSelections = ['Current Plan','No Extra Roth Conversions'];
+    changed = true;
+  } else {
+    const seenSelections = new Set();
+    const cleanedSelections = rothLabSettings.reportSelections.filter(label => {
+      if (!label || seenSelections.has(label)) return false;
+      seenSelections.add(label);
+      return true;
+    }).slice(0, rothLabReportMax());
+    if (cleanedSelections.length !== rothLabSettings.reportSelections.length || cleanedSelections.some((x,i) => x !== rothLabSettings.reportSelections[i])) {
+      rothLabSettings.reportSelections = cleanedSelections;
+      changed = true;
+    }
+  }
+  if (rothLabSettings.reportSelectionMode !== 'preserve-report-selections-v2') {
+    rothLabSettings.reportSelectionMode = 'preserve-report-selections-v2';
     changed = true;
   }
   if (rothLabSettings.taxFillGuardMode !== 'no-guard-default-v1') {
@@ -7602,7 +7615,7 @@ function rothLabSaveCurrentAsUserScenario(){
     selected = selected.filter(x => x && x !== 'User Scenario');
     if (selected.length < rothLabReportMax()) selected.push('User Scenario');
     rothLabSettings.reportSelections = selected;
-    rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+    rothLabSettings.reportSelectionMode = 'preserve-report-selections-v2';
     rothLabSaveSettings();
     renderRothLab();
   });
@@ -7947,7 +7960,7 @@ function rothLabToggleReportScenario(label, checked){
       selected.push(label);
     }
     rothLabSettings.reportSelections = selected;
-    rothLabSettings.reportSelectionMode = 'selectable-current-v1';
+    rothLabSettings.reportSelectionMode = 'preserve-report-selections-v2';
     rothLabSaveSettings();
     renderRothLab();
   });
@@ -8145,7 +8158,7 @@ function rothLabSetReportPreset(kind){
     }
     if (!selected.length) return;
     rothLabSettings.reportSelections = selected;
-    rothLabSettings.reportSelectionMode = kind + '-preset-v1';
+    rothLabSettings.reportSelectionMode = 'preserve-report-selections-v2';
     rothLabSaveSettings();
     renderRothLab();
   });
