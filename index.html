@@ -783,7 +783,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;margin-top:4px">MEDICARE / IRMAA</div>
         <div class="field-row">
           <div class="field"><label>IRMAA Target Cap</label><select id="i-irmaat" onchange="IC()"></select><div class="note">Select the Medicare income tier ceiling to target. Off disables global IRMAA targeting unless Max Bracket is selected.</div></div>
-          <div class="field"><label>IRMAA Fill Mode</label><select id="i-irmaa-fillmode" onchange="IC()"><option value="">No extra fill</option><option value="F">Fill to next tier</option><option value="R">Use Roth above target</option></select><div class="note">When income is already above the selected target, this controls whether to leave it alone, fill toward the next tier, or use Roth withdrawals instead of taxable draws.</div></div>
+          <div class="field"><label>IRMAA Fill Mode</label><select id="i-irmaa-fillmode" onchange="IC()"><option value="">No extra fill</option><option value="F">Fill to next tier</option><option value="R">Use Roth above target</option></select><div class="note">When income is already above the selected target, No extra fill leaves normal funding alone, Fill moves toward the next tier, and Roth mode uses Roth withdrawals instead of extra taxable draws.</div></div>
           <div class="field"><label>IRMAA Headroom ($)</label><input type="number" id="i-irmaah" oninput="IC()"><div class="note">Stay this far below the selected IRMAA tier limit</div></div>
         </div>
         <div class="field-row">
@@ -2576,13 +2576,12 @@ function runProjection(S) {
     let   remainingShortfall = Math.max(0, totalRequired - step1Total);
     const shortfall_inner = remainingShortfall;
 
-    // When an IRMAA/MAGI/bracket target is active, IRA-first funding should not
-    // accidentally push taxable income above that target. It may use IRA dollars
-    // up to the target, then continue the normal waterfall. In Roth-above-target
-    // mode, remaining funding need is routed to Roth before taxable sources.
+    // Only the explicit Roth-above-target mode should change normal cash-flow funding.
+    // No-extra-fill means no added conversions and no hidden cap on IRA draws needed
+    // for spending/tax funding, so scenario comparisons stay neutral when Roth Conv is $0.
     const fundingTargetInfo = getProjectionIncomeTargetInfo(S, yr, taxFiling, tables);
-    const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode !== 'F');
-    const useRothAboveTargetFunding = !!(protectTaxableFunding && fundingTargetInfo.fillMode === 'R');
+    const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode === 'R');
+    const useRothAboveTargetFunding = protectTaxableFunding;
     const qualDivsForFunding = cashInterest + totalSecDivs;
     const estimateAGIForFundingDraws = (ira1Extra, ira2Extra, preAddl1, preAddl2, secExtra) => {
       const taxableStkGainEst = Math.max(0, secExtra || 0) * stkGainPct;
@@ -8107,7 +8106,7 @@ function rothLabRenderControls(cfg){
       setupField('Federal Bracket Cushion ($)', rothLabControlNumber('bracketHeadroom', cfg.bracketHeadroom), 'Stay this far below the selected federal bracket target. This avoids accidentally crossing a tax bracket by a small amount.')+
       setupField('Optional Federal Bracket Cap', rothLabControlSelect('maxBracket', bracketOptions), 'Extra ceiling for Roth scenarios. If an IRMAA guardrail is selected, this list only shows bracket targets below that guardrail. 35% stops before 37%; 37% has no upper ceiling and becomes a no-tax-ceiling stress test.')+
       setupField('Tax-Fill IRMAA Guardrail', rothLabControlSelect('taxFillIrmaaGuard', guardOptions), 'Optional safety rail for the bracket-fill scenario. No guardrail means the tax-fill scenario ignores Medicare tiers; choosing a tier adds a safer guarded version.')+
-      setupField('If Income Already Exceeds IRMAA Target', rothLabControlSelect('fillMode', fillModeOptions), 'For generated IRMAA scenarios. No extra fill stops adding Roth conversions; Fill to next tier intentionally uses the next Medicare band; Use Roth above target routes funding needs above the target to Roth withdrawals instead of extra taxable IRA draws.')+
+      setupField('If Income Already Exceeds IRMAA Target', rothLabControlSelect('fillMode', fillModeOptions), 'For generated IRMAA scenarios. No extra fill stops adding Roth conversions and leaves normal funding alone; Fill to next tier intentionally uses the next Medicare band; Use Roth above target routes funding needs above the target to Roth withdrawals instead of extra taxable IRA draws.')+
     '</div><div class="roth-control-section roth-custom-anchor" id="roth-scenario-custom-control">Optional Custom Target</div><div class="roth-control-grid">'+
       setupField('Custom MAGI Target ($)', rothLabControlNumber('customMagi', cfg.customMagi || '', 'Optional'), 'Adds one scenario that converts only up to this total income ceiling. Use this when an advisor gives you a specific MAGI target.')+
     '</div></div>';
@@ -8148,7 +8147,7 @@ function rothLabRenderFieldGuide(){
     ['Federal Bracket Cushion','This keeps taxable income below a chosen federal bracket line by a small amount. It is useful when you want to fill most of a bracket but avoid crossing it by mistake.'],
     ['Optional Federal Bracket Cap','This is an extra ceiling for IRMAA scenarios. If the IRMAA tier would allow more conversion than you want, the bracket cap stops earlier. Choose 35% to stop before 37%; 37% has no upper cap.'],
     ['Tax-Fill IRMAA Guardrail','Tax-fill means fill the bracket you are already in. No guardrail ignores Medicare tiers. Selecting an IRMAA tier adds a safer version that stops if Medicare income would get too high.'],
-    ['IRMAA Overflow Choice','Controls what generated IRMAA scenarios do if normal income is already above the selected target. No extra fill is the conservative default; Roth above target tries to avoid extra taxable withdrawals; fill to next tier intentionally uses more room.'],
+    ['IRMAA Overflow Choice','Controls what generated IRMAA scenarios do if normal income is already above the selected target. No extra fill is neutral: it does not add conversions or change normal funding. Roth above target intentionally uses Roth withdrawals above the target; Fill to next tier intentionally uses more income room.'],
     ['Custom MAGI Target','MAGI means Medicare/tax income for this purpose. Use a custom target when you want to test one exact income number, such as an advisor-suggested target.'],
     ['Assumption Lens','This reruns every scenario under one what-if assumption, such as lower growth or frozen IRMAA thresholds. It helps show whether a strategy is fragile or still reasonable.'],
     ['Detail Years','This controls how much annual detail appears in Year-by-Year and the advisor report. Five years is often enough for a meeting; Full plan or Until IRA drained helps when the ending matters.']
@@ -9290,7 +9289,7 @@ function renderSetupMedicareStep(){
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Roth conversion in plain English</div><div class="setup-check-body">A Roth conversion moves money from a traditional IRA to a Roth IRA. It creates taxable income now, but can reduce future RMDs and future taxable income. These fields tell the model how much income room it is allowed to use for conversions.</div></div>',
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">How the limits work together</div><div class="setup-check-body">The model first calculates normal income. If there is room under your selected IRMAA target and tax bracket cap, it can fill that room with Roth conversions. Headroom leaves a safety cushion below the limit. When both IRMAA and bracket limits are set, the lower practical limit wins.</div></div>',
     setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true,note:'The Medicare MAGI ceiling to target. Off means no global IRMAA ceiling; a Max Bracket can still guide Roth conversions.'}),
-    setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{note:'What to do when normal income is already above the selected IRMAA target. No extra fill leaves it alone; Fill to next tier uses the next threshold; Use Roth above target can prefer Roth withdrawals instead of additional taxable draws.'}),
+    setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{note:'What to do when normal income is already above the selected IRMAA target. No extra fill leaves conversions and normal funding alone; Fill to next tier uses the next threshold; Use Roth above target can prefer Roth withdrawals instead of additional taxable draws.'}),
     setupInput('IRMAA Headroom ($)','irmaaHeadroom','number',S.irmaaHeadroom,{min:0,note:'A cushion below the selected IRMAA target. Example: $4,000 means stop about $4,000 under the Medicare income tier.'}),
     setupSelect('IRMAA Max Bracket','irmaaMaxBracket',S.irmaaMaxBracket || '',getMaxBracketOptions({startYear:S.startYear, level:S.irmaaTarget}),{note:'Optional federal tax bracket ceiling for Roth conversions. Use this when you want conversions to stop before entering a higher ordinary-income bracket.'}),
     setupInput('Bracket Headroom ($)','irmaaBracketHeadroom','number',S.irmaaBracketHeadroom || 0,{min:0,note:'A cushion below the selected federal bracket limit. This is separate from IRMAA headroom.'}),
