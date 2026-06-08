@@ -200,6 +200,36 @@ body:not(.advanced-on) .advanced-tab{display:none}
 .roth-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:10px}
 .roth-help-card{border:1px solid var(--cream3);border-radius:7px;background:rgba(255,252,245,.88);padding:11px 12px;line-height:1.5;color:var(--ink2);font-size:12.5px}
 .roth-help-card strong{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+
+/* IRMAA watchlist */
+.irmaa-watch-panel{margin:14px 0 22px;border-left:5px solid var(--warn);background:linear-gradient(180deg,rgba(255,248,229,.92),rgba(255,252,245,.78))}
+.irmaa-watch-panel.good{border-left-color:var(--green);background:linear-gradient(180deg,rgba(241,250,238,.92),rgba(255,252,245,.78))}
+.irmaa-watch-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.irmaa-watch-title .sh{margin:0}
+.irmaa-watch-scenario{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#705a22;background:rgba(214,168,44,.12);border:1px solid var(--cream3);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.irmaa-watch-copy{font-size:12.5px;line-height:1.5;color:#6a5830;margin:0 0 10px;max-width:1050px}
+.irmaa-watch-empty{font-size:13px;line-height:1.5;color:var(--green);margin:4px 0 0}
+.irmaa-watch-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid var(--cream3);border-radius:9px;background:rgba(255,252,245,.88);padding:10px 12px;margin-top:8px}
+.irmaa-watch-summary-main{font-size:13px;line-height:1.45;color:var(--ink2)}
+.irmaa-watch-summary-main strong{color:var(--warn)}
+.irmaa-watch-years{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:#705a22;background:rgba(214,168,44,.12);border:1px solid var(--cream3);border-radius:999px;padding:5px 8px}
+.irmaa-watch-details{margin-top:8px}
+.irmaa-watch-details summary{cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);border:2px solid var(--gold);border-radius:6px;background:rgba(255,252,245,.88);padding:7px 10px;list-style:none}
+.irmaa-watch-details summary::-webkit-details-marker{display:none}
+.irmaa-watch-details summary::before{content:'+';font-weight:900;color:var(--gold)}
+.irmaa-watch-details[open] summary::before{content:'-'}
+.irmaa-watch-details[open] .irmaa-watch-table-wrap{margin-top:9px}
+.irmaa-watch-table-wrap{overflow-x:auto;border:1px solid var(--cream3);border-radius:8px;background:rgba(255,252,245,.84)}
+.irmaa-watch-table{width:100%;min-width:760px;table-layout:fixed;border-collapse:separate;border-spacing:0;font-family:'Lora',Georgia,serif;font-size:12.5px;line-height:1.35;font-variant-numeric:tabular-nums}
+.irmaa-watch-table th{background:#fff3d6;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;border-bottom:2px solid var(--gold2);text-align:left;white-space:nowrap}
+.irmaa-watch-table td{padding:8px 10px;border-bottom:1px solid var(--cream3);vertical-align:top;white-space:normal;overflow-wrap:anywhere}
+.irmaa-watch-table .r{text-align:right;white-space:nowrap;overflow-wrap:normal}
+.irmaa-watch-status{line-height:1.38}
+.irmaa-watch-tier{font-weight:850;color:var(--warn)}
+.irmaa-watch-meta{color:#7b6842;font-size:11px;line-height:1.38}
+.irmaa-watch-action{font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.42;color:#624812}
+.irmaa-watch-more{font-size:11.5px;color:#6a5830;margin:8px 0 0;font-style:italic}
+@media(max-width:760px){.irmaa-watch-table{min-width:720px}.irmaa-watch-title{display:block}.irmaa-watch-scenario{display:inline-block;margin-top:6px}}
 @media(max-width:980px){.roth-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.roth-tabs-shell{top:76px}}
 @media(max-width:760px){.roth-tabs{grid-template-columns:1fr}.roth-tabs-shell{position:relative;top:auto}.roth-tabs-head{align-items:flex-start;flex-direction:column}.roth-plan-snapshot-grid{grid-template-columns:1fr}}
 .roth-report-launcher{border-left:5px solid var(--green);background:linear-gradient(180deg,rgba(247,252,244,.90),rgba(255,250,238,.80))}
@@ -1562,6 +1592,58 @@ function getIRMAAThresholdsForFiling(filing, tables) {
   if (filing === 'HOH') return tables.irmaaTHOH || tables.irmaaTSingle || tables.irmaaT || DEFAULT_TAX_TABLE_2026.irmaaThreshHOH;
   return tables.irmaaT || DEFAULT_TAX_TABLE_2026.irmaaThresh;
 }
+function getProjectionIncomeTargetInfo(state, yr, filing, tables) {
+  const A = state || S;
+  const incomeRow = (A.ovIncomeLevel || []).find(r => {
+    const s = parseInt(r.startYear) || 0, e = parseInt(r.endYear) || 9999;
+    return yr >= s && yr <= e;
+  }) || null;
+  const incomeLvlOv = resolveOverrideNonBlank(A.ovIncomeLevel, yr, 'magiTarget');
+  if (incomeRow && incomeLvlOv != null) {
+    const incomeHeadroom = parseF(incomeRow.headroom) || 0;
+    const targetIncome = parseF(incomeLvlOv) - incomeHeadroom;
+    return targetIncome > 0 && isFinite(targetIncome)
+      ? {active:true, source:'income', targetIncome, fillMode:'', label:'MAGI target'}
+      : null;
+  }
+
+  const irmaaOvRow = (A.ovIRMAA || []).find(r => {
+    const s = parseInt(r.startYear) || 0, e = parseInt(r.endYear) || 9999;
+    return yr >= s && yr <= e;
+  }) || null;
+  const irmaaOvExists = !!irmaaOvRow;
+  const irmaaLvlOv = resolveOverrideNonBlank(A.ovIRMAA, yr, 'level');
+  const irmaaTargetRaw = irmaaLvlOv != null ? irmaaLvlOv : irmaaOvExists ? '' : A.irmaaTarget;
+  const irmaaTarget = parseIRMAATargetLevel(irmaaTargetRaw);
+  const fillMode = irmaaOvRow ? (irmaaOvRow.fillMode || '') : (A.irmaaFillMode || '');
+  const thresholds = getIRMAAThresholdsForFiling(filing, tables) || [];
+  const irmaaHeadroom = irmaaOvRow ? (parseF(irmaaOvRow.headroom) ?? (A.irmaaHeadroom || 0)) : (A.irmaaHeadroom || 0);
+  let targetIncome = null;
+  let label = '';
+  if (irmaaTarget != null && thresholds.length) {
+    const idx = Math.min(irmaaTarget + 1, thresholds.length - 1);
+    targetIncome = (thresholds[idx] || Infinity) - irmaaHeadroom;
+    label = (IRMAA_TARGET_NAMES[irmaaTarget] || ('Tier ' + irmaaTarget)) + ' target';
+  }
+
+  const maxBracketRaw = irmaaOvRow ? (irmaaOvRow.maxBracket || '') : (A.irmaaMaxBracket || '');
+  const maxBracketCeil = getMaxBracketCeiling(maxBracketRaw, filing, tables);
+  if (maxBracketCeil != null) {
+    const bracketHeadroom = irmaaOvRow
+      ? (parseF(irmaaOvRow.bracketHeadroom) || 0)
+      : (parseF(A.irmaaBracketHeadroom) || 0);
+    const bracketTarget = maxBracketCeil - bracketHeadroom;
+    if (targetIncome == null || bracketTarget < targetIncome) {
+      targetIncome = bracketTarget;
+      const pct = Math.round((parseF(maxBracketRaw) || 0) * 100);
+      label = pct ? (pct + '% federal bracket cap') : 'Federal bracket cap';
+    }
+  }
+
+  return targetIncome != null && isFinite(targetIncome) && targetIncome > 0
+    ? {active:true, source:'irmaa', targetIncome, fillMode, label}
+    : null;
+}
 function getIRMAALevelOptions(row, filing) {
   const yr = parseInt(row?.startYear) || S.startYear || new Date().getFullYear();
   const rowFiling = filing || getFilingForYearForState(S, yr) || S.filing || 'MFJ';
@@ -2427,6 +2509,12 @@ function runProjection(S) {
     const k401Emp2Amt = w2Base2 * k401e2;
     const netAtWages = atWages; // take-home already net — no further deduction
 
+    // W-2 wages in AGI = gross wages minus pre-tax 401k contributions.
+    // Calculated before the waterfall because target-protected funding estimates AGI while choosing account draws.
+    const w2AGI1Funding = grossWages1 > 0 ? grossWages1 - k401Contrib1Trad : 0;
+    const w2AGI2Funding = grossWages2 > 0 ? grossWages2 - k401Contrib2Trad : 0;
+    const w2AGIFunding  = w2AGI1Funding + w2AGI2Funding;
+
     // ── Mandatory funding (step 1 of waterfall) ───────────────────────────
     // SS + RMDs + Inh draw + dividends + wages — these come in regardless
     const mandatoryFunding = grossSS + rmd1 + rmd2 + pre2020InhDraw + post2020InhDraw + divs + netAtWages + ptWages; // SS, RMDs, pre-2020 inherited RMDs, dividends, wages = W-2 take-home + self-employ
@@ -2461,6 +2549,38 @@ function runProjection(S) {
     let   remainingShortfall = Math.max(0, totalRequired - step1Total);
     const shortfall_inner = remainingShortfall;
 
+    // When an IRMAA/MAGI/bracket target is active, IRA-first funding should not
+    // accidentally push taxable income above that target. It may use IRA dollars
+    // up to the target, then continue the normal waterfall. In Roth-above-target
+    // mode, remaining funding need is routed to Roth before taxable sources.
+    const fundingTargetInfo = getProjectionIncomeTargetInfo(S, yr, taxFiling, tables);
+    const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode !== 'F');
+    const useRothAboveTargetFunding = !!(protectTaxableFunding && fundingTargetInfo.fillMode === 'R');
+    const qualDivsForFunding = cashInterest + totalSecDivs;
+    const estimateAGIForFundingDraws = (ira1Extra, ira2Extra, preAddl1, preAddl2, secExtra) => {
+      const taxableStkGainEst = Math.max(0, secExtra || 0) * stkGainPct;
+      const taxableRMDsEst = rmd1 + rmd2 + pre2020InhDraw + (preAddl1 || 0) + (preAddl2 || 0) + post2020InhDraw + (ira1Extra || 0) + (ira2Extra || 0) + qualDivsForFunding;
+      const agiExSSEst = w2AGIFunding + ptWages + taxableRMDsEst + taxableStkGainEst;
+      const tSSEst = calcTaxableSS(grossSS, agiExSSEst + grossSS, taxFiling);
+      return agiExSSEst + tSSEst;
+    };
+    const allowedRegularIRADrawForTarget = (which, avail) => {
+      if (!protectTaxableFunding || avail <= 0) return avail;
+      const target = fundingTargetInfo.targetIncome;
+      const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+      if (currentAGI >= target - 0.50) return 0;
+      let lo = 0, hi = Math.max(0, avail);
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        const testIra1 = ira1Draw_inner + (which === 1 ? mid : 0);
+        const testIra2 = ira2Draw_inner + (which === 2 ? mid : 0);
+        const testAGI = estimateAGIForFundingDraws(testIra1, testIra2, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+        if (testAGI <= target + 0.50) lo = mid;
+        else hi = mid;
+      }
+      return Math.max(0, lo);
+    };
+
     // ── Funding waterfall — cash above floor, then selected account order ──
     const fundingOrder = getFundingOrderForYear(S, yr);
     const fundingChoice = fundingOrder[0] || 'SEC';
@@ -2492,8 +2612,28 @@ function runProjection(S) {
       cashDraw_inner = Math.min(remainingShortfall, availCash);
       remainingShortfall -= cashDraw_inner;
     }
+    const drawRothFunding = () => {
+      const buckets = [
+        {i:1, avail:Math.max(0, roth1 - rothDraw1_inner)},
+        ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - rothDraw2_inner)}] : [])
+      ].sort((a,b)=>b.avail-a.avail);
+      for (const b of buckets) {
+        if (remainingShortfall <= 0 || b.avail <= 0) continue;
+        const d = Math.min(remainingShortfall, b.avail);
+        if (b.i === 1) rothDraw1_inner += d;
+        else rothDraw2_inner += d;
+        remainingShortfall -= d;
+      }
+    };
     const drawFundingBucket = (bucket) => {
       if (remainingShortfall <= 0) return;
+      if (useRothAboveTargetFunding) {
+        const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+        if (currentAGI >= fundingTargetInfo.targetIncome - 0.50) {
+          drawRothFunding();
+          if (remainingShortfall <= 0) return;
+        }
+      }
       if (bucket === 'SEC') {
         const d = Math.min(remainingShortfall, sec - secDraw_inner);
         secDraw_inner += Math.max(0, d);
@@ -2507,7 +2647,9 @@ function runProjection(S) {
           ].sort((a,b)=>b.avail-a.avail);
           for (const b of buckets) {
             if (remainingShortfall <= 0 || b.avail <= 0) continue;
-            const d = Math.min(remainingShortfall, b.avail);
+            const targetCap = allowedRegularIRADrawForTarget(b.i, b.avail);
+            const d = Math.min(remainingShortfall, b.avail, targetCap);
+            if (d <= 0.50) continue;
             if (b.i === 1) ira1Draw_inner += d;
             else ira2Draw_inner += d;
             remainingShortfall -= d;
@@ -2515,17 +2657,7 @@ function runProjection(S) {
           drawPre2020ForFunding('after');
         }
       } else if (bucket === 'ROTH') {
-        const buckets = [
-          {i:1, avail:Math.max(0, roth1 - rothDraw1_inner)},
-          ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - rothDraw2_inner)}] : [])
-        ].sort((a,b)=>b.avail-a.avail);
-        for (const b of buckets) {
-          if (remainingShortfall <= 0 || b.avail <= 0) continue;
-          const d = Math.min(remainingShortfall, b.avail);
-          if (b.i === 1) rothDraw1_inner += d;
-          else rothDraw2_inner += d;
-          remainingShortfall -= d;
-        }
+        drawRothFunding();
       }
     };
     fundingOrder.forEach(drawFundingBucket);
@@ -2545,12 +2677,7 @@ function runProjection(S) {
     const cashInt    = cash * intRate;                      // cash interest (always ordinary)
     const qualDivs   = cashInt + allSecDivs;                // total taxable dividends & interest
     const taxableRMDs    = rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
-    // W-2 wages in AGI = gross wages minus pre-tax 401k contributions
-    // Only applies when grossWages entered — atWages is take-home spend money, not AGI
-    const w2AGI1         = grossWages1 > 0 ? grossWages1 - k401Contrib1Trad : 0;
-    const w2AGI2         = grossWages2 > 0 ? grossWages2 - k401Contrib2Trad : 0;
-    const w2AGI          = w2AGI1 + w2AGI2;
-    const agiExSS        = w2AGI + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
+    const agiExSS        = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
     const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling);
     let agi              = agiExSS + tSS0;
 
@@ -2590,10 +2717,12 @@ function runProjection(S) {
                          : irmaaOvExists       ? ''
                          : S.irmaaTarget;
     const irmaaTarget = parseIRMAATargetLevel(irmaaTargetRaw);
-    const fillMode    = irmaaModeOv != null ? irmaaModeOv : (S.irmaaFillMode || '');
     // Headroom: use override row's headroom if active, else global
     const irmaaOvRow  = (S.ovIRMAA||[]).find(r => { const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s && yr<=e; });
     const incomeOvRow = (S.ovIncomeLevel||[]).find(r => { const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s && yr<=e; });
+    // If a year-specific IRMAA/Roth row exists, a blank Fill Mode means No extra fill.
+    // Do not silently inherit the global Fill Mode, or late-year targets can jump unexpectedly.
+    const fillMode    = irmaaOvRow ? (irmaaModeOv != null ? irmaaModeOv : '') : (S.irmaaFillMode || '');
     const irmaaHeadroom  = irmaaOvRow  ? (parseF(irmaaOvRow.headroom) ?? (S.irmaaHeadroom||0)) : (S.irmaaHeadroom||0);
     const incomeHeadroom = incomeOvRow ? (parseF(incomeOvRow.headroom) ?? 0) : 0;
     const irmaaMaxBracketRaw = irmaaOvRow ? irmaaMaxBracketOv : (S.irmaaMaxBracket || '');
@@ -2646,11 +2775,9 @@ function runProjection(S) {
           if (fillDiff > 0) rothConv = Math.min(rothConv + fillDiff, rothConvAvailTotal);
           break;
         } else if (fillMode === 'R') {
-          // Roth mode: AGI over target — withdraw from Roth tax-free instead
+          // Roth-above-target mode does not add conversions when income is already over target.
+          // Funding needs above the target are handled earlier in the waterfall as Roth draws.
           rothConv = 0;
-          const excess = curAGI - targetIncome;
-          if (roth1 >= roth2) rothModeWith1 = Math.min(excess, roth1);
-          else                 rothModeWith2 = Math.min(excess, roth2);
           break;
         } else {
           // No-extra-fill / capped Fill mode: if already over the active target, do not add conversions.
@@ -2742,7 +2869,7 @@ function runProjection(S) {
     excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
     unfunded_f=unfunded; fundingChoice_f=fundingChoice; fundingOrder_f=fundingOrder; irmaaMagi_f=irmaaMagi;
     qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
-    taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGI; w2AGI1_f=w2AGI1; w2AGI2_f=w2AGI2;
+    taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
     // Converge if tax override supplied, or change is below display precision.
     if (taxOvrAmt != null || Math.abs(newNetTax - taxEst) < TAX_SOLVER_EPS) break;
     taxEst = newNetTax;
@@ -4019,6 +4146,263 @@ function mkChart(id,type,data,opts){
   }});
 }
 
+
+// ── IRMAA Watchlist ──────────────────────────────────────────────────────
+function irmaaWatchTierRank(label){
+  if (!label || String(label).toLowerCase() === 'base') return 0;
+  const m = String(label).match(/\d+/);
+  return m ? parseInt(m[0], 10) : 0;
+}
+function irmaaWatchPaidMedicareInputs(state, paidYear, sourceRow, paidRow, filing){
+  const A = state || S;
+  let age1 = paidRow && paidRow.age1 != null ? parseInt(paidRow.age1, 10) : ((parseInt(sourceRow.age1, 10) || 0) + 2);
+  let age2 = paidRow && paidRow.age2 != null ? parseInt(paidRow.age2, 10) : ((parseInt(sourceRow.age2, 10) || 0) + 2);
+  if ((!age1 || age1 < 0) && A.by1) age1 = paidYear - (parseInt(A.by1, 10) || paidYear);
+  if ((!age2 || age2 < 0) && A.by2) age2 = paidYear - (parseInt(A.by2, 10) || paidYear);
+  const hasSecond = A.householdMode !== 'single' && !!(A.name2 && String(A.name2).trim());
+  const deathYear = parseInt(A.widowDeathYear, 10) || 0;
+  const survivorMode = A.widowMode || 'off';
+  if (hasSecond && survivorMode !== 'off' && deathYear > 0 && paidYear > deathYear) {
+    if (survivorMode === 'p2Survives') return {age1:age2 || 0, age2:0, hasSecond:false};
+    return {age1:age1 || 0, age2:0, hasSecond:false};
+  }
+  return {age1:age1 || 0, age2:age2 || 0, hasSecond:filing === 'MFJ' && hasSecond};
+}
+function irmaaWatchCreatedAmount(state, sourceRow, rows){
+  const A = state || S;
+  const paidYear = (parseInt(sourceRow.yr, 10) || 0) + 2;
+  const paidRow = (rows || []).find(x => x.yr === paidYear) || null;
+  const filing = (paidRow && paidRow.taxFiling) || getFilingForYearForState(A, paidYear) || A.filing || 'MFJ';
+  const tables = getScaledTables(A, paidYear || sourceRow.yr);
+  const med = irmaaWatchPaidMedicareInputs(A, paidYear, sourceRow, paidRow || {}, filing);
+  return calcIRMAA(sourceRow.agi || 0, filing, med.age1, med.age2, med.hasSecond, tables);
+}
+function irmaaWatchPreRothAGI(row, filing){
+  const agi = row.agi || 0;
+  const roth = row.rothConv || 0;
+  if (!roth) return agi;
+  const taxableSS = row.taxableSS != null ? row.taxableSS : (row.tSS || 0);
+  const grossSS = row.grossSS != null ? row.grossSS : ((row.grossSS1 || 0) + (row.grossSS2 || 0));
+  const agiExSSWithRoth = Math.max(0, agi - taxableSS);
+  const agiExSSNoRoth = Math.max(0, agiExSSWithRoth - roth);
+  const taxableSSNoRoth = grossSS > 0 ? calcTaxableSS(grossSS, agiExSSNoRoth + grossSS, filing) : 0;
+  return Math.max(0, agiExSSNoRoth + taxableSSNoRoth);
+}
+function irmaaWatchDriver(row){
+  const taxableDivs = row.qualDivs != null ? row.qualDivs : (row.divs || 0);
+  const taxableRMDs = row.taxableRMDs != null ? row.taxableRMDs : (row.rmd1||0)+(row.rmd2||0)+(row.pre2020InhDraw||0)+(row.pre2020InhAddl||0)+(row.post2020InhDraw||0)+(row.ira1Addl||0)+(row.ira2Addl||0)+taxableDivs;
+  const iraDraws = Math.max(0, taxableRMDs - taxableDivs);
+  const pieces = [
+    ['Roth conversions', row.rothConv || 0],
+    ['IRA/RMD/inherited IRA income', iraDraws],
+    ['Wages/self-employment', (row.w2AGI || 0) + (row.ptWages || 0)],
+    ['Social Security taxable income', row.taxableSS != null ? row.taxableSS : (row.tSS || 0)],
+    ['Stock-sale gains', row.taxableStkGain || 0],
+    ['Dividends/interest', taxableDivs]
+  ].filter(x => Math.abs(x[1] || 0) >= 1000).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+  if (!pieces.length) return 'Mixed income';
+  return pieces.slice(0, 2).map(x => x[0] + ' ' + f$(x[1], true)).join(' + ');
+}
+function irmaaWatchActiveRow(rows, yr){
+  return (rows || []).find(row => {
+    const s = parseInt(row.startYear, 10) || 0;
+    const e = parseInt(row.endYear, 10) || 9999;
+    return yr >= s && yr <= e;
+  }) || null;
+}
+function irmaaWatchActiveTarget(state, row, filing, tables){
+  const A = state || S;
+  const yr = parseInt(row && row.yr, 10) || 0;
+  const incomeRow = irmaaWatchActiveRow(A.ovIncomeLevel, yr);
+  if (incomeRow && incomeRow.magiTarget !== '' && incomeRow.magiTarget != null) {
+    const ceiling = Math.max(0, parseF(incomeRow.magiTarget));
+    if (ceiling > 0) return {ceiling, label:'Custom MAGI target', source:'custom'};
+  }
+  const irmaaRow = irmaaWatchActiveRow(A.ovIRMAA, yr);
+  const hasIRMAARow = !!irmaaRow;
+  const thresholds = getIRMAAThresholdsForFiling(filing, tables) || [];
+  let ceiling = null;
+  let label = '';
+  let source = '';
+  let cushion = 0;
+  if (hasIRMAARow) {
+    if (irmaaRow.level !== '' && irmaaRow.level != null) {
+      const level = parseIRMAATargetLevel(irmaaRow.level);
+      if (level != null && thresholds.length) {
+        const idx = Math.min(level + 1, thresholds.length - 1);
+        const headroom = irmaaRow.headroom !== '' && irmaaRow.headroom != null ? parseF(irmaaRow.headroom) : 0;
+        cushion = headroom;
+        ceiling = (thresholds[idx] || Infinity) - headroom;
+        label = (IRMAA_TARGET_NAMES[level] || ('Tier '+level)) + ' target';
+        source = 'irmaa';
+      }
+    }
+  } else {
+    const level = parseIRMAATargetLevel(A.irmaaTarget);
+    if (level != null && thresholds.length) {
+      const idx = Math.min(level + 1, thresholds.length - 1);
+      const headroom = parseF(A.irmaaHeadroom || 0);
+      cushion = headroom;
+      ceiling = (thresholds[idx] || Infinity) - headroom;
+      label = (IRMAA_TARGET_NAMES[level] || ('Tier '+level)) + ' target';
+      source = 'global-irmaa';
+    }
+  }
+  const maxBracketRaw = hasIRMAARow ? (irmaaRow.maxBracket || '') : (A.irmaaMaxBracket || '');
+  const bracketCeil = getMaxBracketCeiling(maxBracketRaw, filing, tables);
+  if (bracketCeil != null) {
+    const bracketHeadroom = hasIRMAARow
+      ? (irmaaRow.bracketHeadroom !== '' && irmaaRow.bracketHeadroom != null ? parseF(irmaaRow.bracketHeadroom) : 0)
+      : parseF(A.irmaaBracketHeadroom || 0);
+    const bracketTarget = bracketCeil - bracketHeadroom;
+    if (ceiling == null || bracketTarget < ceiling) {
+      cushion = bracketHeadroom;
+      const pct = Math.round((parseF(maxBracketRaw) || 0) * 100);
+      ceiling = bracketTarget;
+      label = pct ? (pct + '% federal bracket cap') : 'Federal bracket cap';
+      source = 'bracket';
+    }
+  }
+  if (ceiling == null || !isFinite(ceiling)) return null;
+  return {ceiling:Math.max(0, ceiling), label, source, cushion:Math.max(0, cushion || 0)};
+}
+function irmaaWatchAction(item){
+  const d = String(item.driver || '').toLowerCase();
+  if (item.targetStatus === 'within') return 'No action needed if this tier is intentional; AGI is within the selected target ceiling.';
+  if (item.targetStatus === 'required-over') return 'Year is already above this target. If Fill to next tier is on, the model may convert toward a higher target. Try No extra fill, Roth funding above target, or accept the crossing.';
+  if (item.targetStatus === 'roth-over') return 'Roth conversion moved projected AGI above the target. Try No extra fill, lower the target, or increase the cushion unless the crossing is intentional.';
+  if (item.crossCause === 'required') return 'Income creates this IRMAA tier before Roth conversion. Review only if income timing, spending, or funding source can realistically change.';
+  if (item.crossCause === 'roth-push') return 'Roth conversion creates this tier. Set an IRMAA target, choose No extra fill, or lower the Roth target if this is not intentional.';
+  if (d.includes('roth')) return 'Review Roth target, IRMAA tier, or use a lower target for this year.';
+  if (d.includes('ira/rmd')) return 'Consider a year-specific income target or Roth funding for the excess.';
+  if (d.includes('stock')) return 'Review stock-sale timing or use a one-year capital-gain strategy.';
+  if (d.includes('wage') || d.includes('self-employment')) return 'Check whether this is a working-income year; IRMAA may be unavoidable.';
+  if (d.includes('social security')) return 'Review Social Security and other income timing together.';
+  return 'Review the year; consider an override only if the crossing is avoidable.';
+}
+function buildIRMAAWatchlist(rows, state, opts){
+  const A = state || S;
+  const options = opts || {};
+  const start = options.start != null ? parseInt(options.start, 10) : -Infinity;
+  const end = options.end != null ? parseInt(options.end, 10) : Infinity;
+  return (rows || []).filter(r => r && r.yr >= start && r.yr <= end).map(r => {
+    const year = parseInt(r.yr, 10) || 0;
+    const filing = r.taxFiling || getFilingForYearForState(A, year) || A.filing || 'MFJ';
+    const tables = getScaledTables(A, year);
+    const createdTier = getIRMAATierLabel(r.agi || 0, filing, tables) || 'Base';
+    const rank = irmaaWatchTierRank(createdTier);
+    const target = irmaaWatchActiveTarget(A, r, filing, tables);
+    const preRothAGI = irmaaWatchPreRothAGI(r, filing);
+    const preRothTier = getIRMAATierLabel(preRothAGI, filing, tables) || 'Base';
+    const preRothRank = irmaaWatchTierRank(preRothTier);
+    const thresholds = getIRMAAThresholdsForFiling(filing, tables) || [];
+    const threshold = thresholds[Math.min(rank, thresholds.length - 1)] || 0;
+    const overBy = rank > 0 ? Math.max(0, (r.agi || 0) - threshold) : 0;
+    const targetOver = target ? Math.max(0, (r.agi || 0) - target.ceiling) : 0;
+    const targetMargin = target ? Math.max(0, target.ceiling - (r.agi || 0)) : 0;
+    let targetStatus = target ? 'within' : 'none';
+    if (target && targetOver > 10) targetStatus = preRothAGI > target.ceiling + 10 ? 'required-over' : 'roth-over';
+    if (target && targetStatus === 'within') return null;
+    if (!target && rank <= 0) return null;
+    const paidYear = year + 2;
+    const paidRow = (rows || []).find(x => x.yr === paidYear) || null;
+    const paidTier = paidRow ? (paidRow.irmaaTier || 'Base') : createdTier;
+    const paidAmount = irmaaWatchCreatedAmount(A, r, rows);
+    if (!options.includeZeroPremium && paidAmount <= 0.49) return null;
+    const driver = irmaaWatchDriver(r);
+    let crossCause = 'required';
+    if ((r.rothConv || 0) > 0 && preRothRank < rank) crossCause = 'roth-push';
+    else if ((r.rothConv || 0) <= 0) crossCause = 'required';
+    return {
+      year, filing, agi:r.agi || 0, rothConv:r.rothConv || 0,
+      preRothAGI, preRothTier, preRothRank, createdTier, threshold, overBy,
+      target, targetStatus, targetOver, targetMargin,
+      paidYear, paidTier, paidAmount, driver, crossCause,
+      action:'', outsidePlan:!paidRow
+    };
+  }).filter(Boolean).map(item => Object.assign(item, {action:irmaaWatchAction(item)}));
+}
+function renderIRMAAWatchlistTable(items, opts){
+  const options = opts || {};
+  const shown = items.slice(0, options.limit || items.length || 999);
+  if (!shown.length) return '<p class="irmaa-watch-empty">No IRMAA target exceptions in this view. Planned years inside a selected target are hidden.</p>';
+  const rows = shown.map(item => {
+    const paidText = String(item.paidYear) + (item.outsidePlan ? ' (outside plan)' : '');
+    let statusMain = item.createdTier || 'Base';
+    let statusSub = '';
+    if (item.target) {
+      const cushionText = item.target.cushion ? ' after ' + f$(item.target.cushion, true) + ' cushion' : '';
+      const targetText = 'Target: ' + f$(item.target.ceiling, true) + cushionText;
+      const agiText = 'Projected AGI: ' + f$(item.agi || 0, true) + ', over by ' + f$(item.targetOver || 0, true);
+      const rothText = 'Roth conversion this year: ' + f$(item.rothConv || 0, true);
+      if (item.targetStatus === 'within') {
+        statusMain = 'Within ' + item.target.label;
+        statusSub = targetText;
+      } else if (item.targetStatus === 'required-over') {
+        statusMain = 'Above ' + item.target.label;
+        statusSub = targetText + '. ' + agiText + '. ' + rothText + '.';
+      } else if (item.targetStatus === 'roth-over') {
+        statusMain = 'Roth conversion above ' + item.target.label;
+        statusSub = targetText + '. ' + agiText + '. ' + rothText + '.';
+      }
+    } else {
+      statusMain = 'Creates ' + item.createdTier;
+      statusSub = 'No IRMAA target is set. Projected AGI is over this tier entry by ' + f$(item.overBy, true) + '.';
+    }
+    return '<tr>'+ 
+      '<td><strong>'+item.year+'</strong></td>'+ 
+      '<td>'+setupEsc(item.filing)+'</td>'+ 
+      '<td class="r">'+f$(item.agi, true)+'</td>'+ 
+      '<td class="irmaa-watch-status"><span class="irmaa-watch-tier">'+setupEsc(statusMain)+'</span><br><span class="irmaa-watch-meta">'+setupEsc(statusSub)+'</span></td>'+ 
+      '<td><strong>'+setupEsc(paidText)+'</strong><br><span class="irmaa-watch-meta">'+setupEsc(item.paidTier)+' ('+f$(item.paidAmount, true)+')</span></td>'+ 
+      '<td class="irmaa-watch-action">'+setupEsc(item.action)+'</td>'+ 
+    '</tr>';
+  }).join('');
+  const more = items.length > shown.length ? '<div class="irmaa-watch-more">Showing '+shown.length+' of '+items.length+' IRMAA watchlist years.</div>' : '';
+  return '<div class="irmaa-watch-table-wrap"><table class="irmaa-watch-table"><colgroup><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:39%"><col style="width:14%"><col style="width:20%"></colgroup><thead><tr><th>Income Year</th><th>Filing</th><th class="r">AGI / MAGI</th><th>Target Status</th><th>IRMAA Paid</th><th>Possible Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+more;
+}
+function renderIRMAAWatchlistSummary(items){
+  if (!items || !items.length) return '';
+  const years = items.slice(0, 6).map(item => item.year).join(', ') + (items.length > 6 ? ', +' + (items.length - 6) + ' more' : '');
+  const required = items.filter(item => item.targetStatus === 'required-over' || item.crossCause === 'required').length;
+  const roth = items.filter(item => item.targetStatus === 'roth-over' || item.crossCause === 'roth-push').length;
+  const parts = [];
+  if (required) parts.push(required + ' income-driven');
+  if (roth) parts.push(roth + ' Roth-driven');
+  const mix = parts.length ? ' (' + parts.join(', ') + ')' : '';
+  return '<div class="irmaa-watch-summary"><div class="irmaa-watch-summary-main"><strong>'+items.length+' IRMAA exception year'+(items.length===1?'':'s')+'</strong>'+mix+'. Open details only if you want to review possible actions.</div><div class="irmaa-watch-years">'+setupEsc(years)+'</div></div>';
+}
+function renderIRMAAWatchlistPanel(rows, state, opts){
+  const options = opts || {};
+  const items = buildIRMAAWatchlist(rows, state, options);
+  const good = !items.length;
+  const title = options.title || 'IRMAA Watchlist';
+  const badge = options.badge ? '<span class="irmaa-watch-scenario">'+setupEsc(options.badge)+'</span>' : '';
+  const copy = options.copy || 'Shows income years where projected AGI/MAGI creates a Medicare IRMAA tier above Base. The paid year is usually two years later because Medicare uses a lookback.';
+  const body = good
+    ? renderIRMAAWatchlistTable(items, options)
+    : renderIRMAAWatchlistSummary(items) + '<details class="irmaa-watch-details" '+(options.open ? 'open' : '')+'><summary>Review IRMAA exception details</summary>'+renderIRMAAWatchlistTable(items, options)+'</details>';
+  return '<div class="panel irmaa-watch-panel '+(good?'good':'')+'"><div class="irmaa-watch-title"><div class="sh">'+setupEsc(title)+'</div>'+badge+'</div><p class="irmaa-watch-copy">'+setupEsc(copy)+'</p>'+body+'</div>';
+}
+function renderIRMAAWatchlist(){
+  const kpi = document.getElementById('kpi-row');
+  if (!kpi) return;
+  let el = document.getElementById('irmaa-watchlist-panel');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'irmaa-watchlist-panel';
+    kpi.insertAdjacentElement('afterend', el);
+  }
+  el.innerHTML = renderIRMAAWatchlistPanel(proj, S, {limit:6, title:'IRMAA Watchlist', copy:'Compact exception list for Medicare IRMAA. It only shows years outside the selected Roth/IRMAA target, or years that create IRMAA when no target is set.'});
+}
+function rothLabRenderIRMAAWatchlist(scenarios, cfg){
+  const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
+  const sc = scenarios[idx] || scenarios[0];
+  if (!sc || !sc.rows || !sc.rows.length) return '';
+  const label = (sc.summary && sc.summary.label) || 'Selected scenario';
+  return renderIRMAAWatchlistPanel(sc.rows, sc.state || S, {limit:10, start:cfg.start, end:cfg.end, title:'IRMAA Watchlist', badge:label, copy:'Compact exception list for the selected Roth Lab detail scenario. Years inside the selected Roth/IRMAA target are hidden; exceptions show whether income before Roth or Roth conversions caused the excess.'});
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────
 function renderDash(){
   if(!proj.length){
@@ -4040,6 +4424,7 @@ function renderDash(){
     <div class="kpi"><div class="kpi-lbl">Total Roth Conv</div><div class="kpi-val">${f$(totConv,true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Avg Eff Tax Rate</div><div class="kpi-val">${fp(avgEff)}</div></div>
   `;
+  renderIRMAAWatchlist();
   const lbs=proj.map(r=>r.yr);
   mkChart('ch-bal','line',{labels:lbs,datasets:[
     {label:'Net Worth',data:proj.map(r=>r.netWorth),borderColor:'#1a5c1a',borderWidth:2.5,pointRadius:0,fill:false},
@@ -7090,6 +7475,7 @@ let rothLabSettings = {
   bracketHeadroom:null,
   maxBracket:'',
   taxFillIrmaaGuard:null,
+  fillMode:'',
   customMagi:'',
   assumption:'current',
   detail:'1',
@@ -7316,6 +7702,11 @@ function rothLabCurrentPlanDescription(start, end){
   if (!bits.length) return 'No saved Roth conversion target rows overlap this analysis window. This is the current plan before adding lab scenarios.';
   return 'Saved Roth target rows: ' + bits.join('; ') + '.';
 }
+function rothLabIRMAAScenarioPlain(fillMode){
+  if (fillMode === 'F') return 'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. If required income is already above the target, it intentionally fills the next tier.';
+  if (fillMode === 'R') return 'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. Once the target is reached, extra funding need is routed to Roth withdrawals instead of taxable IRA draws.';
+  return 'Medicare-aware Roth target using the selected IRMAA tier and cushion. If normal income is already above the target, it does not add extra Roth conversions.';
+}
 function rothLabScenarioDefs(){
   const start = rothLabNumSetting('startYear', rothLabDefaultStart());
   const end = Math.max(start, rothLabNumSetting('endYear', rothLabDefaultEnd()));
@@ -7323,6 +7714,7 @@ function rothLabScenarioDefs(){
   const bracketHeadroom = Math.max(0, rothLabNumSetting('bracketHeadroom', S.irmaaBracketHeadroom || 0));
   const rawMaxBracket = String(rothLabSetting('maxBracket', '') || '');
   const taxFillIrmaaGuard = String(rothLabSetting('taxFillIrmaaGuard', '') || '');
+  const fillMode = String(rothLabSetting('fillMode', '') || '');
   const bracketOptionsForGuard = getMaxBracketOptions({startYear:start, level:taxFillIrmaaGuard || ''});
   const maxBracket = rawMaxBracket && bracketOptionsForGuard.some(o => String(o[0]) === rawMaxBracket) ? rawMaxBracket : '';
   const customMagi = Math.max(0, rothLabNumSetting('customMagi', 0));
@@ -7333,7 +7725,7 @@ function rothLabScenarioDefs(){
   ];
   for (let lvl = 0; lvl <= 4; lvl++) {
     const nm = IRMAA_TARGET_NAMES[lvl] || ('Tier '+lvl);
-    defs.push({kind:'irmaa', label:'IRMAA '+nm, plain:'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. This is usually the better starting point for retired or near-retired users who care about IRMAA.', save:true, level:String(lvl), maxBracket, irmaaHeadroom, bracketHeadroom});
+    defs.push({kind:'irmaa', label:'IRMAA '+nm, plain:rothLabIRMAAScenarioPlain(fillMode), save:true, level:String(lvl), maxBracket, fillMode, irmaaHeadroom, bracketHeadroom});
   }
   if (taxFillIrmaaGuard !== '') {
     const guardName = IRMAA_TARGET_NAMES[parseIRMAATargetLevel(taxFillIrmaaGuard)] || ('Tier '+taxFillIrmaaGuard);
@@ -7350,7 +7742,7 @@ function rothLabScenarioDefs(){
   if (customMagi > 0) {
     defs.push({kind:'magi', label:'Custom MAGI '+shortDollar(customMagi), plain:'Converts only up to the custom MAGI ceiling entered below.', save:true, customMagi});
   }
-  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, customMagi, defs};
+  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, defs};
 }
 function rothLabApplyTaxFillGuard(st, def, start, end){
   const base = JSON.parse(JSON.stringify(st));
@@ -7392,7 +7784,7 @@ function rothLabApplyScenario(st, def, start, end){
   } else if (def.kind === 'bracket-cap-top') {
     st.ovIncomeLevel.push({magiTarget:999999999, startYear:start, endYear:end, notes:'Roth Lab: top federal bracket has no upper cap'});
   } else if (def.kind === 'irmaa') {
-    st.ovIRMAA.push({level:def.level, fillMode:'', maxBracket:def.maxBracket || '', bracketHeadroom:def.bracketHeadroom || 0, headroom:def.irmaaHeadroom || 0, startYear:start, endYear:end, notes:'Roth Lab: '+def.label});
+    st.ovIRMAA.push({level:def.level, fillMode:def.fillMode || '', maxBracket:def.maxBracket || '', bracketHeadroom:def.bracketHeadroom || 0, headroom:def.irmaaHeadroom || 0, startYear:start, endYear:end, notes:'Roth Lab: '+def.label});
   } else if (def.kind === 'magi') {
     st.ovIncomeLevel.push({magiTarget:def.customMagi || 0, startYear:start, endYear:end, notes:'Roth Lab: custom MAGI target'});
   }
@@ -7661,6 +8053,7 @@ function rothLabControlNumber(key, value, placeholder){
 function rothLabRenderControls(cfg){
   const bracketOptions = getMaxBracketOptions({startYear:cfg.start, level:cfg.taxFillIrmaaGuard || ''}).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.maxBracket)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
   const guardOptions = [['','No guardrail - tax-fill ignores IRMAA']].concat(getIRMAALevelOptions({startYear:cfg.start, level:cfg.taxFillIrmaaGuard}).filter(o => String(o[0]) !== '')).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.taxFillIrmaaGuard)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
+  const fillModeOptions = IRMAA_FILL_MODE_OPTIONS.map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.fillMode)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
   const assumptionOptions = '<option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds</option>';
   const detailOptions = '<option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option>';
   const currentPlan = rothLabCurrentPlanDescription(cfg.start, cfg.end);
@@ -7679,6 +8072,7 @@ function rothLabRenderControls(cfg){
       setupField('Federal Bracket Cushion ($)', rothLabControlNumber('bracketHeadroom', cfg.bracketHeadroom), 'Stay this far below the selected federal bracket target. This avoids accidentally crossing a tax bracket by a small amount.')+
       setupField('Optional Federal Bracket Cap', rothLabControlSelect('maxBracket', bracketOptions), 'Extra ceiling for Roth scenarios. If an IRMAA guardrail is selected, this list only shows bracket targets below that guardrail. 35% stops before 37%; 37% has no upper ceiling and becomes a no-tax-ceiling stress test.')+
       setupField('Tax-Fill IRMAA Guardrail', rothLabControlSelect('taxFillIrmaaGuard', guardOptions), 'Optional safety rail for the bracket-fill scenario. No guardrail means the tax-fill scenario ignores Medicare tiers; choosing a tier adds a safer guarded version.')+
+      setupField('If Income Already Exceeds IRMAA Target', rothLabControlSelect('fillMode', fillModeOptions), 'For generated IRMAA scenarios. No extra fill stops adding Roth conversions; Fill to next tier intentionally uses the next Medicare band; Use Roth above target routes funding needs above the target to Roth withdrawals instead of extra taxable IRA draws.')+
     '</div><div class="roth-control-section">Optional Custom Target</div><div class="roth-control-grid">'+
       setupField('Custom MAGI Target ($)', rothLabControlNumber('customMagi', cfg.customMagi || '', 'Optional'), 'Adds one scenario that converts only up to this total income ceiling. Use this when an advisor gives you a specific MAGI target.')+
     '</div></div>';
@@ -7719,6 +8113,7 @@ function rothLabRenderFieldGuide(){
     ['Federal Bracket Cushion','This keeps taxable income below a chosen federal bracket line by a small amount. It is useful when you want to fill most of a bracket but avoid crossing it by mistake.'],
     ['Optional Federal Bracket Cap','This is an extra ceiling for IRMAA scenarios. If the IRMAA tier would allow more conversion than you want, the bracket cap stops earlier. Choose 35% to stop before 37%; 37% has no upper cap.'],
     ['Tax-Fill IRMAA Guardrail','Tax-fill means fill the bracket you are already in. No guardrail ignores Medicare tiers. Selecting an IRMAA tier adds a safer version that stops if Medicare income would get too high.'],
+    ['IRMAA Overflow Choice','Controls what generated IRMAA scenarios do if normal income is already above the selected target. No extra fill is the conservative default; Roth above target tries to avoid extra taxable withdrawals; fill to next tier intentionally uses more room.'],
     ['Custom MAGI Target','MAGI means Medicare/tax income for this purpose. Use a custom target when you want to test one exact income number, such as an advisor-suggested target.'],
     ['Assumption Lens','This reruns every scenario under one what-if assumption, such as lower growth or frozen IRMAA thresholds. It helps show whether a strategy is fragile or still reasonable.'],
     ['Detail Years','This controls how much annual detail appears in Year-by-Year and the advisor report. Five years is often enough for a meeting; Full plan or Until IRA drained helps when the ending matters.']
@@ -7945,7 +8340,7 @@ function renderRothLab(){
   const tab = rothLabActiveTab();
   let body = '';
   if (tab === 'details') {
-    body = rothLabRenderDetails(built.scenarios, built.cfg);
+    body = rothLabRenderIRMAAWatchlist(built.scenarios, built.cfg) + rothLabRenderDetails(built.scenarios, built.cfg);
   } else if (tab === 'report') {
     body = rothLabRenderReportLauncher(built.scenarios, built.cfg) + rothLabRenderAdvisorReport(built.scenarios, built.cfg);
   } else if (tab === 'guide') {
@@ -9350,7 +9745,9 @@ function setupCollectStrategyRows(filterType){
   (S.ovIRMAA || []).forEach((row, idx) => {
     const parts = [];
     setupPushPart(parts, 'IRMAA cap', setupIrmTargetLabel(row.level));
-    setupPushPart(parts, 'Fill mode', setupFillModeLabel(row.fillMode));
+    if (setupHasValue(row.level) || setupHasValue(row.maxBracket) || setupHasValue(row.fillMode)) {
+      setupPushPart(parts, 'Fill mode', setupFillModeLabel(row.fillMode) || 'No extra fill');
+    }
     setupPushPart(parts, 'Max bracket', setupBracketLabel(row.maxBracket));
     setupPushPart(parts, 'IRMAA cushion', setupMoneyLabel(row.headroom));
     setupPushPart(parts, 'Bracket cushion', setupMoneyLabel(row.bracketHeadroom));
