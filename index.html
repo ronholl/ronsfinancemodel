@@ -4294,18 +4294,9 @@ function irmaaWatchActiveTarget(state, row, filing, tables){
   return {ceiling:Math.max(0, ceiling), label, source, cushion:Math.max(0, cushion || 0)};
 }
 function irmaaWatchAction(item){
-  const d = String(item.driver || '').toLowerCase();
-  if (item.targetStatus === 'within') return 'No action needed if this tier is intentional; AGI is within the selected target ceiling.';
-  if (item.targetStatus === 'required-over') return 'Year is already above this target. If Fill to next tier is on, the model may convert toward a higher target. Try No extra fill, Roth funding above target, or accept the crossing.';
-  if (item.targetStatus === 'roth-over') return 'Roth conversion moved projected AGI above the target. Try No extra fill, lower the target, or increase the cushion unless the crossing is intentional.';
-  if (item.crossCause === 'required') return 'Income creates this IRMAA tier before Roth conversion. Review only if income timing, spending, or funding source can realistically change.';
-  if (item.crossCause === 'roth-push') return 'Roth conversion creates this tier. Set an IRMAA target, choose No extra fill, or lower the Roth target if this is not intentional.';
-  if (d.includes('roth')) return 'Review Roth target, IRMAA tier, or use a lower target for this year.';
-  if (d.includes('ira/rmd')) return 'Consider a year-specific income target or Roth funding for the excess.';
-  if (d.includes('stock')) return 'Review stock-sale timing or use a one-year capital-gain strategy.';
-  if (d.includes('wage') || d.includes('self-employment')) return 'Check whether this is a working-income year; IRMAA may be unavoidable.';
-  if (d.includes('social security')) return 'Review Social Security and other income timing together.';
-  return 'Review the year; consider an override only if the crossing is avoidable.';
+  if (item.targetStatus === 'roth-over') return 'Roth conversion is what crosses the selected target. If this was not intentional, lower the Roth target, increase the cushion, choose No extra fill, or use Roth funding above target.';
+  if (item.crossCause === 'roth-push') return 'Roth conversion creates a Medicare IRMAA tier. If that was not intentional, set an IRMAA target or lower the conversion.';
+  return 'Review the Roth conversion settings only if this crossing was not intentional.';
 }
 function buildIRMAAWatchlist(rows, state, opts){
   const A = state || S;
@@ -4327,21 +4318,30 @@ function buildIRMAAWatchlist(rows, state, opts){
     const overBy = rank > 0 ? Math.max(0, (r.agi || 0) - threshold) : 0;
     const targetOver = target ? Math.max(0, (r.agi || 0) - target.ceiling) : 0;
     const targetMargin = target ? Math.max(0, target.ceiling - (r.agi || 0)) : 0;
+    const rothConv = r.rothConv || 0;
     let targetStatus = target ? 'within' : 'none';
-    if (target && targetOver > 10) targetStatus = preRothAGI > target.ceiling + 10 ? 'required-over' : 'roth-over';
-    if (target && targetStatus === 'within') return null;
-    if (!target && rank <= 0) return null;
+    let crossCause = '';
+    // This watchlist is intentionally Roth-only: it should not warn on income
+    // that is already needed for spending, taxes, RMDs, or Social Security.
+    if (target) {
+      if (targetOver <= 10) return null;
+      if (rothConv <= 0) return null;
+      if (preRothAGI > target.ceiling + 10) return null;
+      targetStatus = 'roth-over';
+      crossCause = 'roth-push';
+    } else {
+      if (rank <= 0) return null;
+      if (rothConv <= 0 || preRothRank >= rank) return null;
+      crossCause = 'roth-push';
+    }
     const paidYear = year + 2;
     const paidRow = (rows || []).find(x => x.yr === paidYear) || null;
     const paidTier = paidRow ? (paidRow.irmaaTier || 'Base') : createdTier;
     const paidAmount = irmaaWatchCreatedAmount(A, r, rows);
     if (!options.includeZeroPremium && paidAmount <= 0.49) return null;
     const driver = irmaaWatchDriver(r);
-    let crossCause = 'required';
-    if ((r.rothConv || 0) > 0 && preRothRank < rank) crossCause = 'roth-push';
-    else if ((r.rothConv || 0) <= 0) crossCause = 'required';
     return {
-      year, filing, agi:r.agi || 0, rothConv:r.rothConv || 0,
+      year, filing, agi:r.agi || 0, rothConv,
       preRothAGI, preRothTier, preRothRank, createdTier, threshold, overBy,
       target, targetStatus, targetOver, targetMargin,
       paidYear, paidTier, paidAmount, driver, crossCause,
@@ -4352,29 +4352,22 @@ function buildIRMAAWatchlist(rows, state, opts){
 function renderIRMAAWatchlistTable(items, opts){
   const options = opts || {};
   const shown = items.slice(0, options.limit || items.length || 999);
-  if (!shown.length) return '<p class="irmaa-watch-empty">No IRMAA target exceptions in this view. Planned years inside a selected target are hidden.</p>';
+  if (!shown.length) return '<p class="irmaa-watch-empty">No Roth-driven IRMAA warnings in this view. Income-only crossings are not flagged here because the watchlist is only looking for Roth conversions that may accidentally push income higher.</p>';
   const rows = shown.map(item => {
     const paidText = String(item.paidYear) + (item.outsidePlan ? ' (outside plan)' : '');
     let statusMain = item.createdTier || 'Base';
     let statusSub = '';
     if (item.target) {
       const cushionText = item.target.cushion ? ' after ' + f$(item.target.cushion, true) + ' cushion' : '';
-      const targetText = 'Target: ' + f$(item.target.ceiling, true) + cushionText;
-      const agiText = 'Projected AGI: ' + f$(item.agi || 0, true) + ', over by ' + f$(item.targetOver || 0, true);
-      const rothText = 'Roth conversion this year: ' + f$(item.rothConv || 0, true);
-      if (item.targetStatus === 'within') {
-        statusMain = 'Within ' + item.target.label;
-        statusSub = targetText;
-      } else if (item.targetStatus === 'required-over') {
-        statusMain = 'Above ' + item.target.label;
-        statusSub = targetText + '. ' + agiText + '. ' + rothText + '.';
-      } else if (item.targetStatus === 'roth-over') {
-        statusMain = 'Roth conversion above ' + item.target.label;
-        statusSub = targetText + '. ' + agiText + '. ' + rothText + '.';
-      }
+      const targetText = 'Target ' + f$(item.target.ceiling, true) + cushionText;
+      const preText = 'Before Roth ' + f$(item.preRothAGI || 0, true);
+      const rothText = 'Roth conversion ' + f$(item.rothConv || 0, true);
+      const finalText = 'Final AGI ' + f$(item.agi || 0, true) + ' (' + f$(item.targetOver || 0, true) + ' over)';
+      statusMain = 'Roth crosses ' + item.target.label;
+      statusSub = targetText + '; ' + preText + '; ' + rothText + '; ' + finalText + '.';
     } else {
-      statusMain = 'Creates ' + item.createdTier;
-      statusSub = 'No IRMAA target is set. Projected AGI is over this tier entry by ' + f$(item.overBy, true) + '.';
+      statusMain = 'Roth creates ' + item.createdTier;
+      statusSub = 'Before Roth ' + setupEsc(item.preRothTier || 'Base') + '; Roth conversion ' + f$(item.rothConv || 0, true) + '; final AGI ' + f$(item.agi || 0, true) + '.';
     }
     return '<tr>'+ 
       '<td><strong>'+item.year+'</strong></td>'+ 
@@ -4385,19 +4378,13 @@ function renderIRMAAWatchlistTable(items, opts){
       '<td class="irmaa-watch-action">'+setupEsc(item.action)+'</td>'+ 
     '</tr>';
   }).join('');
-  const more = items.length > shown.length ? '<div class="irmaa-watch-more">Showing '+shown.length+' of '+items.length+' IRMAA watchlist years.</div>' : '';
-  return '<div class="irmaa-watch-table-wrap"><table class="irmaa-watch-table"><colgroup><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:39%"><col style="width:14%"><col style="width:20%"></colgroup><thead><tr><th>Income Year</th><th>Filing</th><th class="r">AGI / MAGI</th><th>Target Status</th><th>IRMAA Paid</th><th>Possible Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+more;
+  const more = items.length > shown.length ? '<div class="irmaa-watch-more">Showing '+shown.length+' of '+items.length+' Roth-driven IRMAA warning years.</div>' : '';
+  return '<div class="irmaa-watch-table-wrap"><table class="irmaa-watch-table"><colgroup><col style="width:8%"><col style="width:8%"><col style="width:11%"><col style="width:43%"><col style="width:14%"><col style="width:16%"></colgroup><thead><tr><th>Income Year</th><th>Filing</th><th class="r">AGI / MAGI</th><th>Roth Warning</th><th>IRMAA Paid</th><th>Possible Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+more;
 }
 function renderIRMAAWatchlistSummary(items){
   if (!items || !items.length) return '';
   const years = items.slice(0, 6).map(item => item.year).join(', ') + (items.length > 6 ? ', +' + (items.length - 6) + ' more' : '');
-  const required = items.filter(item => item.targetStatus === 'required-over' || item.crossCause === 'required').length;
-  const roth = items.filter(item => item.targetStatus === 'roth-over' || item.crossCause === 'roth-push').length;
-  const parts = [];
-  if (required) parts.push(required + ' income-driven');
-  if (roth) parts.push(roth + ' Roth-driven');
-  const mix = parts.length ? ' (' + parts.join(', ') + ')' : '';
-  return '<div class="irmaa-watch-summary"><div class="irmaa-watch-summary-main"><strong>'+items.length+' IRMAA exception year'+(items.length===1?'':'s')+'</strong>'+mix+'. Open details only if you want to review possible actions.</div><div class="irmaa-watch-years">'+setupEsc(years)+'</div></div>';
+  return '<div class="irmaa-watch-summary"><div class="irmaa-watch-summary-main"><strong>'+items.length+' Roth-driven IRMAA warning year'+(items.length===1?'':'s')+'</strong>. Open details only if you want to review Roth target or fill-mode choices.</div><div class="irmaa-watch-years">'+setupEsc(years)+'</div></div>';
 }
 function renderIRMAAWatchlistPanel(rows, state, opts){
   const options = opts || {};
@@ -4405,7 +4392,7 @@ function renderIRMAAWatchlistPanel(rows, state, opts){
   const good = !items.length;
   const title = options.title || 'IRMAA Watchlist';
   const badge = options.badge ? '<span class="irmaa-watch-scenario">'+setupEsc(options.badge)+'</span>' : '';
-  const copy = options.copy || 'Shows income years where projected AGI/MAGI creates a Medicare IRMAA tier above Base. The paid year is usually two years later because Medicare uses a lookback.';
+  const copy = options.copy || 'Shows only years where Roth conversions may accidentally push projected AGI/MAGI into a higher Medicare IRMAA tier. The paid year is usually two years later because Medicare uses a lookback.';
   const body = good
     ? renderIRMAAWatchlistTable(items, options)
     : renderIRMAAWatchlistSummary(items) + '<details class="irmaa-watch-details" '+(options.open ? 'open' : '')+'><summary>Review IRMAA exception details</summary>'+renderIRMAAWatchlistTable(items, options)+'</details>';
@@ -4420,14 +4407,14 @@ function renderIRMAAWatchlist(){
     el.id = 'irmaa-watchlist-panel';
     kpi.insertAdjacentElement('afterend', el);
   }
-  el.innerHTML = renderIRMAAWatchlistPanel(proj, S, {limit:6, title:'IRMAA Watchlist', copy:'Compact exception list for Medicare IRMAA. It only shows years outside the selected Roth/IRMAA target, or years that create IRMAA when no target is set.'});
+  el.innerHTML = renderIRMAAWatchlistPanel(proj, S, {limit:6, title:'IRMAA Watchlist', copy:'Roth-conversion warning list for Medicare IRMAA. It only shows years where Roth conversion pushes AGI above a selected target or creates a higher IRMAA tier. Income-only crossings are not flagged here.'});
 }
 function rothLabRenderIRMAAWatchlist(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
   const sc = scenarios[idx] || scenarios[0];
   if (!sc || !sc.rows || !sc.rows.length) return '';
   const label = (sc.summary && sc.summary.label) || 'Selected scenario';
-  return renderIRMAAWatchlistPanel(sc.rows, sc.state || S, {limit:10, start:cfg.start, end:cfg.end, title:'IRMAA Watchlist', badge:label, copy:'Compact exception list for the selected Roth Lab detail scenario. Years inside the selected Roth/IRMAA target are hidden; exceptions show whether income before Roth or Roth conversions caused the excess.'});
+  return renderIRMAAWatchlistPanel(sc.rows, sc.state || S, {limit:10, start:cfg.start, end:cfg.end, title:'IRMAA Watchlist', badge:label, copy:'Roth-conversion warning list for the selected Roth Lab detail scenario. It flags only years where Roth conversions push income above the selected target or into a higher IRMAA tier; income-only crossings are left alone.'});
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
