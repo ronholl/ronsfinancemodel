@@ -7493,6 +7493,7 @@ let rothLabSettings = {
   taxFillIrmaaGuard:null,
   fillMode:'',
   customMagi:'',
+  heirTaxRate:'30',
   assumption:'current',
   detail:'1',
   detailYears:'10',
@@ -7736,6 +7737,17 @@ function rothLabIRMAAScenarioPlain(fillMode){
   if (fillMode === 'R') return 'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. Once the target is reached, extra funding need is routed to Roth withdrawals instead of taxable IRA draws.';
   return 'Medicare-aware Roth target using the selected IRMAA tier and cushion. If normal income is already above the target, it does not add extra Roth conversions.';
 }
+function rothLabHeirTaxPct(){
+  const pct = parseF(rothLabSetting('heirTaxRate', '30'));
+  return Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 30;
+}
+function rothLabHeirTaxRate(){
+  return rothLabHeirTaxPct() / 100;
+}
+function rothLabHeirTaxRateLabel(){
+  const pct = Math.round(rothLabHeirTaxPct() * 10) / 10;
+  return String(pct).replace(/\.0$/, '') + '%';
+}
 function rothLabScenarioDefs(){
   const start = rothLabNumSetting('startYear', rothLabDefaultStart());
   const end = Math.max(start, rothLabNumSetting('endYear', rothLabDefaultEnd()));
@@ -7747,6 +7759,7 @@ function rothLabScenarioDefs(){
   const bracketOptionsForGuard = getMaxBracketOptions({startYear:start, level:taxFillIrmaaGuard || ''});
   const maxBracket = rawMaxBracket && bracketOptionsForGuard.some(o => String(o[0]) === rawMaxBracket) ? rawMaxBracket : '';
   const customMagi = Math.max(0, rothLabNumSetting('customMagi', 0));
+  const heirTaxRate = rothLabHeirTaxRate();
   const defs = [
     {kind:'current', label:'Current Plan', plain:rothLabCurrentPlanDescription(start, end), save:false},
     ...(rothLabSettings.userScenario ? [{kind:'user', label:'User Scenario', plain:rothLabUserScenarioDescription(rothLabSettings.userScenario), save:true, userScenario:rothLabSettings.userScenario}] : []),
@@ -7771,7 +7784,7 @@ function rothLabScenarioDefs(){
   if (customMagi > 0) {
     defs.push({kind:'magi', label:'Custom MAGI '+shortDollar(customMagi), plain:'Converts only up to the custom MAGI ceiling entered below.', save:true, customMagi});
   }
-  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, defs};
+  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, heirTaxRate, defs};
 }
 function rothLabApplyTaxFillGuard(st, def, start, end){
   const base = JSON.parse(JSON.stringify(st));
@@ -7848,8 +7861,8 @@ function rothLabSummarize(def, rows, start, end){
   const finalRoth = (final.roth1||0) + (final.roth2||0);
   const finalNetWorth = final.netWorth || 0;
   const finalOther = finalNetWorth - finalIRA - finalRoth;
-  const iraTaxRate = Math.max(0, Math.min(0.60, peakMarg || avgEff || 0));
-  const taxAdjustedNetWorth = finalOther + finalRoth + Math.max(0, finalIRA) * (1 - iraTaxRate);
+  const heirTaxRate = rothLabHeirTaxRate();
+  const estateValue = finalOther + finalRoth + Math.max(0, finalIRA) * (1 - heirTaxRate);
   return {
     label:def.label,
     plain:def.plain,
@@ -7865,8 +7878,10 @@ function rothLabSummarize(def, rows, start, end){
     finalRoth,
     finalOther,
     finalNetWorth,
-    iraTaxRate,
-    taxAdjustedNetWorth,
+    heirTaxRate,
+    estateValue,
+    // Compatibility alias for older render paths or saved UI state.
+    taxAdjustedNetWorth: estateValue,
     futureTaxableIra:sum(futureRows, r => Math.max(0, (r.taxableRMDs||0) - (r.qualDivs||0))),
     peakAGI,
     avgEff,
@@ -8107,6 +8122,7 @@ function rothLabRenderControls(cfg){
       setupField('Analysis End Year', rothLabControlSelect('endYear', rothLabYearOptions(cfg.end)), 'Last year to test. Later years still calculate the downstream effect on balances and taxes.')+
       setupField('Assumption Lens', rothLabControlSelect('assumption', assumptionOptions), 'Rerun every scenario under one stress lens without changing the saved plan.')+
       setupField('Detail Years', rothLabControlSelect('detailYears', detailOptions), 'How many annual rows to show. 5 years is usually best for a concise advisor report; Full plan is useful when the IRA does not drain quickly.')+
+      setupField('Assumed Heir IRA Tax Rate (%)', rothLabControlNumber('heirTaxRate', rothLabHeirTaxPct()), 'Used only for Estate Value. It does not change the projection. Default 30 means remaining traditional IRA dollars are valued at 70% for heir comparison.')+
     '</div><div class="roth-control-section">Guardrails</div><div class="roth-control-grid">'+
       setupField('IRMAA Cushion ($)', rothLabControlNumber('irmaaHeadroom', cfg.irmaaHeadroom), 'Stay this far below the selected Medicare IRMAA income ceiling. A cushion helps avoid barely crossing a Medicare tier.')+
       setupField('Federal Bracket Cushion ($)', rothLabControlNumber('bracketHeadroom', cfg.bracketHeadroom), 'Stay this far below the selected federal bracket target. This avoids accidentally crossing a tax bracket by a small amount.')+
@@ -8156,7 +8172,8 @@ function rothLabRenderFieldGuide(){
     ['IRMAA Overflow Choice','Controls what generated IRMAA scenarios do if normal income is already above the selected target. No extra fill is neutral: it does not add conversions or change normal funding. Roth above target intentionally uses Roth withdrawals above the target; Fill to next tier intentionally uses more income room.'],
     ['Custom MAGI Target','MAGI means Medicare/tax income for this purpose. Use a custom target when you want to test one exact income number, such as an advisor-suggested target.'],
     ['Assumption Lens','This reruns every scenario under one what-if assumption, such as lower growth or frozen IRMAA thresholds. It helps show whether a strategy is fragile or still reasonable.'],
-    ['Detail Years','This controls how much annual detail appears in Year-by-Year and the advisor report. Five years is often enough for a meeting; Full plan or Until IRA drained helps when the ending matters.']
+    ['Detail Years','This controls how much annual detail appears in Year-by-Year and the advisor report. Five years is often enough for a meeting; Full plan or Until IRA drained helps when the ending matters.'],
+    ['Estate Value','A simple heir-value estimate. Other assets and Roth count fully; remaining traditional IRA is reduced by the assumed heir IRA tax rate. This is only a comparison metric and does not change the projection.']
   ];
   return '<div class="panel"><div class="sh">Roth Lab Field Guide</div><p style="font-size:13px;line-height:1.6;margin:0 0 10px;color:#6a5830">Use this when a field name feels technical. The short version: set the years, pick any guardrails you care about, compare scenarios, then print only the few worth discussing.</p><div class="roth-help-grid">'+cards.map(c => '<div class="roth-help-card"><strong>'+setupEsc(c[0])+'</strong>'+setupEsc(c[1])+'</div>').join('')+'</div></div>';
 }
@@ -8279,7 +8296,7 @@ function rothLabRenderSummary(scenarios, cfg){
       save = x.save ? '<button type="button" class="roth-scenario-action use" onclick="rothLabSaveScenario('+idx+')">Use This Strategy</button>' : '<span class="roth-badge">Baseline</span>';
     }
     const delta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.finalNetWorth||0)-(base.finalNetWorth||0));
-    const adjDelta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.taxAdjustedNetWorth||0)-(base.taxAdjustedNetWorth||0));
+    const estateDelta = idx === 0 ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta((x.estateValue||0)-(base.estateValue||0));
     const tierWarning = rothLabTierRank(x.peakTier) >= 5 ? '<div class="roth-warning">Crosses top IRMAA tier</div>' : '';
     return '<div class="roth-card"'+idAttr+'>'+ 
       '<div class="roth-card-head"><div><div class="roth-card-title">'+setupEsc(x.label || '')+'</div><div class="roth-card-desc">'+setupEsc(x.plain || '')+'</div>'+rothLabFirstYearMeta(sc, cfg)+'</div><div class="roth-card-actions">'+save+'</div></div>'+ 
@@ -8292,7 +8309,7 @@ function rothLabRenderSummary(scenarios, cfg){
         rothLabMetric('Final Roth', rothLabMoney(x.finalRoth,true))+ 
         rothLabMetric('Final Other Assets', rothLabMoney(x.finalOther,true))+ 
         rothLabMetric('Final Net Worth', rothLabMoney(x.finalNetWorth,true)+' <span style="font-size:12px">'+delta+'</span>')+ 
-        rothLabMetric('Tax-Adj Net Worth', rothLabMoney(x.taxAdjustedNetWorth,true)+' <span style="font-size:12px">'+adjDelta+'</span>')+ 
+        rothLabMetric('Estate Value', rothLabMoney(x.estateValue,true)+' <span style="font-size:12px">'+estateDelta+'</span>')+ 
       '</div>'+ 
       '<div class="roth-metric-section">Tax and Medicare impact</div>'+ 
       '<div class="roth-metrics">'+ 
@@ -8307,7 +8324,7 @@ function rothLabRenderSummary(scenarios, cfg){
       '</div>'+ 
     '</div>';
   }).join('');
-  return '<div class="panel"><div class="sh">Scenario Scorecard</div><div style="font-size:12px;color:#6a5830;line-height:1.45;margin-bottom:10px">Lifetime Income Tax includes federal plus state. State Tax is broken out separately so Roth conversions can be discussed by federal, state, and Medicare impact. Final Other Assets is the part of net worth not shown in Final IRA or Final Roth. Tax-Adj Net Worth = Final Other Assets + Final Roth + Final IRA x (1 - Peak Marginal Rate). It is a rough pre-tax IRA haircut, not a liquidation tax estimate.</div><div class="roth-scorecards">'+cards+'</div></div>';
+  return '<div class="panel"><div class="sh">Scenario Scorecard</div><div style="font-size:12px;color:#6a5830;line-height:1.45;margin-bottom:10px">Lifetime Income Tax includes federal plus state. State Tax is broken out separately so Roth conversions can be discussed by federal, state, and Medicare impact. Final Other Assets is the part of net worth not shown in Final IRA or Final Roth. Estate Value = Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough heir after-tax comparison, not an estate-tax or inherited-IRA projection.</div><div class="roth-scorecards">'+cards+'</div></div>';
 }
 function rothLabAssumptionLensLabel(){
   const lens = rothLabSetting('assumption','current');
@@ -8360,7 +8377,7 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
   const lookback = (A.startYear - 2) + ' ' + f$(A.medicareMagi2 || 0, true) + '; ' + (A.startYear - 1) + ' ' + f$(A.medicareMagi1 || 0, true) + '; later years use the two-year lookback.';
   const rows = [
     ['Plan and Roth Window', 'Plan ' + A.startYear + '-' + A.endYear + '; Roth Lab ' + cfg.start + '-' + cfg.end + '; detail ' + rothLabDetailModeLabel(rothLabSetting('detailYears','10')) + '.'],
-    ['Household and Tax', household + '; ' + filingLabel + '; ' + stateLabel + '.'],
+    ['Household and Tax', household + '; ' + filingLabel + '; ' + stateLabel + '; Estate Value heir IRA rate ' + rothLabHeirTaxRateLabel() + '.'],
     ['Survivor Plan', rothLabSurvivorAssumptionLabel(A)],
     ['Growth', fp(A.growthRate || 0) + ' portfolio growth; ' + fp(A.divRate || 0) + ' dividend rate; ' + fp(A.intRate || 0) + ' cash interest.'],
     ['Inflation', fp(A.spendInfl || 0) + ' spending; ' + fp(A.ssCola || 0) + ' Social Security COLA; ' + fp(A.bracketInfl || 0) + ' tax brackets; ' + fp(A.irmaaInfl || 0) + ' IRMAA.'],
@@ -8379,8 +8396,8 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
     const x = sc.summary || {};
     const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
     const delta = x.label === 'Current Plan' ? '--' : ((x.finalNetWorth||0) - (base.finalNetWorth||0));
-    const adjDelta = x.label === 'Current Plan' ? '--' : ((x.taxAdjustedNetWorth||0) - (base.taxAdjustedNetWorth||0));
-    return '<tr><td><strong>'+setupEsc(x.label||'')+'</strong><div style="font-size:11px;color:#6a5830;line-height:1.35">'+setupEsc(rothLabReportScenarioText(sc))+'</div></td><td class="r">'+f$(first.agi||0,true)+'</td><td class="r">'+f$(first.rothConv||0,true)+'</td><td class="r">'+rothLabMoney(x.windowConv,true)+'</td><td class="r">'+rothLabMoney(x.incomeTax,true)+'</td><td class="r">'+rothLabMoney(x.irmaa,true)+'</td><td class="r bold">'+rothLabMoney(x.burden,true)+'</td><td class="r">'+rothLabMoney(x.finalIRA,true)+'</td><td class="r">'+setupEsc(rothLabIraDrainText(x.iraDrainYear))+'</td><td class="r">'+rothLabMoney(x.finalRoth,true)+'</td><td class="r">'+rothLabMoney(x.finalOther,true)+'</td><td class="r bold">'+rothLabMoney(x.finalNetWorth,true)+'<div style="font-size:10px">'+(delta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(delta))+'</div></td><td class="r bold">'+rothLabMoney(x.taxAdjustedNetWorth,true)+'<div style="font-size:10px">'+(adjDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(adjDelta))+'</div></td><td class="r">'+fp(x.avgEff||0)+'</td><td class="r">'+fp(x.peakMarg||0)+'</td><td>'+setupEsc(x.peakTier||'Base')+'</td></tr>';
+    const estateDelta = x.label === 'Current Plan' ? '--' : ((x.estateValue||0) - (base.estateValue||0));
+    return '<tr><td><strong>'+setupEsc(x.label||'')+'</strong><div style="font-size:11px;color:#6a5830;line-height:1.35">'+setupEsc(rothLabReportScenarioText(sc))+'</div></td><td class="r">'+f$(first.agi||0,true)+'</td><td class="r">'+f$(first.rothConv||0,true)+'</td><td class="r">'+rothLabMoney(x.windowConv,true)+'</td><td class="r">'+rothLabMoney(x.incomeTax,true)+'</td><td class="r">'+rothLabMoney(x.irmaa,true)+'</td><td class="r bold">'+rothLabMoney(x.burden,true)+'</td><td class="r">'+rothLabMoney(x.finalIRA,true)+'</td><td class="r">'+setupEsc(rothLabIraDrainText(x.iraDrainYear))+'</td><td class="r">'+rothLabMoney(x.finalRoth,true)+'</td><td class="r">'+rothLabMoney(x.finalOther,true)+'</td><td class="r bold">'+rothLabMoney(x.finalNetWorth,true)+'<div style="font-size:10px">'+(delta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(delta))+'</div></td><td class="r bold">'+rothLabMoney(x.estateValue,true)+'<div style="font-size:10px">'+(estateDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(estateDelta))+'</div></td><td class="r">'+fp(x.avgEff||0)+'</td><td class="r">'+fp(x.peakMarg||0)+'</td><td>'+setupEsc(x.peakTier||'Base')+'</td></tr>';
   }).join('');
   const notes = selected.map(sc => {
     const x = sc.summary || {};
@@ -8397,7 +8414,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
     }).join('');
     return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
-  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Tax-Adj NW applies a rough tax haircut to remaining IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Tax-Adj NW</th><th class="r">Wt Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Tax-Adj NW formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - Peak Marginal Rate). This is a rough comparison haircut for remaining pre-tax IRA dollars, not a full liquidation tax estimate.</div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r">Wt Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
 }
 function rothLabRenderDetails(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
