@@ -723,8 +723,8 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
         <div class="field p2-field"><label id="l-ssage2">P2 SS Start Age</label><input type="number" id="i-ssa2" oninput="IC()"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label id="l-ssmo1">P1 Monthly SS ($)</label><input type="number" id="i-ssmo1" oninput="IC()"><div class="note">At start age</div></div>
-        <div class="field p2-field"><label id="l-ssmo2">P2 Monthly SS ($)</label><input type="number" id="i-ssmo2" oninput="IC()"></div>
+        <div class="field"><label id="l-ssmo1">P1 Gross Monthly Social Security ($)</label><input type="number" id="i-ssmo1" oninput="IC()"><div class="note">Monthly benefit at claiming age, before tax withholding and Medicare premiums are deducted.</div></div>
+        <div class="field p2-field"><label id="l-ssmo2">P2 Gross Monthly Social Security ($)</label><input type="number" id="i-ssmo2" oninput="IC()"><div class="note">Monthly benefit at claiming age, before tax withholding and Medicare premiums are deducted.</div></div>
       </div>
     </div>
 
@@ -4110,7 +4110,7 @@ function updateLabels(){
   const setInner=(id,v)=>{const e=document.getElementById(id);if(e)e.innerHTML=v;};
   setTxt('l-p1name',n1);setTxt('l-p2name',n2);
   setTxt('l-ssage1',n1+' SS Age');setTxt('l-ssage2',n2+' SS Age');
-  setTxt('l-ssmo1',n1+' Monthly SS ($)');setTxt('l-ssmo2',n2+' Monthly SS ($)');
+  setTxt('l-ssmo1',n1+' Gross Monthly Social Security ($)');setTxt('l-ssmo2',n2+' Gross Monthly Social Security ($)');
   const wm=document.getElementById('i-widow-mode');
   if(wm){
     const o1=wm.querySelector('option[value="p1Survives"]');
@@ -5108,15 +5108,15 @@ function renderSOY(){
   const n1=p1(), n2=p2(), hp=hasP2();
   // Column definitions: [key, header-row1, header-row2]
   const cols = [
-    ['grossWages',   n1,  'Gross Wages'],
+    ['grossWages',   n1,  'W-2 Gross'],
     ['withholdPct',  n1,  'WH Override %'],
     ['ptWages',      n1,  'Self-Employ'],
-    ...(hp ? [['grossWages2', n2, 'Gross Wages'], ['withholdPct2', n2, 'WH Override %'], ['ptWages2', n2, 'Self-Employ']] : []),
-    ['ss1',      n1,          'SS/mo'],
-    ...(hp ? [['ss2', n2, 'SS/mo']] : []),
+    ...(hp ? [['grossWages2', n2, 'W-2 Gross'], ['withholdPct2', n2, 'WH Override %'], ['ptWages2', n2, 'Self-Employ']] : []),
+    ['ss1',      n1,          'Gross SS/mo'],
+    ...(hp ? [['ss2', n2, 'Gross SS/mo']] : []),
     ['spending', 'Annual',    'Spending'],
-    ['cash',     'Cash',      'Balance'],
-    ['sec',      'Securities','Balance'],
+    ['cash',     'Non-IRA',   'Cash/Bank'],
+    ['sec',      'Taxable',   'Brokerage'],
     ['ira1',     n1,          'IRA'],
     ...(hp ? [['ira2', n2, 'IRA']] : []),
     ['roth1',    n1,          'Roth'],
@@ -5339,16 +5339,16 @@ function editSOY(yr){
     <div class="sh">Income &amp; Spending</div>
     ${yr === S.startYear ? `<div style="font-size:11px;color:#8a7040;font-style:italic;margin-bottom:8px">Year 1 — enter wages, SS, and spending here to seed the projection. Subsequent years will pre-fill automatically using COLA growth.</div>` : ''}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
-      ${fld('grossWages',p1()+' Gross Annual Wages ($)', 'W-2 salary · pre-fills from prior year with COLA · enter to override or add new wages')}
+      ${fld('grossWages',p1()+' W-2 Gross Annual Wages ($)', 'Gross means annual pay before anything is taken out: taxes, withholding, 401k, health insurance, FSA, or other paycheck deductions.')}
       ${fld('preTaxDed1',p1()+' Pre-Tax Deductions/yr ($)','Health/dental/vision premiums + FSA + other Section 125 · reduces taxable income · optional, improves suggestion accuracy')}
       ${buildWithholdField('withholdPct',p1()+' Optional W-2 Withholding Override %','grossWages','k401Trad1','k401Roth1',yr-S.by1-1,'preTaxDed1')}
       ${fld('ptWages',p1()+' Self-Employ / 1099 ($)', 'Consulting/self-employ income · pre-fills from prior year with COLA · enter to override or add new income')}
-      ${hasP2()?fld('grossWages2',p2()+' Gross Annual Wages ($)', 'W-2 salary · pre-fills from prior year with COLA · enter to override or add new wages'):''}
+      ${hasP2()?fld('grossWages2',p2()+' W-2 Gross Annual Wages ($)', 'Gross means annual pay before anything is taken out: taxes, withholding, 401k, health insurance, FSA, or other paycheck deductions.'):''}
       ${hasP2()?fld('preTaxDed2',p2()+' Pre-Tax Deductions/yr ($)','Health/dental/vision premiums + FSA + other Section 125 · reduces taxable income · optional, improves suggestion accuracy'):''}
       ${hasP2()?buildWithholdField('withholdPct2',p2()+' Optional W-2 Withholding Override %','grossWages2','k401Trad2','k401Roth2',yr-S.by2-1,'preTaxDed2'):''}
       ${hasP2()?fld('ptWages2',p2()+' Self-Employ / 1099 ($)', 'Consulting/self-employ income · pre-fills from prior year with COLA · enter to override or add new income'):''}
-      ${fld('ss1',p1()+' Monthly SS ($)','Monthly benefit · COLA-adjusted forward')}
-      ${hasP2()?fld('ss2',p2()+' Monthly SS ($)','Monthly benefit · COLA-adjusted forward'):''}
+      ${fld('ss1',p1()+' Gross Monthly Social Security ($)','Before tax withholding and Medicare premiums · COLA-adjusted forward')}
+      ${hasP2()?fld('ss2',p2()+' Gross Monthly Social Security ($)','Before tax withholding and Medicare premiums · COLA-adjusted forward'):''}
       ${fld('spending','Spending ($)','Sets new spending base · subsequent years inflate from this value at spend % · enter next year to reset after a one-time expense')}
       ${fld('hsaDep','HSA Deposit ($)')}
       ${fld('hsaWith','HSA Withdrawal ($)')}
@@ -5364,8 +5364,8 @@ function editSOY(yr){
     </div>
     <div class="sh">Starting Balances (actual values entering this year)</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
-      ${fld('cash','Cash ($)')}
-      ${fld('sec','Securities ($)')}
+      ${fld('cash','Non-Retirement Cash / Bank ($)','Checking, savings, money market, CDs, or similar cash-like accounts outside IRA, 401k, Roth, and HSA.')}
+      ${fld('sec','Taxable Brokerage / Non-Retirement Securities ($)','Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA.')}
       ${fld('ira1',p1()+' IRA ($)')}
       ${hasP2()?fld('ira2',p2()+' IRA ($)'):''}
       ${fld('roth1',p1()+' Roth ($)')}
@@ -9226,8 +9226,8 @@ function renderSetupBalancesStep(){
   return [
     setupInfoCard('Balances at the start of '+yr, 'Enter the balances that exist at the start of the first plan year. This is not asking for every account statement detail - combine similar accounts into the buckets below.', 'done'),
     setupSOYInput('Annual Household Spending ($)',yr,'spending','number',{min:0,note:'Normal household spending for the first plan year before income taxes. Include Medicare premiums, supplemental insurance, and regular healthcare costs here if they are part of the household budget. Later years inflate from here unless a Spending strategy overrides them.'}),
-    setupSOYInput('Cash / Near-Cash Outside Retirement ($)',yr,'cash','number',{min:0,note:'Checking, savings, money market, CDs, or other non-retirement cash-like reserves. Do not include IRA, 401k, Roth, HSA, or brokerage investments here.'}),
-    setupSOYInput('Taxable Brokerage / Securities ($)',yr,'sec','number',{min:0,note:'Non-retirement investment accounts such as brokerage funds, stocks, ETFs, and mutual funds.'}),
+    setupSOYInput('Non-Retirement Cash / Bank ($)',yr,'cash','number',{min:0,note:'Checking, savings, money market, CDs, or similar cash-like accounts outside retirement accounts. Do not include IRA, 401k, Roth, HSA, or taxable brokerage investments here.'}),
+    setupSOYInput('Taxable Brokerage / Non-Retirement Securities ($)',yr,'sec','number',{min:0,note:'Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA here.'}),
     setupSOYInput(p1()+' Traditional IRA / 401k ($)',yr,'ira1','number',{min:0,note:'Combine pre-tax retirement accounts for '+p1()+': traditional IRA, rollover IRA, traditional 401k, 403b, or similar.'}),
     has2 ? setupSOYInput(p2()+' Traditional IRA / 401k ($)',yr,'ira2','number',{min:0,note:'Combine pre-tax retirement accounts for '+p2()+': traditional IRA, rollover IRA, traditional 401k, 403b, or similar.'}) : '',
     setupSOYInput(p1()+' Roth IRA / Roth 401k ($)',yr,'roth1','number',{min:0,note:'Combine Roth retirement accounts for '+p1()+'. Roth money is modeled separately because qualified withdrawals are tax-free.'}),
@@ -9267,27 +9267,27 @@ function renderSetupIncomeStep(){
   const has2 = hasP2();
   const workIntro = '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Work income is optional</div><div class="setup-check-body">Use W-2 wages for paychecks. Use Non-Wage Taxable Income for self-employment, consulting, 1099, pension, gambling, or other taxable income outside a paycheck. If neither applies, skip to Social Security.</div></div>';
   const workFields = [
-    setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Annual W-2 salary before withholding, payroll taxes, and 401k contributions.'}),
+    setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}),
     setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}),
     setupInput(p1()+' Last W-2 Wage Year','wagesEnd1','int',S.wagesEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}),
     setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}),
     setupInput(p1()+' Last Non-Wage Income Year','ptEnd1','int',S.ptEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}),
-    has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Annual W-2 salary before withholding, payroll taxes, and 401k contributions.'}) : '',
+    has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}) : '',
     has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}) : '',
     has2 ? setupInput(p2()+' Last W-2 Wage Year','wagesEnd2','int',S.wagesEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}) : '',
     has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}) : '',
     has2 ? setupInput(p2()+' Last Non-Wage Income Year','ptEnd2','int',S.ptEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}) : ''
   ].join('');
-  const ssIntro = '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Social Security is separate</div><div class="setup-check-body">Use planned claiming fields if benefits start later. Use current monthly Social Security only if already receiving benefits in the plan start year.</div></div>';
+  const ssIntro = '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Social Security is separate</div><div class="setup-check-body">Enter the gross monthly Social Security benefit before tax withholding and before Medicare premiums are deducted. Use planned claiming fields if benefits start later; use current monthly fields only if already receiving benefits in the plan start year.</div></div>';
   const ssFields = [
     setupInput(p1()+' SS Start Age','ssAge1','number',S.ssAge1,{min:0,max:90,note:'Age when Social Security is expected to start. Leave 0 if not modeling Social Security.'}),
-    setupInput(p1()+' Monthly SS at Start ($)','ssmo1','number',S.ssmo1,{min:0,note:'Expected monthly benefit at the start age.'}),
-    setupSOYInput(p1()+' Current Monthly SS ($)',yr,'ss1','number',{min:0,note:'Use only if already receiving Social Security in the plan start year.'}),
+    setupInput(p1()+' Gross Monthly Social Security at Start ($)','ssmo1','number',S.ssmo1,{min:0,note:'Expected monthly benefit at the claiming age, before tax withholding and Medicare premiums are deducted.'}),
+    setupSOYInput(p1()+' Current Gross Monthly Social Security ($)',yr,'ss1','number',{min:0,note:'Use only if already receiving Social Security in the plan start year. Enter the benefit before tax withholding and Medicare premiums, not the bank deposit amount.'}),
     has2 ? setupInput(p2()+' SS Start Age','ssAge2','number',S.ssAge2,{min:0,max:90,note:'Age when Social Security is expected to start. Leave 0 if not modeling Social Security.'}) : '',
-    has2 ? setupInput(p2()+' Monthly SS at Start ($)','ssmo2','number',S.ssmo2,{min:0,note:'Expected monthly benefit at the start age.'}) : '',
-    has2 ? setupSOYInput(p2()+' Current Monthly SS ($)',yr,'ss2','number',{min:0,note:'Use only if already receiving Social Security in the plan start year.'}) : ''
+    has2 ? setupInput(p2()+' Gross Monthly Social Security at Start ($)','ssmo2','number',S.ssmo2,{min:0,note:'Expected monthly benefit at the claiming age, before tax withholding and Medicare premiums are deducted.'}) : '',
+    has2 ? setupSOYInput(p2()+' Current Gross Monthly Social Security ($)',yr,'ss2','number',{min:0,note:'Use only if already receiving Social Security in the plan start year. Enter the benefit before tax withholding and Medicare premiums, not the bank deposit amount.'}) : ''
   ].join('');
   return [
     '<div class="sh" style="grid-column:1/-1">Work / Earned Income</div>',
@@ -9526,16 +9526,16 @@ function renderSetupAnnualView(){
   for (let y = S.startYear; y <= S.endYear; y++) opts.push('<option value="'+y+'" '+(y===yr?'selected':'')+'>'+y+'</option>');
   const has2 = hasP2();
   const income = [
-    setupSOYInput(p1()+' Gross Wages ($)',yr,'grossWages','number',{min:0}),
+    setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}),
     setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}),
     setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}),
-    has2 ? setupSOYInput(p2()+' Gross Wages ($)',yr,'grossWages2','number',{min:0}) : '',
+    has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}) : '',
     has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}) : '',
     has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}) : '',
-    setupSOYInput(p1()+' Monthly SS ($)',yr,'ss1','number',{min:0}),
-    has2 ? setupSOYInput(p2()+' Monthly SS ($)',yr,'ss2','number',{min:0}) : '',
+    setupSOYInput(p1()+' Gross Monthly Social Security ($)',yr,'ss1','number',{min:0,note:'Monthly Social Security benefit before tax withholding and Medicare premiums. Do not use the smaller bank deposit amount after deductions.'}),
+    has2 ? setupSOYInput(p2()+' Gross Monthly Social Security ($)',yr,'ss2','number',{min:0,note:'Monthly Social Security benefit before tax withholding and Medicare premiums. Do not use the smaller bank deposit amount after deductions.'}) : '',
     setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0,note:'Normal household spending for this check-in year before income taxes. Include Medicare premiums and regular healthcare costs here if they are part of the household budget.'}),
     setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0}),
     setupSOYInput('HSA Withdrawal ($)',yr,'hsaWith','number',{min:0})
@@ -9549,8 +9549,8 @@ function renderSetupAnnualView(){
     has2 ? setupSOYPctInput(p2()+' Employer 401k % Override',yr,'k401Emp2',S.k401Emp2) : ''
   ].join('');
   const bals = [
-    setupSOYInput('Cash ($)',yr,'cash','number',{min:0}),
-    setupSOYInput('Securities ($)',yr,'sec','number',{min:0}),
+    setupSOYInput('Non-Retirement Cash / Bank ($)',yr,'cash','number',{min:0,note:'Checking, savings, money market, CDs, or similar cash-like accounts outside IRA, 401k, Roth, and HSA.'}),
+    setupSOYInput('Taxable Brokerage / Non-Retirement Securities ($)',yr,'sec','number',{min:0,note:'Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA.'}),
     setupSOYInput(p1()+' IRA ($)',yr,'ira1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' IRA ($)',yr,'ira2','number',{min:0}) : '',
     setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
