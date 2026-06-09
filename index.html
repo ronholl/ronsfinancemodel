@@ -8487,69 +8487,98 @@ function showWelcomePage1() {
   showWelcomeModal();
   _welcomeForceShow = false;
 }
-// ── Update Message — shown once to existing users ──────────────────────────
-// To send a new update: change UPDATE_MSG_ID to a new unique string, and update UPDATE_MSG_TEXT.
-const UPDATE_MSG_ID  = 'update_2026_03_v5';  // change this to show a new message
+// -- Hosted User Message - shown once when user-message.json id changes ---------
+const USER_MESSAGE_FILE = 'user-message.json';
 
-// Clear any old update flags so they don't block new ones
-['update_2026_03_v1','update_2026_03_v2','update_2026_03_v3','update_2026_03_v4'].forEach(k => localStorage.removeItem('rrfm_'+k));
-const UPDATE_MSG_TEXT = {
-  title: 'What\'s New — March 2026',
-  items: [
-    ['📊','Print Report','Click the <strong>REPORT</strong> button (top bar, next to GUIDE) to open a printable report with your full plan — use File → Print → Save as PDF.'],
-    ['⚙️','Override Priority Fixed','Income Level override now correctly takes precedence over both IRMAA override rows and the global IRMAA input setting.'],
-    ['📅','Start of Year Pre-Fill','The Start of Year edit form now pre-fills wages, SS, balances, and spending from the prior year\'s projection — shown in blue. Green = values you entered.'],
-    ['🔄','Reset Now Works Immediately','Reset All Data in the Export/Import tab now clears all data and re-renders immediately without requiring a page refresh.'],
-    ['💊','Medicare Part B','Medicare Part B base premium is now tracked separately in Cash Flow, Tax Summary, and the Print Report.'],
-  ]
-};
-
-function showUpdateMessage() {
-  const key = 'rrfm_' + UPDATE_MSG_ID;
-  const alreadySeen = localStorage.getItem(key);
+function userMessageEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function userMessageKey(msg){
+  const id = msg && msg.id ? String(msg.id).trim() : '';
+  return id ? 'rrfm_user_message_seen_' + id : '';
+}
+function userMessagePreviewMode(){
+  try {
+    const q = new URLSearchParams(location.search || '');
+    return q.has('previewMessage') || q.has('showMessage') || q.has('userMessage');
+  } catch(e) {
+    return false;
+  }
+}
+function dismissUserMessage(msgId){
+  const modal = document.getElementById('update-modal');
+  if (modal) modal.remove();
+  // Preview URLs should be repeatable, so they do not mark the message as seen.
+  if (msgId && !userMessagePreviewMode()) localStorage.setItem('rrfm_user_message_seen_' + msgId, '1');
+}
+function userMessageActionHtml(action, msgId){
+  if (!action || !action.label) return '';
+  const label = userMessageEsc(action.label);
+  const close = "dismissUserMessage('" + String(msgId).replace(/'/g,'\\\'') + "');";
+  if (action.view) {
+    const view = String(action.view).replace(/'/g,'\\\'');
+    return '<button onclick="'+close+'ST(\''+view+'\')" style="padding:9px 16px;background:#3a6a2a;color:#e8f4e8;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin:3px">'+label+'</button>';
+  }
+  if (action.href) {
+    const href = userMessageEsc(action.href);
+    const target = action.targetBlank ? ' target="_blank" rel="noopener"' : '';
+    return '<a href="'+href+'"'+target+' onclick="'+close+'" style="display:inline-block;padding:9px 16px;background:#2a3a1a;color:#8ac88a;border:1px solid #3a6a2a;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;margin:3px">'+label+'</a>';
+  }
+  return '';
+}
+function showUserMessageFromConfig(msg, opts){
+  const force = !!(opts && opts.force);
+  if (!msg || (msg.active !== true && !force)) return;
+  const id = msg.id ? String(msg.id).trim() : '';
+  if (!id) return;
+  const audience = String(msg.audience || 'returning').toLowerCase();
   const newUser = isUnconfigured();
-  console.log('[update msg] key='+key+' seen='+alreadySeen+' newUser='+newUser);
-  if (alreadySeen) return; // already dismissed
-  if (newUser) return;     // new user — welcome modal handles them
+  if (!force && audience !== 'all' && newUser) return;
+  if (!force && localStorage.getItem(userMessageKey(msg))) return;
+  const welcome = document.getElementById('welcome-modal');
+  if (welcome && force) welcome.remove();
+  if (welcome && !force) return;
+
+  const items = Array.isArray(msg.items) ? msg.items : [];
+  const actions = Array.isArray(msg.actions) ? msg.actions : [];
+  const title = userMessageEsc(msg.title || 'Message from Ron');
+  const subtitle = userMessageEsc(msg.subtitle || 'One-time app update');
+  const intro = msg.intro ? '<div style="background:#1e2810;border:1px solid #2a4a1a;border-radius:6px;padding:10px 13px;margin-bottom:12px;font-size:11.5px;color:#a8bd93;line-height:1.6">'+userMessageEsc(msg.intro)+'</div>' : '';
+  const itemHtml = items.map(item => {
+    if (typeof item === 'string') item = {body:item};
+    const ic = userMessageEsc(item.icon || '•');
+    const h = item.title ? '<div style="color:#8ac88a;font-size:11.5px;font-weight:700;margin-bottom:2px">'+userMessageEsc(item.title)+'</div>' : '';
+    const body = userMessageEsc(item.body || '');
+    return '<div style="background:#1e2810;border:1px solid #2a4a1a;border-radius:6px;padding:9px 13px;display:flex;gap:10px;align-items:flex-start"><div style="font-size:16px;flex-shrink:0;margin-top:1px">'+ic+'</div><div>'+h+'<div style="font-size:11px;color:#8a9a7a;line-height:1.6">'+body+'</div></div></div>';
+  }).join('');
+  const actionHtml = actions.map(a => userMessageActionHtml(a, id)).join('');
+  const defaultButton = '<button onclick="dismissUserMessage(\''+String(id).replace(/'/g,'\\\'')+'\')" style="padding:9px 28px;background:#3a6a2a;color:#e8f4e8;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin:3px">Got it - dismiss</button>';
+
   const modal = document.createElement('div');
   modal.id = 'update-modal';
-  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9998;
-    display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto`;
-  modal.innerHTML = `
-    <div style="background:#1a1208;border:2px solid #4a6a2a;border-radius:10px;
-      max-width:560px;width:100%;padding:28px 32px;font-family:inherit;box-shadow:0 8px 40px rgba(0,0,0,0.9);position:relative">
-      <button onclick="document.getElementById('update-modal').remove();localStorage.setItem('rrfm_${UPDATE_MSG_ID}','1')"
-        style="position:absolute;top:14px;right:16px;background:none;border:none;color:#6a5a3a;
-        font-size:20px;cursor:pointer;line-height:1;padding:4px 6px;font-family:inherit"
-        title="Dismiss">✕</button>
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:28px;margin-bottom:6px">🆕</div>
-        <h2 style="color:#8ac88a;font-size:17px;margin:0 0 3px;font-family:'Playfair Display',serif">
-          ${UPDATE_MSG_TEXT.title}
-        </h2>
-        <p style="color:#6a7a5a;font-size:11px;margin:0">Updates since your last session</p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
-        ${UPDATE_MSG_TEXT.items.map(([ic,title,desc])=>`
-          <div style="background:#1e2810;border:1px solid #2a4a1a;border-radius:6px;padding:9px 13px;display:flex;gap:10px;align-items:flex-start">
-            <div style="font-size:16px;flex-shrink:0;margin-top:1px">${ic}</div>
-            <div>
-              <div style="color:#8ac88a;font-size:11.5px;font-weight:700;margin-bottom:2px">${title}</div>
-              <div style="font-size:11px;color:#8a9a7a;line-height:1.6">${desc}</div>
-            </div>
-          </div>`).join('')}
-      </div>
-      <div style="text-align:center">
-        <button onclick="document.getElementById('update-modal').remove();localStorage.setItem('rrfm_${UPDATE_MSG_ID}','1')"
-          style="padding:9px 28px;background:#3a6a2a;color:#e8f4e8;border:none;border-radius:6px;
-          font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-          Got it — dismiss
-        </button>
-      </div>
-    </div>`;
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto';
+  modal.innerHTML = '<div style="background:#1a1208;border:2px solid #4a6a2a;border-radius:10px;max-width:600px;width:100%;padding:28px 32px;font-family:inherit;box-shadow:0 8px 40px rgba(0,0,0,0.9);position:relative">'+
+    '<button onclick="dismissUserMessage(\''+String(id).replace(/'/g,'\\\'')+'\')" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#6a5a3a;font-size:20px;cursor:pointer;line-height:1;padding:4px 6px;font-family:inherit" title="Dismiss">✕</button>'+
+    '<div style="text-align:center;margin-bottom:16px"><div style="font-size:28px;margin-bottom:6px">'+userMessageEsc(msg.icon || '🆕')+'</div><h2 style="color:#8ac88a;font-size:17px;margin:0 0 3px;font-family:\'Playfair Display\',serif">'+title+'</h2><p style="color:#6a7a5a;font-size:11px;margin:0">'+subtitle+'</p></div>'+
+    intro+
+    (itemHtml ? '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">'+itemHtml+'</div>' : '')+
+    '<div style="text-align:center">'+(actionHtml || '')+defaultButton+'</div>'+ 
+    '</div>';
   document.body.appendChild(modal);
 }
-
+async function showUpdateMessage(){
+  try {
+    const force = userMessagePreviewMode();
+    if (!force && isUnconfigured()) return;
+    const url = USER_MESSAGE_FILE + '?v=' + Date.now();
+    const resp = await fetch(url, {cache:'no-store'});
+    if (!resp.ok) return;
+    const msg = await resp.json();
+    showUserMessageFromConfig(msg, {force});
+  } catch(e) {
+    console.warn('[user message] unavailable', e);
+  }
+}
 
 
 function showWelcomeModal() {

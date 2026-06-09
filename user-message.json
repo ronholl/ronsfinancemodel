@@ -1,0 +1,31 @@
+{
+  "active": true,
+  "id": "message_2026_08_msg1",
+  "audience": "returning",
+  "icon": "📣",
+  "title": "New Messaging Capability",
+  "subtitle": "Message from Ron",
+  "intro": "I will use this if there are changes anyone should know about. Here are a couple worth noting.",
+  "items": [
+    {
+      "icon": "📖",
+      "title": "Updated guide",
+      "body": "The User Guide now starts with a simpler onboarding flow and includes a Roth Lab section."
+    },
+    {
+      "icon": "🧪",
+      "title": "Roth Lab",
+      "body": "Roth Lab helps compare income targets, IRMAA tiers, tax bracket choices, and advisor report scenarios."
+    }
+  ],
+  "actions": [
+    {
+      "label": "Open Guide",
+      "href": "guide.html"
+    },
+    {
+      "label": "Open Roth Lab",
+      "view": "rothlab"
+    }
+  ]
+}
