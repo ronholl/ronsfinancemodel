@@ -2279,6 +2279,13 @@ function runProjection(S) {
       if (p1Survivor) { grossSS1 = survivorBenefit; grossSS2 = 0; }
       else if (p2Survivor) { grossSS1 = 0; grossSS2 = survivorBenefit; }
     }
+    const ssStressPct = Math.max(0, Math.min(100, parseF(S.ssStressPct || 0))) / 100;
+    const ssStressStart = parseInt(S.ssStressStartYear, 10) || 0;
+    if (ssStressPct > 0 && ssStressStart && yr >= ssStressStart) {
+      const ssStressFactor = 1 - ssStressPct;
+      grossSS1 *= ssStressFactor;
+      grossSS2 *= ssStressFactor;
+    }
     const grossSS = grossSS1 + grossSS2;
 
     // ── RMDs (based on START-of-year balance, matching Excel $AM3*(1+g) pattern) ──
@@ -7495,6 +7502,9 @@ let rothLabSettings = {
   customMagi:'',
   heirTaxRate:'30',
   assumption:'current',
+  ssStressMode:'current',
+  ssStressPct:'20',
+  ssStressStartYear:null,
   survivorLens:'current',
   survivorDeathYear:null,
   detail:'1',
@@ -7728,6 +7738,70 @@ function rothLabSurvivorControlHtml(cfg){
   }
   return html;
 }
+function rothLabDefaultSsStressStartYear(){
+  const start = parseInt(S.startYear, 10) || currentYear;
+  const end = parseInt(S.endYear, 10) || start;
+  return Math.min(end, Math.max(start, 2034));
+}
+function rothLabSsStressModeSetting(){
+  const raw = String(rothLabSetting('ssStressMode', 'current') || 'current');
+  return raw === 'reduction' ? 'reduction' : 'current';
+}
+function rothLabSsStressPctSetting(){
+  const pct = parseF(rothLabSetting('ssStressPct', '20'));
+  return isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 20;
+}
+function rothLabSsStressStartYearSetting(){
+  const raw = rothLabSetting('ssStressStartYear', null);
+  const yr = parseInt(raw, 10);
+  const start = parseInt(S.startYear, 10) || currentYear;
+  const end = parseInt(S.endYear, 10) || start;
+  if (yr && yr >= start && yr <= end) return yr;
+  return rothLabDefaultSsStressStartYear();
+}
+function rothLabApplySocialSecurityStress(st, mode, pct, startYear){
+  if ((mode || 'current') !== 'reduction') {
+    st.ssStressPct = 0;
+    st.ssStressStartYear = '';
+    return st;
+  }
+  const p = isFinite(parseF(pct)) ? parseF(pct) : 20;
+  const start = parseInt(st.startYear, 10) || currentYear;
+  const end = parseInt(st.endYear, 10) || start;
+  const yr = parseInt(startYear, 10);
+  st.ssStressPct = Math.max(0, Math.min(100, p));
+  st.ssStressStartYear = yr && yr >= start && yr <= end ? yr : Math.min(end, Math.max(start, 2034));
+  return st;
+}
+function rothLabSocialSecurityStressSummary(cfg){
+  const mode = (cfg && cfg.ssStressMode) || rothLabSsStressModeSetting();
+  if (mode !== 'reduction') return 'Current scheduled Social Security benefits. This stress lens is off, so the Roth Lab uses the saved plan benefits.';
+  const pct = (cfg && cfg.ssStressPct != null) ? cfg.ssStressPct : rothLabSsStressPctSetting();
+  const yr = (cfg && cfg.ssStressStartYear) || rothLabSsStressStartYearSetting();
+  return 'Temporary Roth Lab stress test: reduce gross Social Security by ' + setupEsc(String(pct)) + '% starting in ' + setupEsc(String(yr)) + '. The saved plan is not changed.';
+}
+function rothLabSocialSecurityStressAssumptionText(cfg){
+  const mode = (cfg && cfg.ssStressMode) || rothLabSsStressModeSetting();
+  if (mode !== 'reduction') return 'Scheduled Social Security benefits; no reduction stress lens.';
+  const pct = (cfg && cfg.ssStressPct != null) ? cfg.ssStressPct : rothLabSsStressPctSetting();
+  const yr = (cfg && cfg.ssStressStartYear) || rothLabSsStressStartYearSetting();
+  return 'Stress lens reduces gross Social Security benefits by ' + pct + '% starting in ' + yr + '. Saved plan benefits are unchanged.';
+}
+function rothLabSocialSecurityStressControlHtml(cfg){
+  const mode = (cfg && cfg.ssStressMode) || rothLabSsStressModeSetting();
+  const pct = (cfg && cfg.ssStressPct != null) ? cfg.ssStressPct : rothLabSsStressPctSetting();
+  const startYear = (cfg && cfg.ssStressStartYear) || rothLabSsStressStartYearSetting();
+  const modeOptions = rothLabOptionList([
+    ['current', 'Scheduled benefits - no stress'],
+    ['reduction', 'Reduce benefits for stress test']
+  ], mode);
+  let html = setupField('Social Security Lens', rothLabControlSelect('ssStressMode', modeOptions), rothLabSocialSecurityStressSummary(cfg));
+  if (mode === 'reduction') {
+    html += setupField('SS Reduction Start Year', rothLabControlSelect('ssStressStartYear', rothLabYearOptions(startYear)), 'First projection year to reduce Social Security in Roth Lab scenarios only.');
+    html += setupField('SS Benefit Reduction (%)', rothLabControlNumber('ssStressPct', pct), 'Example: 20 means each projected gross Social Security benefit is reduced by 20% starting in the selected year.');
+  }
+  return html;
+}
 function rothLabRemoveOverlapRows(rows, start, end){
   return (rows || []).filter(row => {
     const s = parseInt(row.startYear)||0;
@@ -7837,6 +7911,9 @@ function rothLabScenarioDefs(){
   const heirTaxRate = rothLabHeirTaxRate();
   const survivorLens = rothLabSurvivorLensSetting();
   const survivorDeathYear = rothLabSurvivorDeathYearSetting();
+  const ssStressMode = rothLabSsStressModeSetting();
+  const ssStressPct = rothLabSsStressPctSetting();
+  const ssStressStartYear = rothLabSsStressStartYearSetting();
   const defs = [
     {kind:'current', label:'Current Plan', plain:rothLabCurrentPlanDescription(start, end), save:false},
     ...(rothLabSettings.userScenario ? [{kind:'user', label:'User Scenario', plain:rothLabUserScenarioDescription(rothLabSettings.userScenario), save:true, userScenario:rothLabSettings.userScenario}] : []),
@@ -7861,7 +7938,7 @@ function rothLabScenarioDefs(){
   if (customMagi > 0) {
     defs.push({kind:'magi', label:'Custom MAGI '+shortDollar(customMagi), plain:'Converts only up to the custom MAGI ceiling entered below.', save:true, customMagi});
   }
-  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, heirTaxRate, survivorLens, survivorDeathYear, defs};
+  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, heirTaxRate, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear, defs};
 }
 function rothLabApplyTaxFillGuard(st, def, start, end){
   const base = JSON.parse(JSON.stringify(st));
@@ -7909,14 +7986,16 @@ function rothLabApplyScenario(st, def, start, end){
   }
   return st;
 }
-function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorDeathYear){
+function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear){
   const st = rothLabApplyAssumption(rothLabCloneState(), assumption);
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
+  rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
   if (def.kind !== 'current' && def.kind !== 'user') {
     rothLabStripTaxFundingOverrides(st, start, end);
   }
   rothLabApplyScenario(st, def, start, end);
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
+  rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
   const rows = runProjection(st);
   return {def, state:st, rows, summary:rothLabSummarize(def, rows, start, end)};
 }
@@ -7974,7 +8053,7 @@ function rothLabBuildScenarios(){
   const assumption = rothLabSetting('assumption', 'current');
   const scenarios = [];
   cfg.defs.forEach(def => {
-    try { scenarios.push(rothLabRunScenario(def, cfg.start, cfg.end, assumption, cfg.survivorLens, cfg.survivorDeathYear)); }
+    try { scenarios.push(rothLabRunScenario(def, cfg.start, cfg.end, assumption, cfg.survivorLens, cfg.survivorDeathYear, cfg.ssStressMode, cfg.ssStressPct, cfg.ssStressStartYear)); }
     catch (e) { scenarios.push({def, rows:[], summary:{label:def.label, plain:'Could not run: '+e.message, save:false}}); }
   });
   return {cfg, scenarios};
@@ -8191,6 +8270,7 @@ function rothLabRenderControls(cfg){
   const assumptionOptions = '<option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds</option>';
   const detailOptions = '<option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option>';
   const survivorControlHtml = rothLabSurvivorControlHtml(cfg);
+  const ssStressControlHtml = rothLabSocialSecurityStressControlHtml(cfg);
   const currentPlan = rothLabCurrentPlanDescription(cfg.start, cfg.end);
   const userScenario = rothLabSettings.userScenario ? rothLabUserScenarioDescription(rothLabSettings.userScenario) : 'No saved User Plan yet. Use Save Current as User Plan on the Current Plan card when you want to freeze the current strategy before trying something else.';
   return '<div class="panel roth-lab-setup"><div class="sh">Roth Analysis Lab</div>'+ 
@@ -8201,6 +8281,7 @@ function rothLabRenderControls(cfg){
       setupField('Analysis Start Year', rothLabControlSelect('startYear', rothLabYearOptions(cfg.start)), 'First year to test Roth conversion targets.')+
       setupField('Analysis End Year', rothLabControlSelect('endYear', rothLabYearOptions(cfg.end)), 'Last year to test. Later years still calculate the downstream effect on balances and taxes.')+
       setupField('Assumption Lens', rothLabControlSelect('assumption', assumptionOptions), 'Rerun every scenario under one stress lens without changing the saved plan.')+
+      ssStressControlHtml+
       survivorControlHtml+
       setupField('Detail Years', rothLabControlSelect('detailYears', detailOptions), 'How many annual rows to show. 5 years is usually best for a concise advisor report; Full plan is useful when the IRA does not drain quickly.')+
       setupField('Assumed Heir IRA Tax Rate (%)', rothLabControlNumber('heirTaxRate', rothLabHeirTaxPct()), 'Used only for Estate Value. It does not change the projection. Default 30 means remaining traditional IRA dollars are valued at 70% for heir comparison.')+
@@ -8253,6 +8334,7 @@ function rothLabRenderFieldGuide(){
     ['IRMAA Overflow Choice','Controls what generated IRMAA scenarios do if normal income is already above the selected target. No extra fill is neutral: it does not add conversions or change normal funding. Roth above target intentionally uses Roth withdrawals above the target; Fill to next tier intentionally uses more income room.'],
     ['Custom MAGI Target','MAGI means Medicare/tax income for this purpose. Use a custom target when you want to test one exact income number, such as an advisor-suggested target.'],
     ['Assumption Lens','This reruns every scenario under one what-if assumption, such as lower growth or frozen IRMAA thresholds. It helps show whether a strategy is fragile or still reasonable.'],
+    ['Social Security Lens','This is a Roth Lab-only stress test. Scheduled benefits remain the normal plan assumption; the stress lens can temporarily reduce gross Social Security by a chosen percent starting in a chosen year so you can discuss whether the Roth strategy still works.'],
     ['Survivor Lens','For two-person plans, reruns every Roth Lab scenario as the current survivor plan, both living through plan end, or one person surviving a temporary death year. It is for analysis only and does not change Setup Guide survivor settings.'],
     ['Detail Years','This controls how much annual detail appears in Year-by-Year and the advisor report. Five years is often enough for a meeting; Full plan or Until IRA drained helps when the ending matters.'],
     ['Estate Value','A simple heir-value estimate. Other assets and Roth count fully; remaining traditional IRA is reduced by the assumed heir IRA tax rate. This is only a comparison metric and does not change the projection.']
@@ -8465,6 +8547,9 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
     ['Inflation', fp(A.spendInfl || 0) + ' spending; ' + fp(A.ssCola || 0) + ' Social Security COLA; ' + fp(A.bracketInfl || 0) + ' tax brackets; ' + fp(A.irmaaInfl || 0) + ' IRMAA.'],
     ['Medicare Lookback', lookback]
   ];
+  if ((cfg && cfg.ssStressMode) === 'reduction') {
+    rows.splice(3, 0, ['Social Security Stress', rothLabSocialSecurityStressAssumptionText(cfg)]);
+  }
   return '<div class="sh">Key Assumptions Used</div><div class="roth-assumption-grid">'+rows.map(r => '<div class="roth-assumption-card"><strong>'+setupEsc(r[0])+'</strong>'+setupEsc(r[1])+'</div>').join('')+'</div>';
 }
 function rothLabRenderAdvisorReport(scenarios, cfg){
