@@ -6985,7 +6985,7 @@ function generateReport(){
   let assump = `
     <table><thead><tr>${th('')}${th(A.name1)}${has2?th(A.name2):''}</tr></thead><tbody>
     <tr><td>Birth Year</td><td>${A.by1}</td>${has2?`<td>${A.by2}</td>`:''}</tr>
-    <tr><td>Age in ${A.startYear}</td><td>${A.startYear-A.by1}</td>${has2?`<td>${A.startYear-A.by2}</td>`:''}</tr>
+    <tr><td>Age in ${A.startYear}</td><td>${setupAgeForYear(A.by1,A.startYear)||'—'}</td>${has2?`<td>${setupAgeForYear(A.by2,A.startYear)||'—'}</td>`:''}</tr>
     <tr><td>SS Start Age</td><td>${A.ssAge1||'—'}</td>${has2?`<td>${A.ssAge2||'—'}</td>`:''}</tr>
     <tr><td>SS Monthly Benefit</td><td>${fd(A.ssmo1)}</td>${has2?`<td>${fd(A.ssmo2)}</td>`:''}</tr>
     <tr><td>Wages End Year</td><td>${wend(A.wagesEnd1)}</td>${has2?`<td>${wend(A.wagesEnd2)}</td>`:''}</tr>
@@ -6998,7 +6998,7 @@ function generateReport(){
   const rateRows=(pairs)=>pairs.map(([l,v])=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`).join('');
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
-    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · ${A.widowDeathYear||'year not set'} · spending ${Number(A.widowSpendPct||0).toFixed(1)}%`:'Off'],
+    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}%`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Dividend Rate',fp(A.divRate)],['Dividend Reinvest',fp(A.divReinvestPct ?? ((A.reinvestDivs||'no')==='yes'?1:0))],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
@@ -7244,14 +7244,14 @@ function generateReport(){
   const strategyBullets=[
     totConv>0 ? `Roth conversions total ${fd(totConv)} over the plan, with the largest conversion in ${rows.reduce((m,r)=>(r.rothConv||0)>(m.rothConv||0)?r:m,rows[0]).yr}.` : 'No Roth conversions are projected under the current settings.',
     hasIRMAAPlan ? `IRMAA is modeled as a Medicare surcharge using the two-year MAGI lookback; lifetime projected IRMAA is ${fd(totIRMAA)}.` : 'No IRMAA surcharge is projected under the current settings.',
-    survivorOn ? `Survivor mode is active: ${survivorName} survives after ${A.widowDeathYear}.` : 'No survivor-mode event is active in this report.',
+    survivorOn ? `Survivor mode is active: ${survivorName} survives after ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)}.` : 'No survivor-mode event is active in this report.',
     firstShortfall ? `The first funding shortfall appears in ${firstShortfall.yr}; review spending, draw order, and cash floor assumptions before relying on later-year results.` : 'The current projection does not show an unfunded year.',
     maxBurdenYear ? `The highest single-year tax plus Medicare burden is ${fd((maxBurdenYear.incomeTax||0)+(maxBurdenYear.irmaaTx||0)+(maxBurdenYear.medicareBase||0))} in ${maxBurdenYear.yr}.` : '',
   ].filter(Boolean);
   const survivorHtml=survivorOn ? `
     <h2>Survivor Mode</h2>
     <div class="callout">
-      <strong>${survivorName} survives after ${A.widowDeathYear}.</strong>
+      <strong>${survivorName} survives after ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)}.</strong>
       Death year remains under the base filing setup. Starting the following year, this report follows the active survivor settings:
       ${A.widowSwitchSingle?'filing switches to Single;':'filing status does not switch automatically;'}
       ${A.widowEndSS?'the lower Social Security benefit ends;':'both Social Security streams remain as entered;'}
@@ -7577,10 +7577,12 @@ function rothLabSet(key, value){
   rothLabSaveSettings();
   renderRothLab();
 }
-function rothLabYearOptions(selected){
+function rothLabYearOptions(selected, opts){
+  opts = opts || {};
   let html = '';
   for (let y = S.startYear || new Date().getFullYear(); y <= (S.endYear || y); y++) {
-    html += '<option value="'+y+'" '+(Number(selected)===y?'selected':'')+'>'+y+'</option>';
+    const label = opts.deathMode ? setupDeathYearLabel(y, opts.deathMode, S) : setupYearLabelWithAges(y, S);
+    html += '<option value="'+y+'" '+(Number(selected)===y?'selected':'')+'>'+setupEsc(label)+'</option>';
   }
   return html;
 }
@@ -7734,7 +7736,7 @@ function rothLabSurvivorControlHtml(cfg){
   ], lens);
   let html = setupField('Survivor Lens', rothLabControlSelect('survivorLens', options), rothLabSurvivorLensSummary(lens, deathYear));
   if (lens === 'p1-survives' || lens === 'p2-survives') {
-    html += setupField('Lens Death Year', rothLabControlSelect('survivorDeathYear', rothLabYearOptions(deathYear)), 'Temporary death year for Roth Lab scenarios and Advisor Report only. The saved plan is not changed.');
+    html += setupField('Lens Death Year', rothLabControlSelect('survivorDeathYear', rothLabYearOptions(deathYear, {deathMode:lens})), 'Temporary death year for Roth Lab scenarios and Advisor Report only. The saved plan is not changed.');
   }
   return html;
 }
@@ -8509,7 +8511,7 @@ function rothLabSurvivorAssumptionLabel(state){
   if (!A.widowMode || A.widowMode === 'off') return 'Both people live through plan end.';
   const survivor = A.widowMode === 'p1Survives' ? (A.name1 || 'Primary Person') : A.widowMode === 'p2Survives' ? (A.name2 || 'Spouse/Partner') : 'Survivor';
   const filing = A.widowSwitchSingle ? 'switches to Single after death year' : 'keeps current filing after death year';
-  return survivor + ' survives; death year ' + (A.widowDeathYear || 'not set') + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%.';
+  return survivor + ' survives; death year ' + setupDeathYearText(A.widowDeathYear, A.widowMode, A) + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%.';
 }
 function rothLabReportSource(scenarios, cfg){
   const selected = rothLabSelectedScenarios(scenarios);
@@ -9067,11 +9069,62 @@ function setupNamedPersonLabel(name, fallback){
   const txt = String(name || '').trim();
   return txt || fallback;
 }
+function setupHasSecondPersonForState(state){
+  const A = state || S;
+  return A.householdMode !== 'single' && !!(A.name2 && String(A.name2).trim());
+}
 function setupAgeForYear(birthYear, year){
   const by = parseInt(birthYear);
   const yr = parseInt(year);
-  if (!by || !yr) return '';
-  return String(Math.max(0, yr - by));
+  if (!by || by <= 1900 || !yr || by > yr) return '';
+  return String(calcAgeForPlanYear(by, yr));
+}
+function setupCompactAgeLabelForYear(year, state){
+  const A = state || S;
+  const a1 = setupAgeForYear(A.by1, year);
+  const a2 = setupHasSecondPersonForState(A) ? setupAgeForYear(A.by2, year) : '';
+  if (a1 && a2) return 'ages ' + a1 + '/' + a2;
+  if (a1) return 'age ' + a1;
+  if (a2) return 'age ' + a2;
+  return '';
+}
+function setupYearLabelWithAges(year, state){
+  const ageText = setupCompactAgeLabelForYear(year, state);
+  return String(year) + (ageText ? ' - ' + ageText : '');
+}
+function setupYearOptionPairsWithAges(start, end, state){
+  const out = [];
+  for (let y = start; y <= end; y++) out.push([String(y), setupYearLabelWithAges(y, state)]);
+  return out;
+}
+function setupSurvivorDeceasedPerson(mode){
+  const m = String(mode || '');
+  if (m === 'p1Survives' || m === 'p1-survives') return 2;
+  if (m === 'p2Survives' || m === 'p2-survives') return 1;
+  return 0;
+}
+function setupSurvivorDeathAgeLabel(year, mode, state){
+  const A = state || S;
+  const person = setupSurvivorDeceasedPerson(mode);
+  if (!person) return setupCompactAgeLabelForYear(year, A);
+  const name = person === 1 ? setupNamedPersonLabel(A.name1, 'Primary Person') : setupNamedPersonLabel(A.name2, 'Spouse/Partner');
+  const age = setupAgeForYear(person === 1 ? A.by1 : A.by2, year);
+  return age ? name + ' age ' + age : '';
+}
+function setupDeathYearLabel(year, mode, state){
+  const ageText = setupSurvivorDeathAgeLabel(year, mode, state);
+  return String(year) + (ageText ? ' - ' + ageText : '');
+}
+function setupDeathYearText(year, mode, state){
+  const y = parseInt(year, 10);
+  if (!y) return 'year not set';
+  const ageText = setupSurvivorDeathAgeLabel(y, mode, state);
+  return String(y) + (ageText ? ' (' + ageText + ')' : '');
+}
+function setupDeathYearOptionPairs(start, end, mode, state){
+  const out = [];
+  for (let y = start; y <= end; y++) out.push([String(y), setupDeathYearLabel(y, mode, state)]);
+  return out;
 }
 function setupAgePreview(){
   const start = parseInt(S.startYear) || setupYear();
@@ -9092,7 +9145,7 @@ function setupAgePreview(){
 }
 function setupPlanStartField(){
   const val = parseInt(S.startYear) || setupYear();
-  return setupStateSelect('Plan Start Year','startYear','int',val,setupYearOptionPairs(2020,2060),{
+  return setupStateSelect('Plan Start Year','startYear','int',val,setupYearOptionPairsWithAges(2020,2060,S),{
     rerender:true,
     note:'The first year shown in reports. Usually this is the current tax year or the first year you want to model in detail.'
   });
@@ -9123,15 +9176,18 @@ function setupSOYPctInput(label, yr, key, defaultPct, opts){
 }
 function setupPlanLengthField(){
   const years = (S.endYear && S.startYear) ? Math.max(1, S.endYear - S.startYear + 1) : 30;
-  const choices = [5,10,15,20,25,30,35,40,45,50,60];
-  if (!choices.includes(years)) choices.push(years);
-  choices.sort((a,b)=>a-b);
-  const end = (parseInt(S.startYear) || setupYear()) + years - 1;
-  const opts = choices.map(y => [String(y), y+' years']);
+  const start = parseInt(S.startYear) || setupYear();
+  const opts = [];
+  for (let y = 1; y <= 100; y++) {
+    const endYear = start + y - 1;
+    const ageText = setupCompactAgeLabelForYear(endYear);
+    opts.push([String(y), y+' years - ends '+endYear+(ageText ? ' ('+ageText+')' : '')]);
+  }
+  const end = start + years - 1;
   return setupField('Plan Length', "<select onchange=\"setupSetPlanYears(this.value)\">"+opts.map(o=>"<option value='"+setupEsc(o[0])+"' "+(String(years)===String(o[0])?'selected':'')+">"+setupEsc(o[1])+"</option>").join('')+"</select>", 'Projection ends in '+end+'. Pick enough years to cover retirement, Medicare, RMDs, inheritance rules, and survivor planning.');
 }
 function setupSetPlanYears(value){
-  const yrs = Math.max(1, Math.min(60, parseInt(value) || 30));
+  const yrs = Math.max(1, Math.min(100, parseInt(value) || 30));
   S.endYear = (parseInt(S.startYear) || setupYear()) + yrs - 1;
   setupAfterChange(true);
 }
@@ -9488,20 +9544,25 @@ function renderSetupSurvivorStep(){
   }
   const active = (S.widowMode || 'off') !== 'off';
   const survivorName = S.widowMode === 'p1Survives' ? p1() : S.widowMode === 'p2Survives' ? p2() : '';
+  const deathStart = parseInt(S.startYear, 10) || setupYear();
+  const deathEnd = parseInt(S.endYear, 10) || deathStart;
+  const deathYearValue = parseInt(S.widowDeathYear, 10) || '';
+  const deathYearLabel = setupDeathYearText(S.widowDeathYear, S.widowMode, S);
+  const deathYearOptions = [['','Select death year']].concat(setupDeathYearOptionPairs(deathStart, deathEnd, S.widowMode, S));
   const scenario = setupSelect('Survivor Scenario','widowMode',S.widowMode || 'off',[
     ['off','Both live through plan end (default)'],
     ['p1Survives',p1()+' survives '+p2()],
     ['p2Survives',p2()+' survives '+p1()]
   ],{rerender:true,note:'Leave this at the default unless you want to test a death-of-spouse scenario.'});
   const activeFields = active ? [
-    setupInput('Death Year','widowDeathYear','number',S.widowDeathYear || '',{min:S.startYear,placeholder:'e.g. 2045',note:'The death year itself stays under the normal household filing setup. Survivor changes begin the following year.'}),
+    setupStateSelect('Death Year','widowDeathYear','int',deathYearValue,deathYearOptions,{rerender:true,note:'The death year itself stays under the normal household filing setup. Survivor changes begin the following year.'}),
     setupInput('Survivor Spending Adjustment (%)','widowSpendPct','number',S.widowSpendPct || 0,{step:'1',placeholder:'0',note:'Applied starting the year after death. Use negative for lower spending or positive for higher spending. Explicit spending overrides still win.'}),
     setupBoolSelect('End Deceased Spouse Social Security','widowEndSS',S.widowEndSS !== false,'Yes - end the lower/deceased benefit','No - keep both streams','Normally yes. This prevents the model from continuing both Social Security checks after one spouse dies.'),
     setupBoolSelect('Survivor Receives Higher Social Security','widowSurvivorSS',S.widowSurvivorSS !== false,'Yes - use the higher benefit','No - no survivor benefit replacement','Normally yes. The surviving spouse often keeps the larger of the two benefits, not both.'),
     setupBoolSelect('Switch Survivor to Single Filing','widowSwitchSingle',S.widowSwitchSingle !== false,'Yes - switch after death year','No - keep current filing','Normally yes. This changes tax brackets, standard deduction, Medicare/IRMAA count, and senior deduction logic after the death year.')
   ].join('') : '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Both living through plan end</div><div class="setup-check-body">No death event is modeled. The projection keeps both people, both Social Security streams as entered, married filing assumptions, Medicare count, and account/RMD logic through the end year.</div></div>';
   const impact = active
-    ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(S.widowDeathYear || 'the death year')+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps the retirement balances. Depending on the choices below, the model can switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
+    ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(deathYearLabel)+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps the retirement balances. Depending on the choices below, the model can switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
     : '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Why this exists</div><div class="setup-check-body">A survivor year can materially change taxes and cash flow: one standard deduction instead of two, one Medicare premium count, possible survivor Social Security, different RMD age, and often different spending. The default is off because most users first need a base plan.</div></div>';
   return [
     '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Plain English</div><div class="setup-check-body">This step answers: should we model both spouses living through the whole plan, or should we test what happens if one person dies first?</div></div>',
