@@ -250,7 +250,7 @@ story += [
     info_table(("Job", "Plain-English Meaning"), [
         ("1. Projection engine", "Moves the household through time using starting balances, growth, inflation, wages, Social Security, RMDs, inherited IRA rules, taxes, Medicare/IRMAA, and spending."),
         ("2. Funding engine", "Figures out how spending, income taxes, and cash needs are funded. It uses automatic income first, then follows the funding order for discretionary account draws."),
-        ("3. Strategy engine", "Lets you test future decisions: Roth conversion targets, IRMAA targets, tax bracket caps, spending changes, survivor planning, cash floors, growth scenarios, and funding order changes."),
+        ("3. Strategy engine", "Lets you test future decisions: Roth conversion targets, Roth conversion sources, IRMAA targets, tax bracket caps, spending changes, survivor planning, cash floors, growth scenarios, and funding order changes."),
     ]),
 ]
 story += subhead("Two Active Planning Functions")
@@ -302,6 +302,7 @@ story += [
         ("Required needs", "The model funds annual spending, income taxes, and any cash gap needed to rebuild cash toward the target."),
         ("Funding order", "If automatic income is not enough, the model follows the selected draw order, such as IRA/401k, then taxable brokerage, then Roth."),
         ("Roth conversions", "A Roth conversion is not spending. It moves money from IRA to Roth and creates taxable income now, usually to reduce future taxable IRA/RMD pressure."),
+        ("Roth conversion source", "The source setting controls which person's IRA supplies the conversion dollars. The Cash Flow tab shows the split by person so the taxable conversion can be audited."),
     ]),
     p("Important cash-flow convention: annual spending is the household spending budget and is assumed to include normal Medicare premiums. Income taxes are modeled separately. IRMAA is shown separately for planning comparison, but it is not added as a second separate spending withdrawal unless you include it in spending.", "Callout"),
 ]
@@ -404,6 +405,7 @@ story += [
         ("Fill to next tier", "If income is already over the selected target, the model may convert toward the next useful tier."),
         ("Use Roth above target", "If spending or tax funding would require taxable IRA draws above the target, use Roth withdrawals above the target instead."),
         ("Federal bracket cap", "Optional tax-bracket ceiling. For working users, this may be more relevant than IRMAA."),
+        ("Roth conversion source", "Choose where conversion dollars come from: higher IRA, lower IRA, first person, second person, or a percent split such as 50/50. If one IRA does not have enough available, the model uses the other IRA to finish the target."),
     ]),
     p("Retired users often start with IRMAA Base through Tier 4. Working users often start with No Extra Roth, Tax Bracket Fill, and a conservative federal bracket cap if one has been chosen.", "GoodCallout"),
 ]
@@ -454,6 +456,7 @@ story += [
         ("Spending change", "A future lifestyle change, one-time cost, or spending reduction."),
         ("Tax funding / deferred tax", "A year-specific tax funding choice, such as paying less estimated tax this year and catching up later."),
         ("Roth conversion / IRMAA target", "A rule for intentional Roth conversion income."),
+        ("Roth conversion source", "A year-range rule for which IRA supplies conversion dollars: higher IRA, lower IRA, either named person first, or a percent split."),
         ("Income target", "A custom taxable income ceiling."),
         ("Portfolio return scenario", "A selected year range with a different assumed growth rate."),
         ("Cash floor", "A future change to the cash reserve target."),
@@ -474,6 +477,7 @@ story += [
         ("Cash", "Non-IRA cash or near-cash only: bank accounts, money markets, CDs, short-term Treasuries, or similar reserves."),
         ("Securities / brokerage", "Taxable investment money outside IRA and Roth accounts."),
         ("IRA / 401k", "Traditional retirement money. Withdrawals and conversions are usually taxable."),
+        ("Roth conversion source", "For two-person plans, this controls whose traditional IRA is converted first or how conversions are split. It changes the source account, not the conversion target amount."),
         ("Roth", "Roth IRA or Roth 401k money. Qualified withdrawals are usually tax-free."),
         ("HSA", "Health Savings Account. Leave blank or zero if none exists."),
         ("Social Security", "Enter current monthly benefit if already receiving. Otherwise enter start age and estimated monthly benefit at that age."),
@@ -508,6 +512,7 @@ story += [
         ("IRMAA", "Extra Medicare premium for higher income."),
         ("RMD", "Required minimum distribution from some retirement accounts."),
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
+        ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
         ("Funding order", "The order used when the model needs extra money from accounts."),
         ("Cash floor", "The cash reserve target the model tries to protect."),
         ("Cushion / headroom", "A safety amount below a target, such as staying $4,000 below an IRMAA tier."),
