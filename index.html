@@ -792,6 +792,10 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
           <div class="field"><label>Bracket Headroom ($)</label><input type="number" id="i-irmaa-brackethr" oninput="IC()"><div class="note">Stay this far below the selected federal bracket cap</div></div>
         </div>
         <div class="field-row">
+          <div class="field"><label>Roth Conversion Source</label><select id="i-rothsrc" onchange="IC()"></select><div class="note">Choose which IRA supplies conversion dollars. Percent split uses the field beside it; if one IRA runs short, the other can finish the target.</div></div>
+          <div class="field"><label id="l-rothsrc-pct">Roth Split to Person 1 (%)</label><input type="number" id="i-rothsrc-pct" step="1" min="0" max="100" oninput="IC()"><div class="note">Used only when source is Percent split. Example: 50 means half from each IRA when both have funds.</div></div>
+        </div>
+        <div class="field-row">
           <div class="field"><label id="l-magi2">Medicare MAGI — 2 Yrs Before Start ($)</label><input type="number" id="i-magi2" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 1 (2-yr lookback)</div></div>
           <div class="field"><label id="l-magi1">Medicare MAGI — 1 Yr Before Start ($)</label><input type="number" id="i-magi1" oninput="IC()"><div class="note">Sets IRMAA surcharge for plan year 2 (2-yr lookback)</div></div>
         </div>
@@ -947,13 +951,24 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 
       <div class="ov-section-inner">
         <div class="ov-section-label">Tax Bracket Fill <span id="ovpill-taxfill"></span></div>
-        <div class="ov-intent">Converts IRA → Roth to fill up to the top of your current tax bracket. The model finds which bracket your existing income falls in and fills to that ceiling minus headroom — only if IRA funds are available. Draws from the larger IRA first. <strong>IRMAA and Income Level take priority</strong> when active in the same year — a warning is shown if they overlap.</div>
+        <div class="ov-intent">Converts IRA → Roth to fill up to the top of your current tax bracket. The model finds which bracket your existing income falls in and fills to that ceiling minus headroom — only if IRA funds are available. Conversion source is controlled by the Roth Conversion Source setting below. <strong>IRMAA and Income Level take priority</strong> when active in the same year — a warning is shown if they overlap.</div>
         <div id="conf-taxfill" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-taxfill">
           <thead><tr><th>T Fill</th><th>Headroom ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-taxfill"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('taxfill')">+ Add Row</button>
+      </div>
+
+      <div class="ov-section-inner">
+        <div class="ov-section-label">Roth Conversion Source <span id="ovpill-rothsource"></span></div>
+        <div class="ov-intent">Override which IRA supplies Roth conversions for a year range. Higher IRA keeps the old behavior. Percent split targets a Person 1 / Person 2 allocation, then uses the other IRA if one side runs short.</div>
+        <div id="conf-rothsource" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl" id="ov-rothsource">
+          <thead><tr><th>Source</th><th>Person 1 Split (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-rothsource"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('rothsource')">+ Add Row</button>
       </div>
 
     </div>
@@ -2021,6 +2036,7 @@ function defaultState() {
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
+    rothConvSource:'HIGH', rothConvP1Pct:50,
     stkGainPct:0.30,
     estTaxPctSpend:0, // legacy — replaced by iterative tax solver
     // 401K defaults
@@ -2045,6 +2061,7 @@ function defaultState() {
     ovHSADeposit:[],     // {amount, startYear, endYear}
     ovIncomeLevel:[],    // {magiTarget, startYear, endYear, notes}
     ovTaxFill:[],        // {active:'T'|'off', headroom, startYear, endYear, notes}
+    ovRothSource:[],     // {source:'HIGH'|'LOW'|'P1'|'P2'|'SPLIT', p1Pct, startYear, endYear, notes}
     ovStateTax:[],       // {state:'NONE'|'CA', startYear, endYear, notes}
     // Start-of-year actuals (keyed by year string)
     soy:{},
@@ -2566,6 +2583,7 @@ function runProjection(S) {
     const TAX_SOLVER_EPS = 0.50;
     let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, tSSfinal_f=0, medicareBase_f=0;
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
+    const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
     let rothModeWith1_f=0, rothModeWith2_f=0;
     let ira1Draw_f=0, ira2Draw_f=0, secDraw_f=0, cashDraw_f=0;
     let pre2020InhAddl1_f=0, pre2020InhAddl2_f=0;
@@ -2724,17 +2742,9 @@ function runProjection(S) {
     const rothConvAvail2 = hp2 ? Math.max(0, ira2 - rmd2 - ira2Addl) : 0;
     const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
     const assignRothConversionDraws = () => {
-      let remaining = Math.max(0, rothConv);
-      const take = (idx) => {
-        if (remaining <= 0) return;
-        const avail = idx === 1 ? rothConvAvail1 : rothConvAvail2;
-        const d = Math.min(remaining, avail);
-        if (idx === 1) rothConvDraw1 += d;
-        else rothConvDraw2 += d;
-        remaining -= d;
-      };
-      if (rothConvAvail1 >= rothConvAvail2) { take(1); take(2); }
-      else { take(2); take(1); }
+      const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
+      rothConvDraw1 = assigned.draw1;
+      rothConvDraw2 = assigned.draw2;
     };
 
     const irmaaLvlOv  = resolveOverrideNonBlank(S.ovIRMAA, yr, 'level');
@@ -3019,7 +3029,7 @@ function runProjection(S) {
       spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + fundingTax + cashGapNeeded,
       excessFunds, cashSweep, shortfall, unfunded, fundingChoice, fundingOrder,
       // Roth activity
-      rothConv, rothConvDraw1, rothConvDraw2, rothModeWith1, rothModeWith2,
+      rothConv, rothConvDraw1, rothConvDraw2, rothConvSource:rothConvSourceCfg.source, rothConvSourceLabel:rothConvSourceCfg.label, rothConvP1Pct:rothConvSourceCfg.p1Pct, rothModeWith1, rothModeWith2,
       // HSA / 401K
       hsaDep,
       k401Contrib1Trad, k401Contrib1Roth, k401Emp1Amt,
@@ -3466,6 +3476,86 @@ const fyr=(v)=>v===9999||v===null?'∞':v;
 const FUNDING_ORDER_VALUES = ['SEC','IRA','ROTH'];
 const FUNDING_ORDER_LABELS = {SEC:'Securities', IRA:'IRA', ROTH:'Roth'};
 const FUNDING_ORDER_OPTIONS = FUNDING_ORDER_VALUES.map(v=>[v,FUNDING_ORDER_LABELS[v]]);
+const ROTH_CONV_SOURCE_VALUES = ['HIGH','LOW','P1','P2','SPLIT'];
+const ROTH_CONV_SOURCE_LABELS = {
+  HIGH:'Higher available IRA',
+  LOW:'Lower available IRA',
+  P1:'Person 1 first',
+  P2:'Person 2 first',
+  SPLIT:'Percent split'
+};
+function rothSplitPctLabel() {
+  return p1() + ' Split (%)';
+}
+function rothConvSourceOptions() {
+  return [
+    ['HIGH','Higher available IRA'],
+    ['LOW','Lower available IRA'],
+    ['P1',p1() + ' first'],
+    ['P2',p2() + ' first'],
+    ['SPLIT','Percent split']
+  ];
+}
+function normalizeRothConvSource(value) {
+  const v = String(value || 'HIGH').toUpperCase();
+  return ROTH_CONV_SOURCE_VALUES.includes(v) ? v : 'HIGH';
+}
+function clampPct(value, fallback) {
+  const n = parseF(value);
+  const base = n == null || isNaN(n) ? fallback : n;
+  return Math.max(0, Math.min(100, base));
+}
+function rothConvSourceLabel(source, p1Pct) {
+  const s = normalizeRothConvSource(source);
+  if (s === 'P1') return p1() + ' first';
+  if (s === 'P2') return p2() + ' first';
+  if (s === 'SPLIT') return Math.round(clampPct(p1Pct, 50)) + '% ' + p1() + ' / ' + Math.round(100 - clampPct(p1Pct, 50)) + '% ' + p2();
+  return ROTH_CONV_SOURCE_LABELS[s] || ROTH_CONV_SOURCE_LABELS.HIGH;
+}
+function getRothConvSourceForYear(state, yr) {
+  const row = (state.ovRothSource||[]).find(r => {
+    const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999;
+    return yr>=s && yr<=e;
+  });
+  const source = normalizeRothConvSource(row ? row.source : state.rothConvSource);
+  const p1Pct = clampPct(row && row.p1Pct !== '' && row.p1Pct != null ? row.p1Pct : state.rothConvP1Pct, 50);
+  return {source, p1Pct, label:rothConvSourceLabel(source, p1Pct)};
+}
+function allocateRothConversionDraws(total, avail1, avail2, cfg) {
+  let remaining = Math.max(0, total || 0);
+  let draw1 = 0, draw2 = 0;
+  const take = (idx, amount) => {
+    if (remaining <= 0 || amount <= 0) return;
+    const used = idx === 1 ? draw1 : draw2;
+    const avail = Math.max(0, (idx === 1 ? avail1 : avail2) - used);
+    const d = Math.min(remaining, amount, avail);
+    if (idx === 1) draw1 += d;
+    else draw2 += d;
+    remaining -= d;
+  };
+  const takeRest = (idx) => take(idx, remaining);
+  const highFirst = () => {
+    if ((avail1 - draw1) >= (avail2 - draw2)) { takeRest(1); takeRest(2); }
+    else { takeRest(2); takeRest(1); }
+  };
+  const source = normalizeRothConvSource(cfg && cfg.source);
+  if (source === 'LOW') {
+    if (avail1 > 0 && (avail1 <= avail2 || avail2 <= 0)) { takeRest(1); takeRest(2); }
+    else { takeRest(2); takeRest(1); }
+  } else if (source === 'P1') {
+    takeRest(1); takeRest(2);
+  } else if (source === 'P2') {
+    takeRest(2); takeRest(1);
+  } else if (source === 'SPLIT') {
+    const p1Share = clampPct(cfg && cfg.p1Pct, 50) / 100;
+    take(1, total * p1Share);
+    take(2, total * (1 - p1Share));
+    highFirst();
+  } else {
+    highFirst();
+  }
+  return {draw1, draw2};
+}
 const IRMAA_FILL_MODE_OPTIONS = [['','No extra fill'],['F','Fill to next tier'],['R','Use Roth above target']];
 function normalizeFundingOrder(a, b, c) {
   const raw = [a,b,c].map(v => String(v||'').toUpperCase());
@@ -3565,7 +3655,7 @@ function applyMigrations(merged) {
     const s = parseInt(row.startYear), e = parseInt(row.endYear);
     if (!isNaN(s) && !isNaN(e) && s > e) row.endYear = s;
   };
-  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovStateTax','ovDeductions','ovWageGrowth'].forEach(k => {
+  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovStateTax','ovDeductions','ovWageGrowth'].forEach(k => {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
@@ -3573,6 +3663,13 @@ function applyMigrations(merged) {
   if (merged.irmaaBracketHeadroom == null || isNaN(merged.irmaaBracketHeadroom)) merged.irmaaBracketHeadroom = 0;
   if (merged.irmaaFillMode == null || merged.irmaaFillMode === 'S') merged.irmaaFillMode = '';
   if (!['','F','R'].includes(merged.irmaaFillMode)) merged.irmaaFillMode = '';
+  merged.rothConvSource = normalizeRothConvSource(merged.rothConvSource);
+  merged.rothConvP1Pct = clampPct(merged.rothConvP1Pct, 50);
+  if (!Array.isArray(merged.ovRothSource)) merged.ovRothSource = [];
+  (merged.ovRothSource || []).forEach(r => {
+    r.source = normalizeRothConvSource(r.source);
+    r.p1Pct = clampPct(r.p1Pct, merged.rothConvP1Pct);
+  });
   (merged.ovIRMAA || []).forEach(r => {
     if (r.fillMode == null || r.fillMode === 'S') r.fillMode = '';
     if (!['','F','R'].includes(r.fillMode)) r.fillMode = '';
@@ -3947,6 +4044,11 @@ function loadUI(){
     irmaaMaxSelect.innerHTML = getMaxBracketOptions({startYear:S.startYear, level:S.irmaaTarget}).map(([val,lbl]) => `<option value="${val}" ${String(S.irmaaMaxBracket??'')===String(val)?'selected':''}>${lbl}</option>`).join('');
   }
   sv('i-irmaah',S.irmaaHeadroom);sv('i-irmaa-brackethr',S.irmaaBracketHeadroom||0);
+  const rothSrcSelect = document.getElementById('i-rothsrc');
+  if (rothSrcSelect) {
+    rothSrcSelect.innerHTML = rothConvSourceOptions().map(([val,lbl]) => `<option value="${val}" ${String(S.rothConvSource||'HIGH')===String(val)?'selected':''}>${lbl}</option>`).join('');
+  }
+  sv('i-rothsrc-pct',S.rothConvP1Pct ?? 50);
   sv('i-magi2',S.medicareMagi2);sv('i-magi1',S.medicareMagi1);
   sv('i-k1t',pct(S.k401Trad1));sv('i-k1r',pct(S.k401Roth1));sv('i-k1e',pct(S.k401Emp1));sv('i-we1',S.wagesEnd1);sv('i-pte1',S.ptEnd1);
   sv('i-k2t',pct(S.k401Trad2));sv('i-k2r',pct(S.k401Roth2));sv('i-k2e',pct(S.k401Emp2));sv('i-we2',S.wagesEnd2);sv('i-pte2',S.ptEnd2);
@@ -4088,7 +4190,7 @@ function readUI(){
   const fundOrder = normalizeFundingOrder(gv('i-fund1')||S.fundingOrder1, gv('i-fund2')||S.fundingOrder2, gv('i-fund3')||S.fundingOrder3);
   S.fundingOrder1=fundOrder[0];S.fundingOrder2=fundOrder[1];S.fundingOrder3=fundOrder[2];
   sv('i-fund1',fundOrder[0]);sv('i-fund2',fundOrder[1]);sv('i-fund3',fundOrder[2]);
-  S.irmaaTarget=gv('i-irmaat')||'';S.irmaaFillMode=gv('i-irmaa-fillmode')||'';S.irmaaHeadroom=gf('i-irmaah');S.irmaaMaxBracket=gv('i-irmaa-maxbracket')||'';S.irmaaBracketHeadroom=gf('i-irmaa-brackethr');S.medicareMagi2=gf('i-magi2');S.medicareMagi1=gf('i-magi1');
+  S.irmaaTarget=gv('i-irmaat')||'';S.irmaaFillMode=gv('i-irmaa-fillmode')||'';S.irmaaHeadroom=gf('i-irmaah');S.irmaaMaxBracket=gv('i-irmaa-maxbracket')||'';S.irmaaBracketHeadroom=gf('i-irmaa-brackethr');S.rothConvSource=normalizeRothConvSource(gv('i-rothsrc'));S.rothConvP1Pct=clampPct(gv('i-rothsrc-pct'),50);S.medicareMagi2=gf('i-magi2');S.medicareMagi1=gf('i-magi1');
   S.k401Trad1=gf('i-k1t')/100;S.k401Roth1=gf('i-k1r')/100;S.k401Emp1=gf('i-k1e')/100;S.wagesEnd1=gi('i-we1');S.ptEnd1=gi('i-pte1')||9999;
   S.k401Trad2=gf('i-k2t')/100;S.k401Roth2=gf('i-k2r')/100;S.k401Emp2=gf('i-k2e')/100;S.wagesEnd2=gi('i-we2');S.ptEnd2=gi('i-pte2')||9999;
   readPost2020InhLots();
@@ -4138,6 +4240,7 @@ function updateLabels(){
   }
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
+  setTxt('l-rothsrc-pct','Roth Split to '+n1+' (%)');
   setTxt('l-rmd1',n1+' RMD Start Year');setTxt('l-rmd2',n2+' RMD Start Year');
   setTxt('l-preinh-startbal1',n1+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr1',n1+' Balance Start Year');
   setTxt('l-preinh-startbal2',n2+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr2',n2+' Balance Start Year');
@@ -4707,7 +4810,8 @@ function renderCF(){
     ]},
     { label:'TAXABLE INCOME', bg:'#2a1f0a', tc:'#d4b060', cols:[
       {f:'totalWages',    h:'Wages &\nSelf-Employ'},
-      {f:'rothConv',      h:'Roth Conv\nTaxable'},
+      {f:'rothConvDraw1', h:n1+'\nRoth Conv'},
+      ...(hp?[{f:'rothConvDraw2', h:n2+'\nRoth Conv'}]:[]),
       {f:'hsaDep',        h:'HSA\nDeposit'},
       {f:'taxableIRADraws', h:'IRA/RMD/\nInh IRA'},
       {f:'taxableDivs',   h:'Taxable\nDiv & Int'},
@@ -4744,7 +4848,7 @@ function renderCF(){
     'atWages','ptWages','grossSS1','grossSS2','rmd1','rmd2','divs',
     'cashDraw','ira1Addl','ira2Addl','stkSales','rothDraw1','rothDraw2','hsaWith',
     'cashGapNeeded',
-    'totalWages','rothConv','hsaDep','taxableIRADraws','taxableDivs','taxableStkGain','taxableSS',
+    'totalWages','rothConvDraw1','rothConvDraw2','hsaDep','taxableIRADraws','taxableDivs','taxableStkGain','taxableSS',
     'ltcg','blended','irmaaTx','medicareBase',
     'excessFunds','cashSweep','unfunded',
     'pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD',
@@ -5621,6 +5725,13 @@ const OV_DEFS = {
     {k:'endYear',  lbl:'End Year',  type:'number',w:90},
     {k:'notes',    lbl:'Notes',     type:'text',  w:160},
   ]},
+  rothsource:{key:'ovRothSource',fields:[
+    {k:'source',   lbl:'Source',type:'select',opts:rothConvSourceOptions,w:180},
+    {k:'p1Pct',    lbl:rothSplitPctLabel,type:'number',w:130},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',  lbl:'End Year',  type:'number',w:90},
+    {k:'notes',    lbl:'Notes',     type:'text',  w:180},
+  ]},
   statetax:{key:'ovStateTax',fields:[
     {k:'state',    lbl:'State',     type:'select',opts:['NONE','CA'],w:80},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
@@ -5647,7 +5758,7 @@ function updateOvBadges(){
   // Map of group → which OV_DEFS keys belong to it
   const groups={
     'spending-taxes': ['spending','deductions'],
-    'conversion':     ['irmaa','income','taxfill'],
+    'conversion':     ['irmaa','income','taxfill','rothsource'],
     'portfolio':      ['growth','incomerates','stkgain','wagegrowth','funding','cashfloor','hsadep','statetax'],
   };
   // Summary bar at top
@@ -5660,7 +5771,7 @@ function updateOvBadges(){
     } else {
       const ovNames = {
         spending:'Spending', deductions:'Deductions', irmaa:'IRMAA', income:'Income',
-        taxfill:'Tax Fill', growth:'Growth', incomerates:'Income Rates',
+        taxfill:'Tax Fill', rothsource:'Roth Source', growth:'Growth', incomerates:'Income Rates',
         stkgain:'Stock Gain', wagegrowth:'Wage Growth',
         funding:'Funding', cashfloor:'Cash Floor', hsadep:'HSA Deposit', statetax:'State Tax'
       };
@@ -5826,6 +5937,7 @@ function addOvRow(name){
   if(name==='spending')newRow.oneYear='';
   if(name==='irmaa'){newRow.level='';newRow.fillMode=S.irmaaFillMode||'';newRow.headroom=0;newRow.maxBracket='';newRow.bracketHeadroom=0;}
   if(name==='taxfill'){newRow.active='T';newRow.headroom=0;}
+  if(name==='rothsource'){newRow.source=S.rothConvSource||'HIGH';newRow.p1Pct=S.rothConvP1Pct ?? 50;}
   if(name==='statetax'){newRow.state='NONE';}
   if(name==='deductions'){newRow.charityOn='No';}
   S[def.key].push(newRow);
@@ -5950,7 +6062,10 @@ function apCard(yr){
     `<div style="font-size:11px;background:${color}18;border-left:3px solid ${color};padding:4px 8px;margin:3px 0;border-radius:0 4px 4px 0;color:${color}"><strong>${label}:</strong> ${f$(val)}</div>` : '';
 
   const rothConv = r.rothConv||0;
-  const convSrc = rothConv > 0 ? ((r.rothConvDraw1||0)>0 ? p1()+' IRA' : p2()+' IRA') : '';
+  const convParts = [];
+  if ((r.rothConvDraw1||0) > 0) convParts.push(p1()+' IRA '+f$(r.rothConvDraw1||0));
+  if ((r.rothConvDraw2||0) > 0) convParts.push(p2()+' IRA '+f$(r.rothConvDraw2||0));
+  const convSrc = rothConv > 0 ? (convParts.length ? convParts.join(' / ') : (r.rothConvSourceLabel||'IRA')) : '';
   const fundedTax = r.fundingTax || 0;
   const cashGap = r.cashGapNeeded || 0;
   const taxLabel = r.taxOvrActive ? 'Income Tax Funding (override)' : 'Income Tax Funding';
@@ -6663,6 +6778,7 @@ function buildReportPayload(){
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
     fundingOrder: normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH'),
     irmaaFillMode: S.irmaaFillMode||'',
+    rothConvSource: S.rothConvSource || 'HIGH', rothConvP1Pct: S.rothConvP1Pct || 50,
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
     widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
@@ -6695,6 +6811,7 @@ function buildReportPayload(){
     pre2020InhOwnerReachedRMD1:!!r.pre2020InhOwnerReachedRMD1, pre2020InhOwnerReachedRMD2:!!r.pre2020InhOwnerReachedRMD2,
     pre2020InhDivisor1:r.pre2020InhDivisor1||0, pre2020InhDivisor2:r.pre2020InhDivisor2||0,
     rothConv:r.rothConv||0, rothConvDraw1:r.rothConvDraw1||0, rothConvDraw2:r.rothConvDraw2||0,
+    rothConvSource:r.rothConvSource||'', rothConvSourceLabel:r.rothConvSourceLabel||'',
     divIncome:r.divs||r.divIncome||0,
     ira1Addl:r.ira1Addl||0, ira2Addl:r.ira2Addl||0,
     hsaWith:r.hsaWith||0,
@@ -7043,7 +7160,10 @@ function generateReport(){
     const fundingRequired=full.totalRequired || (spending + taxFunding + cashGap);
     const taxFundingLabel=full.taxOvrActive?'Income Tax Funding (override)':'Income Tax Funding';
     const targetIncome = reportIncomeTarget(full);
-    const convSrc=(full.rothConvDraw1||0)>0?A.name1+' IRA':A.name2?' '+A.name2+' IRA':'IRA';
+    const convParts = [];
+    if ((full.rothConvDraw1||0) > 0) convParts.push((A.name1||'Person 1')+' IRA '+fd(full.rothConvDraw1||0));
+    if ((full.rothConvDraw2||0) > 0) convParts.push((A.name2||'Person 2')+' IRA '+fd(full.rothConvDraw2||0));
+    const convSrc = convParts.length ? convParts.join(' / ') : (full.rothConvSourceLabel||'IRA');
 
     // Three-panel table
     const bals=[['Cash',cash_s],['Securities',sec_s],['IRA (combined)',ira_s],
@@ -9805,6 +9925,7 @@ function setupStrategyOptions(){
     ['deductions','Tax deductions'],
     ['state-move','Move / state tax change'],
     ['irmaa','Roth conversion target'],
+    ['roth-source','Roth conversion source'],
     ['income-level','MAGI income ceiling'],
     ['tax-fill','Tax bracket fill'],
     ['income-rates','Dividend / interest rates'],
@@ -9849,6 +9970,10 @@ function setupStrategyDescription(){
     'irmaa': {
       title:'Roth conversion target',
       body:'Use this when you want the model to manage IRA-to-Roth conversions around Medicare IRMAA income tiers or federal tax brackets. In plain terms, it can convert some IRA money now to try to avoid larger taxable IRA withdrawals later.'
+    },
+    'roth-source': {
+      title:'Roth conversion source',
+      body:'Use this when Roth conversions should come from a specific IRA, the smaller IRA, or a planned split between two people. It changes only the conversion source, not the conversion target amount.'
     },
     'income-level': {
       title:'MAGI income ceiling',
@@ -9957,6 +10082,7 @@ function renderStrategyForm(){
   }
   else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',9999),{min:yr})+stratSelect('state','State',val('state','NONE'),[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes',val('notes','State tax change'));
   else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('level','IRMAA Target Cap',val('level',''),getIRMAALevelOptions({startYear:yr,level:val('level','')}))+stratSelect('fill','Fill Mode',val('fillMode',''),IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket',val('maxBracket',''),getMaxBracketOptions({startYear:yr,level:val('level','')}))+stratInput('irmaaHeadroom','IRMAA Cushion ($)',val('headroom',S.irmaaHeadroom||0),{min:0,note:'Stay this far below the selected Medicare IRMAA income ceiling.'})+stratInput('bracketHeadroom','Federal Bracket Cushion ($)',val('bracketHeadroom',S.irmaaBracketHeadroom||0),{min:0,note:'Stay this far below the selected federal bracket cap, when a bracket cap applies.'})+stratText('notes','Notes',val('notes','Roth conversion target'));
+  else if (setupStrategyType === 'roth-source') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('source','Conversion Source',val('source',S.rothConvSource||'HIGH'),rothConvSourceOptions())+stratInput('p1Pct',rothSplitPctLabel(),val('p1Pct',S.rothConvP1Pct ?? 50),{step:'1',min:0,max:100,note:'Used only for Percent split. Any shortfall falls back to the other IRA.'})+stratText('notes','Notes',val('notes','Roth conversion source'));
   else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('magi','MAGI Target ($)',val('magiTarget',''),{min:0})+stratText('notes','Notes',val('notes','MAGI ceiling'));
   else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('active','Tax Fill',val('active','T'),[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)',val('headroom',''),{min:0})+stratText('notes','Notes',val('notes','Tax bracket fill'));
   else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('div','Brokerage Dividend Rate (%)',val('divRate',''),{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)',val('divReinvestPct',''),{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)',val('intRate',''),{step:'0.01',min:0})+stratText('notes','Notes',val('notes','Income rate change'));
@@ -10007,6 +10133,7 @@ function applySetupStrategy(){
   }
   else if (setupStrategyType === 'state-move') writeOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'irmaa') writeOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), headroom:stratVal('irmaaHeadroom'), bracketHeadroom:stratVal('bracketHeadroom'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'roth-source') writeOv('ovRothSource', {source:normalizeRothConvSource(stratVal('source')), p1Pct:clampPct(stratVal('p1Pct'), S.rothConvP1Pct ?? 50), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-level') writeOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'tax-fill') writeOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-rates') writeOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
@@ -10138,6 +10265,12 @@ function setupCollectStrategyRows(filterType){
     if (row.active === 'T') parts.push('Tax bracket fill active');
     setupPushPart(parts, 'Headroom', setupMoneyLabel(row.headroom));
     add('Tax Bracket Fill', row, parts, ['tax-fill'], {tableKey:'ovTaxFill', rowIndex:idx, editType:'tax-fill'});
+  });
+  (S.ovRothSource || []).forEach((row, idx) => {
+    const source = normalizeRothConvSource(row.source);
+    const parts = ['Source: ' + rothConvSourceLabel(source, row.p1Pct)];
+    if (source === 'SPLIT') setupPushPart(parts, p1() + ' split', setupPercentLabel(row.p1Pct));
+    add('Roth Conversion Source', row, parts, ['roth-source'], {tableKey:'ovRothSource', rowIndex:idx, editType:'roth-source'});
   });
   (S.ovGrowth || []).forEach((row, idx) => {
     const parts = [];

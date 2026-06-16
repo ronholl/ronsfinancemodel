@@ -1,31 +1,36 @@
 {
   "active": true,
-  "id": "message_2026_08_msg1",
+  "id": "message_2026_06_roth_source",
   "audience": "returning",
   "icon": "📣",
-  "title": "New Messaging Capability",
+  "title": "New Roth Conversion Source Controls",
   "subtitle": "Message from Ron",
-  "intro": "I will use this if there are changes anyone should know about. Here are a couple worth noting.",
+  "intro": "Roth conversions now have clearer source choices. The default still uses the higher available IRA, but you can now choose a different source or split conversions between two people.",
   "items": [
     {
-      "icon": "📖",
-      "title": "Updated guide",
-      "body": "The User Guide now starts with a simpler onboarding flow and includes a Roth Lab section."
+      "icon": "⚙️",
+      "title": "Choose the conversion source",
+      "body": "Use Higher IRA, Lower IRA, Person 1 first, Person 2 first, or Percent split. A 50/50 split is supported, and the other IRA can finish the target if one side runs short."
     },
     {
-      "icon": "🧪",
-      "title": "Roth Lab",
-      "body": "Roth Lab helps compare income targets, IRMAA tiers, tax bracket choices, and advisor report scenarios."
+      "icon": "📅",
+      "title": "Change it by year range",
+      "body": "The new Roth Conversion Source strategy lets you change the source for selected years without changing the Roth conversion target itself."
+    },
+    {
+      "icon": "🔎",
+      "title": "Easier Cash Flow audit",
+      "body": "Cash Flow now breaks Roth conversions into separate Person 1 and Person 2 columns, so the taxable conversion total is easier to trace."
     }
   ],
   "actions": [
     {
-      "label": "Open Guide",
-      "href": "guide.html"
+      "label": "Open Setup Guide",
+      "view": "setup"
     },
     {
-      "label": "Open Roth Lab",
-      "view": "rothlab"
+      "label": "Review Cash Flow",
+      "view": "cashflow"
     }
   ]
 }
