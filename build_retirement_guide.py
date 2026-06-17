@@ -257,7 +257,7 @@ story += subhead("Two Active Planning Functions")
 story += [
     p("Beyond tracking portfolio movement, the app actively models two decision systems."),
     cards([
-        ("Funding buckets", "The app decides which buckets fund life: wages, Social Security, RMDs, inherited IRA draws, dividends, cash, brokerage, IRA/401k, and Roth."),
+        ("Funding buckets", "The app decides which buckets fund life: wages, Social Security, RMDs, inherited IRA draws, dividends, cash, taxable brokerage, IRA/401k, and Roth."),
         ("Roth conversion income", "The app can intentionally create taxable income by converting IRA money to Roth, using rules such as IRMAA tiers or federal tax bracket caps."),
     ], cols=2),
 ]
@@ -298,11 +298,12 @@ story += section("3. How The Model Thinks About Money")
 story += [
     p("The app works year by year. In each year, money comes in, needs are calculated, and account draws fill the gap."),
     info_table(("Layer", "What Happens"), [
-        ("Automatic income", "Wages, self-employment, Social Security, RMDs, inherited IRA required draws, dividends, and interest appear according to setup and strategies."),
+        ("Automatic income", "Wages, self-employment, Social Security, RMDs, inherited IRA required draws, brokerage dividends/interest, and cash interest appear according to setup and strategies."),
         ("Required needs", "The model funds annual spending, income taxes, and any cash gap needed to rebuild cash toward the target."),
         ("Funding order", "If automatic income is not enough, the model follows the selected draw order, such as IRA/401k, then taxable brokerage, then Roth."),
         ("Roth conversions", "A Roth conversion is not spending. It moves money from IRA to Roth and creates taxable income now, usually to reduce future taxable IRA/RMD pressure."),
         ("Roth conversion source", "The source setting controls which person's IRA supplies the conversion dollars. The Cash Flow tab shows the split by person so the taxable conversion can be audited."),
+        ("Taxable account buckets", "Taxable brokerage income is estimated from entered balances. Regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds receive different tax treatment."),
     ]),
     p("Important cash-flow convention: annual spending is the household spending budget and is assumed to include normal Medicare premiums. Income taxes are modeled separately. IRMAA is shown separately for planning comparison, but it is not added as a second separate spending withdrawal unless you include it in spending.", "Callout"),
 ]
@@ -348,7 +349,7 @@ story += [
         ("Household", "Names, one-person or two-person plan, tax filing, state, plan start year, and plan length."),
         ("Survivor Plan", "Only needed for two-person plans when testing one spouse dying during the plan."),
         ("Assumptions", "Global defaults for growth, inflation, dividends, cash interest, spending growth, Social Security COLA, cash floor, and draw order."),
-        ("Opening Year", "First-year spending and account balances: cash, taxable brokerage, IRA/401k, Roth, HSA, and inherited accounts."),
+        ("Opening Year", "First-year spending and balances. Taxable brokerage is split into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds before IRA/401k, Roth, HSA, and inherited accounts."),
         ("Inherited IRAs", "Rule details for inherited retirement accounts. Use this only if inherited accounts exist."),
         ("Income", "Work income and Social Security. Retired users can skip work income if it does not apply."),
         ("401k Defaults", "Global contribution defaults for people still working."),
@@ -356,6 +357,17 @@ story += [
         ("Review", "A checklist that sends you back to the right screen when something needs attention."),
     ]),
     p("Leave truly unused items blank or zero. The app should explain when a blank means 'not applicable' and when a field is actually needed.", "GoodCallout"),
+]
+story += subhead("Taxable Brokerage And Bond Balances")
+story += [
+    p("Opening Year and Annual Check-In ask for taxable-account balances, not annual interest. Put ordinary taxable brokerage holdings in Taxable Stocks/Funds. Use the U.S. Treasury bucket for Treasury or federal-obligation balances, CA Municipal Bond for California municipal bonds, and Other-State Municipal Bond for municipal bonds taxable by California.", "Callout"),
+    p("The model applies the Brokerage Dividend / Interest Rate to those balances to estimate annual income, while the full taxable account still shares the overall Investment Growth Rate.", "GoodCallout"),
+    info_table(("Bucket", "Tax Treatment"), [
+        ("Taxable Stocks/Funds", "Federally taxable and generally taxable by California."),
+        ("U.S. Treasury / Federal Obligation", "Federally taxable, but exempt from California/state tax."),
+        ("CA Municipal Bond", "Exempt from regular federal and California tax, but included for Social Security provisional income and Medicare MAGI."),
+        ("Other-State Municipal Bond", "Federally tax-exempt municipal interest that is taxable by California."),
+    ]),
 ]
 story.append(PageBreak())
 
@@ -440,14 +452,14 @@ story += section("9. Annual Check-In And Strategy Builder")
 story += [
     p("The first setup is only the starting map. Annual Check-In and Strategy Builder keep the map useful."),
     cards([
-        ("Annual Check-In", "Use once a year to enter real balances, real income, and real first-year details. This keeps the model anchored to reality."),
+        ("Annual Check-In", "Use once a year to enter real balances, taxable-account bond buckets, real income, and other actual details. This keeps the model anchored to reality."),
         ("Strategy Builder", "Use for future decisions: spending changes, Roth targets, cash floors, growth scenarios, tax timing, and funding order changes."),
     ], cols=2),
 ]
 story += subhead("Annual Check-In")
 story += [simple_steps([
     ("Pick year", "Choose the year being updated."),
-    ("Enter actuals", "Update balances, spending, income, HSA, inherited IRA values, and other real numbers if known."),
+    ("Enter actuals", "Update spending, income, HSA, inherited IRA values, and balances. For taxable accounts, enter the balance split between taxable investments, Treasuries, CA munis, and other-state munis."),
     ("Rerun report", "Generate a fresh report so the action plan reflects reality."),
 ])]
 story += subhead("Strategy Builder")
@@ -475,7 +487,7 @@ story += [
         ("Birth years", "Used for age, Social Security, Medicare, RMDs, and senior deduction timing."),
         ("Plan start and length", "The first and last years shown in reports. Pick enough years to cover retirement, Medicare, RMDs, inherited IRA deadlines, and survivor planning."),
         ("Cash", "Non-IRA cash or near-cash only: bank accounts, money markets, CDs, short-term Treasuries, or similar reserves."),
-        ("Securities / brokerage", "Taxable investment money outside IRA and Roth accounts."),
+        ("Securities / brokerage", "Taxable investment money outside IRA and Roth accounts. Enter it by tax bucket when possible: taxable stocks/funds, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds."),
         ("IRA / 401k", "Traditional retirement money. Withdrawals and conversions are usually taxable."),
         ("Roth conversion source", "For two-person plans, this controls whose traditional IRA is converted first or how conversions are split. It changes the source account, not the conversion target amount."),
         ("Roth", "Roth IRA or Roth 401k money. Qualified withdrawals are usually tax-free."),
@@ -513,6 +525,7 @@ story += [
         ("RMD", "Required minimum distribution from some retirement accounts."),
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
         ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
+        ("Tax-free bond buckets", "Taxable-account balance entries for U.S. Treasuries and municipal bonds so federal and California tax treatment can differ."),
         ("Funding order", "The order used when the model needs extra money from accounts."),
         ("Cash floor", "The cash reserve target the model tries to protect."),
         ("Cushion / headroom", "A safety amount below a target, such as staying $4,000 below an IRMAA tier."),

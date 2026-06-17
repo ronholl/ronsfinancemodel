@@ -1,26 +1,31 @@
 {
   "active": true,
-  "id": "message_2026_06_roth_source",
+  "id": "message_2026_06_roth_source_bond_balances",
   "audience": "returning",
   "icon": "📣",
-  "title": "New Roth Conversion Source Controls",
+  "title": "New Roth Source and Bond Balance Controls",
   "subtitle": "Message from Ron",
-  "intro": "Roth conversions now have clearer source choices. The default still uses the higher available IRA, but you can now choose a different source or split conversions between two people.",
+  "intro": "This update adds clearer Roth conversion source choices and cleaner taxable-account balance entry for U.S. Treasury and municipal bond holdings.",
   "items": [
     {
       "icon": "⚙️",
       "title": "Choose the conversion source",
-      "body": "Use Higher IRA, Lower IRA, Person 1 first, Person 2 first, or Percent split. A 50/50 split is supported, and the other IRA can finish the target if one side runs short."
+      "body": "Use Higher IRA, Lower IRA, either named person first, or Percent split. A 50/50 split is supported, and the other IRA can finish the target if one side runs short."
     },
     {
       "icon": "📅",
-      "title": "Change it by year range",
-      "body": "The new Roth Conversion Source strategy lets you change the source for selected years without changing the Roth conversion target itself."
+      "title": "Change Roth source by year range",
+      "body": "The Roth Conversion Source strategy lets you change which IRA supplies conversions for selected years without changing the Roth conversion target itself."
+    },
+    {
+      "icon": "🏦",
+      "title": "Enter tax-free bonds by balance",
+      "body": "Opening Year and Annual Check-In now break taxable-account balances into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds. Enter balances, not interest."
     },
     {
       "icon": "🔎",
       "title": "Easier Cash Flow audit",
-      "body": "Cash Flow now breaks Roth conversions into separate Person 1 and Person 2 columns, so the taxable conversion total is easier to trace."
+      "body": "Cash Flow breaks Roth conversions into separate person columns, while taxable-account income is generated from the entered balance buckets and taxed according to each bucket."
     }
   ],
   "actions": [

@@ -1822,8 +1822,8 @@ function calcIRMAA(magi, filing, age1, age2, hasP2, tables) {
   const count = (age1>=65?1:0)+(hasP2&&age2>=65?1:0);
   return prem * count;
 }
-function calcTaxableSS(grossSS, agi, filing) {
-  const prov = (agi-grossSS) + 0.5*grossSS;
+function calcTaxableSS(grossSS, agi, filing, taxExemptInterest=0) {
+  const prov = (agi-grossSS) + 0.5*grossSS + (taxExemptInterest || 0);
   const [t1,t2] = filing==='MFJ' ? [32000,44000] : [25000,34000];
   if (prov<=t1) return 0;
   if (prov<=t2) return Math.min(0.5*grossSS, 0.5*(prov-t1));
@@ -2032,7 +2032,8 @@ function defaultState() {
     pre2020InhStartBal2:0, pre2020InhStartYear2:'',
     pre2020InhRmdYear1:'', pre2020InhRmdYear2:'', // legacy saved field
     // Key variables (global defaults)
-    growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02, reinvestDivs:'yes',
+    growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02,
+    reinvestDivs:'yes',
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
@@ -2108,6 +2109,7 @@ function runProjection(S) {
 
   // Working balances — will be overridden by SOY entries when present
   let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0;
+  let secBalanceMix = {taxable:1, treasury:0, caMuni:0, otherMuni:0};
   const pre2020Lots = getPre2020InhLots(S).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
   const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
 
@@ -2132,7 +2134,24 @@ function runProjection(S) {
 
     // ── SOY balance overrides (override-and-resume) ──────────────────────
     if (soy.cash  != null && soy.cash  !== '') cash  = parseF(soy.cash);
-    if (soy.sec   != null && soy.sec   !== '') sec   = parseF(soy.sec);
+    const secBucketFields = ['secTaxableBal','secTreasuryBal','secCAMuniBal','secOtherMuniBal'];
+    const hasManualSecBuckets = secBucketFields.some(k => soy[k] != null && soy[k] !== '');
+    if (hasManualSecBuckets) {
+      const secTaxableBal = Math.max(0, parseF(soy.secTaxableBal) || 0);
+      const secTreasuryBal = Math.max(0, parseF(soy.secTreasuryBal) || 0);
+      const secCAMuniBal = Math.max(0, parseF(soy.secCAMuniBal) || 0);
+      const secOtherMuniBal = Math.max(0, parseF(soy.secOtherMuniBal) || 0);
+      const secBucketTotal = secTaxableBal + secTreasuryBal + secCAMuniBal + secOtherMuniBal;
+      sec = secBucketTotal;
+      secBalanceMix = secBucketTotal > 0 ? {
+        taxable: secTaxableBal / secBucketTotal,
+        treasury: secTreasuryBal / secBucketTotal,
+        caMuni: secCAMuniBal / secBucketTotal,
+        otherMuni: secOtherMuniBal / secBucketTotal,
+      } : {taxable:1, treasury:0, caMuni:0, otherMuni:0};
+    } else if (soy.sec != null && soy.sec !== '') {
+      sec = parseF(soy.sec);
+    }
     if (soy.ira1  != null && soy.ira1  !== '') ira1  = parseF(soy.ira1);
     if (soy.ira2  != null && soy.ira2  !== '') ira2  = parseF(soy.ira2);
     if (soy.roth1 != null && soy.roth1 !== '') roth1 = parseF(soy.roth1);
@@ -2188,6 +2207,10 @@ function runProjection(S) {
     const startHSABal = hsa;
     const startPre2020Inh1 = pre2020Inh1, startPre2020Inh2 = pre2020Inh2;
     const startPost2020Inh = post2020Lots.reduce((sum, lot)=>sum+(lot.active?(lot.bal||0):0),0);
+    const startSecTaxableBal = startSec * secBalanceMix.taxable;
+    const startSecTreasuryBal = startSec * secBalanceMix.treasury;
+    const startSecCAMuniBal = startSec * secBalanceMix.caMuni;
+    const startSecOtherMuniBal = startSec * secBalanceMix.otherMuni;
 
     // ── Growth rate ───────────────────────────────────────────────────────
     const _gRaw = resolveOverrideNonBlank(S.ovGrowth, yr, 'rate');
@@ -2201,11 +2224,26 @@ function runProjection(S) {
     const _stkGainRaw = resolveOverrideNonBlank(S.ovStkGainPct, yr, 'rate');
     const stkGainPct = _stkGainRaw != null ? parseF(_stkGainRaw)/100 : (S.stkGainPct||0);
 
+    // ── Income from cash (interest) and securities (dividends/interest) ───
+    // Taxable account balance buckets drive tax treatment; the global dividend/interest
+    // rate estimates annual income and overall investment growth still drives total return.
+    const cashInterest = cash * intRate;
+    const totalSecDivs = sec * divRate;
+    const taxableSecDivs = totalSecDivs * secBalanceMix.taxable;
+    const treasuryInterest = totalSecDivs * secBalanceMix.treasury;
+    const caMuniInterest = totalSecDivs * secBalanceMix.caMuni;
+    const otherMuniInterest = totalSecDivs * secBalanceMix.otherMuni;
+    const fedTaxableDivInt = cashInterest + taxableSecDivs + treasuryInterest;
+    const taxExemptInterest = caMuniInterest + otherMuniInterest;
+    const caTaxableMuniInterest = otherMuniInterest;
+    const reinvestedSecDivs = totalSecDivs * divReinvestPct;
+    const secDivs = totalSecDivs * (1 - divReinvestPct);
+    const divs = cashInterest + secDivs;
+
     // ── Apply growth to investment accounts ──────────────────────────────
-    // growthRate = total return (price appreciation + reinvested dividends)
-    // Dividend reinvest % controls cash availability only; all dividends remain taxable.
-    const priceG   = gRate - divRate; // price appreciation excluding dividend yield
-    const secGrowth  = sec  * (priceG + divRate * divReinvestPct);
+    // growthRate = total return (price appreciation + reinvested dividends/interest).
+    const priceG   = gRate - divRate;
+    const secGrowth  = sec * priceG + reinvestedSecDivs;
     const ira1Growth = ira1 * gRate;
     const ira2Growth = ira2 * gRate;
     const roth1Growth= roth1* gRate;
@@ -2213,15 +2251,6 @@ function runProjection(S) {
 
     // ── Cash floor ────────────────────────────────────────────────────────
     const cashFloor = parseF(resolveOverrideNonBlank(S.ovCashFloor, yr, 'floor')) ?? S.cashFloor;
-
-    // ── Income from cash (interest) and securities (dividends) ──────────
-    // Cash interest: intRate applied to cash balance
-    const cashInterest = cash * intRate;
-    // Securities dividends: taxable either way; only the non-reinvested portion is cash funding.
-    const totalSecDivs = sec * divRate;
-    const reinvestedSecDivs = totalSecDivs * divReinvestPct;
-    const secDivs = totalSecDivs * (1 - divReinvestPct);
-    const divs = cashInterest + secDivs;
 
     // ── Spending ──────────────────────────────────────────────────────────
     const ovSpend    = resolveOverrideNonBlank(S.ovSpending, yr, 'amount');
@@ -2581,7 +2610,7 @@ function runProjection(S) {
     // changes taxable income, so converge to near-dollar precision.
     const TAX_SOLVER_MAX_PASSES = 20;
     const TAX_SOLVER_EPS = 0.50;
-    let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, tSSfinal_f=0, medicareBase_f=0;
+    let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
     const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
     let rothModeWith1_f=0, rothModeWith2_f=0;
@@ -2608,26 +2637,28 @@ function runProjection(S) {
     const fundingTargetInfo = getProjectionIncomeTargetInfo(S, yr, taxFiling, tables);
     const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode === 'R');
     const useRothAboveTargetFunding = protectTaxableFunding;
-    const qualDivsForFunding = cashInterest + totalSecDivs;
+    const qualDivsForFunding = fedTaxableDivInt;
     const estimateAGIForFundingDraws = (ira1Extra, ira2Extra, preAddl1, preAddl2, secExtra) => {
       const taxableStkGainEst = Math.max(0, secExtra || 0) * stkGainPct;
       const taxableRMDsEst = rmd1 + rmd2 + pre2020InhDraw + (preAddl1 || 0) + (preAddl2 || 0) + post2020InhDraw + (ira1Extra || 0) + (ira2Extra || 0) + qualDivsForFunding;
       const agiExSSEst = w2AGIFunding + ptWages + taxableRMDsEst + taxableStkGainEst;
-      const tSSEst = calcTaxableSS(grossSS, agiExSSEst + grossSS, taxFiling);
+      const tSSEst = calcTaxableSS(grossSS, agiExSSEst + grossSS, taxFiling, taxExemptInterest);
       return agiExSSEst + tSSEst;
     };
     const allowedRegularIRADrawForTarget = (which, avail) => {
       if (!protectTaxableFunding || avail <= 0) return avail;
       const target = fundingTargetInfo.targetIncome;
       const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
-      if (currentAGI >= target - 0.50) return 0;
+      const currentTargetIncome = currentAGI + (taxExemptInterest || 0);
+      if (currentTargetIncome >= target - 0.50) return 0;
       let lo = 0, hi = Math.max(0, avail);
       for (let i = 0; i < 24; i++) {
         const mid = (lo + hi) / 2;
         const testIra1 = ira1Draw_inner + (which === 1 ? mid : 0);
         const testIra2 = ira2Draw_inner + (which === 2 ? mid : 0);
         const testAGI = estimateAGIForFundingDraws(testIra1, testIra2, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
-        if (testAGI <= target + 0.50) lo = mid;
+        const testTargetIncome = testAGI + (taxExemptInterest || 0);
+        if (testTargetIncome <= target + 0.50) lo = mid;
         else hi = mid;
       }
       return Math.max(0, lo);
@@ -2725,12 +2756,12 @@ function runProjection(S) {
     // Dividends are ALWAYS a taxable event whether reinvested or not.
     // The reinvest flag only controls whether dividends are paid out as cash;
     // they still appear in AGI. Cash interest is always ordinary income.
-    const allSecDivs = totalSecDivs;                        // security dividends (always taxable)
-    const cashInt    = cash * intRate;                      // cash interest (always ordinary)
-    const qualDivs   = cashInt + allSecDivs;                // total taxable dividends & interest
+    const allSecDivs = taxableSecDivs;                      // federal-taxable brokerage dividends only
+    const cashInt    = cashInterest;                        // cash interest (always ordinary)
+    const qualDivs   = fedTaxableDivInt;                    // federal-taxable dividends & interest
     const taxableRMDs    = rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
     const agiExSS        = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
-    const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling);
+    const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling, taxExemptInterest);
     let agi              = agiExSS + tSS0;
 
     // ── IRMAA / Income targeting (iterative solver) ───────────────────────
@@ -2793,17 +2824,19 @@ function runProjection(S) {
       let targetIncome = irmaaTarget != null ? tierMax - headroom : Infinity;
       if (maxBracketCapActive) {
         const bracketTarget = maxBracketCeilPre - bracketHeadroom;
-        targetIncome = irmaaTarget != null ? Math.min(targetIncome, bracketTarget) : bracketTarget;
+        const bracketTargetAsMagi = bracketTarget + taxExemptInterest;
+        targetIncome = irmaaTarget != null ? Math.min(targetIncome, bracketTargetAsMagi) : bracketTargetAsMagi;
       }
 
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
         const curAGI = agiExSS + tSS + rothConv;
-        const diff = targetIncome - curAGI;
+        const curMAGI = curAGI + taxExemptInterest;
+        const diff = targetIncome - curMAGI;
 
         if (Math.abs(diff) < 10) break; // converged
 
-        if (curAGI < targetIncome) {
+        if (curMAGI < targetIncome) {
           // Under target — convert from IRA to Roth to fill up to target
           // Cap: can't convert more than available IRA balance, and diff is the exact gap needed
           rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
@@ -2815,7 +2848,7 @@ function runProjection(S) {
             ? baseIRMAA[nextCeilIdx]
             : 1e9;
           const fillTo   = nextMax - headroom;
-          const fillDiff = fillTo - curAGI;
+          const fillDiff = fillTo - curMAGI;
           if (fillDiff > 0) rothConv = Math.min(rothConv + fillDiff, rothConvAvailTotal);
           break;
         } else if (fillMode === 'R') {
@@ -2833,11 +2866,12 @@ function runProjection(S) {
     } else if (incomeOvActive && rothConvAvailTotal > 0) {
       const target = parseF(incomeLvlOv) - incomeHeadroom;
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
         const curAGI = agiExSS + tSS + rothConv;
-        const diff = target - curAGI;
+        const curMAGI = curAGI + taxExemptInterest;
+        const diff = target - curMAGI;
         if (Math.abs(diff) < 10) break;
-        if (curAGI < target) {
+        if (curMAGI < target) {
           rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
         } else break;
       }
@@ -2845,7 +2879,7 @@ function runProjection(S) {
     } else if (taxFillActive && rothConvAvailTotal > 0) {
       // Tax Bracket Fill: convert IRA→Roth to top of current federal bracket minus headroom
       for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
+        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
         const curAGI = agiExSS + tSS + rothConv;
         const bktCeil = getBracketCeiling(curAGI, taxFiling, tables);
         if (bktCeil === null) break; // already in top bracket
@@ -2859,13 +2893,14 @@ function runProjection(S) {
     }
 
     // Final AGI with conversion
-    const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling);
+    const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
     agi = agiExSS + tSSfinal_inner + rothConv;
+    const magi = agi + taxExemptInterest;
 
     // ── Taxes ─────────────────────────────────────────────────────────────
     // Dividend tax treatment: ordinary = all taxed at ordinary rates; qualified = LTCG rates
     // Dividend tax treatment: cash interest always ordinary; security dividends can be qualified
-    const qualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? allSecDivs : 0;
+    const qualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
     const ltcgIncome = qualDivsForTax + taxableStkGain; // divs + stk gains both get LTCG rates
     // Itemized deduction override — use higher of itemized or standard for each jurisdiction
     const ovDedRow    = resolveOverrideNonBlank(S.ovDeductions, yr, 'fedItemized');
@@ -2878,8 +2913,8 @@ function runProjection(S) {
     // CA: if no CA entry, default to CA standard (no itemizing for CA)
     const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
     const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
-    // CA does not tax Social Security — subtract taxable SS from CA AGI
-    const caAGI   = agi - tSSfinal_inner;
+    // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
+    const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
     // Resolve state override for this year (move to tax-free state, etc.)
     const ovStateRow = resolveOverride(S.ovStateTax||[], yr, 'state');
     // If a row exists for this year, use it (null/undefined/empty = NONE = no state tax)
@@ -2893,7 +2928,7 @@ function runProjection(S) {
     // IRMAA uses 2-year prior MAGI (Medicare lookback rule)
     const irmaaMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
                       yr === S.startYear+1 ? (S.medicareMagi1||0) :
-                      rows.length >= 2 ? rows[rows.length-2].agi : agi;
+                      rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
     const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
     // Part B base premium — per enrolled person (age 65+), inflated with irmaaInfl
     const partBPerPerson = tables.partBBase || 2220;
@@ -2904,7 +2939,7 @@ function runProjection(S) {
     const newTax = fedRes.ordTax + fedRes.ltcgTax + stTax; // income tax only (IRMAA separate)
     const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld);  // IRMAA excluded — Medicare premium, not income tax funding
     // Save finals from this pass
-    netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
+    netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
     rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
     ira1Draw_f=ira1Draw_inner; ira2Draw_f=ira2Draw_inner; secDraw_f=secDraw_inner; cashDraw_f=cashDraw_inner;
@@ -2919,7 +2954,7 @@ function runProjection(S) {
     taxEst = newNetTax;
     } // end taxPass loop
     // Unpack finals from converged pass
-    const tSSfinal=tSSfinal_f, rothConv=rothConv_f;
+    const tSSfinal=tSSfinal_f, rothConv=rothConv_f, magi=magi_f;
     const rothConvDraw1=rothConvDraw1_f, rothConvDraw2=rothConvDraw2_f;
     const rothModeWith1=rothModeWith1_f, rothModeWith2=rothModeWith2_f;
     const ira1Draw=ira1Draw_f, ira2Draw=ira2Draw_f, secDraw=secDraw_f, cashDraw=cashDraw_f;
@@ -3006,6 +3041,10 @@ function runProjection(S) {
       ? Math.max(0, Math.min(cashFloor, rawCash))
       : Math.max(0, rawCash);
     if (cashSweep > 0) sec = Math.max(0, sec + cashSweep);
+    const endSecTaxableBal = sec * secBalanceMix.taxable;
+    const endSecTreasuryBal = sec * secBalanceMix.treasury;
+    const endSecCAMuniBal = sec * secBalanceMix.caMuni;
+    const endSecOtherMuniBal = sec * secBalanceMix.otherMuni;
     const allCashOut = spending + fundingTax;
 
     const endPost2020Inh = post2020Lots.reduce((sum, lot)=>sum+(lot.active?(lot.bal||0):0),0);
@@ -3023,7 +3062,7 @@ function runProjection(S) {
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
       pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
       pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, ira1Addl, ira2Addl,
-      divs, totalSecDivs, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
+      divs, totalSecDivs, taxableSecDivs, treasuryInterest, caMuniInterest, otherMuniInterest, fedTaxableDivInt, taxExemptInterest, caTaxableMuniInterest, hasManualSecBuckets, hasManualSecIncome:hasManualSecBuckets, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
       mandatoryFunding, step1Total, totalFunding,
       // Spending / cash
       spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + fundingTax + cashGapNeeded,
@@ -3036,16 +3075,16 @@ function runProjection(S) {
       k401Contrib2Trad, k401Contrib2Roth, k401Emp2Amt,
       // Taxable income
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
-      agi, stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
+      agi, magi, stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
       fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, taxFiling,
       totalTax: cashTax, incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
-      startCashBal, startSec, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startPre2020Inh1, startPre2020Inh2, startPost2020Inh,
-      endCash: cash, sec, ira1, ira2, roth1, roth2, hsa, pre2020Inh1, pre2020Inh2, post2020Inh: endPost2020Inh, netWorth,
+      startCashBal, startSec, startSecTaxableBal, startSecTreasuryBal, startSecCAMuniBal, startSecOtherMuniBal, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startPre2020Inh1, startPre2020Inh2, startPost2020Inh,
+      endCash: cash, sec, secTaxableBal: endSecTaxableBal, secTreasuryBal: endSecTreasuryBal, secCAMuniBal: endSecCAMuniBal, secOtherMuniBal: endSecOtherMuniBal, ira1, ira2, roth1, roth2, hsa, pre2020Inh1, pre2020Inh2, post2020Inh: endPost2020Inh, netWorth,
       // Growth amounts (for transparency)
-      gRate, secGrowth, ira1Growth, ira2Growth, roth1Growth, roth2Growth,
+      gRate, secGrowth, ira1Growth, ira2Growth, roth1Growth, roth2Growth, secBalanceMix:Object.assign({}, secBalanceMix), secIncomeMix:Object.assign({}, secBalanceMix),
     });
   }
   return rows;
@@ -3721,6 +3760,28 @@ function applyMigrations(merged) {
       if (e && (e.grossWages2 != null || e.ptWages2 != null)) delete e.atWages2;
     });
   }
+  // Migrate old total taxable brokerage balance into the new balance buckets.
+  if (merged.soy) {
+    const secBucketKeys = ['secTaxableBal','secTreasuryBal','secCAMuniBal','secOtherMuniBal'];
+    const legacyIncomeKeys = ['taxableBrokerageIncome','treasuryInterest','caMuniInterest','otherMuniInterest'];
+    const hasEntered = (obj, keys) => keys.some(k => obj && obj[k] != null && obj[k] !== '');
+    Object.keys(merged.soy).forEach(yr => {
+      const e = merged.soy[yr];
+      if (!e || hasEntered(e, secBucketKeys) || e.sec == null || e.sec === '') return;
+      const totalSec = Math.max(0, parseF(e.sec) || 0);
+      if (!totalSec) return;
+      const legacyIncome = legacyIncomeKeys.map(k => Math.max(0, parseF(e[k]) || 0));
+      const totalLegacyIncome = legacyIncome.reduce((sum, v) => sum + v, 0);
+      if (totalLegacyIncome > 0) {
+        e.secTaxableBal = totalSec * legacyIncome[0] / totalLegacyIncome;
+        e.secTreasuryBal = totalSec * legacyIncome[1] / totalLegacyIncome;
+        e.secCAMuniBal = totalSec * legacyIncome[2] / totalLegacyIncome;
+        e.secOtherMuniBal = totalSec * legacyIncome[3] / totalLegacyIncome;
+      } else {
+        e.secTaxableBal = totalSec;
+      }
+    });
+  }
   const D2 = DEFAULT_TAX_TABLE_2026;
   const updatePartBOnlyIRMAA = arr => {
     if (!Array.isArray(arr) || !arr.length) return false;
@@ -4312,7 +4373,7 @@ function irmaaWatchCreatedAmount(state, sourceRow, rows){
   const filing = (paidRow && paidRow.taxFiling) || getFilingForYearForState(A, paidYear) || A.filing || 'MFJ';
   const tables = getScaledTables(A, paidYear || sourceRow.yr);
   const med = irmaaWatchPaidMedicareInputs(A, paidYear, sourceRow, paidRow || {}, filing);
-  return calcIRMAA(sourceRow.agi || 0, filing, med.age1, med.age2, med.hasSecond, tables);
+  return calcIRMAA((sourceRow.magi ?? sourceRow.agi) || 0, filing, med.age1, med.age2, med.hasSecond, tables);
 }
 function irmaaWatchPreRothAGI(row, filing){
   const agi = row.agi || 0;
@@ -4322,7 +4383,7 @@ function irmaaWatchPreRothAGI(row, filing){
   const grossSS = row.grossSS != null ? row.grossSS : ((row.grossSS1 || 0) + (row.grossSS2 || 0));
   const agiExSSWithRoth = Math.max(0, agi - taxableSS);
   const agiExSSNoRoth = Math.max(0, agiExSSWithRoth - roth);
-  const taxableSSNoRoth = grossSS > 0 ? calcTaxableSS(grossSS, agiExSSNoRoth + grossSS, filing) : 0;
+  const taxableSSNoRoth = grossSS > 0 ? calcTaxableSS(grossSS, agiExSSNoRoth + grossSS, filing, row.taxExemptInterest || 0) : 0;
   return Math.max(0, agiExSSNoRoth + taxableSSNoRoth);
 }
 function irmaaWatchDriver(row){
@@ -4417,17 +4478,19 @@ function buildIRMAAWatchlist(rows, state, opts){
     const year = parseInt(r.yr, 10) || 0;
     const filing = r.taxFiling || getFilingForYearForState(A, year) || A.filing || 'MFJ';
     const tables = getScaledTables(A, year);
-    const createdTier = getIRMAATierLabel(r.agi || 0, filing, tables) || 'Base';
+    const magi = (r.magi ?? r.agi) || 0;
+    const createdTier = getIRMAATierLabel(magi, filing, tables) || 'Base';
     const rank = irmaaWatchTierRank(createdTier);
     const target = irmaaWatchActiveTarget(A, r, filing, tables);
     const preRothAGI = irmaaWatchPreRothAGI(r, filing);
-    const preRothTier = getIRMAATierLabel(preRothAGI, filing, tables) || 'Base';
+    const preRothMAGI = preRothAGI + (r.taxExemptInterest || 0);
+    const preRothTier = getIRMAATierLabel(preRothMAGI, filing, tables) || 'Base';
     const preRothRank = irmaaWatchTierRank(preRothTier);
     const thresholds = getIRMAAThresholdsForFiling(filing, tables) || [];
     const threshold = thresholds[Math.min(rank, thresholds.length - 1)] || 0;
-    const overBy = rank > 0 ? Math.max(0, (r.agi || 0) - threshold) : 0;
-    const targetOver = target ? Math.max(0, (r.agi || 0) - target.ceiling) : 0;
-    const targetMargin = target ? Math.max(0, target.ceiling - (r.agi || 0)) : 0;
+    const overBy = rank > 0 ? Math.max(0, magi - threshold) : 0;
+    const targetOver = target ? Math.max(0, magi - target.ceiling) : 0;
+    const targetMargin = target ? Math.max(0, target.ceiling - magi) : 0;
     const rothConv = r.rothConv || 0;
     let targetStatus = target ? 'within' : 'none';
     let crossCause = '';
@@ -4436,7 +4499,7 @@ function buildIRMAAWatchlist(rows, state, opts){
     if (target) {
       if (targetOver <= 10) return null;
       if (rothConv <= 0) return null;
-      if (preRothAGI > target.ceiling + 10) return null;
+      if (preRothMAGI > target.ceiling + 10) return null;
       targetStatus = 'roth-over';
       crossCause = 'roth-push';
     } else {
@@ -4451,8 +4514,8 @@ function buildIRMAAWatchlist(rows, state, opts){
     if (!options.includeZeroPremium && paidAmount <= 0.49) return null;
     const driver = irmaaWatchDriver(r);
     return {
-      year, filing, agi:r.agi || 0, rothConv,
-      preRothAGI, preRothTier, preRothRank, createdTier, threshold, overBy,
+      year, filing, agi:r.agi || 0, magi, rothConv,
+      preRothAGI, preRothMAGI, preRothTier, preRothRank, createdTier, threshold, overBy,
       target, targetStatus, targetOver, targetMargin,
       paidYear, paidTier, paidAmount, driver, crossCause,
       action:'', outsidePlan:!paidRow
@@ -4470,19 +4533,19 @@ function renderIRMAAWatchlistTable(items, opts){
     if (item.target) {
       const cushionText = item.target.cushion ? ' after ' + f$(item.target.cushion, true) + ' cushion' : '';
       const targetText = 'Target ' + f$(item.target.ceiling, true) + cushionText;
-      const preText = 'Before Roth ' + f$(item.preRothAGI || 0, true);
+      const preText = 'Before Roth MAGI ' + f$(item.preRothMAGI || item.preRothAGI || 0, true);
       const rothText = 'Roth conversion ' + f$(item.rothConv || 0, true);
-      const finalText = 'Final AGI ' + f$(item.agi || 0, true) + ' (' + f$(item.targetOver || 0, true) + ' over)';
+      const finalText = 'Final MAGI ' + f$(item.magi || item.agi || 0, true) + ' (' + f$(item.targetOver || 0, true) + ' over)';
       statusMain = 'Roth crosses ' + item.target.label;
       statusSub = targetText + '; ' + preText + '; ' + rothText + '; ' + finalText + '.';
     } else {
       statusMain = 'Roth creates ' + item.createdTier;
-      statusSub = 'Before Roth ' + setupEsc(item.preRothTier || 'Base') + '; Roth conversion ' + f$(item.rothConv || 0, true) + '; final AGI ' + f$(item.agi || 0, true) + '.';
+      statusSub = 'Before Roth ' + setupEsc(item.preRothTier || 'Base') + '; Roth conversion ' + f$(item.rothConv || 0, true) + '; final MAGI ' + f$(item.magi || item.agi || 0, true) + '.';
     }
     return '<tr>'+ 
       '<td><strong>'+item.year+'</strong></td>'+ 
       '<td>'+setupEsc(item.filing)+'</td>'+ 
-      '<td class="r">'+f$(item.agi, true)+'</td>'+ 
+      '<td class="r">'+f$(item.magi || item.agi, true)+'</td>'+ 
       '<td class="irmaa-watch-status"><span class="irmaa-watch-tier">'+setupEsc(statusMain)+'</span><br><span class="irmaa-watch-meta">'+setupEsc(statusSub)+'</span></td>'+ 
       '<td><strong>'+setupEsc(paidText)+'</strong><br><span class="irmaa-watch-meta">'+setupEsc(item.paidTier)+' ('+f$(item.paidAmount, true)+')</span></td>'+ 
       '<td class="irmaa-watch-action">'+setupEsc(item.action)+'</td>'+ 
@@ -4814,7 +4877,9 @@ function renderCF(){
       ...(hp?[{f:'rothConvDraw2', h:n2+'\nRoth Conv'}]:[]),
       {f:'hsaDep',        h:'HSA\nDeposit'},
       {f:'taxableIRADraws', h:'IRA/RMD/\nInh IRA'},
-      {f:'taxableDivs',   h:'Taxable\nDiv & Int'},
+      {f:'taxableDivs',   h:'Fed Taxable\nDiv & Int'},
+      {f:'taxExemptInterest', h:'Tax-Exempt\nInterest'},
+      {f:'caTaxableMuniInterest', h:'CA Taxable\nMuni Int'},
       {f:'taxableStkGain',h:'Taxable\nStk Sales'},
       {f:'taxableSS',     h:'Taxable\nSoc Sec'},
     ]},
@@ -4848,7 +4913,7 @@ function renderCF(){
     'atWages','ptWages','grossSS1','grossSS2','rmd1','rmd2','divs',
     'cashDraw','ira1Addl','ira2Addl','stkSales','rothDraw1','rothDraw2','hsaWith',
     'cashGapNeeded',
-    'totalWages','rothConvDraw1','rothConvDraw2','hsaDep','taxableIRADraws','taxableDivs','taxableStkGain','taxableSS',
+    'totalWages','rothConvDraw1','rothConvDraw2','hsaDep','taxableIRADraws','taxableDivs','taxExemptInterest','caTaxableMuniInterest','taxableStkGain','taxableSS',
     'ltcg','blended','irmaaTx','medicareBase',
     'excessFunds','cashSweep','unfunded',
     'pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD',
@@ -4859,14 +4924,17 @@ function renderCF(){
     if (field === 'startAllInh') return ((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)) > 0;
     if (field === 'blended') return Math.abs(r.ltcg||0) > 0.49 || Math.abs(r.qualDivsForTax||0) > 0.49 || Math.abs(r.taxableStkGain||0) > 0.49;
     if (field === 'totalWages') return Math.abs((r.w2AGI||0)+(r.ptWages||0)) > 0.49;
-    if (field === 'taxableDivs') return Math.abs(r.qualDivs != null ? r.qualDivs : (r.divs||0)) > 0.49;
+    if (field === 'taxableDivs') return Math.abs(r.fedTaxableDivInt != null ? r.fedTaxableDivInt : (r.qualDivs != null ? r.qualDivs : (r.divs||0))) > 0.49;
+    if (field === 'taxExemptInterest') return Math.abs(r.taxExemptInterest || 0) > 0.49;
+    if (field === 'caTaxableMuniInterest') return Math.abs(r.caTaxableMuniInterest || 0) > 0.49;
     if (field === 'taxableIRADraws') {
-      const taxableRMDs = (r.taxableRMDs != null) ? r.taxableRMDs : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
-      const taxableDivs = (r.qualDivs != null) ? r.qualDivs : (r.divs||0);
+      const taxableDivs = (r.fedTaxableDivInt != null) ? r.fedTaxableDivInt : ((r.qualDivs != null) ? r.qualDivs : (r.divs||0));
+      const taxableRMDs = (r.taxableRMDs != null) ? r.taxableRMDs : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+taxableDivs;
       return Math.abs(Math.max(0, taxableRMDs - taxableDivs)) > 0.49;
     }
     if (field === 'taxableSS') {
-      const taxableRMDs = (r.taxableRMDs != null) ? r.taxableRMDs : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
+      const taxableDivsForFallback = (r.fedTaxableDivInt != null) ? r.fedTaxableDivInt : ((r.qualDivs != null) ? r.qualDivs : (r.divs||0));
+      const taxableRMDs = (r.taxableRMDs != null) ? r.taxableRMDs : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+taxableDivsForFallback;
       const taxableStkGain = (r.taxableStkGain != null) ? r.taxableStkGain : 0;
       const taxableSS = (r.taxableSS != null) ? r.taxableSS : ((r.agi||0) - (r.ptWages||0) - taxableRMDs - taxableStkGain - (r.rothConv||0));
       return Math.abs(taxableSS) > 0.49;
@@ -4931,8 +4999,8 @@ function renderCF(){
     });
 
     // Scrollable cells — derive taxable IRA draws, dividends, stock gains, taxable SS if not on row
-    const taxableRMDs    = (r.taxableRMDs    != null) ? r.taxableRMDs    : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.qualDivs||r.divs||0);
-    const taxableDivs    = (r.qualDivs != null) ? r.qualDivs : (r.divs||0);
+    const taxableDivs    = (r.fedTaxableDivInt != null) ? r.fedTaxableDivInt : ((r.qualDivs != null) ? r.qualDivs : (r.divs||0));
+    const taxableRMDs    = (r.taxableRMDs    != null) ? r.taxableRMDs    : (r.rmd1||0)+(r.rmd2||0)+(r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+taxableDivs;
     const taxableIRADraws = Math.max(0, taxableRMDs - taxableDivs);
     const taxableStkGain = (r.taxableStkGain != null) ? r.taxableStkGain : 0;
     const taxableSS      = (r.taxableSS      != null) ? r.taxableSS      : ((r.agi||0) - (r.ptWages||0) - taxableRMDs - taxableStkGain - (r.rothConv||0));
@@ -5078,7 +5146,9 @@ function renderYD(){
   const agiWages = (r.w2AGI||0) + (r.ptWages||0);
   const agiIRADraws = (r.rmd1||0) + (r.rmd2||0) + (r.pre2020InhDraw||0) + (r.pre2020InhAddl||0) + (r.post2020InhDraw||0) + (r.ira1Addl||0) + (r.ira2Addl||0);
   const agiRothConv = r.rothConv || 0;
-  const agiDivInt = r.qualDivs != null ? r.qualDivs : (r.divs||0);
+  const agiDivInt = r.fedTaxableDivInt != null ? r.fedTaxableDivInt : (r.qualDivs != null ? r.qualDivs : (r.divs||0));
+  const taxExemptInterest = r.taxExemptInterest || 0;
+  const caTaxableMuniInterest = r.caTaxableMuniInterest || 0;
   const agiStkGain = r.taxableStkGain || 0;
   const agiTaxableSS = r.tSS || 0;
   const agiPartsTotal = agiWages + agiIRADraws + agiRothConv + agiDivInt + agiStkGain + agiTaxableSS;
@@ -5094,7 +5164,7 @@ function renderYD(){
   const agiDrivers = [
     ['IRA / RMD / Inherited IRA', agiIRADraws],
     ['Roth Conversion', agiRothConv],
-    ['Taxable Dividends & Interest', agiDivInt],
+    ['Fed Taxable Dividends & Interest', agiDivInt],
     ['Taxable Wages & Self-Employ', agiWages],
     ['Taxable Stock Sale Gains', agiStkGain],
     ['Taxable Social Security', agiTaxableSS],
@@ -5104,7 +5174,8 @@ function renderYD(){
     Math.abs(agiResidual)>2 ? '<div style="font-size:10px;line-height:1.5;color:#8b0000;background:#fff0f0;border-left:3px solid #8b0000;padding:5px 8px;margin-top:6px">AGI parts do not tie to AGI. Check this year for a model or display issue.</div>' : '',
     agiRothConv>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a3a6a;background:#eef5ff;border-left:3px solid #1a3a6a;padding:5px 8px;margin-top:6px">Roth conversion is adding taxable income this year.</div>' : '',
     agiStkGain>0 ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">Security sales are adding taxable capital gains this year.</div>' : '',
-    agiIRADraws>0 && (r.fundingOrder||[])[0]==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : ''
+    agiIRADraws>0 && (r.fundingOrder||[])[0]==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : '',
+    taxExemptInterest>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a5a1a;background:#eef8ee;border-left:3px solid #1a6a1a;padding:5px 8px;margin-top:6px">Tax-exempt bond interest is excluded from regular federal AGI but included for Social Security provisional income and Medicare MAGI.</div>' : ''
   ].filter(Boolean).join('');
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
@@ -5121,6 +5192,10 @@ function renderYD(){
       ${r.post2020InhExtra>0?dr('Post-2020 Inh IRA Draw',f$(r.post2020InhExtra)):''}
 
       ${dr('Dividends & Interest',f$(r.divs))}
+      ${r.fedTaxableDivInt>0?dr('Fed Taxable Div/Int',f$(r.fedTaxableDivInt)):''}
+      ${r.treasuryInterest>0?dr('U.S. Treasury Interest',f$(r.treasuryInterest)):''}
+      ${r.caMuniInterest>0?dr('CA Muni Interest',f$(r.caMuniInterest)):''}
+      ${r.otherMuniInterest>0?dr('Other-State Muni Interest',f$(r.otherMuniInterest)):''}
       <div class="dr tot"><span class="dl">Step 1 Total</span><span class="dv">${f$(r.mandatoryFunding)}</span></div>
       <div class="sh" style="font-size:8px;color:#a07830;border:none;margin-bottom:4px;margin-top:6px">STEP 2–4 — ACCOUNT DRAWS</div>
 
@@ -5172,6 +5247,8 @@ function renderYD(){
       ${Math.abs(agiResidual)>2?dr('Unexplained / Rounding',f$(agiResidual),'','color:#8b0000'):''}
       ${dr('AGI Parts Total',f$(agiPartsTotal),'tot')}
       ${dr('Adjusted Gross Income',f$(r.agi),'tot')}
+      ${taxExemptInterest>0?dr('Tax-Exempt Interest Addback',f$(taxExemptInterest)):''}
+      ${taxExemptInterest>0?dr('Medicare MAGI',f$(r.magi || ((r.agi||0)+taxExemptInterest)),'tot'):''}
       ${agiAlertLines}
       <div class="sh">Roth Activity</div>
       ${r.rothConv>0?dr('Roth Conv — IRA to Roth (taxable)',f$(r.rothConv)):''}
@@ -5188,6 +5265,8 @@ function renderYD(){
       ${dr('Federal Ordinary',f$(r.fedOrd))}
       ${dr('LTCG / Qual Divs',f$(r.ltcg))}
       ${dr('CA State',f$(r.stTax))}
+      ${r.treasuryInterest>0?dr('CA-exempt U.S. Treasury Interest',f$(r.treasuryInterest)):''}
+      ${caTaxableMuniInterest>0?dr('CA-taxable Non-CA Muni Interest',f$(caTaxableMuniInterest)):''}
       ${r.itemizedUsed ? dr('Itemized Deduction',f$(r.effDed-(r.seniorBonus||0)-(r.charityDed||0)),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
       ${(r.seniorBonus||0)>0?dr('Enhanced Senior Deduction',f$(r.seniorBonus)):''}
       ${(r.charityDed||0)>0?dr('Non-itemizer Charity Deduction',f$(r.charityDed)):''}
@@ -5227,7 +5306,10 @@ function renderSOY(){
     ...(hp ? [['ss2', n2, 'Gross SS/mo']] : []),
     ['spending', 'Annual',    'Spending'],
     ['cash',     'Non-IRA',   'Cash/Bank'],
-    ['sec',      'Taxable',   'Brokerage'],
+    ['secTaxableBal',   'Taxable Acct', 'Taxable\nStocks/Funds'],
+    ['secTreasuryBal',  'Taxable Acct', 'U.S.\nTreasuries'],
+    ['secCAMuniBal',    'Taxable Acct', 'CA Muni\nBonds'],
+    ['secOtherMuniBal', 'Taxable Acct', 'Other Muni\nBonds'],
     ['ira1',     n1,          'IRA'],
     ...(hp ? [['ira2', n2, 'IRA']] : []),
     ['roth1',    n1,          'Roth'],
@@ -5251,7 +5333,7 @@ function renderSOY(){
     const pt1 = yr <= (S.ptEnd1||9999);
     const pt2 = yr <= (S.ptEnd2||9999);
     const map = {
-      cash: r.endCash, sec: r.sec, ira1: r.ira1, ira2: r.ira2,
+      cash: r.endCash, sec: r.sec, secTaxableBal: r.secTaxableBal, secTreasuryBal: r.secTreasuryBal, secCAMuniBal: r.secCAMuniBal, secOtherMuniBal: r.secOtherMuniBal, ira1: r.ira1, ira2: r.ira2,
       roth1: r.roth1, roth2: r.roth2, hsa: r.hsa, pre2020Inh1: r.pre2020Inh1, pre2020Inh2: r.pre2020Inh2, post2020Inh: r.post2020Inh,
       grossWages:  w1  ? (r.grossWages1||0) * wCola : null,
       grossWages2: w2  ? (r.grossWages2||0) * wCola : null,
@@ -5261,6 +5343,10 @@ function renderSOY(){
       ss1: r.grossSS1 > 0 ? Math.round(r.grossSS1/12) : null,
       ss2: r.grossSS2 > 0 ? Math.round(r.grossSS2/12) : null,
       spending: r.spending, hsaDep: r.hsaDep, hsaWith: r.hsaWith,
+      secTaxableBal: r.secTaxableBal || null,
+      secTreasuryBal: r.secTreasuryBal || null,
+      secCAMuniBal: r.secCAMuniBal || null,
+      secOtherMuniBal: r.secOtherMuniBal || null,
     };
     return map[key] ?? null;
   }
@@ -5329,7 +5415,7 @@ function editSOY(yr){
     if (!r) {
       // First year — use S starting inputs as fallback
       const firstMap = {
-        cash: S.startCash, sec: S.startSec, ira1: S.startIRA1, ira2: S.startIRA2,
+        cash: S.startCash, sec: S.startSec, secTaxableBal: S.startSec || 0, secTreasuryBal: 0, secCAMuniBal: 0, secOtherMuniBal: 0, ira1: S.startIRA1, ira2: S.startIRA2,
         roth1: S.startRoth1, roth2: S.startRoth2, hsa: S.startHSA, pre2020Inh1: S.startPre2020Inh1, pre2020Inh2: S.startPre2020Inh2, post2020Inh: (S.post2020InhLots||[]).reduce((sum,l)=>sum+(parseF(l.balance)||0),0),
         grossWages: S.grossWages1||0, withholdPct: S.withholdPct1||null,
         ptWages: S.ptWages1||0,
@@ -5349,7 +5435,7 @@ function editSOY(yr){
     const pt1 = yr <= (S.ptEnd1||9999);
     const pt2 = yr <= (S.ptEnd2||9999);
     const map = {
-      cash: r.endCash, sec: r.sec, ira1: r.ira1, ira2: r.ira2,
+      cash: r.endCash, sec: r.sec, secTaxableBal: r.secTaxableBal, secTreasuryBal: r.secTreasuryBal, secCAMuniBal: r.secCAMuniBal, secOtherMuniBal: r.secOtherMuniBal, ira1: r.ira1, ira2: r.ira2,
       roth1: r.roth1, roth2: r.roth2, hsa: r.hsa,
       grossWages:  w1  ? Math.round((r.grossWages1||0) * wCola) : 0,
       ptWages:     pt1 ? Math.round((r.ptWages1||0)   * wCola) : 0,
@@ -5464,6 +5550,14 @@ function editSOY(yr){
       ${fld('hsaDep','HSA Deposit ($)')}
       ${fld('hsaWith','HSA Withdrawal ($)')}
     </div>
+    <div class="sh">Taxable Account Balances by Tax Treatment</div>
+    <div style="font-size:11px;color:#8a7040;font-style:italic;margin-bottom:8px">Enter balances, not income. The model applies the Brokerage Dividend / Interest Rate to these balances for annual income, then taxes each bucket correctly.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+      ${fld('secTaxableBal','Taxable Stocks/Funds Balance ($)','Regular taxable brokerage investments: stocks, ETFs, mutual funds, CDs, corporate bonds, or cash-like securities not broken out below.')}
+      ${fld('secTreasuryBal','U.S. Treasury / Federal Obligation Balance ($)','Taxable federally; exempt from CA/state tax. Use the Treasury/federal-obligation portion of a fund if known.')}
+      ${fld('secCAMuniBal','CA Municipal Bond Balance ($)','Exempt from regular federal and CA tax; still included for Social Security provisional income and Medicare MAGI.')}
+      ${fld('secOtherMuniBal','Other-State Municipal Bond Balance ($)','Federally tax-exempt; taxable by California.')}
+    </div>
     <div class="sh">401K Percentages (override global defaults)</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
       ${fldPct('k401Trad1',p1()+' % → Trad 401K')}
@@ -5476,7 +5570,6 @@ function editSOY(yr){
     <div class="sh">Starting Balances (actual values entering this year)</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
       ${fld('cash','Non-Retirement Cash / Bank ($)','Checking, savings, money market, CDs, or similar cash-like accounts outside IRA, 401k, Roth, and HSA.')}
-      ${fld('sec','Taxable Brokerage / Non-Retirement Securities ($)','Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA.')}
       ${fld('ira1',p1()+' IRA ($)')}
       ${hasP2()?fld('ira2',p2()+' IRA ($)'):''}
       ${fld('roth1',p1()+' Roth ($)')}
@@ -9544,7 +9637,8 @@ function renderSetupHouseholdStep(){
 function renderSetupAssumptionsStep(){
   const investmentFields = [
     setupInput('Investment Growth Rate (%)','growthRate','pct',setupPct(S.growthRate),{step:'0.1',min:-100,note:'Expected yearly total return for invested accounts. This includes both share-price growth and dividends/interest; the separate dividend rate estimates taxable income from brokerage accounts. Year-specific Portfolio Growth strategies can override it.'}),
-    setupInput('Brokerage Dividend / Interest Rate (%)','divRate','pct',setupPct(S.divRate),{step:'0.01',min:0,note:'Estimated yearly taxable income produced by the securities/brokerage account.'}),
+    setupInput('Brokerage Dividend / Interest Rate (%)','divRate','pct',setupPct(S.divRate),{step:'0.01',min:0,note:'Applied to taxable-account balances to estimate annual dividends/interest. The taxable/Treasury/municipal balance buckets control tax treatment; overall account growth still uses Investment Growth Rate.'}),
+    setupInfoCard('Tax-free bond balance entry', 'For municipal bonds or Treasury holdings, enter balances in Opening Year, Start of Year, or Annual Check-In. The model applies the brokerage dividend/interest rate to those balances and carries the latest balance mix forward.', 'done'),
     setupInput('Cash / Money Market Interest Rate (%)','intRate','pct',setupPct(S.intRate),{step:'0.01',min:0,note:'Estimated interest on cash or near-cash reserves.'}),
     setupInput('Dividends Reinvested (%)','divReinvestPct','pct',setupPct(S.divReinvestPct),{step:'1',min:0,max:100,note:'100 means dividends stay invested. 0 means dividends become available cash. Taxes may still apply either way.'}),
     setupSelect('Dividend Tax Treatment','qualDivsMode',S.qualDivsMode || 'ordinary',[['ordinary','Ordinary Income'],['qualified','Qualified / LTCG Rate']],{note:'Choose Ordinary unless you know the dividends are mostly qualified for lower capital-gain tax rates.'}),
@@ -9573,9 +9667,16 @@ function renderSetupBalancesStep(){
   const has2 = hasP2();
   return [
     setupInfoCard('Balances at the start of '+yr, 'Enter the balances that exist at the start of the first plan year. This is not asking for every account statement detail - combine similar accounts into the buckets below.', 'done'),
+    '<div class="sh" style="grid-column:1/-1;margin-top:4px">Cash and Spending</div>',
     setupSOYInput('Annual Household Spending ($)',yr,'spending','number',{min:0,note:'Normal household spending for the first plan year before income taxes. Include Medicare premiums, supplemental insurance, and regular healthcare costs here if they are part of the household budget. Later years inflate from here unless a Spending strategy overrides them.'}),
     setupSOYInput('Non-Retirement Cash / Bank ($)',yr,'cash','number',{min:0,note:'Checking, savings, money market, CDs, or similar cash-like accounts outside retirement accounts. Do not include IRA, 401k, Roth, HSA, or taxable brokerage investments here.'}),
-    setupSOYInput('Taxable Brokerage / Non-Retirement Securities ($)',yr,'sec','number',{min:0,note:'Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA here.'}),
+    '<div class="strategy-card" style="grid-column:1/-1;border-left:4px solid var(--green);margin-top:8px"><div class="strategy-card-title">Taxable Account / Brokerage Balances</div><div class="setup-section-copy">Break the taxable account into the parts users can see on statements: regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds. Enter balances, not interest. If everything is ordinary taxable brokerage, put the full amount in Taxable Stocks/Funds and leave the bond buckets blank.</div><div class="setup-field-grid" style="margin-top:10px">' +
+      setupSOYInput('Taxable Stocks/Funds Balance ($)',yr,'secTaxableBal','number',{min:0,note:'Regular taxable brokerage investments: stocks, ETFs, mutual funds, CDs, corporate bonds, or cash-like securities not broken out below.'}) +
+      setupSOYInput('U.S. Treasury / Federal Obligation Balance ($)',yr,'secTreasuryBal','number',{min:0,note:'Taxable federally; exempt from CA/state tax. Use the Treasury/federal-obligation portion of a fund if known.'}) +
+      setupSOYInput('CA Municipal Bond Balance ($)',yr,'secCAMuniBal','number',{min:0,note:'Exempt from regular federal and CA tax; included for Social Security provisional income and Medicare MAGI.'}) +
+      setupSOYInput('Other-State Municipal Bond Balance ($)',yr,'secOtherMuniBal','number',{min:0,note:'Federally tax-exempt; taxable by California.'}) +
+    '</div><div class="setup-section-copy" style="margin-top:8px">The model applies the Brokerage Dividend / Interest Rate to these balances for annual income, while all taxable-account buckets share the overall Investment Growth Rate.</div></div>',
+    '<div class="sh" style="grid-column:1/-1;margin-top:12px">Retirement and Health Account Balances</div>',
     setupSOYInput(p1()+' Traditional IRA / 401k ($)',yr,'ira1','number',{min:0,note:'Combine pre-tax retirement accounts for '+p1()+': traditional IRA, rollover IRA, traditional 401k, 403b, or similar.'}),
     has2 ? setupSOYInput(p2()+' Traditional IRA / 401k ($)',yr,'ira2','number',{min:0,note:'Combine pre-tax retirement accounts for '+p2()+': traditional IRA, rollover IRA, traditional 401k, 403b, or similar.'}) : '',
     setupSOYInput(p1()+' Roth IRA / Roth 401k ($)',yr,'roth1','number',{min:0,note:'Combine Roth retirement accounts for '+p1()+'. Roth money is modeled separately because qualified withdrawals are tax-free.'}),
@@ -9893,6 +9994,12 @@ function renderSetupAnnualView(){
     setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0}),
     setupSOYInput('HSA Withdrawal ($)',yr,'hsaWith','number',{min:0})
   ].join('');
+  const taxableAccountBalances = [
+    setupSOYInput('Taxable Stocks/Funds Balance ($)',yr,'secTaxableBal','number',{min:0,note:'Regular taxable brokerage investments: stocks, ETFs, mutual funds, CDs, corporate bonds, or cash-like securities not broken out below.'}),
+    setupSOYInput('U.S. Treasury / Federal Obligation Balance ($)',yr,'secTreasuryBal','number',{min:0,note:'Taxable federally; exempt from CA/state tax. Use the Treasury/federal-obligation portion of a fund if known.'}),
+    setupSOYInput('CA Municipal Bond Balance ($)',yr,'secCAMuniBal','number',{min:0,note:'Exempt from regular federal and CA tax; included for Social Security provisional income and Medicare MAGI.'}),
+    setupSOYInput('Other-State Municipal Bond Balance ($)',yr,'secOtherMuniBal','number',{min:0,note:'Federally tax-exempt; taxable by California.'})
+  ].join('');
   const k401 = [
     setupSOYPctInput(p1()+' Trad 401k % Override',yr,'k401Trad1',S.k401Trad1),
     setupSOYPctInput(p1()+' Roth 401k % Override',yr,'k401Roth1',S.k401Roth1),
@@ -9903,7 +10010,6 @@ function renderSetupAnnualView(){
   ].join('');
   const bals = [
     setupSOYInput('Non-Retirement Cash / Bank ($)',yr,'cash','number',{min:0,note:'Checking, savings, money market, CDs, or similar cash-like accounts outside IRA, 401k, Roth, and HSA.'}),
-    setupSOYInput('Taxable Brokerage / Non-Retirement Securities ($)',yr,'sec','number',{min:0,note:'Non-retirement brokerage investments such as stocks, ETFs, mutual funds, or other taxable securities. Do not include IRA, 401k, Roth, or HSA.'}),
     setupSOYInput(p1()+' IRA ($)',yr,'ira1','number',{min:0}),
     has2 ? setupSOYInput(p2()+' IRA ($)',yr,'ira2','number',{min:0}) : '',
     setupSOYInput(p1()+' Roth ($)',yr,'roth1','number',{min:0}),
@@ -9914,7 +10020,7 @@ function renderSetupAnnualView(){
     setupSOYInput('Post-2020 Inherited IRA Active-Lot Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for lots active in this check-in year; add new lots in Inherited IRA Setup.'})
   ].join('');
   const inheritedNote = '<div class="setup-check warn" style="margin:12px 0"><div class="setup-check-title">Inherited IRA changes</div><div class="setup-check-body">If a new inherited IRA appears, or if the death year / beneficiary / draw strategy needs correction, update the Inherited IRAs setup. This Annual Check-In only resets balances.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRA Setup</button></div></div>';
-  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
+  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">Taxable Account Balances</div><div class="setup-section-copy">Enter balances, not income. The app applies the Brokerage Dividend / Interest Rate to these balances and taxes each bucket correctly.</div><div class="setup-field-grid">'+taxableAccountBalances+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
 }
 function setupStrategyOptions(){
   return [
