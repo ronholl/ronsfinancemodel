@@ -106,6 +106,8 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 #hdr-left{padding:14px 0}
 #hdr-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:900;color:var(--gold3);letter-spacing:.04em}
 #hdr-sub{font-size:10px;color:#9a8050;margin-top:3px;font-family:'JetBrains Mono',monospace;letter-spacing:.1em}
+#hdr-sub a{color:#b8944a;text-decoration:none}
+#hdr-sub a:hover{color:var(--gold3);text-decoration:underline}
 #hdr-right{display:flex;align-items:center;gap:20px;font-size:10px;color:#7a6040;font-family:'JetBrains Mono',monospace}
 #hdr-right span{color:var(--gold2)}
 #save-indicator{font-size:9px;color:#5a8a5a;opacity:0;transition:opacity .5s}
@@ -276,6 +278,16 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .roth-report-table td:first-child{white-space:normal;min-width:190px}
 .roth-report-table .r{text-align:right}
 .roth-report-table .bold{font-weight:850}
+.roth-report-score-table{min-width:1320px;table-layout:fixed}
+.roth-report-score-table th,.roth-report-score-table td{padding:7px 6px}
+.roth-report-score-table td:first-child{white-space:normal;min-width:0}
+.roth-report-score-table .rate-col{white-space:nowrap}
+.roth-report-score-table .peak-irmaa-col{white-space:normal;line-height:1.22;padding-left:8px}
+.roth-report-detail-table{min-width:1120px;table-layout:fixed}
+.roth-report-detail-table th,.roth-report-detail-table td{padding:7px 6px}
+.roth-report-detail-table td:first-child{white-space:nowrap;min-width:0}
+.roth-report-detail-table .rate-col{white-space:nowrap}
+.roth-report-detail-table .irmaa-detail{white-space:normal;line-height:1.26;padding-left:9px}
 .roth-report-footnote{font-size:11px;color:#6a5830;line-height:1.4;margin:-6px 0 14px}
 .roth-report-notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:12px 0}
 .roth-report-note{border:1px solid var(--cream3);border-radius:7px;background:#fffaf0;padding:10px 12px;font-size:12px;line-height:1.45;color:var(--ink2)}
@@ -476,6 +488,8 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 .info-box{background:#e8f4ff;border:1px solid #90b8e0;border-radius:4px;padding:10px 14px;font-size:12px;line-height:1.8;margin-bottom:14px}
 .info-box.warn{background:var(--warn-bg);border-color:#c8a000;color:var(--warn)}
 footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-size:9px;letter-spacing:.14em;border-top:2px solid var(--gold);font-family:'JetBrains Mono',monospace;margin-top:32px}
+footer a{color:#d4a843;text-decoration:none}
+footer a:hover{color:#f5d87a;text-decoration:underline}
 
 /* -- guided setup --------------------------------------------------------- */
 .setup-shell{display:flex;flex-direction:column;gap:16px}
@@ -1366,7 +1380,7 @@ footer{text-align:center;padding:14px;background:var(--ink);color:#a08840;font-s
 </div>
 
 </div><!-- /content -->
-<footer id="app-footer">RON'S RETIREMENT FINANCE MODEL V1 &nbsp;·&nbsp; DATA STORED LOCALLY IN YOUR BROWSER &nbsp;·&nbsp; NOT FINANCIAL ADVICE</footer>
+<footer id="app-footer">RON'S RETIREMENT FINANCE MODEL V1 &nbsp;·&nbsp; CONTACT: <a href="mailto:ronsfinancemodel@gmail.com">ronsfinancemodel@gmail.com</a> &nbsp;·&nbsp; DATA STORED LOCALLY IN YOUR BROWSER &nbsp;·&nbsp; NOT FINANCIAL ADVICE</footer>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
@@ -4260,7 +4274,7 @@ function readUI(){
 
 function updateHeader(){
   const sub=document.getElementById('hdr-sub');
-  if(sub) sub.textContent=`${p1()}${hasP2()?' & '+p2():''} · ${S.startYear||2026}–${S.endYear||2051}`;
+  if(sub) sub.innerHTML=`${setupEsc(p1())}${hasP2()?' & '+setupEsc(p2()):''} · ${S.startYear||2026}–${S.endYear||2051} · Contact: <a href="mailto:ronsfinancemodel@gmail.com">ronsfinancemodel@gmail.com</a>`;
   const meta=document.getElementById('hdr-meta');
   const filingLabel = {MFJ:'Married (MFJ)',SINGLE:'Single',HOH:'Head of Household'}[S.filing]||S.filing;
   if(meta)meta.textContent=`${filingLabel} · ${S.state||'Federal'}`;
@@ -4271,7 +4285,7 @@ function updateHeader(){
     const storage=ghCfg&&ghCfg.owner&&ghCfg.repo
       ? `SYNCED TO GITHUB · ${ghCfg.owner}/${ghCfg.repo}`
       : 'DATA STORED LOCALLY IN YOUR BROWSER';
-    footer.innerHTML=`RON'S RETIREMENT FINANCE MODEL V1 &nbsp;·&nbsp; ${storage} &nbsp;·&nbsp; NOT FINANCIAL ADVICE`;
+    footer.innerHTML=`RON'S RETIREMENT FINANCE MODEL V1 &nbsp;·&nbsp; CONTACT: <a href="mailto:ronsfinancemodel@gmail.com">ronsfinancemodel@gmail.com</a> &nbsp;·&nbsp; ${storage} &nbsp;·&nbsp; NOT FINANCIAL ADVICE`;
   }
 }
 function updateLabels(){
@@ -8434,6 +8448,16 @@ function rothLabPrintAdvisorReport(){
     '.roth-report-table td:first-child{white-space:normal;min-width:0;width:15%;font-size:10.8px;line-height:1.22}'+
     '.roth-report-table td:first-child div{font-size:9.8px!important;line-height:1.24!important;color:#21180d!important}'+
     '.roth-report-table .r{text-align:right}.roth-report-table .bold{font-weight:800}'+
+    '.roth-report-score-table{min-width:0;table-layout:fixed}'+
+    '.roth-report-score-table th,.roth-report-score-table td{padding:4px 3px}'+
+    '.roth-report-score-table td:first-child{width:auto;min-width:0}'+
+    '.roth-report-score-table .rate-col{white-space:nowrap}'+
+    '.roth-report-score-table .peak-irmaa-col{white-space:normal;line-height:1.12;padding-left:4px}'+
+    '.roth-report-detail-table{table-layout:fixed;font-size:10.5px;line-height:1.14}'+
+    '.roth-report-detail-table th,.roth-report-detail-table td{padding:4px 3px}'+
+    '.roth-report-detail-table td:first-child{width:auto;font-size:10px;white-space:nowrap}'+
+    '.roth-report-detail-table .rate-col{white-space:nowrap}'+
+    '.roth-report-detail-table .irmaa-detail{white-space:normal;line-height:1.16;padding-left:5px}'+
     '.roth-report-footnote{font-size:9px;color:#21180d;line-height:1.35;margin:-4px 0 10px}'+
     '.roth-report-questions{font-size:11px;line-height:1.45;margin:6px 0 12px;padding-left:18px;color:#111}'+
     '.roth-report-details{break-before:page;page-break-before:always;margin-top:0}'+
@@ -8786,6 +8810,12 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
   }
   return '<div class="sh">Key Assumptions Used</div><div class="roth-assumption-grid">'+rows.map(r => '<div class="roth-assumption-card"><strong>'+setupEsc(r[0])+'</strong>'+setupEsc(r[1])+'</div>').join('')+'</div>';
 }
+function rothLabScoreColgroup(){
+  return '<colgroup><col style="width:18%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:5%"><col style="width:6%"><col style="width:6%"><col style="width:5%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:5%"></colgroup>';
+}
+function rothLabDetailColgroup(){
+  return '<colgroup><col style="width:5%"><col style="width:6%"><col style="width:8%"><col style="width:8%"><col style="width:5.5%"><col style="width:6%"><col style="width:11.5%"><col style="width:11%"><col style="width:8%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:8.5%"></colgroup>';
+}
 function rothLabRenderAdvisorReport(scenarios, cfg){
   const selected = rothLabSelectedScenarios(scenarios);
   if (!selected.length) {
@@ -8798,7 +8828,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
     const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
     const delta = x.label === 'Current Plan' ? '--' : ((x.finalNetWorth||0) - (base.finalNetWorth||0));
     const estateDelta = x.label === 'Current Plan' ? '--' : ((x.estateValue||0) - (base.estateValue||0));
-    return '<tr><td><strong>'+setupEsc(x.label||'')+'</strong><div style="font-size:11px;color:#6a5830;line-height:1.35">'+setupEsc(rothLabReportScenarioText(sc))+'</div></td><td class="r">'+f$(first.agi||0,true)+'</td><td class="r">'+f$(first.rothConv||0,true)+'</td><td class="r">'+rothLabMoney(x.windowConv,true)+'</td><td class="r">'+rothLabMoney(x.incomeTax,true)+'</td><td class="r">'+rothLabMoney(x.irmaa,true)+'</td><td class="r bold">'+rothLabMoney(x.burden,true)+'</td><td class="r">'+rothLabMoney(x.finalIRA,true)+'</td><td class="r">'+setupEsc(rothLabIraDrainText(x.iraDrainYear))+'</td><td class="r">'+rothLabMoney(x.finalRoth,true)+'</td><td class="r">'+rothLabMoney(x.finalOther,true)+'</td><td class="r bold">'+rothLabMoney(x.finalNetWorth,true)+'<div style="font-size:10px">'+(delta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(delta))+'</div></td><td class="r bold">'+rothLabMoney(x.estateValue,true)+'<div style="font-size:10px">'+(estateDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(estateDelta))+'</div></td><td class="r">'+fp(x.avgEff||0)+'</td><td class="r">'+fp(x.peakMarg||0)+'</td><td>'+setupEsc(x.peakTier||'Base')+'</td></tr>';
+    return '<tr><td><strong>'+setupEsc(x.label||'')+'</strong><div style="font-size:11px;color:#6a5830;line-height:1.35">'+setupEsc(rothLabReportScenarioText(sc))+'</div></td><td class="r">'+f$(first.agi||0,true)+'</td><td class="r">'+f$(first.rothConv||0,true)+'</td><td class="r">'+rothLabMoney(x.windowConv,true)+'</td><td class="r">'+rothLabMoney(x.incomeTax,true)+'</td><td class="r">'+rothLabMoney(x.irmaa,true)+'</td><td class="r bold">'+rothLabMoney(x.burden,true)+'</td><td class="r">'+rothLabMoney(x.finalIRA,true)+'</td><td class="r">'+setupEsc(rothLabIraDrainText(x.iraDrainYear))+'</td><td class="r">'+rothLabMoney(x.finalRoth,true)+'</td><td class="r">'+rothLabMoney(x.finalOther,true)+'</td><td class="r bold">'+rothLabMoney(x.finalNetWorth,true)+'<div style="font-size:10px">'+(delta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(delta))+'</div></td><td class="r bold">'+rothLabMoney(x.estateValue,true)+'<div style="font-size:10px">'+(estateDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(estateDelta))+'</div></td><td class="r rate-col">'+fp(x.avgEff||0)+'</td><td class="r rate-col">'+fp(x.peakMarg||0)+'</td><td class="peak-irmaa-col">'+setupEsc(x.peakTier||'Base')+'</td></tr>';
   }).join('');
   const notes = selected.map(sc => {
     const x = sc.summary || {};
@@ -8813,11 +8843,11 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
       const endOther = endNetWorth - endIRA - endRoth;
       const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
       const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
-      return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td><td class="r">'+f$(endOther,true)+'</td><td class="r bold">'+f$(endNetWorth,true)+'</td></tr>';
+      return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r rate-col">'+fp(r.effRate||0)+'</td><td class="r rate-col">'+fp(r.margRate||0)+'</td><td class="irmaa-detail">'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td class="irmaa-detail">'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td><td class="r">'+f$(endOther,true)+'</td><td class="r bold">'+f$(endNetWorth,true)+'</td></tr>';
     }).join('');
-    return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-detail-table">'+rothLabDetailColgroup()+'<thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r rate-col">Eff Rate</th><th class="r rate-col">Marg Rate</th><th class="irmaa-detail">IRMAA Created</th><th class="irmaa-detail">IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
-  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table"><thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r">Wt Eff</th><th class="r">Peak Marg</th><th>Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-score-table">'+rothLabScoreColgroup()+'<thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r rate-col">Wt Eff</th><th class="r rate-col">Peak Marg Rate</th><th class="peak-irmaa-col">Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
 }
 function rothLabRenderDetails(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
@@ -8845,10 +8875,10 @@ function rothLabRenderDetails(scenarios, cfg){
     const endOther = endNetWorth - endIRA - endRoth;
     const createdTier = rothLabIrmaaFromIncome(sc.state || S, r);
     const createdAmount = rothLabIrmaaCreatedAmount(sc.state || S, r, sc.rows || []);
-    return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r">'+fp(r.effRate||0)+'</td><td>'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td>'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td><td class="r">'+f$(endOther,true)+'</td><td class="r bold">'+f$(endNetWorth,true)+'</td></tr>';
+    return '<tr><td>'+r.yr+'</td><td>'+setupEsc(rothLabAgeText(r, sc.state || S))+'</td><td class="r">'+f$(r.agi,true)+'</td><td class="r bold">'+f$(r.rothConv||0,true)+'</td><td class="r rate-col">'+fp(r.effRate||0)+'</td><td class="r rate-col">'+fp(r.margRate||0)+'</td><td class="irmaa-detail">'+rothLabIrmaaLevelWithAmount(createdTier||'Base', createdAmount)+'</td><td class="irmaa-detail">'+rothLabIrmaaLevelWithAmount(r.irmaaTier||'Base', r.irmaaTx||0)+'</td><td class="r">'+f$(r.incomeTax||0,true)+'</td><td class="r">'+f$(endIRA,true)+'</td><td class="r">'+f$(endRoth,true)+'</td><td class="r">'+f$(endOther,true)+'</td><td class="r bold">'+f$(endNetWorth,true)+'</td></tr>';
   }).join('');
   const emptyNote = shownRows.length ? '' : '<p style="font-size:13px;color:#6a5830">No detail rows match this selection.</p>';
-  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. Effective rate is the annual tax load to focus on; peak marginal rate stays in the scorecard as a bracket guardrail. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI, with an estimated surcharge two years later in parentheses. IRMAA Paid is the cash-flow tier after the lookback. Income Tax includes federal plus state. IRMAA is shown separately for Medicare planning; Medicare premiums and IRMAA are assumed to be paid from annual spending. End Other is everything not shown in End IRA or End Roth, such as cash, taxable brokerage, HSA, and inherited-account balances.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r">Eff Rate</th><th>IRMAA Created</th><th>IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="panel" style="margin-top:16px"><div class="roth-detail-head"><div><div class="sh" style="margin-bottom:0">Year-by-Year Detail</div><div class="roth-detail-note">Showing '+setupEsc(rothLabDetailModeLabel(detailSetting))+' for the selected scenario. Effective rate and marginal rate are shown by year; the scorecard summarizes weighted effective rate and peak marginal rate. IRMAA Created is the Medicare tier implied by that year&rsquo;s AGI, with an estimated surcharge two years later in parentheses. IRMAA Paid is the cash-flow tier after the lookback. Income Tax includes federal plus state. IRMAA is shown separately for Medicare planning; Medicare premiums and IRMAA are assumed to be paid from annual spending. End Other is everything not shown in End IRA or End Roth, such as cash, taxable brokerage, HSA, and inherited-account balances.</div></div><div class="setup-field" style="min-width:280px"><label>Detail Scenario</label><select onchange="rothLabSet(\'detail\',this.value)">'+opts+'</select></div></div>'+emptyNote+'<div class="roth-table-wrap"><table class="roth-table"><thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r rate-col">Eff Rate</th><th class="r rate-col">Marg Rate</th><th class="irmaa-detail">IRMAA Created</th><th class="irmaa-detail">IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function renderRothLab(){
   rothLabEnsureSettings();
