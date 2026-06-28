@@ -8198,10 +8198,25 @@ function rothLabCurrentPlanDescription(start, end){
   if (!bits.length) return 'No saved Roth conversion target rows overlap this analysis window. This is the current plan before adding lab scenarios.';
   return 'Saved Roth target rows: ' + bits.join('; ') + '.';
 }
+function rothLabIRMAAScenarioText(defOrFillMode){
+  const def = (defOrFillMode && typeof defOrFillMode === 'object') ? defOrFillMode : {fillMode:defOrFillMode};
+  const lvl = parseIRMAATargetLevel(def.level);
+  const tier = lvl == null ? 'selected IRMAA tier' : (IRMAA_TARGET_NAMES[lvl] || ('Tier ' + lvl));
+  const fillLabel = setupFillModeLabel(def.fillMode || '') || 'No extra fill';
+  const parts = [tier, fillLabel];
+  const cushion = parseF(def.irmaaHeadroom);
+  parts.push(cushion > 0 ? 'IRMAA cushion ' + shortDollar(cushion) : 'no IRMAA cushion');
+  const maxBracket = setupBracketLabel(def.maxBracket || '');
+  if (maxBracket) parts.push('max ' + maxBracket);
+  const bracketCushion = parseF(def.bracketHeadroom);
+  if (bracketCushion > 0) parts.push('bracket cushion ' + shortDollar(bracketCushion));
+  let behavior = 'If normal income is already above the target, it does not add extra Roth conversions.';
+  if (def.fillMode === 'F') behavior = 'If required income is already above the target, it intentionally fills the next tier.';
+  if (def.fillMode === 'R') behavior = 'Once the target is reached, extra funding need is routed to Roth withdrawals instead of taxable IRA draws.';
+  return 'Medicare-aware Roth target: ' + parts.join(', ') + '. ' + behavior;
+}
 function rothLabIRMAAScenarioPlain(fillMode){
-  if (fillMode === 'F') return 'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. If required income is already above the target, it intentionally fills the next tier.';
-  if (fillMode === 'R') return 'Medicare-aware target. Converts up to the selected Medicare income tier, less cushion. Once the target is reached, extra funding need is routed to Roth withdrawals instead of taxable IRA draws.';
-  return 'Medicare-aware Roth target using the selected IRMAA tier and cushion. If normal income is already above the target, it does not add extra Roth conversions.';
+  return rothLabIRMAAScenarioText({fillMode});
 }
 function rothLabHeirTaxPct(){
   const pct = parseF(rothLabSetting('heirTaxRate', '30'));
@@ -8238,7 +8253,7 @@ function rothLabScenarioDefs(){
   ];
   for (let lvl = 0; lvl <= 4; lvl++) {
     const nm = IRMAA_TARGET_NAMES[lvl] || ('Tier '+lvl);
-    defs.push({kind:'irmaa', label:'IRMAA '+nm, plain:rothLabIRMAAScenarioPlain(fillMode), save:true, level:String(lvl), maxBracket, fillMode, irmaaHeadroom, bracketHeadroom});
+    defs.push({kind:'irmaa', label:'IRMAA '+nm, plain:rothLabIRMAAScenarioText({level:String(lvl), maxBracket, fillMode, irmaaHeadroom, bracketHeadroom}), save:true, level:String(lvl), maxBracket, fillMode, irmaaHeadroom, bracketHeadroom});
   }
   if (taxFillIrmaaGuard !== '') {
     const guardName = IRMAA_TARGET_NAMES[parseIRMAATargetLevel(taxFillIrmaaGuard)] || ('Tier '+taxFillIrmaaGuard);
@@ -8307,9 +8322,6 @@ function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorD
   const st = rothLabApplyAssumption(rothLabCloneState(), assumption);
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
   rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
-  if (def.kind !== 'current' && def.kind !== 'user') {
-    rothLabStripTaxFundingOverrides(st, start, end);
-  }
   rothLabApplyScenario(st, def, start, end);
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
   rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
@@ -8850,7 +8862,7 @@ function rothLabReportScenarioText(sc){
   const def = (sc && sc.def) || {};
   const x = (sc && sc.summary) || {};
   if (def.kind === 'none') return 'No added Roth conversions in the analysis window.';
-  if (def.kind === 'irmaa') return 'Medicare-aware Roth target using the selected IRMAA tier and cushion.';
+  if (def.kind === 'irmaa') return rothLabIRMAAScenarioText(def);
   if (def.kind === 'taxfill-guard') return 'Fills the current tax bracket, but stops at the selected IRMAA guardrail.';
   if (def.kind === 'taxfill') return 'Fills the current federal tax bracket and ignores Medicare tiers.';
   if (def.kind === 'bracket-cap-top') return 'No-ceiling stress test; converts available IRA as quickly as the model allows.';
@@ -8883,6 +8895,13 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
 function rothLabScoreColgroup(){
   return '<colgroup><col style="width:18%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:5%"><col style="width:6%"><col style="width:6%"><col style="width:5%"><col style="width:6%"><col style="width:6%"><col style="width:6%"><col style="width:7%"><col style="width:4.5%"><col style="width:5.5%"><col style="width:5%"></colgroup>';
 }
+function rothLabScenarioTaxTimingNote(selected, cfg){
+  const hasTaxOverride = (selected || []).some(sc => {
+    return (sc.rows || []).some(r => r.yr >= cfg.start && r.yr <= cfg.end && r.taxOvrActive);
+  });
+  if (!hasTaxOverride) return '';
+  return '<div class="roth-report-footnote"><strong>Tax funding note:</strong> Saved tax-funding timing overrides are applied to the selected scenarios for consistency. Income Tax still shows the projected tax; the override only changes which accounts fund taxes and cash flow in that year. If you want a pure tax-cost stress test, temporarily remove the override or add a later catch-up tax-funding strategy.</div>';
+}
 function rothLabDetailColgroup(){
   return '<colgroup><col style="width:5%"><col style="width:6%"><col style="width:8%"><col style="width:8%"><col style="width:5.5%"><col style="width:6%"><col style="width:11.5%"><col style="width:11%"><col style="width:8%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:8.5%"></colgroup>';
 }
@@ -8893,6 +8912,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
   }
   const base = selected[0].summary || {};
   const sourceHeading = rothLabReportSource(scenarios, cfg);
+  const taxTimingNote = rothLabScenarioTaxTimingNote(selected, cfg);
   const scoreRows = selected.map(sc => {
     const x = sc.summary || {};
     const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
@@ -8917,7 +8937,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
     }).join('');
     return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-detail-table">'+rothLabDetailColgroup()+'<thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r rate-col">Eff Rate</th><th class="r rate-col">Marg Rate</th><th class="irmaa-detail">IRMAA Created</th><th class="irmaa-detail">IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
-  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-score-table">'+rothLabScoreColgroup()+'<thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r rate-col">Wt Eff</th><th class="r rate-col">Peak Marg Rate</th><th class="peak-irmaa-col">Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div><div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-score-table">'+rothLabScoreColgroup()+'<thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r rate-col">Wt Eff</th><th class="r rate-col">Peak Marg Rate</th><th class="peak-irmaa-col">Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div>'+taxTimingNote+'<div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
 }
 function rothLabRenderDetails(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);

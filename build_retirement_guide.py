@@ -348,12 +348,12 @@ story += [
     info_table(("Setup Screen", "Why It Exists"), [
         ("Household", "Names, one-person or two-person plan, tax filing, state, plan start year, and plan length."),
         ("Survivor Plan", "Only needed for two-person plans when testing one spouse dying during the plan."),
-        ("Assumptions", "Global defaults for growth, inflation, dividends, cash interest, spending growth, Social Security COLA, cash floor, and draw order."),
+        ("Assumptions", "Global defaults for growth, inflation, dividends, cash interest, spending growth, Social Security COLA, tax bracket inflation, IRMAA MAGI threshold inflation, Medicare cost inflation, cash floor, and draw order."),
         ("Opening Year", "First-year spending and balances. Taxable brokerage is split into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds before IRA/401k, Roth, HSA, and inherited accounts."),
         ("Inherited IRAs", "Rule details for inherited retirement accounts. Use this only if inherited accounts exist."),
         ("Income", "Work income and Social Security. Retired users can skip work income if it does not apply."),
         ("401k Defaults", "Global contribution defaults for people still working."),
-        ("Medicare & IRMAA", "Prior MAGI, Medicare surcharge assumptions, and default Roth conversion targets."),
+        ("Medicare & IRMAA", "Prior MAGI, Medicare lookback, IRMAA MAGI threshold inflation, Medicare premium and surcharge cost inflation, and default Roth conversion targets."),
         ("Review", "A checklist that sends you back to the right screen when something needs attention."),
     ]),
     p("Leave truly unused items blank or zero. The app should explain when a blank means 'not applicable' and when a field is actually needed.", "GoodCallout"),
@@ -368,6 +368,16 @@ story += [
         ("CA Municipal Bond", "Exempt from regular federal and California tax, but included for Social Security provisional income and Medicare MAGI."),
         ("Other-State Municipal Bond", "Federally tax-exempt municipal interest that is taxable by California."),
     ]),
+]
+story += subhead("Tax Tables And Inflation Assumptions")
+story += [
+    p("Tax Tables owns the exact IRS and Medicare tables plus the global inflation assumptions used after the latest table year. Guided Setup shows the same global values in plain-English context; changing them in either place updates the same model setting.", "Callout"),
+    info_table(("Setting", "What It Changes"), [
+        ("Tax Bracket Inflation", "Annual percent increase for federal tax bracket thresholds after the latest entered tax table year."),
+        ("IRMAA MAGI Threshold Inflation", "Annual percent increase for the MAGI income levels that define each Medicare IRMAA tier. This controls how quickly the income lines move."),
+        ("Medicare Cost Inflation", "Annual percent increase for standard Part B premiums and IRMAA surcharge dollar amounts. This can be higher than threshold inflation so Medicare costs are not understated."),
+    ]),
+    p("Use an Inflation Assumption Change strategy only when a future year range should use different assumptions than the global Tax Tables settings. Blank strategy fields inherit the global setting, so you can change only Medicare Cost Inflation without changing bracket or IRMAA MAGI threshold inflation.", "GoodCallout"),
 ]
 story.append(PageBreak())
 
@@ -471,6 +481,7 @@ story += [
         ("Roth conversion source", "A year-range rule for which IRA supplies conversion dollars: higher IRA, lower IRA, either named person first, or a percent split."),
         ("Income target", "A custom taxable income ceiling."),
         ("Portfolio return scenario", "A selected year range with a different assumed growth rate."),
+        ("Inflation assumption change", "A selected year range with different tax bracket, IRMAA MAGI threshold, or Medicare cost inflation assumptions. Blank fields inherit Tax Tables."),
         ("Cash floor", "A future change to the cash reserve target."),
         ("Funding order", "A future change to which accounts are tapped first."),
     ]),
@@ -490,6 +501,7 @@ story += [
         ("Securities / brokerage", "Taxable investment money outside IRA and Roth accounts. Enter it by tax bucket when possible: taxable stocks/funds, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds."),
         ("IRA / 401k", "Traditional retirement money. Withdrawals and conversions are usually taxable."),
         ("Roth conversion source", "For two-person plans, this controls whose traditional IRA is converted first or how conversions are split. It changes the source account, not the conversion target amount."),
+        ("Tax Tables inflation settings", "Global assumptions for how tax brackets, IRMAA MAGI tier thresholds, and Medicare premium/surcharge dollars grow after the latest exact table year. Use strategies only for future-year exceptions."),
         ("Roth", "Roth IRA or Roth 401k money. Qualified withdrawals are usually tax-free."),
         ("HSA", "Health Savings Account. Leave blank or zero if none exists."),
         ("Social Security", "Enter current monthly benefit if already receiving. Otherwise enter start age and estimated monthly benefit at that age."),
@@ -522,6 +534,8 @@ story += [
     info_table(("Term", "Plain-English Meaning"), [
         ("AGI / MAGI", "Income measures used for tax and Medicare planning. Medicare IRMAA uses a MAGI-style lookback."),
         ("IRMAA", "Extra Medicare premium for higher income."),
+        ("IRMAA MAGI threshold inflation", "How fast the MAGI income levels for IRMAA tiers increase each year after the latest exact table year."),
+        ("Medicare cost inflation", "How fast standard Part B premiums and IRMAA surcharge dollar amounts increase after the latest exact table year."),
         ("RMD", "Required minimum distribution from some retirement accounts."),
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
         ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
