@@ -1047,7 +1047,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
         <div class="ov-intent">Override tax-bracket inflation, IRMAA threshold inflation, or Medicare cost inflation for a future year range. Leave a field blank to inherit the global Tax Tables setting.</div>
         <div id="conf-inflation" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-inflation">
-          <thead><tr><th>Tax Bracket Infl (%)</th><th>IRMAA Threshold Infl (%)</th><th>Medicare Cost Infl (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <thead><tr><th>Tax Bracket Infl (%)</th><th>IRMAA MAGI Threshold Infl (%)</th><th>Medicare Cost Infl (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
           <tbody id="ovb-inflation"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('inflation')">+ Add Row</button>
@@ -1178,9 +1178,9 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           <div class="note">How fast tax brackets grow each year. Default 2.5% matches historical IRS CPI-W adjustments. Use 0% only as a stress-test (frozen brackets overstate long-term taxes).</div>
         </div>
         <div class="field">
-          <label>IRMAA Threshold Inflation %/yr</label>
+          <label>IRMAA MAGI Threshold Inflation %/yr</label>
           <input type="number" id="tt-iinfl" oninput="TT()" min="0" max="10" step="0.1" style="width:80px" placeholder="2.0">
-          <div class="note">How fast Medicare IRMAA MAGI thresholds grow. This should usually stay near general inflation; raising it too much can make IRMAA look easier to avoid.</div>
+          <div class="note">Annual percent increase for the MAGI income thresholds that define each IRMAA tier. This is separate from Medicare premium and surcharge dollar inflation.</div>
         </div>
         <div class="field">
           <label>Medicare Cost Inflation %/yr</label>
@@ -5868,7 +5868,7 @@ const OV_DEFS = {
   ]},
   inflation:{key:'ovInflation',fields:[
     {k:'bracketInfl',lbl:'Tax Bracket Infl (%)',type:'number',w:145},
-    {k:'irmaaInfl',lbl:'IRMAA Threshold Infl (%)',type:'number',w:165},
+    {k:'irmaaInfl',lbl:'IRMAA MAGI Threshold Infl (%)',type:'number',w:165},
     {k:'medicareCostInfl',lbl:'Medicare Cost Infl (%)',type:'number',w:160},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
@@ -7315,7 +7315,7 @@ function generateReport(){
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
   const rightRates=rateRows([
-    ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Threshold Inflation',fp(A.irmaaInfl)],['Medicare Cost Inflation',fp(A.medicareCostInfl ?? A.irmaaInfl)],
+    ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA MAGI Threshold Inflation',fp(A.irmaaInfl)],['Medicare Cost Inflation',fp(A.medicareCostInfl ?? A.irmaaInfl)],
     ['Stock Gain % Taxable',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
     ['Default Funding Order',formatFundingOrder(A.fundingOrder||['SEC','IRA','ROTH'])],
     ['IRMAA Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
@@ -9763,7 +9763,7 @@ function renderSetupAssumptionsStep(){
     setupInput('Annual Spending Inflation (%)','spendInfl','pct',setupPct(S.spendInfl),{step:'0.1',min:0,note:'How normal spending grows after the opening year unless a Spending strategy overrides it.'}),
     setupInput('Social Security COLA (%)','ssCola','pct',setupPct(S.ssCola),{step:'0.1',min:0,note:'How Social Security benefits grow each year after they start.'}),
     setupInput('Tax Bracket Inflation (%)','bracketInfl','pct',setupPct(S.bracketInfl),{step:'0.1',min:0,note:'How IRS and state tax brackets/deductions inflate after the latest entered tax table year.'}),
-    setupInput('IRMAA Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'How Medicare IRMAA MAGI thresholds inflate. Keep this separate from Medicare premium costs.'}),
+    setupInput('IRMAA MAGI Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'Annual percent increase for the MAGI income thresholds that define each IRMAA tier. Keep this separate from Medicare premium costs.'}),
     setupInput('Medicare Cost Inflation (%)','medicareCostInfl','pct',setupPct(S.medicareCostInfl ?? S.irmaaInfl),{step:'0.1',min:0,note:'How standard Part B premiums and IRMAA surcharge dollars inflate after the latest tax table year. A higher default avoids understating Medicare costs.'}),
     setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0,note:'How W-2 and non-wage taxable income grows before it ends. Strategy Builder can override this for selected years.'}),
     setupInput('Taxable Gain on Brokerage Sales (%)','stkGainPct','pct',setupPct(S.stkGainPct),{step:'1',min:0,max:100,note:'When brokerage investments are sold, this estimates how much of the sale is taxable gain instead of return of principal. Lower numbers mean higher cost basis.'}),
@@ -9919,8 +9919,8 @@ function renderSetupMedicareStep(){
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Roth conversion in plain English</div><div class="setup-check-body">A Roth conversion moves money from a traditional IRA to a Roth IRA. It creates taxable income now, but can reduce future RMDs and future taxable income. These fields tell the model how much income room it is allowed to use for conversions.</div></div>',
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">How the limits work together</div><div class="setup-check-body">The model first calculates normal income. If there is room under your selected IRMAA target and tax bracket cap, it can fill that room with Roth conversions. Headroom leaves a safety cushion below the limit. When both IRMAA and bracket limits are set, the lower practical limit wins.</div></div>',
     '<div class="sh" style="grid-column:1/-1;margin-top:4px">Medicare Cost Assumptions</div>',
-    setupInfoCard('Thresholds and costs are separate', 'IRMAA income thresholds can grow slowly while Part B premiums and IRMAA surcharge dollars rise faster. This avoids understating Medicare costs without making IRMAA income tiers look easier to avoid.', 'warn'),
-    setupInput('IRMAA Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'How Medicare IRMAA MAGI thresholds inflate after the latest tax table year. Current default: 2.0%.'}),
+    setupInfoCard('MAGI thresholds and costs are separate', 'IRMAA MAGI thresholds are the taxable-income levels that define each IRMAA tier. They can grow slowly while Part B premiums and IRMAA surcharge dollars rise faster.', 'warn'),
+    setupInput('IRMAA MAGI Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'Annual percent increase for the MAGI income thresholds that define each IRMAA tier after the latest tax table year. Current default: 2.0%.'}),
     setupInput('Medicare Cost Inflation (%)','medicareCostInfl','pct',setupPct(S.medicareCostInfl ?? S.irmaaInfl),{step:'0.1',min:0,note:'How standard Part B premiums and IRMAA surcharge dollars inflate after the latest tax table year. Current conservative default: 6.5%.'}),
     '<div class="sh" style="grid-column:1/-1;margin-top:4px">Roth Conversion Guardrails</div>',
     setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true,note:'The Medicare MAGI ceiling to target. Off means no global IRMAA ceiling; a Max Bracket can still guide Roth conversions.'}),
@@ -10328,7 +10328,7 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Annual HSA Deposit ($)',val('amount',''),{min:0})+stratText('notes','Notes',val('notes','HSA deposit'));
   else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Growth Rate (%)',val('rate',''),{step:'0.1',min:-100})+stratText('notes','Notes',val('notes','Portfolio growth rate'));
   else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Wage Growth (%)',val('rate',''),{step:'0.1',min:0})+stratText('notes','Notes',val('notes','Wage growth scenario'));
-  else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
+  else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA MAGI Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting for IRMAA MAGI income-tier thresholds.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
   else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
   const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
   const buttons = '<button class="btn btn-dark" onclick="applySetupStrategy()">'+(editing?'Update Strategy':'Add Strategy')+'</button>'+(editing?'<button class="btn btn-light" onclick="setupCancelStrategyEdit()">Cancel Edit</button>':'');

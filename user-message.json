@@ -20,7 +20,7 @@
     {
       "icon": "🏥",
       "title": "Medicare costs are split from IRMAA thresholds",
-      "body": "The model now separates IRMAA Threshold Inflation from Medicare Cost Inflation. This was added because Medicare Part B premiums and IRMAA surcharge dollars may rise faster than the income thresholds used to decide who pays IRMAA."
+      "body": "The model now separates IRMAA MAGI Threshold Inflation from Medicare Cost Inflation. This was added because Medicare Part B premiums and IRMAA surcharge dollars may rise faster than the MAGI income thresholds used to decide who pays IRMAA."
     },
     {
       "icon": "📈",
