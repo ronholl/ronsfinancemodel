@@ -993,7 +993,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <div class="ov-group-header" onclick="toggleOvGroup('portfolio')">
       <span class="ov-chevron open" id="ovg-chevron-portfolio">▶</span>
       <span class="ov-group-title">Portfolio &amp; Accounts</span>
-      <span class="ov-group-desc">Growth, income rates, funding order, cash floor, HSA deposits</span>
+      <span class="ov-group-desc">Growth, income rates, inflation assumptions, funding order, cash floor, HSA deposits</span>
       <span class="ov-group-badges" id="ovg-badges-portfolio"></span>
     </div>
     <div class="ov-group-body" id="ovg-body-portfolio">
@@ -1040,6 +1040,17 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           <tbody id="ovb-wagegrowth"></tbody>
         </table></div>
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('wagegrowth')">+ Add Row</button>
+      </div>
+
+      <div class="ov-section-inner">
+        <div class="ov-section-label">Inflation Assumptions <span id="ovpill-inflation"></span></div>
+        <div class="ov-intent">Override tax-bracket inflation, IRMAA threshold inflation, or Medicare cost inflation for a future year range. Leave a field blank to inherit the global Tax Tables setting.</div>
+        <div id="conf-inflation" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl" id="ov-inflation">
+          <thead><tr><th>Tax Bracket Infl (%)</th><th>IRMAA Threshold Infl (%)</th><th>Medicare Cost Infl (%)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-inflation"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('inflation')">+ Add Row</button>
       </div>
 
       <div class="ov-section-inner">
@@ -1167,13 +1178,18 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           <div class="note">How fast tax brackets grow each year. Default 2.5% matches historical IRS CPI-W adjustments. Use 0% only as a stress-test (frozen brackets overstate long-term taxes).</div>
         </div>
         <div class="field">
-          <label>IRMAA Inflation %/yr</label>
+          <label>IRMAA Threshold Inflation %/yr</label>
           <input type="number" id="tt-iinfl" oninput="TT()" min="0" max="10" step="0.1" style="width:80px" placeholder="2.0">
-          <div class="note">How fast IRMAA thresholds and surcharges grow. Default 2.0% matches historical SSA adjustment pace. Use 0% to stress-test frozen Medicare surcharges.</div>
+          <div class="note">How fast Medicare IRMAA MAGI thresholds grow. This should usually stay near general inflation; raising it too much can make IRMAA look easier to avoid.</div>
+        </div>
+        <div class="field">
+          <label>Medicare Cost Inflation %/yr</label>
+          <input type="number" id="tt-minfl" oninput="TT()" min="0" max="15" step="0.1" style="width:80px" placeholder="6.5">
+          <div class="note">How fast Part B base premiums and IRMAA surcharge dollars grow after the latest defined table. Use this separately from income thresholds so Medicare costs are not understated.</div>
         </div>
       </div>
       <div style="padding:10px;background:#fffbf0;border:1px solid #e0cc80;border-radius:6px;font-size:12px;color:#5a4000">
-        <strong>Each November:</strong> Click <em>+ Add</em>, enter the new year, then fill in updated IRS brackets from <em>irs.gov/newsroom</em> and IRMAA thresholds from <em>cms.gov</em>. Prior year tables are preserved exactly and used for historical calculations.
+        <strong>Each November:</strong> Click <em>+ Add</em>, enter the new year, then fill in updated IRS brackets from <em>irs.gov/newsroom</em>, plus IRMAA thresholds, surcharge amounts, and standard Part B premiums from CMS/Medicare updates. Prior year tables are preserved exactly and used for historical calculations.
       </div>
     </div>
 
@@ -1233,7 +1249,12 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 
     <div class="panel">
       <div class="sh">IRMAA Thresholds</div>
-      <div class="note" style="margin-bottom:8px">MAGI threshold where each tier begins. Surcharge is additional annual cost per person above standard Part B premium.</div>
+      <div class="note" style="margin-bottom:8px">MAGI threshold where each tier begins. Surcharge is additional annual cost per person above standard Part B premium. Standard Part B is shown separately so it can be reviewed instead of hidden in the model.</div>
+      <div class="field" style="max-width:280px;margin-bottom:10px">
+        <label>Standard Part B Premium ($/yr/person)</label>
+        <input type="number" id="tt-partb-base" oninput="TT()" min="0" step="1">
+        <div class="note">2026 default is $2,434.80/yr ($202.90/mo). Add future tax table years if you want exact CMS/trustee values.</div>
+      </div>
       <div id="tt-irmaa-grid" style="display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr;gap:6px;align-items:center">
         <span style="font-size:10px;color:var(--gold);font-weight:700">TIER</span>
         <span style="font-size:10px;color:var(--gold);font-weight:700">MFJ MAGI ABOVE ($)</span>
@@ -1478,6 +1499,7 @@ function getTaxTableForYear(S, yr) {
         irmaaThreshSingle: S.irmaaThreshSingle || DEFAULT_TAX_TABLE_2026.irmaaThreshSingle,
         irmaaThreshHOH:    S.irmaaThreshHOH    || DEFAULT_TAX_TABLE_2026.irmaaThreshHOH,
         irmaaSurch:        S.irmaaSurch        || DEFAULT_TAX_TABLE_2026.irmaaSurch,
+        partBBase:         S.partBBase         || DEFAULT_TAX_TABLE_2026.partBBase,
         caOrdBkts:   S.caOrdBkts  || DEFAULT_TAX_TABLE_2026.caOrdBkts,
         caStd:       S.caStd      || DEFAULT_TAX_TABLE_2026.caStd,
       }
@@ -1488,60 +1510,81 @@ function getTaxTableForYear(S, yr) {
   for (const y of years) { if (y <= yr) best = y; else break; }
   return { tableYear: best, table: tables[best] };
 }
+function getInflationAssumptionsForYear(A, yr) {
+  const state = A || S;
+  const pctOverride = (key, fallback) => {
+    const raw = resolveOverrideNonBlank(state.ovInflation || [], yr, key);
+    return raw != null ? (parseF(raw) || 0) / 100 : (fallback || 0);
+  };
+  return {
+    bracketInfl: pctOverride('bracketInfl', state.bracketInfl ?? 0.025),
+    irmaaInfl: pctOverride('irmaaInfl', state.irmaaInfl ?? 0.020),
+    medicareCostInfl: pctOverride('medicareCostInfl', state.medicareCostInfl ?? state.irmaaInfl ?? 0.065),
+  };
+}
 function getScaledTables(S, yr) {
   const { tableYear, table: T } = getTaxTableForYear(S, yr);
   const yrs = yr - tableYear;
-  const bi = 1 + (S.bracketInfl ?? 0);
-  const ii = 1 + (S.irmaaInfl   ?? 0);
-  const scale  = (arr, infl) => arr.map(([s,r]) => [yrs>0 ? Math.round(s * Math.pow(infl,yrs)) : s, r]);
-  const scaleN = (n,   infl) => yrs>0 ? Math.round(n * Math.pow(infl,yrs)) : n;
+  const compoundFactor = key => {
+    let factor = 1;
+    for (let y = tableYear + 1; y <= yr; y++) {
+      const rates = getInflationAssumptionsForYear(S, y);
+      factor *= 1 + (rates[key] || 0);
+    }
+    return factor;
+  };
+  const bracketFactor = compoundFactor('bracketInfl');
+  const irmaaFactor = compoundFactor('irmaaInfl');
+  const medicareFactor = compoundFactor('medicareCostInfl');
+  const scale  = (arr, factor) => arr.map(([s,r]) => [yrs>0 ? Math.round(s * factor) : s, r]);
+  const scaleN = (n, factor) => yrs>0 ? Math.round(n * factor) : n;
   const D = DEFAULT_TAX_TABLE_2026;
 
   // Helper: get field with filing-specific key fallback
   const tf = (key, fb) => { const v = T[key]; return v != null ? v : fb; };
 
   // MFJ
-  const mfjOrd     = scale(tf('fedOrdBkts',     D.fedOrdBkts),     bi);
-  const mfjLtcg    = scale(tf('fedLtcgBkts',    D.fedLtcgBkts),    bi);
-  const fedStdBase = scaleN(tf('fedStdBase',     D.fedStdBase),     bi);
-  const fedStdSr   = scaleN(tf('fedStdSr',       D.fedStdSr),       bi);
+  const mfjOrd     = scale(tf('fedOrdBkts',     D.fedOrdBkts),     bracketFactor);
+  const mfjLtcg    = scale(tf('fedLtcgBkts',    D.fedLtcgBkts),    bracketFactor);
+  const fedStdBase = scaleN(tf('fedStdBase',     D.fedStdBase),     bracketFactor);
+  const fedStdSr   = scaleN(tf('fedStdSr',       D.fedStdSr),       bracketFactor);
   const fedCharityNonItemizerCap = tf('fedCharityNonItemizerCap', D.fedCharityNonItemizerCap);
   const fedSrBonus = tf('fedSrBonus', D.fedSrBonus);
   const fedSrBonusStart = tf('fedSrBonusStart', D.fedSrBonusStart);
   const fedSrBonusMax = tf('fedSrBonusMax', D.fedSrBonusMax);
   // SINGLE
-  const singleOrd  = scale(tf('fedOrdBktsSingle',  D.fedOrdBktsSingle),  bi);
-  const singleLtcg = scale(tf('fedLtcgBktsSingle', D.fedLtcgBktsSingle), bi);
-  const fedStdBaseSingle = scaleN(tf('fedStdBaseSingle', D.fedStdBaseSingle), bi);
-  const fedStdSrSingle   = scaleN(tf('fedStdSrSingle',   D.fedStdSrSingle),   bi);
+  const singleOrd  = scale(tf('fedOrdBktsSingle',  D.fedOrdBktsSingle),  bracketFactor);
+  const singleLtcg = scale(tf('fedLtcgBktsSingle', D.fedLtcgBktsSingle), bracketFactor);
+  const fedStdBaseSingle = scaleN(tf('fedStdBaseSingle', D.fedStdBaseSingle), bracketFactor);
+  const fedStdSrSingle   = scaleN(tf('fedStdSrSingle',   D.fedStdSrSingle),   bracketFactor);
   const fedCharityNonItemizerCapSingle = tf('fedCharityNonItemizerCapSingle', D.fedCharityNonItemizerCapSingle);
   const fedSrBonusSingle = tf('fedSrBonusSingle', D.fedSrBonusSingle);
   const fedSrBonusStartSingle = tf('fedSrBonusStartSingle', D.fedSrBonusStartSingle);
   const fedSrBonusMaxSingle = tf('fedSrBonusMaxSingle', D.fedSrBonusMaxSingle);
   // HOH
-  const hohOrd     = scale(tf('fedOrdBktsHOH',    D.fedOrdBktsHOH),    bi);
-  const hohLtcg    = scale(tf('fedLtcgBktsHOH',   D.fedLtcgBktsHOH),   bi);
-  const fedStdBaseHOH = scaleN(tf('fedStdBaseHOH', D.fedStdBaseHOH), bi);
-  const fedStdSrHOH   = scaleN(tf('fedStdSrHOH',   D.fedStdSrHOH),   bi);
+  const hohOrd     = scale(tf('fedOrdBktsHOH',    D.fedOrdBktsHOH),    bracketFactor);
+  const hohLtcg    = scale(tf('fedLtcgBktsHOH',   D.fedLtcgBktsHOH),   bracketFactor);
+  const fedStdBaseHOH = scaleN(tf('fedStdBaseHOH', D.fedStdBaseHOH), bracketFactor);
+  const fedStdSrHOH   = scaleN(tf('fedStdSrHOH',   D.fedStdSrHOH),   bracketFactor);
   const fedCharityNonItemizerCapHOH = tf('fedCharityNonItemizerCapHOH', D.fedCharityNonItemizerCapHOH);
   const fedSrBonusHOH = tf('fedSrBonusHOH', D.fedSrBonusHOH);
   const fedSrBonusStartHOH = tf('fedSrBonusStartHOH', D.fedSrBonusStartHOH);
   const fedSrBonusMaxHOH = tf('fedSrBonusMaxHOH', D.fedSrBonusMaxHOH);
   // IRMAA
-  const irmaaT = (tf('irmaaThresh', D.irmaaThresh)).map((v,i) => i===0 ? 0 : scaleN(v, ii));
-  const irmaaTSingle = (tf('irmaaThreshSingle', D.irmaaThreshSingle)).map((v,i) => i===0 ? 0 : scaleN(v, ii));
-  const irmaaTHOH = (tf('irmaaThreshHOH', D.irmaaThreshHOH)).map((v,i) => i===0 ? 0 : scaleN(v, ii));
-  const irmaaS = (tf('irmaaSurch', D.irmaaSurch)).map((v,i) => i===0 ? 0 : scaleN(v, ii));
-  const partBBase = scaleN(tf('partBBase', D.partBBase), ii);
+  const irmaaT = (tf('irmaaThresh', D.irmaaThresh)).map((v,i) => i===0 ? 0 : scaleN(v, irmaaFactor));
+  const irmaaTSingle = (tf('irmaaThreshSingle', D.irmaaThreshSingle)).map((v,i) => i===0 ? 0 : scaleN(v, irmaaFactor));
+  const irmaaTHOH = (tf('irmaaThreshHOH', D.irmaaThreshHOH)).map((v,i) => i===0 ? 0 : scaleN(v, irmaaFactor));
+  const irmaaS = (tf('irmaaSurch', D.irmaaSurch)).map((v,i) => i===0 ? 0 : scaleN(v, medicareFactor));
+  const partBBase = scaleN(tf('partBBase', D.partBBase), medicareFactor);
   // CA MFJ
-  const caOrd  = scale(tf('caOrdBkts',       D.caOrdBkts),       bi);
-  const caStd  = scaleN(tf('caStd',          D.caStd),           bi);
+  const caOrd  = scale(tf('caOrdBkts',       D.caOrdBkts),       bracketFactor);
+  const caStd  = scaleN(tf('caStd',          D.caStd),           bracketFactor);
   // CA SINGLE
-  const caOrdSingle = scale(tf('caOrdBktsSingle', D.caOrdBktsSingle), bi);
-  const caStdSingle = scaleN(tf('caStdSingle',    D.caStdSingle),     bi);
+  const caOrdSingle = scale(tf('caOrdBktsSingle', D.caOrdBktsSingle), bracketFactor);
+  const caStdSingle = scaleN(tf('caStdSingle',    D.caStdSingle),     bracketFactor);
   // CA HOH
-  const caOrdHOH    = scale(tf('caOrdBktsHOH',    D.caOrdBktsHOH),    bi);
-  const caStdHOH    = scaleN(tf('caStdHOH',        D.caStdHOH),        bi);
+  const caOrdHOH    = scale(tf('caOrdBktsHOH',    D.caOrdBktsHOH),    bracketFactor);
+  const caStdHOH    = scaleN(tf('caStdHOH',        D.caStdHOH),        bracketFactor);
 
   return {
     projectionYear: yr,
@@ -2077,6 +2120,7 @@ function defaultState() {
     ovIncomeLevel:[],    // {magiTarget, startYear, endYear, notes}
     ovTaxFill:[],        // {active:'T'|'off', headroom, startYear, endYear, notes}
     ovRothSource:[],     // {source:'HIGH'|'LOW'|'P1'|'P2'|'SPLIT', p1Pct, startYear, endYear, notes}
+    ovInflation:[],      // {bracketInfl, irmaaInfl, medicareCostInfl, startYear, endYear, notes} percent values
     ovStateTax:[],       // {state:'NONE'|'CA', startYear, endYear, notes}
     // Start-of-year actuals (keyed by year string)
     soy:{},
@@ -2111,8 +2155,9 @@ function defaultState() {
         caStdHOH:         11500,
       }
     },
-    bracketInfl: 0.025,   // 2.5% — matches historical IRS CPI-W adjustment rate
-    irmaaInfl:   0.020,   // 2.0% — SSA typically adjusts IRMAA thresholds below general CPI
+    bracketInfl: 0.025,       // 2.5% — matches historical IRS CPI-W adjustment rate
+    irmaaInfl:   0.020,       // 2.0% — IRMAA income threshold growth
+    medicareCostInfl: 0.065,  // 6.5% — conservative Part B / IRMAA dollar cost growth
   };
 }
 
@@ -2944,7 +2989,7 @@ function runProjection(S) {
                       yr === S.startYear+1 ? (S.medicareMagi1||0) :
                       rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
     const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
-    // Part B base premium — per enrolled person (age 65+), inflated with irmaaInfl
+    // Part B base premium — per enrolled person (age 65+), inflated with medicareCostInfl
     const partBPerPerson = tables.partBBase || 2220;
     const medicareCount = afterDeathYear
       ? (survivorAge>=65?1:0)
@@ -3692,6 +3737,10 @@ function applyMigrations(merged) {
   }
   if (merged.bracketInfl == null || isNaN(merged.bracketInfl)) merged.bracketInfl = 0.025;
   if (merged.irmaaInfl   == null || isNaN(merged.irmaaInfl))   merged.irmaaInfl   = 0.020;
+  if (merged.medicareCostInfl == null || isNaN(merged.medicareCostInfl)) {
+    const oldIRMAAInfl = parseF(merged.irmaaInfl) || 0;
+    merged.medicareCostInfl = oldIRMAAInfl > 0.03 ? oldIRMAAInfl : 0.065;
+  }
   if (!merged._m_irmaaLevelSchemeV2) {
     const migrateLevel = v => {
       if (v === null || v === undefined || v === '' || v === 'off') return '';
@@ -3708,7 +3757,7 @@ function applyMigrations(merged) {
     const s = parseInt(row.startYear), e = parseInt(row.endYear);
     if (!isNaN(s) && !isNaN(e) && s > e) row.endYear = s;
   };
-  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovStateTax','ovDeductions','ovWageGrowth'].forEach(k => {
+  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovInflation','ovStateTax','ovDeductions','ovWageGrowth'].forEach(k => {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
@@ -3723,6 +3772,7 @@ function applyMigrations(merged) {
     r.source = normalizeRothConvSource(r.source);
     r.p1Pct = clampPct(r.p1Pct, merged.rothConvP1Pct);
   });
+  if (!Array.isArray(merged.ovInflation)) merged.ovInflation = [];
   (merged.ovIRMAA || []).forEach(r => {
     if (r.fillMode == null || r.fillMode === 'S') r.fillMode = '';
     if (!['','F','R'].includes(r.fillMode)) r.fillMode = '';
@@ -3859,7 +3909,7 @@ function applyMigrations(merged) {
     if (!T.caOrdBktsHOH)           T.caOrdBktsHOH         = D2.caOrdBktsHOH;
     if (T.caStdHOH==null)          T.caStdHOH             = D2.caStdHOH;
   });
-  const rateFields = ['growthRate','divRate','divReinvestPct','intRate','spendInfl','ssCola','wageGrowth','stkGainPct',
+  const rateFields = ['growthRate','divRate','divReinvestPct','intRate','spendInfl','ssCola','wageGrowth','stkGainPct','bracketInfl','irmaaInfl','medicareCostInfl',
                       // 'estTaxPctSpend' legacy —'k401Trad1','k401Roth1','k401Emp1',
                       'k401Trad2','k401Roth2','k401Emp2'];
   for (const f of rateFields) {
@@ -5816,6 +5866,14 @@ const OV_DEFS = {
     {k:'endYear',lbl:'End Year',type:'number',w:90},
     {k:'notes',lbl:'Notes',type:'text',w:160},
   ]},
+  inflation:{key:'ovInflation',fields:[
+    {k:'bracketInfl',lbl:'Tax Bracket Infl (%)',type:'number',w:145},
+    {k:'irmaaInfl',lbl:'IRMAA Threshold Infl (%)',type:'number',w:165},
+    {k:'medicareCostInfl',lbl:'Medicare Cost Infl (%)',type:'number',w:160},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:180},
+  ]},
   cashfloor:{key:'ovCashFloor',fields:[
     {k:'floor',lbl:'Cash Floor',type:'number',w:110},
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
@@ -5884,7 +5942,7 @@ function updateOvBadges(){
   const groups={
     'spending-taxes': ['spending','deductions'],
     'conversion':     ['irmaa','income','taxfill','rothsource'],
-    'portfolio':      ['growth','incomerates','stkgain','wagegrowth','funding','cashfloor','hsadep','statetax'],
+    'portfolio':      ['growth','incomerates','stkgain','wagegrowth','inflation','funding','cashfloor','hsadep','statetax'],
   };
   // Summary bar at top
   const bar=document.getElementById('ov-summary-bar');
@@ -5897,7 +5955,7 @@ function updateOvBadges(){
       const ovNames = {
         spending:'Spending', deductions:'Deductions', irmaa:'IRMAA', income:'Income',
         taxfill:'Tax Fill', rothsource:'Roth Source', growth:'Growth', incomerates:'Income Rates',
-        stkgain:'Stock Gain', wagegrowth:'Wage Growth',
+        stkgain:'Stock Gain', wagegrowth:'Wage Growth', inflation:'Inflation',
         funding:'Funding', cashfloor:'Cash Floor', hsadep:'HSA Deposit', statetax:'State Tax'
       };
       bar.innerHTML=active.map(n=>{
@@ -6055,6 +6113,7 @@ function addOvRow(name){
   if(name==='incomerates'){newRow.divRate=pct(S.divRate);newRow.divReinvestPct=pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0));newRow.intRate=pct(S.intRate||0);}
   if(name==='stkgain')newRow.rate=pct(S.stkGainPct);
   if(name==='wagegrowth')newRow.rate=pct(S.wageGrowth);
+  if(name==='inflation'){newRow.bracketInfl=pct(S.bracketInfl);newRow.irmaaInfl=pct(S.irmaaInfl);newRow.medicareCostInfl=pct(S.medicareCostInfl ?? S.irmaaInfl);}
   if(name==='funding'){
     const ord=normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH');
     newRow.draw1=ord[0];newRow.draw2=ord[1];newRow.draw3=ord[2];
@@ -6298,6 +6357,7 @@ function renderTaxTables() {
   ttLoadYear();
   sv('tt-binfl', pct100(S.bracketInfl ?? 0));
   sv('tt-iinfl', pct100(S.irmaaInfl   ?? 0));
+  sv('tt-minfl', pct100(S.medicareCostInfl ?? S.irmaaInfl ?? 0));
   renderTTPreviewSel();
   renderTTPreview();
 }
@@ -6387,6 +6447,7 @@ function ttLoadYear() {
   const D = DEFAULT_TAX_TABLE_2026;
   const badge = document.getElementById('tt-yr-badge');
   if (badge) badge.textContent = ttEditYear + ' · ' + {MFJ:'Married (MFJ)',SINGLE:'Single',HOH:'Head of Household'}[ttFilingTab];
+  sv('tt-partb-base', T.partBBase ?? DEFAULT_TAX_TABLE_2026.partBBase);
   // Load filing-specific std deduction
   if (ttFilingTab === 'SINGLE') {
     sv('tt-fed-std-base', T.fedStdBaseSingle ?? D.fedStdBaseSingle);
@@ -6545,12 +6606,15 @@ function TT() {
   // Global inflation rates
   const bi = gv('tt-binfl')==='' ? 0 : (parseFloat(gv('tt-binfl')) ?? 0);
   const ii = gv('tt-iinfl')==='' ? 0 : (parseFloat(gv('tt-iinfl')) ?? 0);
+  const mi = gv('tt-minfl')==='' ? 0 : (parseFloat(gv('tt-minfl')) ?? 0);
   S.bracketInfl = bi / 100;
   S.irmaaInfl   = ii / 100;
+  S.medicareCostInfl = mi / 100;
   // Scalar fields for current editing year, filing-specific
   const T = ttGetCurrentTable();
   const D = DEFAULT_TAX_TABLE_2026;
   const gvNum = (id, fb) => gv(id)==='' ? fb : (parseFloat(gv(id)) || 0);
+  T.partBBase = gvNum('tt-partb-base', D.partBBase);
   if (ttFilingTab === 'SINGLE') {
     T.fedStdBaseSingle = parseFloat(gv('tt-fed-std-base')) || D.fedStdBaseSingle;
     T.fedStdSrSingle   = parseFloat(gv('tt-fed-std-sr'))   || D.fedStdSrSingle;
@@ -6604,8 +6668,10 @@ function renderTTPreview() {
   const t = getScaledTables(S, yr);
   const { tableYear } = getTaxTableForYear(S, yr);
   const yrs = yr - tableYear;
-  const bi = ((S.bracketInfl??0)*100).toFixed(1);
-  const ii = ((S.irmaaInfl??0)*100).toFixed(1);
+  const previewInfl = getInflationAssumptionsForYear(S, yr);
+  const bi = ((previewInfl.bracketInfl??0)*100).toFixed(1);
+  const ii = ((previewInfl.irmaaInfl??0)*100).toFixed(1);
+  const mi = ((previewInfl.medicareCostInfl??0)*100).toFixed(1);
 
   const row = (label, val) =>
     `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #ede8d8">
@@ -6619,13 +6685,14 @@ function renderTTPreview() {
   const irmaaRows = t.irmaaT.map((thresh,i) => {
     const single = (t.irmaaTSingle || [])[i] || 0;
     const hoh = (t.irmaaTHOH || t.irmaaTSingle || [])[i] || 0;
-    const val = i===0 ? '$0' : 'MFJ '+f$(thresh)+' / Single '+f$(single)+' / HOH '+f$(hoh);
+    const surcharge = (t.irmaaS || [])[i] || 0;
+    const val = i===0 ? '$0' : 'MFJ '+f$(thresh)+' / Single '+f$(single)+' / HOH '+f$(hoh)+' · Surcharge '+f$(surcharge)+'/yr';
     return row(irmaaLabels[i]+' above', val);
   }).join('');
 
   const source = yrs === 0
     ? `Using exact ${tableYear} table`
-    : `${tableYear} table + ${yrs} yr${yrs>1?'s':''} inflation · Fed: ${bi}%/yr · IRMAA: ${ii}%/yr`;
+    : `${tableYear} table + ${yrs} yr${yrs>1?'s':''} inflation · target-year rates: tax brackets ${bi}%/yr · IRMAA thresholds ${ii}%/yr · Medicare costs ${mi}%/yr`;
   const seniorBonusPreview = (bonus, start, max) => t.projectionYear >= 2025 && t.projectionYear <= 2028
     ? `${row('Bonus/person', f$(bonus))} ${row('Phaseout', f$(start)+'-'+f$(max))}`
     : row('Status', 'Expired after 2028');
@@ -6670,7 +6737,9 @@ function renderTTPreview() {
       ${col('Single', singleRows)}
       ${col('Head of Household', hohRows)}
     </div>
-    ${hdr('IRMAA THRESHOLDS (per person surcharge)')}
+    ${hdr('MEDICARE COSTS')}
+    ${row('Part B base/person', f$(t.partBBase)+' / yr ('+f$(t.partBBase/12)+'/mo)')}
+    ${hdr('IRMAA THRESHOLDS AND SURCHARGES')}
     ${irmaaRows}
   `;
 }
@@ -6899,7 +6968,7 @@ function buildReportPayload(){
     startYear: S.startYear, endYear: S.endYear,
     growthRate: S.growthRate, divRate: S.divRate, divReinvestPct: S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0), intRate: S.intRate||0, reinvestDivs: S.reinvestDivs||'no',
     spendInfl: S.spendInfl, ssCola: S.ssCola, wageGrowth: S.wageGrowth,
-    bracketInfl: S.bracketInfl, irmaaInfl: S.irmaaInfl,
+    bracketInfl: S.bracketInfl, irmaaInfl: S.irmaaInfl, medicareCostInfl: S.medicareCostInfl ?? S.irmaaInfl,
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
     fundingOrder: normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH'),
     irmaaFillMode: S.irmaaFillMode||'',
@@ -6981,6 +7050,7 @@ function buildReportPayload(){
   addOverride('incomeRates', S.ovIncomeRates,  ['divRate','divReinvestPct','intRate','notes']);
   addOverride('stockGainPct',S.ovStkGainPct,   ['rate','notes']);
   addOverride('wageGrowth',  S.ovWageGrowth,   ['rate']);
+  addOverride('inflation',   S.ovInflation,    ['bracketInfl','irmaaInfl','medicareCostInfl','notes']);
   addOverride('funding',     S.ovFundingOrder, ['draw1','draw2','draw3','choice']);
   addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
   addOverride('deductions',  S.ovDeductions,   ['fedItemized','caItemized','charityCash']);
@@ -7245,7 +7315,7 @@ function generateReport(){
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
   const rightRates=rateRows([
-    ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Inflation',fp(A.irmaaInfl)],
+    ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA Threshold Inflation',fp(A.irmaaInfl)],['Medicare Cost Inflation',fp(A.medicareCostInfl ?? A.irmaaInfl)],
     ['Stock Gain % Taxable',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
     ['Default Funding Order',formatFundingOrder(A.fundingOrder||['SEC','IRA','ROTH'])],
     ['IRMAA Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
@@ -7909,7 +7979,7 @@ function rothLabClearUserScenario(){
 function rothLabApplyAssumption(st, assumption){
   if (assumption === 'lower-growth') st.growthRate = Math.max(-0.10, (parseF(st.growthRate)||0) - 0.02);
   if (assumption === 'higher-growth') st.growthRate = (parseF(st.growthRate)||0) + 0.02;
-  if (assumption === 'frozen-irmaa') st.irmaaInfl = 0;
+  if (assumption === 'frozen-irmaa') { st.irmaaInfl = 0; st.medicareCostInfl = 0; }
   return st;
 }
 function rothLabHasSecondPerson(state){
@@ -8525,7 +8595,7 @@ function rothLabRenderControls(cfg){
   const bracketOptions = getMaxBracketOptions({startYear:cfg.start, level:cfg.taxFillIrmaaGuard || ''}).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.maxBracket)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
   const guardOptions = [['','No guardrail - tax-fill ignores IRMAA']].concat(getIRMAALevelOptions({startYear:cfg.start, level:cfg.taxFillIrmaaGuard}).filter(o => String(o[0]) !== '')).map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.taxFillIrmaaGuard)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
   const fillModeOptions = IRMAA_FILL_MODE_OPTIONS.map(o => '<option value="'+setupEsc(o[0])+'" '+(String(cfg.fillMode)===String(o[0])?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('');
-  const assumptionOptions = '<option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds</option>';
+  const assumptionOptions = '<option value="current" '+(rothLabSetting('assumption','current')==='current'?'selected':'')+'>Current assumptions</option><option value="lower-growth" '+(rothLabSetting('assumption','current')==='lower-growth'?'selected':'')+'>Lower growth (-2%)</option><option value="higher-growth" '+(rothLabSetting('assumption','current')==='higher-growth'?'selected':'')+'>Higher growth (+2%)</option><option value="frozen-irmaa" '+(rothLabSetting('assumption','current')==='frozen-irmaa'?'selected':'')+'>Frozen IRMAA thresholds & costs</option>';
   const detailOptions = '<option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option>';
   const survivorControlHtml = rothLabSurvivorControlHtml(cfg);
   const ssStressControlHtml = rothLabSocialSecurityStressControlHtml(cfg);
@@ -8752,7 +8822,7 @@ function rothLabAssumptionLensLabel(){
   const lens = rothLabSetting('assumption','current');
   if (lens === 'lower-growth') return 'Lower growth lens (-2%)';
   if (lens === 'higher-growth') return 'Higher growth lens (+2%)';
-  if (lens === 'frozen-irmaa') return 'Frozen IRMAA thresholds';
+  if (lens === 'frozen-irmaa') return 'Frozen IRMAA thresholds and costs';
   return 'Current assumptions';
 }
 function rothLabFundingOrderLabel(state, yr){
@@ -8802,7 +8872,7 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
     ['Household and Tax', household + '; ' + filingLabel + '; ' + stateLabel + '; Estate Value heir IRA rate ' + rothLabHeirTaxRateLabel() + '.'],
     ['Survivor Lens', rothLabSurvivorLensAssumptionText(cfg, A)],
     ['Growth', fp(A.growthRate || 0) + ' portfolio growth; ' + fp(A.divRate || 0) + ' dividend rate; ' + fp(A.intRate || 0) + ' cash interest.'],
-    ['Inflation', fp(A.spendInfl || 0) + ' spending; ' + fp(A.ssCola || 0) + ' Social Security COLA; ' + fp(A.bracketInfl || 0) + ' tax brackets; ' + fp(A.irmaaInfl || 0) + ' IRMAA.'],
+    ['Inflation', fp(A.spendInfl || 0) + ' spending; ' + fp(A.ssCola || 0) + ' Social Security COLA; ' + fp(A.bracketInfl || 0) + ' tax brackets; ' + fp(A.irmaaInfl || 0) + ' IRMAA thresholds; ' + fp(A.medicareCostInfl ?? A.irmaaInfl ?? 0) + ' Medicare costs.'],
     ['Medicare Lookback', lookback]
   ];
   if ((cfg && cfg.ssStressMode) === 'reduction') {
@@ -9581,7 +9651,7 @@ function setupReadiness(){
     add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k Defaults', 'interview-savings');
   }
   add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open Assumptions', 'interview-assumptions');
-  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
+  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
   add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
   const done = items.filter(i => i.status === 'done').length;
   const missing = items.filter(i => i.status === 'missing').length;
@@ -9692,6 +9762,9 @@ function renderSetupAssumptionsStep(){
     setupSelect('Dividend Tax Treatment','qualDivsMode',S.qualDivsMode || 'ordinary',[['ordinary','Ordinary Income'],['qualified','Qualified / LTCG Rate']],{note:'Choose Ordinary unless you know the dividends are mostly qualified for lower capital-gain tax rates.'}),
     setupInput('Annual Spending Inflation (%)','spendInfl','pct',setupPct(S.spendInfl),{step:'0.1',min:0,note:'How normal spending grows after the opening year unless a Spending strategy overrides it.'}),
     setupInput('Social Security COLA (%)','ssCola','pct',setupPct(S.ssCola),{step:'0.1',min:0,note:'How Social Security benefits grow each year after they start.'}),
+    setupInput('Tax Bracket Inflation (%)','bracketInfl','pct',setupPct(S.bracketInfl),{step:'0.1',min:0,note:'How IRS and state tax brackets/deductions inflate after the latest entered tax table year.'}),
+    setupInput('IRMAA Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'How Medicare IRMAA MAGI thresholds inflate. Keep this separate from Medicare premium costs.'}),
+    setupInput('Medicare Cost Inflation (%)','medicareCostInfl','pct',setupPct(S.medicareCostInfl ?? S.irmaaInfl),{step:'0.1',min:0,note:'How standard Part B premiums and IRMAA surcharge dollars inflate after the latest tax table year. A higher default avoids understating Medicare costs.'}),
     setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0,note:'How W-2 and non-wage taxable income grows before it ends. Strategy Builder can override this for selected years.'}),
     setupInput('Taxable Gain on Brokerage Sales (%)','stkGainPct','pct',setupPct(S.stkGainPct),{step:'1',min:0,max:100,note:'When brokerage investments are sold, this estimates how much of the sale is taxable gain instead of return of principal. Lower numbers mean higher cost basis.'}),
     setupInput('Cash Reserve Target ($)','cashFloor','number',setupNum(S.cashFloor),{min:0,note:'The minimum non-retirement cash/near-cash balance the model tries to keep before drawing from cash. A Cash Floor strategy can change this later.'})
@@ -9845,6 +9918,11 @@ function renderSetupMedicareStep(){
     '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">What this section is for</div><div class="setup-check-body">This section does two jobs. First, it estimates IRMAA, the Medicare premium surcharge based on income. Second, it gives the Roth conversion engine guardrails so it can convert IRA money without accidentally crossing income thresholds you want to avoid.</div></div>',
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Roth conversion in plain English</div><div class="setup-check-body">A Roth conversion moves money from a traditional IRA to a Roth IRA. It creates taxable income now, but can reduce future RMDs and future taxable income. These fields tell the model how much income room it is allowed to use for conversions.</div></div>',
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">How the limits work together</div><div class="setup-check-body">The model first calculates normal income. If there is room under your selected IRMAA target and tax bracket cap, it can fill that room with Roth conversions. Headroom leaves a safety cushion below the limit. When both IRMAA and bracket limits are set, the lower practical limit wins.</div></div>',
+    '<div class="sh" style="grid-column:1/-1;margin-top:4px">Medicare Cost Assumptions</div>',
+    setupInfoCard('Thresholds and costs are separate', 'IRMAA income thresholds can grow slowly while Part B premiums and IRMAA surcharge dollars rise faster. This avoids understating Medicare costs without making IRMAA income tiers look easier to avoid.', 'warn'),
+    setupInput('IRMAA Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'How Medicare IRMAA MAGI thresholds inflate after the latest tax table year. Current default: 2.0%.'}),
+    setupInput('Medicare Cost Inflation (%)','medicareCostInfl','pct',setupPct(S.medicareCostInfl ?? S.irmaaInfl),{step:'0.1',min:0,note:'How standard Part B premiums and IRMAA surcharge dollars inflate after the latest tax table year. Current conservative default: 6.5%.'}),
+    '<div class="sh" style="grid-column:1/-1;margin-top:4px">Roth Conversion Guardrails</div>',
     setupSelect('IRMAA Target Cap','irmaaTarget',S.irmaaTarget || '',getIRMAALevelOptions({startYear:S.startYear, level:S.irmaaTarget}, getFilingForYearForState(S,S.startYear)),{rerender:true,note:'The Medicare MAGI ceiling to target. Off means no global IRMAA ceiling; a Max Bracket can still guide Roth conversions.'}),
     setupSelect('IRMAA Fill Mode','irmaaFillMode',S.irmaaFillMode || '',IRMAA_FILL_MODE_OPTIONS,{note:'What to do when normal income is already above the selected IRMAA target. No extra fill leaves conversions and normal funding alone; Fill to next tier uses the next threshold; Use Roth above target can prefer Roth withdrawals instead of additional taxable draws.'}),
     setupInput('IRMAA Headroom ($)','irmaaHeadroom','number',S.irmaaHeadroom,{min:0,note:'A cushion below the selected IRMAA target. Example: $4,000 means stop about $4,000 under the Medicare income tier.'}),
@@ -10088,6 +10166,7 @@ function setupStrategyOptions(){
     ['hsa-deposit','HSA deposit'],
     ['growth','Portfolio growth rate'],
     ['wage-growth','Wage growth change'],
+    ['inflation','Inflation assumption change'],
     ['funding','Funding order change']
   ];
 }
@@ -10160,6 +10239,10 @@ function setupStrategyDescription(){
     'wage-growth': {
       title:'Wage growth change',
       body:'Use this when wages or non-wage taxable income should grow differently than the global default. This can model promotions, slowing work, consulting income changes, or flat income years.'
+    },
+    'inflation': {
+      title:'Inflation assumption change',
+      body:'Use this when future tax brackets, IRMAA thresholds, or Medicare premium costs should inflate differently for a period. Blank fields inherit the global Tax Tables settings, so you can change only Medicare cost inflation if that is the only assumption you want to stress.'
     },
     'funding': {
       title:'Funding order change',
@@ -10245,6 +10328,7 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Annual HSA Deposit ($)',val('amount',''),{min:0})+stratText('notes','Notes',val('notes','HSA deposit'));
   else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Growth Rate (%)',val('rate',''),{step:'0.1',min:-100})+stratText('notes','Notes',val('notes','Portfolio growth rate'));
   else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Wage Growth (%)',val('rate',''),{step:'0.1',min:0})+stratText('notes','Notes',val('notes','Wage growth scenario'));
+  else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
   else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
   const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
   const buttons = '<button class="btn btn-dark" onclick="applySetupStrategy()">'+(editing?'Update Strategy':'Add Strategy')+'</button>'+(editing?'<button class="btn btn-light" onclick="setupCancelStrategyEdit()">Cancel Edit</button>':'');
@@ -10296,6 +10380,7 @@ function applySetupStrategy(){
   else if (setupStrategyType === 'hsa-deposit') writeOv('ovHSADeposit', {amount:stratVal('amount'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'growth') writeOv('ovGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'wage-growth') writeOv('ovWageGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'inflation') writeOv('ovInflation', {bracketInfl:stratVal('bracket'), irmaaInfl:stratVal('irmaa'), medicareCostInfl:stratVal('medicare'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'funding') {
     const ord = normalizeFundingOrder(stratVal('draw1'), stratVal('draw2'), stratVal('draw3'));
     writeOv('ovFundingOrder', {draw1:ord[0], draw2:ord[1], draw3:ord[2], startYear:start, endYear:end, notes:notes});
@@ -10447,6 +10532,13 @@ function setupCollectStrategyRows(filterType){
     const parts = [];
     setupPushPart(parts, 'Wage growth', setupPercentLabel(row.rate));
     add('Wage Growth', row, parts, ['wage-growth'], {tableKey:'ovWageGrowth', rowIndex:idx, editType:'wage-growth'});
+  });
+  (S.ovInflation || []).forEach((row, idx) => {
+    const parts = [];
+    setupPushPart(parts, 'Tax bracket inflation', setupPercentLabel(row.bracketInfl));
+    setupPushPart(parts, 'IRMAA threshold inflation', setupPercentLabel(row.irmaaInfl));
+    setupPushPart(parts, 'Medicare cost inflation', setupPercentLabel(row.medicareCostInfl));
+    add('Inflation Assumptions', row, parts, ['inflation'], {tableKey:'ovInflation', rowIndex:idx, editType:'inflation'});
   });
   (S.ovFundingOrder || []).forEach((row, idx) => {
     const ord = normalizeFundingOrder(row.draw1, row.draw2, row.draw3);
