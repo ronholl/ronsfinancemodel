@@ -13,11 +13,6 @@
       "body": "The model now separates IRMAA MAGI Threshold Inflation from Medicare Cost Inflation. IRMAA MAGI Threshold Inflation controls how the income levels for IRMAA tiers grow; Medicare Cost Inflation controls standard Part B premiums and IRMAA surcharge dollar amounts."
     },
     {
-      "icon": "📍",
-      "title": "Medicare assumption entry is in one place",
-      "body": "The plain-English controls for IRMAA MAGI Threshold Inflation and Medicare Cost Inflation are now under Setup Guide → Medicare & IRMAA. The Assumptions screen points you there instead of asking for the same inputs twice."
-    },
-    {
       "icon": "📊",
       "title": "New 6-year portfolio implementation summary",
       "body": "The general report now includes this year plus the next five years of planned HSA withdrawals, inherited IRA draws, traditional IRA draws, and Roth conversions by person. It is intended to help discuss how the portfolio should be positioned to support the plan."
