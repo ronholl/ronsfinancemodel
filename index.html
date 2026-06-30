@@ -7043,7 +7043,7 @@ function buildReportPayload(){
     if (kept.length) overrides[name] = kept;
   };
   addOverride('spending',    S.ovSpending,     ['amount','pctChange','taxOvr','oneYear','notes']);
-  addOverride('irmaa',       S.ovIRMAA,        ['level','fillMode','maxBracket','bracketHeadroom']);
+  addOverride('irmaa',       S.ovIRMAA,        ['level','fillMode','maxBracket','headroom','bracketHeadroom']);
   addOverride('incomeLevel', S.ovIncomeLevel,  ['magiTarget']);
   addOverride('taxFill',     S.ovTaxFill,      ['active','headroom']);
   addOverride('growth',      S.ovGrowth,       ['rate']);
@@ -7051,6 +7051,7 @@ function buildReportPayload(){
   addOverride('stockGainPct',S.ovStkGainPct,   ['rate','notes']);
   addOverride('wageGrowth',  S.ovWageGrowth,   ['rate']);
   addOverride('inflation',   S.ovInflation,    ['bracketInfl','irmaaInfl','medicareCostInfl','notes']);
+  addOverride('rothSource',  S.ovRothSource,   ['source','p1Pct','notes']);
   addOverride('funding',     S.ovFundingOrder, ['draw1','draw2','draw3','choice']);
   addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
   addOverride('deductions',  S.ovDeductions,   ['fedItemized','caItemized','charityCash']);
@@ -7245,7 +7246,7 @@ function generateReport(){
     .checklist li:before{content:"☐ ";font-weight:700;color:#6a4e00;}
     .side{display:grid;grid-template-columns:1fr 16px 1fr;gap:0;}
     @page{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}
-    @page cashflow{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}
+    @page cashflow{size:letter landscape;margin:0.25in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:7.5pt;color:#555;}}
     @media print{
       body{padding:0;font-size:9.5pt;color:#111;font-weight:500;}
       .no-print{display:none;}
@@ -7286,12 +7287,17 @@ function generateReport(){
       .yr-tbl th{font-size:8pt;padding:4px 5px;}
       .yr-tbl td{padding:3px 5px;}
       .cashflow-section{page:cashflow;break-before:page;}
-      .cf-screen-only{display:none;}
-      .cf-print-only{display:block;}
-      .cf-print-only h3{font-size:12pt;color:#5e4700;margin:10px 0 5px;break-after:avoid;}
-      .cf-print-table{font-size:8.9pt;margin-bottom:14px;page-break-inside:auto;}
-      .cf-print-table th{background:#e8dfc8;color:#111;font-size:8.1pt;padding:5px 5px;font-weight:800;}
-      .cf-print-table td{padding:4px 5px;color:#111;font-weight:600;}
+      .cashflow-section h2{font-size:12.5pt;margin:4px 0 5px;}
+      .cashflow-section table.cf-screen-only{display:table;}
+      .cashflow-section p.cf-screen-only{display:block;}
+      .cashflow-section .cf-print-only{display:none;}
+      .cashflow-section .cf-table{font-size:var(--cf-font,6.1pt);margin-bottom:4px;page-break-inside:auto;}
+      .cashflow-section .cf-table th{background:#1e1a0e;color:#fff;font-size:var(--cf-head-font,5.6pt);padding:2px 2px;line-height:1.05;font-weight:800;white-space:pre-line;}
+      .cashflow-section .cf-table td{font-size:inherit;padding:1.7px 2px;line-height:1.08;color:#111;font-weight:700;white-space:nowrap;}
+      .cashflow-section .cf-table .cf-group th{background:#8a6800;color:#fff;font-size:var(--cf-head-font,5.5pt);padding:2px 2px;}
+      .cashflow-section .cf-table .cf-sub th{background:#1e1a0e;color:#fff;}
+      .cashflow-section .cf-table .cf-start{border-left:1px solid #b88700;}
+      .cashflow-section .note{font-size:7pt;margin-top:3px;}
       h2{page-break-after:avoid;}
       .yr-band{page-break-before:auto;}
       table{page-break-inside:auto;}
@@ -7318,18 +7324,20 @@ function generateReport(){
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
     ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}%`:'Off'],
-    ['Portfolio Growth',fp(A.growthRate)],['Dividend Rate',fp(A.divRate)],['Dividend Reinvest',fp(A.divReinvestPct ?? ((A.reinvestDivs||'no')==='yes'?1:0))],
+    ['Portfolio Growth',fp(A.growthRate)],['Brokerage Dividend / Interest Rate',fp(A.divRate)],['Dividend Reinvest',fp(A.divReinvestPct ?? ((A.reinvestDivs||'no')==='yes'?1:0))],
+    ['Cash Interest Rate',fp(A.intRate||0)],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
   ]);
   const rightRates=rateRows([
     ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA MAGI Threshold Inflation',fp(A.irmaaInfl)],['Medicare Cost Inflation',fp(A.medicareCostInfl ?? A.irmaaInfl)],
     ['Stock Gain % Taxable',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
     ['Default Funding Order',formatFundingOrder(A.fundingOrder||['SEC','IRA','ROTH'])],
-    ['IRMAA Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
-    ['IRMAA Fill Mode',A.irmaaFillMode==='F'?'Fill to next tier':A.irmaaFillMode==='R'?'Use Roth above target':'No extra fill'],
-    ['IRMAA Headroom',fd(A.irmaaHeadroom)],
-    ['IRMAA Max Bracket',A.irmaaMaxBracket?Math.round(parseF(A.irmaaMaxBracket)*100)+'%':'Off'],
-    ['Bracket Headroom',fd(A.irmaaBracketHeadroom||0)],
+    ['Roth Conversion Source',rothConvSourceLabel(A.rothConvSource, A.rothConvP1Pct)],
+    ['Roth Conversion Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
+    ['Target Fill Mode',A.irmaaFillMode==='F'?'Fill to next tier':A.irmaaFillMode==='R'?'Use Roth above target':'No extra fill'],
+    ['Target Cushion',fd(A.irmaaHeadroom)],
+    ['Federal Bracket Cap',A.irmaaMaxBracket?Math.round(parseF(A.irmaaMaxBracket)*100)+'%':'Off'],
+    ['Bracket Cushion',fd(A.irmaaBracketHeadroom||0)],
     ['Plan Period',`${A.startYear}–${A.endYear} (${A.endYear-A.startYear+1} yrs)`],
   ]);
 
@@ -7551,23 +7559,49 @@ function generateReport(){
     return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,preInhD,postInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
   };
   const dzGap=(v)=>Math.abs(v||0)>=50?fd(v,true):'—';
-  const cfRows=rows.map(r=>{
-    const v=cfVals(r);
-    return `<tr>
-      ${td(r.yr)}${td(age(r))}
-      ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}
-      ${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
-      ${td(dz(v.hsa_inh),'r')}${td(dz(v.roth_wd),'r')}
-      ${td(dz(v.stkCash),'r')}${td(fd(v.totalFunded,true),'r bold')}
-      ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
-      ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
-      ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}
-      ${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}
-      ${td(fd(v.hsa_inh_soy,true),'r')}
-      ${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
-    </tr>`;
-  }).join('');
+  const cfValueRows=rows.map(r=>({r,v:cfVals(r)}));
+  const cfAny = (getter, min=50) => cfValueRows.some(({r,v}) => Math.abs(getter(r,v)||0) >= min);
+  const cfCols=[
+    {group:'Year',label:'Year',cell:(r,v)=>td(r.yr)},
+    {group:'Year',label:'Ages',cell:(r,v)=>td(age(r))},
+    {group:'Funding Sources',label:'Wages',show:cfAny((r,v)=>v.wages),cell:(r,v)=>td(dz(v.wages),'r')},
+    {group:'Funding Sources',label:'Social\nSecurity',show:cfAny((r,v)=>v.ss),cell:(r,v)=>td(dz(v.ss),'r')},
+    {group:'Funding Sources',label:'IRA Draw\n(incl RMDs)',show:cfAny((r,v)=>v.ira_tot),cell:(r,v)=>td(dz(v.ira_tot),'r')},
+    {group:'Funding Sources',label:'Roth\nConversion',show:cfAny((r,v)=>v.rc),cell:(r,v)=>td(dz(v.rc),'r')},
+    {group:'Funding Sources',label:'Dividends\n& Interest',show:cfAny((r,v)=>v.divs),cell:(r,v)=>td(dz(v.divs),'r')},
+    {group:'Funding Sources',label:'HSA &\nInh Draw',show:cfAny((r,v)=>v.hsa_inh),cell:(r,v)=>td(dz(v.hsa_inh),'r')},
+    {group:'Funding Sources',label:'Roth\nWithdrawal',show:cfAny((r,v)=>v.roth_wd),cell:(r,v)=>td(dz(v.roth_wd),'r')},
+    {group:'Funding Sources',label:'Sec & Cash\nDraw',show:cfAny((r,v)=>v.stkCash),cell:(r,v)=>td(dz(v.stkCash),'r')},
+    {group:'Funding Sources',label:'Total\nFunded',cell:(r,v)=>td(fd(v.totalFunded,true),'r bold')},
+    {group:'Funding Required',label:'Spending',cell:(r,v)=>td(fd(r.spending,true),'r')},
+    {group:'Funding Required',label:'Funded\nTaxes',show:cfAny((r,v)=>v.taxFunding),cell:(r,v)=>td(dz(v.taxFunding),'r')},
+    {group:'Funding Required',label:'Cash\nGap',show:cfAny((r,v)=>v.cashGap),cell:(r,v)=>td(dzGap(v.cashGap),'r')},
+    {group:'Funding Required',label:'Total\nRequired',cell:(r,v)=>td(fd(v.fundingRequired,true),'r bold')},
+    {group:'Tax & Medicare',label:'Income\nTax',cell:(r,v)=>td(fd(r.incomeTax,true),'r')},
+    {group:'Tax & Medicare',label:'IRMAA\nSurcharge',show:cfAny((r,v)=>r.irmaaTx),cell:(r,v)=>td(dz(r.irmaaTx),'r')},
+    {group:'Tax & Medicare',label:'Medicare\nPart B',show:cfAny((r,v)=>r.medicareBase),cell:(r,v)=>td(dz(r.medicareBase),'r')},
+    {group:'Tax & Medicare',label:'Eff\nRate',cell:(r,v)=>td(fp(r.effRate),'r')},
+    {group:'Tax & Medicare',label:'Marg\nRate',cell:(r,v)=>td(fp(r.margRate),'r')},
+    {group:'Start-of-Year Balances',label:'Cash',cell:(r,v)=>td(fd(v.cash_soy,true),'r')},
+    {group:'Start-of-Year Balances',label:'Sec',show:cfAny((r,v)=>v.sec_soy),cell:(r,v)=>td(fd(v.sec_soy,true),'r')},
+    {group:'Start-of-Year Balances',label:'IRA',show:cfAny((r,v)=>v.ira_soy),cell:(r,v)=>td(fd(v.ira_soy,true),'r')},
+    {group:'Start-of-Year Balances',label:'Roth',show:cfAny((r,v)=>v.roth_soy),cell:(r,v)=>td(fd(v.roth_soy,true),'r')},
+    {group:'Start-of-Year Balances',label:'HSA +\nInh IRA',show:cfAny((r,v)=>v.hsa_inh_soy),cell:(r,v)=>td(fd(v.hsa_inh_soy,true),'r')},
+    {group:'Start-of-Year Balances',label:'Net\nWorth',cell:(r,v)=>td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')},
+  ];
+  const cfVisibleCols=cfCols.filter(c=>c.show!==false);
+  const cfGroups=[];
+  cfVisibleCols.forEach(c=>{
+    const last=cfGroups[cfGroups.length-1];
+    if(last && last.label===c.group) last.count++;
+    else cfGroups.push({label:c.group,count:1});
+  });
+  const cfGroupHeader=cfGroups.map(g=>`<th colspan="${g.count}">${g.label}</th>`).join('');
+  const cfSubHeader=cfVisibleCols.map(c=>c.group==='Year' ? th(c.label) : thr(c.label)).join('');
+  const cfColumnCount=cfVisibleCols.length;
+  const cfPrintFont=(cfColumnCount<=22?6.8:cfColumnCount<=24?6.4:6.0).toFixed(1);
+  const cfPrintHeadFont=(cfColumnCount<=22?6.2:cfColumnCount<=24?5.9:5.5).toFixed(1);
+  const cfRows=cfValueRows.map(({r,v})=>`<tr>${cfVisibleCols.map(c=>c.cell(r,v)).join('')}</tr>`).join('');
   const cfSourceRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
@@ -7715,50 +7749,65 @@ function generateReport(){
     const ov = P.overrides||{};
     if(!Object.keys(ov).length) return '';
     const ovLabels = {
-      spending:'Spending',irmaa:'IRMAA Level',incomeLevel:'Income Level Target',
-      taxFill:'Tax Bracket Fill',growth:'Portfolio Growth Rate',wageGrowth:'Wage Growth Rate',
-      incomeRates:'Brokerage Dividend & Cash Interest Rates',stockGainPct:'Stock Sales Taxable Gain',
-      funding:'Funding Order',cashFloor:'Cash Floor',deductions:'Deductions',
-      hsaDep:'HSA Deposits',stateTax:'State Tax'
+      spending:'Spending Strategy',irmaa:'Roth Conversion Target Strategy',incomeLevel:'Income Level Target Strategy',
+      taxFill:'Tax Bracket Fill Strategy',growth:'Portfolio Growth Rate Strategy',wageGrowth:'Wage Growth Rate Strategy',
+      incomeRates:'Brokerage Dividend & Cash Interest Rate Strategy',stockGainPct:'Stock Sales Taxable Gain Strategy',
+      inflation:'Inflation Assumption Strategy',rothSource:'Roth Conversion Source Strategy',
+      funding:'Funding Order Strategy',cashFloor:'Cash Floor Strategy',deductions:'Deduction Strategy',
+      hsaDep:'HSA Deposit Strategy',stateTax:'State Tax Strategy'
     };
-    const fmtRow = (row) => {
+    const money0 = v => Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
+    const pctText = v => Number(v).toLocaleString('en-US',{maximumFractionDigits:2})+'%';
+    const fmtRow = (row, key) => {
       const parts=[];
       const validMaxBracket = row.maxBracket && getMaxBracketOptions(row).some(([v]) => v === String(row.maxBracket));
       const modeLabel = {F:'Fill mode', R:'Roth-withdrawal mode'}[row.fillMode] || '';
-      if(row.amount!=null&&row.amount!=='') parts.push('Spending $'+Number(row.amount).toLocaleString('en-US',{maximumFractionDigits:0}));
-      if(row.pctChange!=null&&row.pctChange!=='') parts.push('Spending change '+Number(row.pctChange).toLocaleString('en-US',{maximumFractionDigits:2})+'%');
-      if(row.taxOvr!=null&&row.taxOvr!=='') parts.push('Tax funding override $'+Number(row.taxOvr).toLocaleString('en-US',{maximumFractionDigits:0}));
+      if(row.amount!=null&&row.amount!=='') parts.push(key==='hsaDep' ? 'HSA deposit $'+money0(row.amount) : 'Spending $'+money0(row.amount));
+      if(row.pctChange!=null&&row.pctChange!=='') parts.push('Spending change '+pctText(row.pctChange));
+      if(row.taxOvr!=null&&row.taxOvr!=='') parts.push('Tax funding override $'+money0(row.taxOvr));
       if(row.oneYear==='Y') parts.push('1 year only');
       if(row.divRate!=null&&row.divRate!=='') parts.push('Brokerage dividend '+row.divRate+'%');
       if(row.divReinvestPct!=null&&row.divReinvestPct!=='') parts.push('Dividend reinvest '+row.divReinvestPct+'%');
       if(row.intRate!=null&&row.intRate!=='') parts.push('Cash interest '+row.intRate+'%');
-      if(row.rate!=null&&row.rate!=='') parts.push(row.rate+'%');
+      if(row.rate!=null&&row.rate!=='') {
+        const rateLabel = key==='growth' ? 'Portfolio growth ' : key==='wageGrowth' ? 'Wage growth ' : key==='stockGainPct' ? 'Taxable stock gain ' : '';
+        parts.push(rateLabel + row.rate+'%');
+      }
+      if(row.bracketInfl!=null&&row.bracketInfl!=='') parts.push('Bracket inflation '+row.bracketInfl+'%');
+      if(row.irmaaInfl!=null&&row.irmaaInfl!=='') parts.push('IRMAA MAGI threshold inflation '+row.irmaaInfl+'%');
+      if(row.medicareCostInfl!=null&&row.medicareCostInfl!=='') parts.push('Medicare cost inflation '+row.medicareCostInfl+'%');
+      if(row.source!=null&&row.source!=='') parts.push(rothConvSourceLabel(row.source, row.p1Pct));
       if(row.level!=null&&row.level!=='') {
         let label = irmaaLevelLabel(row.level, row.startYear);
         if(modeLabel) label += ' - '+modeLabel;
         if(validMaxBracket) label += ', bracket cap '+Math.round(parseF(row.maxBracket)*100)+'%';
         parts.push(label);
       }
-      if(row.magiTarget!=null&&row.magiTarget!=='') parts.push('MAGI target $'+Number(row.magiTarget).toLocaleString());
-      if(row.choice) parts.push(row.choice+' first');
-      if(row.floor!=null&&row.floor!=='') parts.push('Floor $'+Number(row.floor).toLocaleString());
+      if(row.magiTarget!=null&&row.magiTarget!=='') parts.push('MAGI target $'+money0(row.magiTarget));
+      if(key==='funding') {
+        const order = (row.draw1 || row.draw2 || row.draw3) ? [row.draw1||'SEC', row.draw2||'', row.draw3||''] : fundingOrderFromLegacyChoice(row.choice);
+        parts.push(formatFundingOrder(order));
+      } else if(row.choice) parts.push(row.choice+' first');
+      if(row.floor!=null&&row.floor!=='') parts.push('Floor $'+money0(row.floor));
       if(row.state) parts.push(row.state==='NONE'?'Tax-Free':row.state);
-      if(row.fedItemized!=null&&row.fedItemized!=='') parts.push('Fed $'+Number(row.fedItemized).toLocaleString());
-      if(row.caItemized!=null&&row.caItemized!=='') parts.push('CA $'+Number(row.caItemized).toLocaleString());
-      if((row.charityOn==='Yes'||row.charityOn==='T')&&row.charityCash!=null&&row.charityCash!=='') parts.push('Charity $'+Number(row.charityCash).toLocaleString());
+      if(row.fedItemized!=null&&row.fedItemized!=='') parts.push('Fed $'+money0(row.fedItemized));
+      if(row.caItemized!=null&&row.caItemized!=='') parts.push('CA $'+money0(row.caItemized));
+      if((row.charityOn==='Yes'||row.charityOn==='T')&&row.charityCash!=null&&row.charityCash!=='') parts.push('Charity $'+money0(row.charityCash));
       else if(row.charityCash!=null&&row.charityCash!=='') parts.push('Charity entered but off');
-      if(row.active) parts.push('Active');
+      if(row.active) parts.push(key==='taxFill' ? 'Tax bracket fill active' : 'Active');
+      if(row.headroom!=null&&row.headroom!=='') parts.push('Target cushion $'+money0(row.headroom));
+      if(row.bracketHeadroom!=null&&row.bracketHeadroom!=='') parts.push('Bracket cushion $'+money0(row.bracketHeadroom));
       const yr1=row.startYear||'—', yr2=row.endYear||9999;
       return `<tr><td>${yr1}</td><td>${yr2>=9999?'ongoing':yr2}</td><td>${parts.join(' · ')||'—'}</td><td style="color:#666;font-style:italic">${row.notes||''}</td></tr>`;
     };
-    let html='<h2>Active Overrides</h2>';
+    let html='<h2>Active Strategies</h2>';
     for(const [key,rows] of Object.entries(ov)){
       if(!rows||!rows.length) continue;
       const hasNotes = rows.some(row => row.notes != null && row.notes !== '');
       html+=`<p style="font-weight:700;font-size:8pt;color:#111;margin:8px 0 2px">${ovLabels[key]||key}</p>`;
       html+=`<table style="font-size:7pt;margin-bottom:6px"><thead><tr><th>Start</th><th>End</th><th>Setting</th>${hasNotes?'<th>Notes</th>':''}</tr></thead><tbody>`;
       html+=rows.map(row => {
-        const rendered = fmtRow(row);
+        const rendered = fmtRow(row, key);
         return hasNotes ? rendered : rendered.replace(/<td style="color:#666;font-style:italic">.*?<\/td><\/tr>$/, '</tr>');
       }).join('');
       html+=`</tbody></table>`;
@@ -7777,17 +7826,9 @@ function generateReport(){
 
   <div class="cashflow-section">
   <h2>Year-by-Year Cash Flow</h2>
-  <table class="cf-table cf-screen-only"><thead>
-    <tr class="cf-group">
-      <th colspan="2">Year</th>
-      <th colspan="9">Funding Sources</th>
-      <th colspan="4">Funding Required</th>
-      <th colspan="5">Tax &amp; Medicare</th>
-      <th colspan="6">Start-of-Year Balances</th>
-    </tr>
-    <tr class="cf-sub">
-      ${[th('Year'),th('Ages'),thr('Wages'),thr('Social\nSecurity'),thr('IRA Draw\n(incl RMDs)'),thr('Roth\nConversion'),thr('Dividends\n& Interest'),thr('HSA &\nInh Draw'),thr('Roth\nWithdrawal'),thr('Sec &\nCash Draw'),thr('Total\nFunded'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired'),thr('Income\nTax'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA +\nInh IRA'),thr('Net\nWorth')].join('')}
-    </tr>
+  <table class="cf-table cf-screen-only" style="--cf-font:${cfPrintFont}pt;--cf-head-font:${cfPrintHeadFont}pt"><thead>
+    <tr class="cf-group">${cfGroupHeader}</tr>
+    <tr class="cf-sub">${cfSubHeader}</tr>
   </thead><tbody>${cfRows}</tbody></table>
   <div class="cf-print-only">
     <h3>Funding Sources</h3>
@@ -7804,7 +7845,7 @@ function generateReport(){
     </tr></thead><tbody>${cfTaxBalanceRows}</tbody></table>
   </div>
   <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
-  <p class="note cf-print-only">Print view splits the cash flow into two larger-font tables for readability. Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Net Worth in red = shortfall year.</p>
+  <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together.</p>
   </div>
 
   <h2>Lifetime Tax Summary</h2>
@@ -7829,7 +7870,7 @@ function generateReport(){
   if(isSafari){
     html = html
       .replace('@page{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}', '@page{size:letter portrait;margin:0.45in;}')
-      .replace('@page cashflow{size:letter portrait;margin:0.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}', '')
+      .replace('@page cashflow{size:letter landscape;margin:0.25in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:7.5pt;color:#555;}}', '')
       .replace('page:cashflow;break-before:page;', 'break-before:page;');
     renderSafariInlineReport(html);
     return;
@@ -10579,7 +10620,7 @@ function setupCollectStrategyRows(filterType){
     setupPushPart(parts, 'Max bracket', setupBracketLabel(row.maxBracket));
     setupPushPart(parts, 'IRMAA cushion', setupMoneyLabel(row.headroom));
     setupPushPart(parts, 'Bracket cushion', setupMoneyLabel(row.bracketHeadroom));
-    add('IRMAA / Roth Target', row, parts, ['irmaa'], {tableKey:'ovIRMAA', rowIndex:idx, editType:'irmaa'});
+    add('Roth Conversion Target', row, parts, ['irmaa'], {tableKey:'ovIRMAA', rowIndex:idx, editType:'irmaa'});
   });
   (S.ovIncomeLevel || []).forEach((row, idx) => {
     const parts = [];
