@@ -8510,7 +8510,7 @@ function rothLabPrintAdvisorReport(){
   }
   const title = 'Roth Conversion Advisor Report';
   const css = '<style>'+ 
-    '@page{size:landscape;margin:.28in}'+
+    '@page{size:landscape;margin:.28in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Arial,sans-serif;font-size:7.5pt;color:#555}}'+
     'body{font-family:Georgia,serif;color:#111;background:#fff;margin:0;padding:10px}'+
     '.panel,.roth-advisor-report{border:0!important;background:#fff!important;margin:0!important;padding:0!important}'+
     '.roth-report-source{border-bottom:2px solid #8f6a00;margin:0 0 12px;padding:0 0 8px;color:#4b3400}'+
@@ -9783,8 +9783,7 @@ function renderSetupAssumptionsStep(){
     setupInput('Annual Spending Inflation (%)','spendInfl','pct',setupPct(S.spendInfl),{step:'0.1',min:0,note:'How normal spending grows after the opening year unless a Spending strategy overrides it.'}),
     setupInput('Social Security COLA (%)','ssCola','pct',setupPct(S.ssCola),{step:'0.1',min:0,note:'How Social Security benefits grow each year after they start.'}),
     setupInput('Tax Bracket Inflation (%)','bracketInfl','pct',setupPct(S.bracketInfl),{step:'0.1',min:0,note:'How IRS and state tax brackets/deductions inflate after the latest entered tax table year.'}),
-    setupInput('IRMAA MAGI Threshold Inflation (%)','irmaaInfl','pct',setupPct(S.irmaaInfl),{step:'0.1',min:0,note:'Annual percent increase for the MAGI income thresholds that define each IRMAA tier. Keep this separate from Medicare premium costs.'}),
-    setupInput('Medicare Cost Inflation (%)','medicareCostInfl','pct',setupPct(S.medicareCostInfl ?? S.irmaaInfl),{step:'0.1',min:0,note:'How standard Part B premiums and IRMAA surcharge dollars inflate after the latest tax table year. A higher default avoids understating Medicare costs.'}),
+    setupInfoCard('Medicare assumptions live under Medicare & IRMAA', 'IRMAA MAGI threshold inflation and Medicare cost inflation are entered on the Medicare & IRMAA screen so they are reviewed with Medicare lookback and Roth conversion guardrails.', 'done'),
     setupInput('Wage Growth (%)','wageGrowth','pct',setupPct(S.wageGrowth),{step:'0.1',min:0,note:'How W-2 and non-wage taxable income grows before it ends. Strategy Builder can override this for selected years.'}),
     setupInput('Taxable Gain on Brokerage Sales (%)','stkGainPct','pct',setupPct(S.stkGainPct),{step:'1',min:0,max:100,note:'When brokerage investments are sold, this estimates how much of the sale is taxable gain instead of return of principal. Lower numbers mean higher cost basis.'}),
     setupInput('Cash Reserve Target ($)','cashFloor','number',setupNum(S.cashFloor),{min:0,note:'The minimum non-retirement cash/near-cash balance the model tries to keep before drawing from cash. A Cash Floor strategy can change this later.'})
