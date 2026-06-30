@@ -1,50 +1,46 @@
 {
   "active": true,
-  "id": "message_2026_06_roth_bonds_medicare_inflation",
+  "id": "message_2026_06_irmaa_report_updates",
   "audience": "returning",
   "icon": "📣",
-  "title": "Roth, Bond, and Medicare Assumption Updates",
+  "title": "Medicare Assumption and Report Updates",
   "subtitle": "Message from Ron",
-  "intro": "This update adds clearer Roth conversion sourcing, taxable bond balance buckets, and more conservative Medicare inflation modeling so Part B and IRMAA costs are not understated.",
+  "intro": "This update clarifies Medicare/IRMAA inflation assumptions and adds a portfolio-focused report summary for advisor review.",
   "items": [
     {
-      "icon": "⚙️",
-      "title": "Choose the Roth conversion source",
-      "body": "Use Higher IRA, Lower IRA, either named person first, or Percent split. A 50/50 split is supported, and the other IRA can finish the target if one side runs short."
-    },
-    {
-      "icon": "🏦",
-      "title": "Enter tax-free bonds by balance",
-      "body": "Opening Year and Annual Check-In now break taxable-account balances into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds. Enter balances, not interest."
-    },
-    {
       "icon": "🏥",
-      "title": "Medicare costs are split from IRMAA thresholds",
-      "body": "The model now separates IRMAA MAGI Threshold Inflation from Medicare Cost Inflation. This was added because Medicare Part B premiums and IRMAA surcharge dollars may rise faster than the MAGI income thresholds used to decide who pays IRMAA."
+      "title": "Medicare costs are separate from IRMAA MAGI thresholds",
+      "body": "The model now separates IRMAA MAGI Threshold Inflation from Medicare Cost Inflation. IRMAA MAGI Threshold Inflation controls how the income levels for IRMAA tiers grow; Medicare Cost Inflation controls standard Part B premiums and IRMAA surcharge dollar amounts."
     },
     {
-      "icon": "📈",
-      "title": "Use a strategy for future inflation changes",
-      "body": "Strategy Builder now has Inflation Assumption Change. Use it for year ranges such as 2026-2035 Medicare Cost Inflation at 6.5%, then 2036+ at a lower rate. Leave any field blank to inherit the global Tax Tables setting."
+      "icon": "📍",
+      "title": "Medicare assumption entry is in one place",
+      "body": "The plain-English controls for IRMAA MAGI Threshold Inflation and Medicare Cost Inflation are now under Setup Guide → Medicare & IRMAA. The Assumptions screen points you there instead of asking for the same inputs twice."
     },
     {
-      "icon": "🔎",
-      "title": "Where to review assumptions",
-      "body": "Use Setup Guide → Medicare & IRMAA for the plain-English controls. Use Tax Tables for expert edits to exact brackets, IRMAA thresholds, surcharge amounts, and standard Part B premiums."
+      "icon": "📊",
+      "title": "New 6-year portfolio implementation summary",
+      "body": "The general report now includes this year plus the next five years of planned HSA withdrawals, inherited IRA draws, traditional IRA draws, and Roth conversions by person. It is intended to help discuss how the portfolio should be positioned to support the plan."
+    },
+    {
+      "icon": "🧭",
+      "title": "Advisor review focus",
+      "body": "Use the new summary to discuss the traditional IRA safety sleeve, inherited IRA runway, and in-kind Roth conversion candidates. Roth conversions move assets; they are not spending."
     }
   ],
   "actions": [
     {
-      "label": "Open Setup Guide",
-      "view": "setup"
+      "label": "Open Medicare & IRMAA",
+      "view": "setup",
+      "setupStep": "medicare"
     },
     {
       "label": "Open Tax Tables",
       "view": "taxtables"
     },
     {
-      "label": "Review Cash Flow",
-      "view": "cashflow"
+      "label": "Generate Report",
+      "action": "report"
     }
   ]
 }

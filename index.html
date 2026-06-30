@@ -7233,6 +7233,10 @@ function generateReport(){
     .yr-tbl th{padding:2px 4px;}
     .yr-tbl td{padding:2px 4px;}
     .actions{margin:4px 0 8px 8px;font-size:8pt;}
+    .portfolio-plan-table{font-size:7.1pt;}
+    .portfolio-plan-table th{font-size:6.2pt;padding:3px 4px;}
+    .portfolio-plan-table td{padding:3px 4px;}
+    .portfolio-plan-table .focus{font-size:6.8pt;color:#4a3512;line-height:1.25;}
     .actions li{margin-bottom:2px;list-style:none;padding-left:10px;text-indent:-10px;}
     .actions li:before{content:"▸ ";}
     .ap-actions-title{font-weight:700;color:#6a4e00;margin:2px 0 3px;font-size:8.5pt;}
@@ -7273,6 +7277,9 @@ function generateReport(){
       .ap-actions{border:1px solid #b9aa80;background:#faf7f2;padding:7px 8px;margin-top:0;}
       .ap-actions-title{font-size:9.5pt;color:#111;font-weight:800;margin-bottom:4px;}
       .ap-actions .actions{margin:0;font-size:8.8pt;}
+      .portfolio-plan-table{font-size:8pt;}
+      .portfolio-plan-table th{font-size:7.4pt;}
+      .portfolio-plan-table .focus{font-size:7.4pt;}
       .print-break-after-overrides{display:block;break-after:page;}
       .yr-band{font-size:10pt;padding:6px 8px;}
       .yr-tbl table{font-size:8.7pt;}
@@ -7325,6 +7332,65 @@ function generateReport(){
     ['Bracket Headroom',fd(A.irmaaBracketHeadroom||0)],
     ['Plan Period',`${A.startYear}–${A.endYear} (${A.endYear-A.startYear+1} yrs)`],
   ]);
+
+  // ── 6-Year Portfolio Implementation Summary ──
+  const portfolioStartYear = Math.max(A.startYear, Math.min(new Date().getFullYear(), A.endYear));
+  const portfolioRows = rows.filter(r => r.yr >= portfolioStartYear && r.yr <= Math.min(A.endYear, portfolioStartYear + 5));
+  const portfolioTotals = {hsa:0, inherited:0, iraDraw:0, roth1:0, roth2:0};
+  const portfolioFocus = (r) => {
+    const hsa = r.hsaWith || 0;
+    const inherited = (r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0);
+    const iraDraw = (r.rmd1||0)+(r.rmd2||0)+(r.ira1Addl||0)+(r.ira2Addl||0);
+    const rothConv = (r.rothConvDraw1||0)+(r.rothConvDraw2||0);
+    const parts = [];
+    if (iraDraw > 0) parts.push('IRA safety sleeve for planned draw');
+    if (rothConv > 0) parts.push('identify in-kind Roth conversion candidates');
+    if (inherited > 0) parts.push('inherited IRA runway');
+    if (hsa > 0) parts.push('HSA cash need');
+    if ((r.stkSales||0) > 0 || (r.cashDraw||0) > 0) parts.push('taxable/cash support');
+    return parts.length ? parts.join('; ') : 'monitor and rebalance';
+  };
+  const portfolioPlanRows = portfolioRows.map(r => {
+    const target = reportIncomeTarget(r);
+    const hsa = r.hsaWith || 0;
+    const inherited = (r.pre2020InhDraw||0)+(r.pre2020InhAddl||0)+(r.post2020InhDraw||0);
+    const iraDraw = (r.rmd1||0)+(r.rmd2||0)+(r.ira1Addl||0)+(r.ira2Addl||0);
+    const roth1 = r.rothConvDraw1 || 0;
+    const roth2 = r.rothConvDraw2 || 0;
+    portfolioTotals.hsa += hsa;
+    portfolioTotals.inherited += inherited;
+    portfolioTotals.iraDraw += iraDraw;
+    portfolioTotals.roth1 += roth1;
+    portfolioTotals.roth2 += roth2;
+    return '<tr>' +
+      td(r.yr) +
+      td(target ? target.note : '—') +
+      td(dz(hsa),'r') +
+      td(dz(inherited),'r') +
+      td(dz(iraDraw),'r') +
+      td(dz(roth1),'r') +
+      (has2 ? td(dz(roth2),'r') : '') +
+      td(portfolioFocus(r),'focus') +
+    '</tr>';
+  }).join('');
+  const portfolioTotalsRow = '<tr>' +
+    td('<b>Totals</b>') +
+    td('') +
+    td('<b>'+dz(portfolioTotals.hsa)+'</b>','r') +
+    td('<b>'+dz(portfolioTotals.inherited)+'</b>','r') +
+    td('<b>'+dz(portfolioTotals.iraDraw)+'</b>','r') +
+    td('<b>'+dz(portfolioTotals.roth1)+'</b>','r') +
+    (has2 ? td('<b>'+dz(portfolioTotals.roth2)+'</b>','r') : '') +
+    td('Use this as the portfolio implementation map for advisor discussion.','focus') +
+  '</tr>';
+  const portfolioPlanHtml = portfolioRows.length ? `
+    <h2>6-Year Portfolio Implementation Summary</h2>
+    <div class="callout"><strong>Purpose:</strong> This summarizes this year plus the next five years so the portfolio can be positioned for planned withdrawals and Roth conversions. Roth conversions move assets; they are not spending.</div>
+    <table class="portfolio-plan-table"><thead><tr>
+      ${[th('Year'),th('Target / Guardrail'),thr('HSA\nW/D'),thr('Inherited\nIRA Draw'),thr('Trad IRA\nDraw'),thr((A.name1||'Person 1')+'\nRoth Conv'),...(has2?[thr((A.name2||'Person 2')+'\nRoth Conv')]:[]),th('Portfolio Review Focus')].join('')}
+    </tr></thead><tbody>${portfolioPlanRows}${portfolioTotalsRow}</tbody></table>
+    <p class="note">Advisor focus: decide how the traditional IRA and inherited IRA should hold enough stable assets for planned draws, while identifying growth assets that may be good in-kind Roth conversion candidates.</p>
+  ` : '';
 
   // ── 3-Year Action Plan ──
   let apHtml = '';
@@ -7700,6 +7766,8 @@ function generateReport(){
     return html;
   })()}
   ${(survivorOn || Object.values(P.overrides||{}).some(x=>x&&x.length)) ? '<div class="print-break-after-overrides"></div>' : ''}
+
+  ${portfolioPlanHtml}
 
   <h2>3-Year Action Plan</h2>
   ${apHtml}
