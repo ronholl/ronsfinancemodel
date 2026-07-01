@@ -7201,6 +7201,8 @@ function generateReport(){
     .summary-card .lbl{font-size:6.7pt;color:#6a4e00;text-transform:uppercase;letter-spacing:.04em;}
     .summary-card .val{font-size:12pt;font-weight:700;color:#1a1208;margin-top:2px;}
     .callout{border-left:3px solid #c8960c;background:#fffaf0;padding:7px 9px;margin:6px 0 10px;font-size:8pt;color:#2a2110;}
+    .assumption-subtable{margin-top:8px;}
+    .assumption-note{border-left:2px solid #c8960c;background:#fffaf0;padding:5px 7px;margin:3px 0 6px;font-size:7.2pt;color:#3a2a0a;line-height:1.25;}
     .callout.red{border-left-color:#8b1a1a;background:#fff5f2;}
     .bullets{margin:4px 0 8px 13px;font-size:8pt;}
     .bullets li{margin-bottom:3px;}
@@ -7332,16 +7334,26 @@ function generateReport(){
     ['Bracket Inflation',fp(A.bracketInfl)],['IRMAA MAGI Threshold Inflation',fp(A.irmaaInfl)],['Medicare Cost Inflation',fp(A.medicareCostInfl ?? A.irmaaInfl)],
     ['Stock Gain % Taxable',fp(A.stkGainPct)],['Cash Floor',fd(A.cashFloor)],
     ['Default Funding Order',formatFundingOrder(A.fundingOrder||['SEC','IRA','ROTH'])],
-    ['Roth Conversion Source',rothConvSourceLabel(A.rothConvSource, A.rothConvP1Pct)],
-    ['Roth Conversion Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
-    ['Target Fill Mode',A.irmaaFillMode==='F'?'Fill to next tier':A.irmaaFillMode==='R'?'Use Roth above target':'No extra fill'],
+    ['Plan Period',A.startYear+'–'+A.endYear+' ('+(A.endYear-A.startYear+1)+' yrs)'],
+  ]);
+  const rothRates=rateRows([
+    ['Conversion Source',rothConvSourceLabel(A.rothConvSource, A.rothConvP1Pct)],
+    ['Conversion Target',parseIRMAATargetLevel(A.irmaaTarget)!=null?irmaaLevelLabel(A.irmaaTarget,A.startYear):'Off'],
+    ['Fill Mode',A.irmaaFillMode==='F'?'Fill to next tier':A.irmaaFillMode==='R'?'Use Roth above target':'No extra fill'],
     ['Target Cushion',fd(A.irmaaHeadroom)],
     ['Federal Bracket Cap',A.irmaaMaxBracket?Math.round(parseF(A.irmaaMaxBracket)*100)+'%':'Off'],
     ['Bracket Cushion',fd(A.irmaaBracketHeadroom||0)],
-    ['Plan Period',`${A.startYear}–${A.endYear} (${A.endYear-A.startYear+1} yrs)`],
   ]);
+  const showRothAssumptions =
+    parseIRMAATargetLevel(A.irmaaTarget)!=null ||
+    !!A.irmaaMaxBracket ||
+    rows.some(r => Math.abs(r.rothConv||0) >= 50 || Math.abs(r.rothConvDraw1||0) >= 50 || Math.abs(r.rothConvDraw2||0) >= 50);
+  const rothRatesHtml = showRothAssumptions
+    ? '<table class="assumption-subtable"><thead><tr>'+th('Roth Conversion Setting')+'<th class="r">Value</th></tr></thead><tbody>'+rothRates+'</tbody></table>' +
+      '<div class="assumption-note">These settings work together only when IRA-to-Roth conversions are modeled. Source controls whose IRA supplies conversions; target, fill mode, and cushions define how much room the model tries to use.</div>'
+    : '';
 
-  // ── 6-Year Portfolio Implementation Summary ──
+  // ── 6-Year Portfolio Implementation Summary ──  // ── 6-Year Portfolio Implementation Summary ──
   const portfolioStartYear = Math.max(A.startYear, Math.min(new Date().getFullYear(), A.endYear));
   const portfolioRows = rows.filter(r => r.yr >= portfolioStartYear && r.yr <= Math.min(A.endYear, portfolioStartYear + 5));
   const portfolioTotals = {hsa:0, inherited:0, iraDraw:0, roth1:0, roth2:0};
@@ -7741,7 +7753,7 @@ function generateReport(){
       <table><thead><tr>${th('Plan Setting')}<th class="r">Value</th></tr></thead><tbody>${leftRates}</tbody></table>
     </div>
     <div></div>
-    <div><table><thead><tr>${th('Tax & Funding Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table></div>
+    <div><table><thead><tr>${th('Tax & Funding Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table>${rothRatesHtml}</div>
   </div>
   ${survivorHtml}
 
