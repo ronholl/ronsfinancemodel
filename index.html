@@ -7755,8 +7755,8 @@ function generateReport(){
     <div class="sub">${names} &nbsp;·&nbsp; ${filingMap[A.filing]||A.filing} &nbsp;·&nbsp; ${A.startYear}–${A.endYear}</div>
     <div class="boxes">
       ${[
-        [String(A.startYear-A.by1),`${A.name1} Age`],
-        ...(has2?[[String(A.startYear-A.by2),`${A.name2} Age`]]:[]),
+        [setupAgeForYear(A.by1,A.startYear)||'—',`${A.name1} Age`],
+        ...(has2?[[setupAgeForYear(A.by2,A.startYear)||'—',`${A.name2} Age`]]:[]),
         [`${(A.growthRate*100).toFixed(1)}%`,'Growth Rate'],
         [`${(A.spendInfl*100).toFixed(1)}%`,'Spend Infl'],
         [`${(A.bracketInfl*100).toFixed(1)}%`,'Bracket Infl'],
