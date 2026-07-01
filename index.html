@@ -480,6 +480,8 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 /* ── CONFLICT BADGE ── */
 .badge-warn{display:inline-block;background:#fff3cd;border:1px solid #c8a000;color:var(--warn);font-size:9px;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace}
 .ssa44-year-marker{display:inline-block;margin-left:2px;color:#1a6a1a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;line-height:1;vertical-align:super}
+.marker-legend{font-size:10.5px;color:#8a7a58;font-style:italic;margin:7px 0 8px;line-height:1.45}
+.marker-legend strong{font-style:normal;color:#6a4e00;font-family:'JetBrains Mono',monospace}
 
 /* ── MISC ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -615,6 +617,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
       <span id="summary-toggle-icon" style="font-size:16px;color:var(--gold);line-height:1">&#9660;</span>
       <span style="font-size:11px;color:#999">click to collapse</span>
     </div>
+    <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied.</div>
     <div id="summary-table-wrap" style="margin-top:12px;overflow-x:auto;border-radius:6px;border:1px solid #444;background:#fffdf5;isolation:isolate">
       <table id="summary-table" style="border-collapse:collapse;width:max-content;min-width:100%;font-family:'JetBrains Mono',monospace;font-size:11px">
         <thead id="sum-thead"></thead>
@@ -1123,6 +1126,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ CASH FLOW ═══════════ -->
 <div id="pane-cashflow" class="pane">
   <div class="sh">Complete Year-by-Year Cash Flow</div>
+  <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied.</div>
   <div id="cf-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh;position:relative;isolation:isolate;background:#fffdf5">
     <table id="cf-tbl" style="border-collapse:collapse;font-size:11px;white-space:nowrap;min-width:max-content">
       <thead id="cf-thead"></thead>
