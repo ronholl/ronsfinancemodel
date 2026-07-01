@@ -7253,10 +7253,6 @@ function generateReport(){
     .cf-print-table th{font-size:6.7pt;padding:3px 4px;}
     .cf-print-table td{padding:2px 4px;}
     .print-break-after-overrides{display:none;}
-    .cf-table tbody td:nth-child(3),
-    .cf-table tbody td:nth-child(12),
-    .cf-table tbody td:nth-child(16),
-    .cf-table tbody td:nth-child(21){border-left:1px solid #d8c48a;}
     .r{text-align:right;}
     .bold{font-weight:700;}
     .red{color:#8b1a1a;}
@@ -7327,8 +7323,8 @@ function generateReport(){
       .cashflow-section .cf-table{font-size:var(--cf-font,6.1pt);margin-bottom:4px;page-break-inside:auto;}
       .cashflow-section .cf-table th{background:#1e1a0e;color:#fff;font-size:var(--cf-head-font,5.6pt);padding:2px 2px;line-height:1.05;font-weight:800;white-space:pre-line;}
       .cashflow-section .cf-table td{font-size:inherit;padding:1.7px 2px;line-height:1.08;color:#111;font-weight:700;white-space:nowrap;}
-      .cashflow-section .cf-table .cf-group th{background:#8a6800;color:#fff;font-size:var(--cf-head-font,5.5pt);padding:2px 2px;}
-      .cashflow-section .cf-table .cf-sub th{background:#1e1a0e;color:#fff;}
+      .cashflow-section .cf-table .cf-group th{background:#fff;color:#5e4700;font-size:var(--cf-head-font,5.5pt);padding:2px 2px;font-weight:900;opacity:1;border-bottom:1px solid #8a6800;}
+      .cashflow-section .cf-table .cf-sub th{background:#fff;color:#111;font-weight:900;opacity:1;border-bottom:1px solid #8a6800;}
       .cashflow-section .cf-table .cf-start{border-left:1px solid #b88700;}
       .cashflow-section .note{font-size:7pt;margin-top:3px;}
       h2{page-break-after:avoid;}
@@ -7640,11 +7636,19 @@ function generateReport(){
     else cfGroups.push({label:c.group,count:1});
   });
   const cfGroupHeader=cfGroups.map(g=>`<th colspan="${g.count}">${g.label}</th>`).join('');
-  const cfSubHeader=cfVisibleCols.map(c=>c.group==='Year' ? th(c.label) : thr(c.label)).join('');
+  const cfAddClass = (html, cls) => html.replace(/^<(td|th)([^>]*)class="([^"]*)"/, '<$1$2class="$3 '+cls+'"').replace(/^<(td|th)(?![^>]*class=)/, '<$1 class="'+cls+'"');
+  const cfIsGroupStart = idx => idx > 0 && cfVisibleCols[idx].group !== cfVisibleCols[idx-1].group;
+  const cfSubHeader=cfVisibleCols.map((c,idx)=>{
+    const cell = c.group==='Year' ? th(c.label) : thr(c.label);
+    return cfIsGroupStart(idx) ? cfAddClass(cell, 'cf-start') : cell;
+  }).join('');
   const cfColumnCount=cfVisibleCols.length;
   const cfPrintFont=(cfColumnCount<=22?6.8:cfColumnCount<=24?6.4:6.0).toFixed(1);
   const cfPrintHeadFont=(cfColumnCount<=22?6.2:cfColumnCount<=24?5.9:5.5).toFixed(1);
-  const cfRows=cfValueRows.map(({r,v})=>`<tr>${cfVisibleCols.map(c=>c.cell(r,v)).join('')}</tr>`).join('');
+  const cfRows=cfValueRows.map(({r,v})=>`<tr>${cfVisibleCols.map((c,idx)=>{
+    const cell = c.cell(r,v);
+    return cfIsGroupStart(idx) ? cfAddClass(cell, 'cf-start') : cell;
+  }).join('')}</tr>`).join('');
   const cfSourceRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
