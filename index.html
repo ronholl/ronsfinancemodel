@@ -479,8 +479,7 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 
 /* ── CONFLICT BADGE ── */
 .badge-warn{display:inline-block;background:#fff3cd;border:1px solid #c8a000;color:var(--warn);font-size:9px;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace}
-.ssa44-year-marker{display:inline-block;margin-left:2px;color:#80c080;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;line-height:1;vertical-align:super}
-.ssa44-marker{display:inline-block;margin-left:3px;padding:1px 4px;border-radius:3px;border:1px solid #9cc79c;background:#eaf6ea;color:#1a4a1a;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;line-height:1.2;vertical-align:middle;white-space:nowrap}
+.ssa44-year-marker{display:inline-block;margin-left:2px;color:#1a6a1a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;line-height:1;vertical-align:super}
 
 /* ── MISC ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -4748,7 +4747,6 @@ function renderSummaryTable(){
   };
   const PCT = n => n==null||isNaN(n) ? '—' : (n*100).toFixed(1)+'%';
   const ssa44YearMarker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-year-marker" title="SSA-44 IRMAA relief assumed for this year">†</span>' : '';
-  const ssa44Marker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-marker" title="SSA-44 IRMAA relief assumed for this year">SSA-44</span>' : '';
 
   let groups = [
     { label:'', bg:'#1a1208', tc:'#b8860b', cols:[
@@ -4886,8 +4884,7 @@ function renderSummaryTable(){
         const raw  = isAge && hideAgeField(r, col.f) ? null
                    : derived[col.f]!==undefined ? derived[col.f] : r[col.f];
         let val    = col.pct ? PCT(raw) : isYr ? raw : isAge && (raw==null||raw<=0) ? '—' : W(raw);
-        if(isYr && r.irmaaSurvivorRelief) val = String(val) + ssa44YearMarker(r);
-        if(col.f==='irmaaTx' && r.irmaaSurvivorRelief) val = ssa44Marker(r) + ' ' + val;
+        if(col.f==='irmaaTx' && r.irmaaSurvivorRelief) val = String(val) + ssa44YearMarker(r);
         if(col.ovr && r[col.ovr]) val = '✦ ' + val; // override active marker (thin space)
         let extra  = '';
         if(col.bold)  extra += 'font-weight:700;';
@@ -4915,7 +4912,6 @@ function renderCF(){
   };
   const PCT = (n) => n==null||isNaN(n) ? '—' : (n*100).toFixed(1)+'%';
   const ssa44YearMarker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-year-marker" title="SSA-44 IRMAA relief assumed for this year">†</span>' : '';
-  const ssa44Marker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-marker" title="SSA-44 IRMAA relief assumed for this year">SSA-44</span>' : '';
 
   // Frozen col widths (px): Year=52, Age1=46, Age2=46
   const frozenCols = [
@@ -5102,7 +5098,6 @@ function renderCF(){
       const isAge = col.f==='age1'||col.f==='age2';
       let fval = isAge && hideAgeField(r, col.f) ? '—'
         : isAge && r[col.f]<=0 ? '—' : r[col.f];
-      if (col.f === 'yr' && r.irmaaSurvivorRelief) fval = String(fval) + ssa44YearMarker(r);
       cells += `<td style="position:sticky;left:${left}px;z-index:2;
         width:${col.w}px;min-width:${col.w}px;max-width:${col.w}px;
         padding:3px 4px;text-align:center;font-family:'JetBrains Mono',monospace;
@@ -5130,7 +5125,7 @@ function renderCF(){
         const bdr = ci===0 ? 'border-left:3px solid #ddd;' : '';
         const raw = derived[col.f] !== undefined ? derived[col.f] : r[col.f];
         let val = typeof raw === 'string' ? raw : (col.pct ? PCT(raw) : W(raw));
-        if(col.f==='irmaaTx' && r.irmaaSurvivorRelief) val = ssa44Marker(r) + ' ' + val;
+        if(col.f==='irmaaTx' && r.irmaaSurvivorRelief) val = String(val) + ssa44YearMarker(r);
         if(col.ovr && r[col.ovr]) val = '✦ ' + val;
         let color='', fw='';
         if(col.bold) fw='font-weight:700;';
@@ -7232,8 +7227,6 @@ function generateReport(){
     .summary-card{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px 8px;}
     .summary-card .lbl{font-size:6.7pt;color:#6a4e00;text-transform:uppercase;letter-spacing:.04em;}
     .summary-card .val{font-size:12pt;font-weight:700;color:#1a1208;margin-top:2px;}
-    .ssa44-year-marker{display:inline-block;margin-left:1px;color:#1a5a1a;font-size:6.8pt;font-weight:900;line-height:1;vertical-align:super;}
-    .ssa44-marker{display:inline-block;margin-left:2px;padding:1px 3px;border-radius:3px;border:0.5px solid #8eb88e;background:#eaf6ea;color:#1a4a1a;font-size:5.5pt;font-weight:800;line-height:1.1;vertical-align:middle;white-space:nowrap;}
     .callout{border-left:3px solid #c8960c;background:#fffaf0;padding:7px 9px;margin:6px 0 10px;font-size:8pt;color:#2a2110;}
     .assumption-subtable{margin-top:8px;}
     .assumption-note{border-left:2px solid #c8960c;background:#fffaf0;padding:5px 7px;margin:3px 0 6px;font-size:7.2pt;color:#3a2a0a;line-height:1.25;}
@@ -7575,9 +7568,6 @@ function generateReport(){
   }
 
   // ── Cash Flow table ──
-  const ssa44YearMarker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-year-marker" title="SSA-44 IRMAA relief assumed for this year">†</span>' : '';
-  const ssa44Marker = r => r && r.irmaaSurvivorRelief ? '<span class="ssa44-marker" title="SSA-44 IRMAA relief assumed for this year">SSA-44</span>' : '';
-  const ssa44Year = r => String(r.yr) + ssa44YearMarker(r);
   const cfVals=(r)=>{
     const w2Cash = (r.atWages != null) ? (r.atWages||0) : ((r.atWages1||0)+(r.atWages2||0));
     const wages=w2Cash+(r.ptWages1||0)+(r.ptWages2||0);
@@ -7611,7 +7601,7 @@ function generateReport(){
   const cfValueRows=rows.map(r=>({r,v:cfVals(r)}));
   const cfAny = (getter, min=50) => cfValueRows.some(({r,v}) => Math.abs(getter(r,v)||0) >= min);
   const cfCols=[
-    {group:'Year',label:'Year',cell:(r,v)=>td(ssa44Year(r))},
+    {group:'Year',label:'Year',cell:(r,v)=>td(r.yr)},
     {group:'Year',label:'Ages',cell:(r,v)=>td(age(r))},
     {group:'Funding Sources',label:'Wages',show:cfAny((r,v)=>v.wages),cell:(r,v)=>td(dz(v.wages),'r')},
     {group:'Funding Sources',label:'Social\nSecurity',show:cfAny((r,v)=>v.ss),cell:(r,v)=>td(dz(v.ss),'r')},
@@ -7627,7 +7617,7 @@ function generateReport(){
     {group:'Funding Required',label:'Cash\nGap',show:cfAny((r,v)=>v.cashGap),cell:(r,v)=>td(dzGap(v.cashGap),'r')},
     {group:'Funding Required',label:'Total\nRequired',cell:(r,v)=>td(fd(v.fundingRequired,true),'r bold')},
     {group:'Tax & Medicare',label:'Income\nTax',cell:(r,v)=>td(fd(r.incomeTax,true),'r')},
-    {group:'Tax & Medicare',label:'IRMAA\nSurcharge',show:cfAny((r,v)=>r.irmaaTx),cell:(r,v)=>td((r.irmaaSurvivorRelief ? ssa44Marker(r)+' ' : '')+dz(r.irmaaTx),'r')},
+    {group:'Tax & Medicare',label:'IRMAA\nSurcharge',show:cfAny((r,v)=>r.irmaaTx),cell:(r,v)=>td(dz(r.irmaaTx),'r')},
     {group:'Tax & Medicare',label:'Medicare\nPart B',show:cfAny((r,v)=>r.medicareBase),cell:(r,v)=>td(dz(r.medicareBase),'r')},
     {group:'Tax & Medicare',label:'Eff\nRate',cell:(r,v)=>td(fp(r.effRate),'r')},
     {group:'Tax & Medicare',label:'Marg\nRate',cell:(r,v)=>td(fp(r.margRate),'r')},
@@ -7654,7 +7644,7 @@ function generateReport(){
   const cfSourceRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
-      ${td(ssa44Year(r))}${td(age(r))}
+      ${td(r.yr)}${td(age(r))}
       ${td(dz(v.wages),'r')}${td(dz(v.ss),'r')}${td(dz(v.ira_tot),'r')}${td(dz(v.rc),'r')}${td(dz(v.divs),'r')}
       ${td(dz(v.hsaW),'r')}${td(dz(v.allInhD),'r')}${td(dz(v.roth_wd),'r')}${td(dz(v.cashD),'r')}${td(dz(v.stkS),'r')}${td(fd(v.totalFunded,true),'r bold')}
     </tr>`;
@@ -7662,15 +7652,15 @@ function generateReport(){
   const cfRequiredRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
-      ${td(ssa44Year(r))}${td(age(r))}
+      ${td(r.yr)}${td(age(r))}
       ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
     </tr>`;
   }).join('');
   const cfTaxBalanceRows=rows.map(r=>{
     const v=cfVals(r);
     return `<tr>
-      ${td(ssa44Year(r))}${td(age(r))}
-      ${td(fd(r.incomeTax,true),'r')}${td((r.irmaaSurvivorRelief ? ssa44Marker(r)+' ' : '')+dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
+      ${td(r.yr)}${td(age(r))}
+      ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
@@ -7740,13 +7730,13 @@ function generateReport(){
   const txRows=rows.map(r=>{
     const ded=r.effDed||r.stdDed||0, flag=(r.effDed||0)>((r.stdDed||0)+(r.seniorBonus||0)+(r.charityDed||0))?'✦ ':'';
     return `<tr>
-      ${td(ssa44Year(r))}${td(age(r))}${td(fd(r.agi,true),'r')}
+      ${td(r.yr)}${td(age(r))}${td(fd(r.agi,true),'r')}
       ${td(flag+fd(ded,true),'r')}${td(r.seniorBonus>0?fd(r.seniorBonus,true):'—','r')}${td(r.charityDed>0?fd(r.charityDed,true):'—','r')}${td(fd(r.taxableInc,true),'r')}
       ${td(r.taxFiling||A.filing)}
       ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.stTax),'r')}
       ${td(fd(r.incomeTax,true),'r bold')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td((r.irmaaSurvivorRelief ? ssa44Marker(r)+' ' : '')+dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
+      ${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
       ${td(r.irmaaTier||'—')}
     </tr>`;
   }).join('');
@@ -7894,8 +7884,8 @@ function generateReport(){
       ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth')].join('')}
     </tr></thead><tbody>${cfTaxBalanceRows}</tbody></table>
   </div>
-  <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year. † / SSA-44 marks survivor years where IRMAA relief is assumed.</p>
-  <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together. † / SSA-44 marks survivor years where IRMAA relief is assumed.</p>
+  <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
+  <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together.</p>
   </div>
 
   <h2>Lifetime Tax Summary</h2>
@@ -7912,7 +7902,7 @@ function generateReport(){
   <table><thead><tr>
     ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
   </tr></thead><tbody>${txRows}</tbody></table>
-  <p class="note">✦ = itemized deduction. † / SSA-44 = survivor IRMAA relief assumed for that year. All figures are projections only.</p>
+  <p class="note">✦ = itemized deduction. All figures are projections only.</p>
 
   </body></html>`;
 
