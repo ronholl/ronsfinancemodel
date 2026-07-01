@@ -770,12 +770,19 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           Survivor receives higher Social Security benefit
         </label>
       </div>
-      <div class="field" style="margin-bottom:0">
+      <div class="field" style="margin-bottom:6px">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
           <input type="checkbox" id="i-widow-single" onchange="IC()" style="width:auto">
           Switch survivor to Single filing starting the year after death
         </label>
         <div class="note">Death year remains MFJ. Starting the following year, federal and CA tax brackets, standard deductions, taxable Social Security, Medicare/IRMAA count, and senior deductions use Single.</div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
+          <input type="checkbox" id="i-widow-ssa44" onchange="IC()" style="width:auto">
+          Assume SSA-44 IRMAA relief after spouse death
+        </label>
+        <div class="note">If checked, survivor years whose Medicare lookback still points to the pre-death/death-year joint period use projected survivor MAGI and filing status, as if SSA approves a life-changing-event request. Leave unchecked for the strict two-year lookback.</div>
       </div>
     </div>
 
@@ -1136,7 +1143,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
       <thead><tr>
         <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
         <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
-        <th style="color:#888">Prior MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
+        <th style="color:#888">IRMAA MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
     </table>
@@ -2074,7 +2081,7 @@ function defaultState() {
     ssCola:0.025,
     irmaaFillMode:'',
     fundingOrder1:'SEC', fundingOrder2:'IRA', fundingOrder3:'ROTH',
-    widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true,
+    widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true, widowSSA44Relief:false,
     wageGrowth:0.030,
     // RMD
     rmdStart1:0,
@@ -2670,6 +2677,7 @@ function runProjection(S) {
     const TAX_SOLVER_MAX_PASSES = 20;
     const TAX_SOLVER_EPS = 0.50;
     let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
+    let irmaaLookbackYear_f=yr-2, irmaaSurvivorRelief_f=false;
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
     const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
     let rothModeWith1_f=0, rothModeWith2_f=0;
@@ -2984,10 +2992,18 @@ function runProjection(S) {
       ? (ovStateRow && ovStateRow !== 'NONE' ? ovStateRow : '')
       : S.state;
     const stTax   = calcStateTax(caAGI, taxFiling, effectiveState, null, tables, caItemized);
-    // IRMAA uses 2-year prior MAGI (Medicare lookback rule)
-    const irmaaMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
-                      yr === S.startYear+1 ? (S.medicareMagi1||0) :
-                      rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
+    // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
+    // an approved SSA-44 life-changing-event request after spouse death: only years
+    // whose lookback still points to the pre-death/death-year joint period use the
+    // current projected survivor MAGI and current survivor filing status.
+    const irmaaLookbackYear = yr === S.startYear ? S.startYear - 2
+                           : yr === S.startYear + 1 ? S.startYear - 1
+                           : yr - 2;
+    const irmaaLookbackMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
+                              yr === S.startYear+1 ? (S.medicareMagi1||0) :
+                              rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
+    const survivorIRMAARelief = afterDeathYear && S.widowSSA44Relief === true && irmaaLookbackYear <= widowYear;
+    const irmaaMagi = survivorIRMAARelief ? magi : irmaaLookbackMagi;
     const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
     // Part B base premium — per enrolled person (age 65+), inflated with medicareCostInfl
     const partBPerPerson = tables.partBBase || 2220;
@@ -3006,6 +3022,7 @@ function runProjection(S) {
     rothDraw1_f=rothDraw1_inner; rothDraw2_f=rothDraw2_inner;
     excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
     unfunded_f=unfunded; fundingChoice_f=fundingChoice; fundingOrder_f=fundingOrder; irmaaMagi_f=irmaaMagi;
+    irmaaLookbackYear_f=irmaaLookbackYear; irmaaSurvivorRelief_f=survivorIRMAARelief;
     qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
     taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
     // Converge if tax override supplied, or change is below display precision.
@@ -3030,6 +3047,7 @@ function runProjection(S) {
     const taxOvrActive = taxOvrAmt != null;
     const ira1Addl=ira1Draw_f, ira2Addl=ira2Draw_f, stkSales=secDraw_f;
     const unfunded=unfunded_f, fundingChoice=fundingChoice_f, fundingOrder=fundingOrder_f, irmaaMagi=irmaaMagi_f;
+    const irmaaLookbackYear=irmaaLookbackYear_f, irmaaSurvivorRelief=irmaaSurvivorRelief_f;
     const qualDivs=qualDivs_f, qualDivsForTax=qualDivsForTax_f, taxableRMDs=taxableRMDs_f;
     const taxableStkGain=taxableStkGain_f, w2AGI=w2AGI_f, w2AGI1=w2AGI1_f, w2AGI2=w2AGI2_f;
     // incomeTax = fed+CA (IRMAA separate); cashTax = incomeTax + IRMAA (actual cash out)
@@ -3136,7 +3154,7 @@ function runProjection(S) {
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
       agi, magi, stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
-      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, taxFiling,
+      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
       totalTax: cashTax, incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
@@ -3761,6 +3779,7 @@ function applyMigrations(merged) {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
+  if (merged.widowSSA44Relief == null) merged.widowSSA44Relief = false;
   if (merged.irmaaMaxBracket == null) merged.irmaaMaxBracket = '';
   if (merged.irmaaBracketHeadroom == null || isNaN(merged.irmaaBracketHeadroom)) merged.irmaaBracketHeadroom = 0;
   if (merged.irmaaFillMode == null || merged.irmaaFillMode === 'S') merged.irmaaFillMode = '';
@@ -4148,6 +4167,7 @@ function loadUI(){
   const we=document.getElementById('i-widow-endss'); if(we) we.checked = S.widowEndSS !== false;
   const wss=document.getElementById('i-widow-survivorss'); if(wss) wss.checked = S.widowSurvivorSS !== false;
   const ws=document.getElementById('i-widow-single'); if(ws) ws.checked = S.widowSwitchSingle !== false;
+  const w44=document.getElementById('i-widow-ssa44'); if(w44) w44.checked = S.widowSSA44Relief === true;
   sv('i-cola',pct(S.ssCola));
   sv('i-wagegrowth',pct(S.wageGrowth ?? S.ssCola));
   // RMD years auto-calculated, shown via updateLabels
@@ -4303,6 +4323,7 @@ function readUI(){
   S.widowEndSS=document.getElementById('i-widow-endss')?.checked ?? true;
   S.widowSurvivorSS=document.getElementById('i-widow-survivorss')?.checked ?? true;
   S.widowSwitchSingle=document.getElementById('i-widow-single')?.checked ?? true;
+  S.widowSSA44Relief=document.getElementById('i-widow-ssa44')?.checked ?? false;
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
   // RMD start years auto-calculated in updateLabels — not read from inputs
@@ -5353,7 +5374,7 @@ function renderYD(){
       ${(r.seniorBonus||0)>0?dr('Enhanced Senior Deduction',f$(r.seniorBonus)):''}
       ${(r.charityDed||0)>0?dr('Non-itemizer Charity Deduction',f$(r.charityDed)):''}
       ${dr('Taxable Income',f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed))))}
-      ${dr('IRMAA ('+r.irmaaTier+') — prior MAGI: '+f$(r.irmaaMagi||0),f$(r.irmaaTx))}
+      ${dr('IRMAA ('+r.irmaaTier+') — '+(r.irmaaSurvivorRelief?'SSA-44 MAGI: ':'IRMAA MAGI: ')+f$(r.irmaaMagi||0),f$(r.irmaaTx))}
       ${dr('Total Cash Tax (Inc + IRMAA)',f$(r.cashTax),'tot')}
       ${dr('Effective Rate',fp(r.effRate))}
       ${dr('Marginal Rate',fp(r.margRate))}
@@ -6341,7 +6362,7 @@ function apCard(yr){
       <span style="font-size:11.5px;color:#555">Effective / Marginal</span>
       <span style="font-size:12px;font-family:'JetBrains Mono',monospace">${((r.effRate||0)*100).toFixed(1)}% / ${((r.margRate||0)*100).toFixed(0)}%</span>
     </div>
-    ${hasIRMAA ? `<div style="font-size:10px;background:#fff4e0;border-left:3px solid #b87000;padding:4px 8px;margin-top:4px;border-radius:0 4px 4px 0;color:#7a4800">⚠ IRMAA ${r.irmaaTier || ""} — prior MAGI: ${f$(r.irmaaMagi||0)}</div>` : ''}
+    ${hasIRMAA ? `<div style="font-size:10px;background:#fff4e0;border-left:3px solid #b87000;padding:4px 8px;margin-top:4px;border-radius:0 4px 4px 0;color:#7a4800">⚠ IRMAA ${r.irmaaTier || ""} — ${r.irmaaSurvivorRelief?'SSA-44 MAGI':'IRMAA MAGI'}: ${f$(r.irmaaMagi||0)}</div>` : ''}
 
     ${hdr('END-OF-YEAR')}
     ${fundingDelta > 0 ? row('Funding Surplus', fundingDelta, false, '#1a4a1a') : ''}
@@ -6976,7 +6997,7 @@ function buildReportPayload(){
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
     widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
-    widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false,
+    widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false, widowSSA44Relief: S.widowSSA44Relief === true,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
     pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
     pre2020InhOwnerBy2: S.pre2020InhOwnerBy2||'', pre2020InhDeathYear2: S.pre2020InhDeathYear2||'',
@@ -7020,7 +7041,7 @@ function buildReportPayload(){
     incomeTax:r.incomeTax||0, irmaaTx:r.irmaaTx||0,
     medicareBase:r.medicareBase||0,
     effRate:r.effRate||0, margRate:r.margRate||0, blended:r.blended||0,
-    irmaaTier:r.irmaaTier||'', irmaaMagi:r.irmaaMagi||0, taxFiling:r.taxFiling||S.filing,
+    irmaaTier:r.irmaaTier||'', irmaaMagi:r.irmaaMagi||0, irmaaLookbackYear:r.irmaaLookbackYear||0, irmaaSurvivorRelief:!!r.irmaaSurvivorRelief, taxFiling:r.taxFiling||S.filing,
     startCashBal:r.startCashBal||0, startSec:r.startSec||0,
     startIRA1:r.startIRA1||0, startIRA2:r.startIRA2||0,
     startRoth1:r.startRoth1||0, startRoth2:r.startRoth2||0,
@@ -7325,7 +7346,7 @@ function generateReport(){
   const rateRows=(pairs)=>pairs.map(([l,v])=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`).join('');
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
-    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}%`:'Off'],
+    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}% · SSA-44 IRMAA relief ${A.widowSSA44Relief?'on':'off'}`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Brokerage Dividend / Interest Rate',fp(A.divRate)],['Dividend Reinvest',fp(A.divReinvestPct ?? ((A.reinvestDivs||'no')==='yes'?1:0))],
     ['Cash Interest Rate',fp(A.intRate||0)],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
@@ -7684,6 +7705,7 @@ function generateReport(){
       ${A.widowEndSS?'the lower Social Security benefit ends;':'both Social Security streams remain as entered;'}
       ${A.widowSurvivorSS?'the survivor receives the higher Social Security benefit;':'survivor benefit replacement is off;'}
       Medicare/IRMAA counts follow the surviving spouse.
+      ${A.widowSSA44Relief?'SSA-44 IRMAA relief is assumed for survivor years whose two-year Medicare lookback still points to the pre-death or death-year joint period; those years use projected survivor MAGI and filing status instead.':'SSA-44 IRMAA relief is not assumed; survivor IRMAA uses the strict two-year lookback even if that points to pre-death joint income.'}
     </div>` : '';
   const hasOverrides=Object.values(P.overrides||{}).some(x=>x&&x.length);
   const apHasRothConv=ap.some(r=>(r.rothConv||0)>0);
@@ -8969,7 +8991,8 @@ function rothLabSurvivorAssumptionLabel(state){
   if (!A.widowMode || A.widowMode === 'off') return 'Both people live through plan end.';
   const survivor = A.widowMode === 'p1Survives' ? (A.name1 || 'Primary Person') : A.widowMode === 'p2Survives' ? (A.name2 || 'Spouse/Partner') : 'Survivor';
   const filing = A.widowSwitchSingle ? 'switches to Single after death year' : 'keeps current filing after death year';
-  return survivor + ' survives; death year ' + setupDeathYearText(A.widowDeathYear, A.widowMode, A) + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%.';
+  const relief = A.widowSSA44Relief ? '; assumes SSA-44 IRMAA relief for stale joint-income lookbacks' : '';
+  return survivor + ' survives; death year ' + setupDeathYearText(A.widowDeathYear, A.widowMode, A) + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%' + relief + '.';
 }
 function rothLabReportSource(scenarios, cfg){
   const selected = rothLabSelectedScenarios(scenarios);
@@ -10041,7 +10064,8 @@ function renderSetupSurvivorStep(){
     setupInput('Survivor Spending Adjustment (%)','widowSpendPct','number',S.widowSpendPct || 0,{step:'1',placeholder:'0',note:'Applied starting the year after death. Use negative for lower spending or positive for higher spending. Explicit spending overrides still win.'}),
     setupBoolSelect('End Deceased Spouse Social Security','widowEndSS',S.widowEndSS !== false,'Yes - end the lower/deceased benefit','No - keep both streams','Normally yes. This prevents the model from continuing both Social Security checks after one spouse dies.'),
     setupBoolSelect('Survivor Receives Higher Social Security','widowSurvivorSS',S.widowSurvivorSS !== false,'Yes - use the higher benefit','No - no survivor benefit replacement','Normally yes. The surviving spouse often keeps the larger of the two benefits, not both.'),
-    setupBoolSelect('Switch Survivor to Single Filing','widowSwitchSingle',S.widowSwitchSingle !== false,'Yes - switch after death year','No - keep current filing','Normally yes. This changes tax brackets, standard deduction, Medicare/IRMAA count, and senior deduction logic after the death year.')
+    setupBoolSelect('Switch Survivor to Single Filing','widowSwitchSingle',S.widowSwitchSingle !== false,'Yes - switch after death year','No - keep current filing','Normally yes. This changes tax brackets, standard deduction, Medicare/IRMAA count, and senior deduction logic after the death year.'),
+    setupBoolSelect('Assume SSA-44 IRMAA Relief','widowSSA44Relief',S.widowSSA44Relief === true,'Yes - use survivor MAGI for stale lookback years','No - strict two-year lookback','Optional planning assumption. If approved, SSA can use newer survivor MAGI after a spouse death instead of stale joint-income lookback years. This is not automatic; the survivor would request it with SSA-44.')
   ].join('') : '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Both living through plan end</div><div class="setup-check-body">No death event is modeled. The projection keeps both people, both Social Security streams as entered, married filing assumptions, Medicare count, and account/RMD logic through the end year.</div></div>';
   const impact = active
     ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(deathYearLabel)+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps the retirement balances. Depending on the choices below, the model can switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
