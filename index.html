@@ -339,6 +339,30 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .funding-order-note{font-size:11px;color:var(--ink2);font-style:italic;margin-top:9px;line-height:1.4}
 .funding-order-note strong{font-weight:900;color:var(--ink);font-style:normal}
 @media(max-width:560px){.funding-order-grid{grid-template-columns:1fr}.funding-order-grid .field label{text-align:left}}
+.bucket-controls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.bucket-controls .field{min-width:160px;margin-bottom:0}
+.bucket-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0 14px}
+.bucket-metric{border:1px solid var(--cream3);border-radius:6px;background:#fffaf0;padding:10px 12px}
+.bucket-metric-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.bucket-metric-value{font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:850;color:var(--ink);line-height:1.1}
+.bucket-table-wrap{overflow-x:auto;border:1px solid var(--cream3);border-radius:8px;background:#fffdf7;margin-top:10px}
+.bucket-table{width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;font-size:12px;font-family:'Lora',Georgia,serif;font-variant-numeric:tabular-nums}
+.bucket-table th{background:#fff1cf;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:8px 9px;border-bottom:2px solid var(--gold2);text-align:left;white-space:nowrap}
+.bucket-table td{padding:9px 9px;border-bottom:1px solid var(--cream3);vertical-align:top}
+.bucket-table .r{text-align:right;white-space:nowrap}
+.bucket-table .bold{font-weight:850}
+.bucket-account-name{font-weight:850;color:var(--ink);line-height:1.2}
+.bucket-account-meta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:#76643b;margin-top:3px}
+.bucket-policy-controls{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;min-width:150px}
+.bucket-policy-controls label{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;color:#6a5830;text-transform:uppercase;letter-spacing:.04em}
+.bucket-policy-controls input{width:54px;padding:4px 5px!important;font-size:11px!important;text-align:right}
+.bucket-policy-controls input[type="checkbox"]{width:auto;padding:0!important;margin:4px 0 0;text-align:left}
+.bucket-policy-controls button{padding:4px 7px!important;font-size:9px!important;line-height:1.2}
+.bucket-policy-note{font-size:10px;line-height:1.35;color:#6a5830;margin-top:4px}
+.bucket-year-list{font-size:10.5px;line-height:1.35;color:#6a5830;margin-top:3px}
+.bucket-guidance{font-size:11.5px;line-height:1.45;color:var(--ink2)}
+.bucket-warning{margin-top:5px;color:#8b1a1a;font-weight:800}
+.bucket-empty{border:1px dashed var(--cream3);border-radius:8px;background:#fffaf0;padding:18px;color:#6a5830;font-size:13px;line-height:1.5}
 .post2020-lots{display:flex;flex-direction:column;gap:8px}
 .post2020-lot{border:1px solid var(--cream3);background:var(--cream2);border-radius:4px;padding:8px}
 .post2020-lot-head{display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em;margin-bottom:6px}
@@ -476,6 +500,14 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 .dr .dv{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:10px}
 .dr.tot .dl,.dr.tot .dv{font-weight:700;color:var(--gold);font-size:12px}
 .dr.big .dv{color:var(--green);font-size:13px}
+.bucket-targets-card{margin-top:10px;background:#fffaf0;border:1px solid #ddd0a8;border-radius:6px;padding:9px 10px}
+.bucket-targets-card .bucket-targets-title{font-size:9px;letter-spacing:.1em;color:var(--gold);font-weight:800;margin-bottom:6px;text-transform:uppercase}
+.bucket-targets-card .bucket-target-row{border-top:1px solid #ede1c0;padding-top:5px;margin-top:5px}
+.bucket-targets-card .bucket-target-row:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.bucket-target-name{font-size:11px;font-weight:850;color:var(--ink);line-height:1.2}
+.bucket-target-line{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:#6a4e00;margin-top:2px}
+.bucket-target-line span:last-child{font-family:'JetBrains Mono',monospace;color:var(--ink);font-weight:700;white-space:nowrap}
+.bucket-target-note{font-size:9.5px;line-height:1.35;color:#6a5830;margin-top:2px}
 
 /* ── CONFLICT BADGE ── */
 .badge-warn{display:inline-block;background:#fff3cd;border:1px solid #c8a000;color:var(--warn);font-size:9px;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace}
@@ -565,6 +597,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
   <button class="tab active" onclick="ST('dashboard')">Dashboard</button>
   <button class="tab" onclick="ST('setup')">Setup Guide</button>
   <button class="tab" onclick="ST('rothlab')">Roth Lab</button>
+  <button class="tab" onclick="ST('portfolio')">Bucket Lab</button>
   <button class="tab advanced-tab" onclick="ST('inputs')">Inputs</button>
   <button class="tab advanced-tab" onclick="ST('soy')">Start of Year</button>
   <button class="tab advanced-tab" onclick="ST('overrides')">Override Tables</button>
@@ -643,6 +676,11 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ ROTH LAB ═══════════ -->
 <div id="pane-rothlab" class="pane">
   <div id="roth-lab-root"></div>
+</div>
+
+<!-- ═══════════ PORTFOLIO PLAN ═══════════ -->
+<div id="pane-portfolio" class="pane">
+  <div id="portfolio-plan-root"></div>
 </div>
 
 <!-- ═══════════ INPUTS ═══════════ -->
@@ -1951,6 +1989,53 @@ function pre2020LotHasData(lot) {
     !!String(lot.deathYear || '').trim() ||
     !!String(lot.notes || '').trim();
 }
+function stableLotHash(text) {
+  let hash = 2166136261;
+  const str = String(text || '');
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+function normalizeLotId(id) {
+  const cleaned = String(id || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+  return cleaned || '';
+}
+function createInheritedLotId(kind, lot, idx) {
+  const safeKind = kind === 'post2020' ? 'post2020' : 'pre2020';
+  const parts = [
+    safeKind, idx + 1,
+    lot && lot.beneficiary || '',
+    lot && lot.balance || '',
+    lot && lot.startYear || '',
+    lot && lot.ownerBy || '',
+    lot && lot.deathYear || '',
+    lot && lot.strategy || '',
+    lot && lot.pct || '',
+    lot && lot.notes || ''
+  ];
+  return safeKind + '_' + (idx + 1) + '_' + stableLotHash(parts.join('|'));
+}
+function ensureInheritedLotIds(state) {
+  if (!state) return false;
+  let changed = false;
+  const ensure = (key, kind) => {
+    if (!Array.isArray(state[key])) state[key] = [];
+    state[key].forEach((lot, idx) => {
+      if (!lot) return;
+      const existing = normalizeLotId(lot.id);
+      const next = existing || createInheritedLotId(kind, lot, idx);
+      if (lot.id !== next) {
+        lot.id = next;
+        changed = true;
+      }
+    });
+  };
+  ensure('pre2020InhLots', 'pre2020');
+  ensure('post2020InhLots', 'post2020');
+  return changed;
+}
 function pre2020LegacyLot(state, beneficiary) {
   const k = beneficiary === '2' ? '2' : '1';
   const lot = {
@@ -1967,7 +2052,8 @@ function getPre2020InhLots(state) {
   const source = Array.isArray(state.pre2020InhLots) && state.pre2020InhLots.length
     ? state.pre2020InhLots
     : [pre2020LegacyLot(state,'1'), pre2020LegacyLot(state,'2')].filter(Boolean);
-  return (source || []).map(lot => ({
+  return (source || []).map((lot, idx) => ({
+    id:normalizeLotId(lot.id) || createInheritedLotId('pre2020', lot, idx),
     beneficiary:pre2020LotBeneficiary(lot),
     balance:lot.balance ?? '',
     startYear:lot.startYear ?? '',
@@ -1993,6 +2079,7 @@ function normalizePre2020InhLots(state) {
     state.pre2020InhLots = [pre2020LegacyLot(state,'1'), pre2020LegacyLot(state,'2')].filter(Boolean);
   }
   state.pre2020InhLots = getPre2020InhLots(state);
+  ensureInheritedLotIds(state);
   syncLegacyPre2020FromLots(state);
   return state.pre2020InhLots;
 }
@@ -2004,7 +2091,7 @@ function resetPre2020LotTotals(lots, beneficiary, targetTotal, year) {
   const activeLots = (lots || []).filter(lot => lot.active && pre2020LotBeneficiary(lot) === beneficiary);
   const target = Math.max(0, parseF(targetTotal) || 0);
   if (!activeLots.length) {
-    if (target > 0) lots.push({idx:lots.length, beneficiary, balance:target, startYear:year, ownerBy:'', deathYear:'', notes:'Annual Check-In balance', bal:target, active:true});
+    if (target > 0) lots.push({id:createInheritedLotId('pre2020', {beneficiary, balance:target, startYear:year, notes:'Annual Check-In balance'}, lots.length), idx:lots.length, beneficiary, balance:target, startYear:year, ownerBy:'', deathYear:'', notes:'Annual Check-In balance', bal:target, active:true});
     return;
   }
   const current = activeLots.reduce((sum, lot) => sum + (lot.bal || 0), 0);
@@ -2105,6 +2192,8 @@ function defaultState() {
     reinvestDivs:'yes',
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
+    bucketShortYears:3, bucketIntermediateYears:5, bucketPlanYear:0,
+    bucketPolicies:{},
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
     rothConvSource:'HIGH', rothConvP1Pct:50,
     stkGainPct:0.30,
@@ -2181,8 +2270,9 @@ function runProjection(S) {
   // Working balances — will be overridden by SOY entries when present
   let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0;
   let secBalanceMix = {taxable:1, treasury:0, caMuni:0, otherMuni:0};
-  const pre2020Lots = getPre2020InhLots(S).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
-  const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot));
+  ensureInheritedLotIds(S);
+  const pre2020Lots = getPre2020InhLots(S).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot, {id:normalizeLotId(lot.id) || createInheritedLotId('pre2020', lot, idx)}));
+  const post2020Lots = (S.post2020InhLots||[]).map((lot, idx)=>Object.assign({idx, bal:0, active:false}, lot, {id:normalizeLotId(lot.id) || createInheritedLotId('post2020', lot, idx)}));
 
   for (let yr = S.startYear; yr <= S.endYear; yr++) {
     const by1Eff = calcBirthYearForPlan(S.by1, yr), by2Eff = calcBirthYearForPlan(S.by2, yr);
@@ -2432,6 +2522,7 @@ function runProjection(S) {
       if (beneficiary === '2') pre2020InhDraw2 += required;
       else pre2020InhDraw1 += required;
       pre2020LotDetails.push({
+        id:lot.id || createInheritedLotId('pre2020', lot, lot.idx || 0),
         idx:lot.idx, beneficiary, label:lot.notes || ('Pre-2020 lot '+(lot.idx+1)),
         startBal:lot.bal || 0, required, addl:0, draw:required,
         firstYear:calc.firstYear, divisor:calc.divisor, ownerReachedRMD:calc.ownerReachedRMD,
@@ -2447,6 +2538,7 @@ function runProjection(S) {
     const post2020LotDetails = [];
     for (const lot of post2020Lots) {
       if (!lot.active || (lot.bal||0) <= 0) continue;
+      const lotStartBal = lot.bal || 0;
       const deathYear = parseInt(lot.deathYear) || 0;
       if (!deathYear) continue;
       const finalYear = deathYear + 10;
@@ -2468,7 +2560,12 @@ function runProjection(S) {
       else if (draw > required) post2020InhExtra += draw - required;
       post2020InhRMD += yr >= finalYear ? draw : Math.min(draw, required);
       lot.bal = Math.max(0, (lot.bal - draw) * (1 + gRate));
-      post2020LotDetails.push({idx:lot.idx, beneficiary:lot.beneficiary||'1', draw, required:yr >= finalYear ? draw : Math.min(draw, required), extra:yr >= finalYear ? 0 : Math.max(0, draw-required), finalYear, divisor, ownerReachedRMD, endBal:lot.bal});
+      post2020LotDetails.push({
+        id:lot.id || createInheritedLotId('post2020', lot, lot.idx || 0),
+        idx:lot.idx, beneficiary:lot.beneficiary||'1', label:lot.notes || ('Post-2020 lot '+(lot.idx+1)),
+        startBal:lotStartBal, draw, required:yr >= finalYear ? draw : Math.min(draw, required),
+        extra:yr >= finalYear ? 0 : Math.max(0, draw-required), finalYear, divisor, ownerReachedRMD, endBal:lot.bal
+      });
     }
     const post2020InhDraw = post2020InhRMD + post2020InhExtra;
     const post2020InhDiscretionary = post2020InhExtra;
@@ -3172,6 +3269,400 @@ function runProjection(S) {
   return rows;
 }
 
+// ── Bucket Lab ────────────────────────────────────────────────────────────
+function bucketPlanConfig(state){
+  const rawShort = parseInt(state.bucketShortYears);
+  const rawIntermediate = parseInt(state.bucketIntermediateYears);
+  const shortYears = Math.max(1, Math.min(10, isNaN(rawShort) ? 3 : rawShort));
+  const intermediateYears = Math.max(0, Math.min(20, isNaN(rawIntermediate) ? 5 : rawIntermediate));
+  return {shortYears, intermediateYears};
+}
+function bucketPlanClampYears(value, fallback, max){
+  const parsed = parseInt(value);
+  return Math.max(0, Math.min(max, isNaN(parsed) ? fallback : parsed));
+}
+function bucketPlanDefaultPolicyForType(type, state){
+  const cfg = bucketPlanConfig(state || S);
+  if (type === 'roth') return {shortYears:0, intermediateYears:0};
+  if (type === 'inherited') return {shortYears:2, intermediateYears:0};
+  if (type === 'taxable') return {shortYears:2, intermediateYears:3};
+  if (type === 'hsa') return {shortYears:1, intermediateYears:0};
+  return {shortYears:cfg.shortYears, intermediateYears:cfg.intermediateYears};
+}
+function bucketPlanPolicyTypeFromKey(key){
+  const k = String(key || '');
+  if (k.startsWith('roth')) return 'roth';
+  if (k.startsWith('pre2020') || k.startsWith('post2020')) return 'inherited';
+  if (k === 'sec') return 'taxable';
+  if (k === 'hsa') return 'hsa';
+  return 'ira';
+}
+function bucketPlanDefaultPolicyForKey(key, state){
+  return bucketPlanDefaultPolicyForType(bucketPlanPolicyTypeFromKey(key), state || S);
+}
+function bucketPlanNormalizePolicy(policy, defaults){
+  const def = defaults || {shortYears:3, intermediateYears:5};
+  return {
+    enabled:!!(policy && policy.enabled === true),
+    shortYears:bucketPlanClampYears(policy && policy.shortYears, def.shortYears, 10),
+    intermediateYears:bucketPlanClampYears(policy && policy.intermediateYears, def.intermediateYears, 20)
+  };
+}
+function bucketPlanPolicyForAccount(account, state){
+  const policies = state && state.bucketPolicies && typeof state.bucketPolicies === 'object' ? state.bucketPolicies : {};
+  const defaults = bucketPlanDefaultPolicyForType(account.policyType || bucketPlanPolicyTypeFromKey(account.key), state || S);
+  const hasCustom = Object.prototype.hasOwnProperty.call(policies, account.key);
+  const policy = bucketPlanNormalizePolicy(hasCustom ? policies[account.key] : null, defaults);
+  const isCustomWindow = policy.shortYears !== defaults.shortYears || policy.intermediateYears !== defaults.intermediateYears;
+  return Object.assign(policy, {
+    defaultShortYears:defaults.shortYears,
+    defaultIntermediateYears:defaults.intermediateYears,
+    isCustom:isCustomWindow
+  });
+}
+function bucketPlanPolicyText(policy){
+  return (policy && policy.shortYears != null ? policy.shortYears : 0) + '/' + (policy && policy.intermediateYears != null ? policy.intermediateYears : 0);
+}
+function bucketTargetsCardHtml(year, options){
+  if (!proj || !proj.length) return '';
+  const cfg = Object.assign({title:'Bucket Targets', compact:false}, options || {});
+  const plan = buildPortfolioBucketPlan(proj, S, year);
+  const accounts = plan.enabledAccounts || [];
+  if (!accounts.length) return '';
+  const money = v => f$(v || 0, true);
+  const rows = accounts.map(a=>{
+    const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0};
+    const current = (a.currentWithdrawal || 0) > 0
+      ? '<div class="bucket-target-line"><span>Current draw</span><span>'+money(a.currentWithdrawal)+'</span></div>' : '';
+    const longLine = cfg.compact ? '' : '<div class="bucket-target-line"><span>Long/Growth</span><span>'+money(a.longTarget||0)+'</span></div>';
+    return '<div class="bucket-target-row">'+
+      '<div class="bucket-target-name">'+setupEsc(a.name)+'</div>'+
+      current+
+      '<div class="bucket-target-line"><span>Short bucket</span><span>'+money(a.shortTarget||0)+'</span></div>'+
+      '<div class="bucket-target-line"><span>Intermediate</span><span>'+money(a.intermediateTarget||0)+'</span></div>'+
+      longLine+
+      '<div class="bucket-target-note">Policy '+setupEsc(bucketPlanPolicyText(policy))+' · '+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+' / '+setupEsc(bucketPlanWindowLabel(a.intermediateStart,a.intermediateEnd))+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+rows+'</div>';
+}
+function bucketPlanDefaultYear(state, rows){
+  const currentYear = new Date().getFullYear();
+  const start = parseInt(state.startYear) || currentYear;
+  const end = parseInt(state.endYear) || start;
+  const saved = parseInt(state.bucketPlanYear);
+  if (!isNaN(saved) && saved >= start && saved <= end) return saved;
+  const rowYears = (rows || []).map(r=>r.yr).filter(Boolean);
+  if (rowYears.length) return Math.max(rowYears[0], Math.min(currentYear, rowYears[rowYears.length - 1]));
+  return Math.max(start, Math.min(currentYear, end));
+}
+function bucketPlanYearOptions(rows, selectedYear){
+  return (rows || []).map(r=>'<option value="'+r.yr+'" '+(r.yr===selectedYear?'selected':'')+'>'+r.yr+'</option>').join('');
+}
+function bucketPlanRowsByYear(rows){
+  const map = {};
+  (rows || []).forEach(r=>{ map[r.yr] = r; });
+  return map;
+}
+function bucketPlanDetailById(details, id, idx){
+  const key = normalizeLotId(id);
+  if (key) {
+    const byId = (details || []).find(d=>normalizeLotId(d.id)===key);
+    if (byId) return byId;
+  }
+  return (details || []).find(d=>String(d.idx)===String(idx)) || null;
+}
+function bucketPlanDemand(account, row){
+  if (!row || !account || typeof account.demand !== 'function') return 0;
+  return Math.max(0, account.demand(row) || 0);
+}
+function bucketPlanConversion(account, row){
+  if (!row || !account || typeof account.conversion !== 'function') return 0;
+  return Math.max(0, account.conversion(row) || 0);
+}
+function bucketPlanSum(account, rowsByYear, startYear, endYear){
+  let sum = 0;
+  const breakdown = [];
+  for (let yr = startYear; yr <= endYear; yr++) {
+    const amount = bucketPlanDemand(account, rowsByYear[yr]);
+    if (amount > 0.49) breakdown.push({yr, amount});
+    sum += amount;
+  }
+  return {sum, breakdown};
+}
+function bucketPlanSumConversions(account, rowsByYear, startYear, endYear){
+  let sum = 0;
+  for (let yr = startYear; yr <= endYear; yr++) sum += bucketPlanConversion(account, rowsByYear[yr]);
+  return sum;
+}
+function bucketPlanWindowLabel(startYear, endYear){
+  if (!startYear || !endYear || endYear < startYear) return 'None';
+  return startYear === endYear ? String(startYear) : startYear + '-' + endYear;
+}
+function bucketPlanBreakdownText(items, moneyFn){
+  if (!items || !items.length) return 'No planned draws';
+  return items.map(x=>x.yr + ' ' + moneyFn(x.amount)).join(' · ');
+}
+function bucketPlanGuidance(account, moneyFn){
+  const notes = [];
+  const policy = account.policy || {shortYears:account.shortYears, intermediateYears:account.intermediateYears};
+  if (!account.enabled) {
+    notes.push('Bucket Lab is off for this account. Turn it on to calculate targets and include it in reports.');
+    return notes;
+  }
+  if ((account.currentWithdrawal || 0) > 0) {
+    notes.push('Current-year planned withdrawal: ' + moneyFn(account.currentWithdrawal) + '.');
+  }
+  if ((policy.shortYears || 0) <= 0) {
+    notes.push('Short bucket is disabled for this account.');
+  } else if ((account.nextShortReplenish || 0) > 0) {
+    notes.push('At next annual review, move ' + moneyFn(account.nextShortReplenish) + ' for ' + account.nextShortYear + ' from Intermediate to Short.');
+  } else {
+    notes.push('No Short bucket refill is projected at the next annual review.');
+  }
+  if ((policy.intermediateYears || 0) <= 0) {
+    notes.push('Intermediate bucket is disabled for this account.');
+  } else if ((account.nextIntermediateReplenish || 0) > 0) {
+    notes.push('Replenish Intermediate from Long-Term for ' + account.nextIntermediateYear + ': ' + moneyFn(account.nextIntermediateReplenish) + '.');
+  } else if (account.forceLongZero) {
+    notes.push('No Long-Term refill is expected because this inherited IRA uses a defined drawdown path.');
+  } else {
+    notes.push('No Intermediate refill is projected from Long-Term at the next annual review.');
+  }
+  if ((account.currentConversion || 0) > 0) {
+    notes.push('Roth conversion candidate this year: ' + moneyFn(account.currentConversion) + ' from Long-Term, excluded from bucket targets.');
+  } else if ((account.remainingConversions || 0) > 0) {
+    notes.push('Future Roth conversions from this account are excluded from withdrawal bucket targets.');
+  }
+  if ((account.targetGap || 0) > 0) {
+    notes.push('Bucket targets exceed starting balance by ' + moneyFn(account.targetGap) + '; review assumptions before treating targets as fully fundable.');
+  }
+  if ((account.unassignedBalance || 0) > 0 && account.forceLongZero) {
+    notes.push('Remaining balance above listed targets is a timing/growth cushion, not a separate long-term bucket.');
+  }
+  return notes;
+}
+function bucketPlanBuildAccount(account, rowsByYear, selectedYear, endYear, cfg){
+  const policy = account.policy || cfg || {shortYears:3, intermediateYears:5};
+  const shortYears = bucketPlanClampYears(policy.shortYears, cfg && cfg.shortYears != null ? cfg.shortYears : 3, 10);
+  const intermediateYears = bucketPlanClampYears(policy.intermediateYears, cfg && cfg.intermediateYears != null ? cfg.intermediateYears : 5, 20);
+  const shortStart = selectedYear;
+  const shortEnd = shortYears > 0 ? Math.min(endYear, selectedYear + shortYears - 1) : selectedYear - 1;
+  const intermediateStart = selectedYear + shortYears;
+  const policyIntermediateEnd = intermediateYears > 0 ? Math.min(endYear, selectedYear + shortYears + intermediateYears - 1) : intermediateStart - 1;
+  const intermediateEnd = policyIntermediateEnd >= intermediateStart ? policyIntermediateEnd : intermediateStart - 1;
+  const shortCalc = bucketPlanSum(account, rowsByYear, shortStart, shortEnd);
+  const intermediateCalc = bucketPlanSum(account, rowsByYear, intermediateStart, intermediateEnd);
+  const currentWithdrawal = bucketPlanDemand(account, rowsByYear[selectedYear]);
+  const nextShortYear = shortYears > 0 ? selectedYear + shortYears : null;
+  const nextShortReplenish = nextShortYear && nextShortYear <= endYear ? bucketPlanDemand(account, rowsByYear[nextShortYear]) : 0;
+  const nextIntermediateYear = account.forceLongZero || intermediateYears <= 0 ? null : selectedYear + shortYears + intermediateYears;
+  const nextIntermediateReplenish = nextIntermediateYear && nextIntermediateYear <= endYear
+    ? bucketPlanDemand(account, rowsByYear[nextIntermediateYear]) : 0;
+  const longTarget = account.forceLongZero ? 0 : Math.max(0, account.startBalance - shortCalc.sum - intermediateCalc.sum);
+  const targetGap = Math.max(0, shortCalc.sum + intermediateCalc.sum + longTarget - account.startBalance);
+  const unassignedBalance = account.forceLongZero ? Math.max(0, account.startBalance - shortCalc.sum - intermediateCalc.sum) : 0;
+  const currentConversion = bucketPlanConversion(account, rowsByYear[selectedYear]);
+  const remainingConversions = bucketPlanSumConversions(account, rowsByYear, selectedYear, endYear);
+  return Object.assign({}, account, {
+    policy:Object.assign({}, policy, {shortYears, intermediateYears}),
+    enabled:policy.enabled === true,
+    shortYears, intermediateYears,
+    shortStart, shortEnd, intermediateStart, intermediateEnd,
+    shortTarget:shortCalc.sum, shortBreakdown:shortCalc.breakdown,
+    intermediateTarget:intermediateCalc.sum, intermediateBreakdown:intermediateCalc.breakdown,
+    longTarget, targetGap, unassignedBalance,
+    currentWithdrawal, nextShortYear, nextShortReplenish,
+    nextIntermediateYear, nextIntermediateReplenish,
+    currentConversion, remainingConversions
+  });
+}
+function buildPortfolioBucketPlan(rows, state, selectedYear){
+  const cfg = bucketPlanConfig(state || S);
+  const list = rows || [];
+  const rowsByYear = bucketPlanRowsByYear(list);
+  const reviewYear = selectedYear || bucketPlanDefaultYear(state || S, list);
+  const current = rowsByYear[reviewYear] || list[0] || {};
+  const endYear = list.length ? list[list.length - 1].yr : reviewYear;
+  const name1 = (state && state.name1) || 'Primary Person';
+  const name2 = (state && state.name2 && String(state.name2).trim()) || 'Spouse/Partner';
+  const hasSecond = (state && state.householdMode !== 'single' && state.name2 && String(state.name2).trim()) || (current.startIRA2 || current.startRoth2);
+  const candidates = [];
+  const addIfUsed = account => {
+    account.policy = bucketPlanPolicyForAccount(account, state || S);
+    const hasBalance = (account.startBalance || 0) > 0.49;
+    const hasDemand = list.some(r=>r.yr >= reviewYear && bucketPlanDemand(account, r) > 0.49);
+    const hasConversion = list.some(r=>r.yr >= reviewYear && bucketPlanConversion(account, r) > 0.49);
+    if (hasBalance || hasDemand || hasConversion) candidates.push(account);
+  };
+  addIfUsed({
+    key:'ira1', policyType:'ira', name:name1 + ' Traditional IRA', type:'Traditional IRA',
+    startBalance:current.startIRA1 || 0,
+    demand:r=>(r.rmd1||0)+(r.ira1Addl||0),
+    conversion:r=>r.rothConvDraw1||0,
+    purpose:'fund planned IRA withdrawals; keep Roth conversions separate as Long-Term candidates'
+  });
+  if (hasSecond) {
+    addIfUsed({
+      key:'ira2', policyType:'ira', name:name2 + ' Traditional IRA', type:'Traditional IRA',
+      startBalance:current.startIRA2 || 0,
+      demand:r=>(r.rmd2||0)+(r.ira2Addl||0),
+      conversion:r=>r.rothConvDraw2||0,
+      purpose:'fund planned IRA withdrawals; keep Roth conversions separate as Long-Term candidates'
+    });
+  }
+  addIfUsed({
+    key:'roth1', policyType:'roth', name:name1 + ' Roth IRA', type:'Roth IRA',
+    startBalance:current.startRoth1 || 0,
+    demand:r=>(r.rothDraw1||0)+(r.rothModeWith1||0),
+    purpose:'preserve as long-term money unless Roth withdrawals are explicitly planned'
+  });
+  if (hasSecond) {
+    addIfUsed({
+      key:'roth2', policyType:'roth', name:name2 + ' Roth IRA', type:'Roth IRA',
+      startBalance:current.startRoth2 || 0,
+      demand:r=>(r.rothDraw2||0)+(r.rothModeWith2||0),
+      purpose:'preserve as long-term money unless Roth withdrawals are explicitly planned'
+    });
+  }
+  addIfUsed({
+    key:'sec', policyType:'taxable', name:'Taxable Securities', type:'Taxable Brokerage',
+    startBalance:current.startSec || 0,
+    demand:r=>(r.stkSales||0)+(r.secDraw&&r.secDraw!==r.stkSales?r.secDraw:0),
+    purpose:'fund planned taxable-account sales while leaving the remaining balance invested'
+  });
+  (current.pre2020LotDetails || []).forEach(detail => {
+    const idx = detail.idx;
+    const lotId = normalizeLotId(detail.id) || String(idx);
+    addIfUsed({
+      key:'pre2020:'+lotId, policyType:'inherited', name:detail.label || ('Pre-2020 Inherited IRA Lot '+(idx+1)),
+      type:'Pre-2020 Inherited IRA', startBalance:detail.startBal || 0,
+      forceLongZero:true,
+      demand:r=>{
+        const d = bucketPlanDetailById(r.pre2020LotDetails, lotId, idx);
+        return d ? (d.draw || 0) : 0;
+      },
+      purpose:'fund inherited IRA RMDs and any discretionary draw planned by the model'
+    });
+  });
+  (current.post2020LotDetails || []).forEach(detail => {
+    const idx = detail.idx;
+    const lotId = normalizeLotId(detail.id) || String(idx);
+    addIfUsed({
+      key:'post2020:'+lotId, policyType:'inherited', name:detail.label || ('Post-2020 Inherited IRA Lot '+(idx+1)),
+      type:'Post-2020 Inherited IRA', startBalance:detail.startBal || 0,
+      forceLongZero:!!detail.finalYear,
+      demand:r=>{
+        const d = bucketPlanDetailById(r.post2020LotDetails, lotId, idx);
+        return d ? (d.draw || 0) : 0;
+      },
+      purpose:detail.finalYear ? 'fund planned inherited IRA distributions through depletion year '+detail.finalYear : 'fund planned inherited IRA distributions'
+    });
+  });
+  const accounts = candidates.map(account=>bucketPlanBuildAccount(account, rowsByYear, reviewYear, endYear, cfg));
+  const enabledAccounts = accounts.filter(a=>a.enabled);
+  const totals = enabledAccounts.reduce((sum, a)=>{
+    sum.startBalance += a.startBalance || 0;
+    sum.shortTarget += a.shortTarget || 0;
+    sum.intermediateTarget += a.intermediateTarget || 0;
+    sum.longTarget += a.longTarget || 0;
+    sum.currentWithdrawal += a.currentWithdrawal || 0;
+    sum.nextShortReplenish += a.nextShortReplenish || 0;
+    sum.nextIntermediateReplenish += a.nextIntermediateReplenish || 0;
+    return sum;
+  }, {startBalance:0, shortTarget:0, intermediateTarget:0, longTarget:0, currentWithdrawal:0, nextShortReplenish:0, nextIntermediateReplenish:0});
+  return {reviewYear, shortYears:cfg.shortYears, intermediateYears:cfg.intermediateYears, accounts, enabledAccounts, totals};
+}
+function setBucketPlanYear(value){
+  const yr = parseInt(value);
+  if (!isNaN(yr)) S.bucketPlanYear = yr;
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
+function setBucketPlanConfig(key, value){
+  const fallback = key === 'bucketShortYears' ? 3 : 5;
+  const max = key === 'bucketShortYears' ? 10 : 20;
+  const min = key === 'bucketShortYears' ? 1 : 0;
+  const parsed = parseInt(value);
+  S[key] = Math.max(min, Math.min(max, isNaN(parsed) ? fallback : parsed));
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
+function setBucketAccountPolicy(key, field, value){
+  if (!key || !['shortYears','intermediateYears'].includes(field)) return;
+  if (!S.bucketPolicies || typeof S.bucketPolicies !== 'object') S.bucketPolicies = {};
+  const defaults = bucketPlanDefaultPolicyForKey(key, S);
+  const current = bucketPlanNormalizePolicy(S.bucketPolicies[key], defaults);
+  current[field] = bucketPlanClampYears(value, current[field], field === 'shortYears' ? 10 : 20);
+  S.bucketPolicies[key] = {enabled:current.enabled === true, shortYears:current.shortYears, intermediateYears:current.intermediateYears};
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
+function setBucketAccountEnabled(key, enabled){
+  if (!key) return;
+  if (!S.bucketPolicies || typeof S.bucketPolicies !== 'object') S.bucketPolicies = {};
+  const defaults = bucketPlanDefaultPolicyForKey(key, S);
+  const current = bucketPlanNormalizePolicy(S.bucketPolicies[key], defaults);
+  current.enabled = !!enabled;
+  S.bucketPolicies[key] = {enabled:current.enabled, shortYears:current.shortYears, intermediateYears:current.intermediateYears};
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
+function resetBucketAccountPolicy(key){
+  if (!key || !S.bucketPolicies) return;
+  const defaults = bucketPlanDefaultPolicyForKey(key, S);
+  const wasEnabled = bucketPlanNormalizePolicy(S.bucketPolicies[key], defaults).enabled === true;
+  if (wasEnabled) S.bucketPolicies[key] = {enabled:true, shortYears:defaults.shortYears, intermediateYears:defaults.intermediateYears};
+  else delete S.bucketPolicies[key];
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
+function renderPortfolioPlan(){
+  const root = document.getElementById('portfolio-plan-root');
+  if (!root) return;
+  if (!proj || !proj.length) proj = runProjection(S);
+  const selectedYear = bucketPlanDefaultYear(S, proj);
+  S.bucketPlanYear = selectedYear;
+  const plan = buildPortfolioBucketPlan(proj, S, selectedYear);
+  const money = v => f$(v || 0, true);
+  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div><div class="note" style="font-size:12px;max-width:860px;line-height:1.55"><strong>What this is:</strong> Bucket Lab is an optional portfolio-planning overlay. It does not change the funding engine, tax projection, Roth conversion logic, or cash-flow results. It simply translates future planned withdrawals into target amounts for each enabled account: Short bucket, Intermediate bucket, and Long/Growth balance.<br><br><strong>How to use it:</strong> pick the review year, turn on only the accounts you want to manage with buckets, then set that account&rsquo;s Short and Intermediate windows. Use 0 years to disable a bucket. Nothing from this lab appears in the printable report until at least one account is turned on.</div></div><button class="btn btn-dark btn-sm" onclick="generateReport()">Print Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div></div></div>';
+  if (!plan.accounts.length) {
+    root.innerHTML = controls + '<div class="bucket-empty">No active retirement or inherited IRA accounts have balances, planned withdrawals, or Roth conversions in the selected review year. Enter opening balances or inherited IRA lots first, then return here.</div>';
+    return;
+  }
+  const summary = '<div class="bucket-summary">'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Review Year</div><div class="bucket-metric-value">'+plan.reviewYear+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Enabled Accounts</div><div class="bucket-metric-value">'+(plan.enabledAccounts?plan.enabledAccounts.length:0)+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Short Target</div><div class="bucket-metric-value">'+money(plan.totals.shortTarget)+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Intermediate Target</div><div class="bucket-metric-value">'+money(plan.totals.intermediateTarget)+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Next Short Refill</div><div class="bucket-metric-value">'+money(plan.totals.nextShortReplenish)+'</div></div>'+
+  '</div>';
+  const rowHtml = plan.accounts.map(a=>{
+    const guidance = bucketPlanGuidance(a, money).map(x=>'<div>'+setupEsc(x)+'</div>').join('');
+    const warning = a.targetGap > 0 ? '<div class="bucket-warning">Target gap: '+money(a.targetGap)+'</div>' : '';
+    const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0, defaultShortYears:0, defaultIntermediateYears:0, isCustom:false};
+    const keyJs = setupJsString(a.key);
+    const shortFieldJs = setupJsString('shortYears');
+    const intermediateFieldJs = setupJsString('intermediateYears');
+    const keyAttr = keyJs.replace(/"/g, '&quot;');
+    const shortFieldAttr = shortFieldJs.replace(/"/g, '&quot;');
+    const intermediateFieldAttr = intermediateFieldJs.replace(/"/g, '&quot;');
+    const policyControls = '<div class="bucket-policy-controls">'+
+      '<label>On<input type="checkbox" '+(a.enabled?'checked':'')+' onchange="setBucketAccountEnabled('+keyAttr+',this.checked)"></label>'+
+      '<label>Short<input type="number" min="0" max="10" value="'+policy.shortYears+'" onchange="setBucketAccountPolicy('+keyAttr+','+shortFieldAttr+',this.value)"></label>'+
+      '<label>Inter<input type="number" min="0" max="20" value="'+policy.intermediateYears+'" onchange="setBucketAccountPolicy('+keyAttr+','+intermediateFieldAttr+',this.value)"></label>'+
+      (policy.isCustom ? '<button class="btn btn-light btn-sm" onclick="resetBucketAccountPolicy('+keyAttr+')">Default</button>' : '')+
+    '</div><div class="bucket-policy-note">'+(a.enabled?'On':'Off')+' · '+(policy.isCustom?'Custom':'Default')+' policy '+bucketPlanPolicyText(policy)+'; default '+policy.defaultShortYears+'/'+policy.defaultIntermediateYears+'</div>';
+    const offText = '<span class="bucket-year-list">Off</span>';
+    return '<tr>'+
+      '<td><div class="bucket-account-name">'+setupEsc(a.name)+'</div><div class="bucket-account-meta">'+setupEsc(a.type)+'</div><div class="bucket-year-list">'+setupEsc(a.purpose||'')+'</div></td>'+
+      '<td>'+policyControls+'</td>'+
+      '<td class="r bold">'+money(a.startBalance)+'</td>'+
+      '<td class="r">'+(a.enabled?money(a.currentWithdrawal):offText)+'</td>'+
+      '<td class="r bold">'+(a.enabled?(money(a.shortTarget)+'<div class="bucket-year-list">'+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+'</div><div class="bucket-year-list">'+setupEsc(bucketPlanBreakdownText(a.shortBreakdown, money))+'</div>'):offText)+'</td>'+
+      '<td class="r bold">'+(a.enabled?(money(a.intermediateTarget)+'<div class="bucket-year-list">'+setupEsc(bucketPlanWindowLabel(a.intermediateStart,a.intermediateEnd))+'</div><div class="bucket-year-list">'+setupEsc(bucketPlanBreakdownText(a.intermediateBreakdown, money))+'</div>'):offText)+'</td>'+
+      '<td class="r bold">'+(a.enabled?(money(a.longTarget)+(a.unassignedBalance>0?'<div class="bucket-year-list">Timing cushion '+money(a.unassignedBalance)+'</div>':'')):offText)+'</td>'+
+      '<td class="bucket-guidance">'+guidance+warning+'</td>'+
+    '</tr>';
+  }).join('');
+  root.innerHTML = controls + summary + '<div class="bucket-table-wrap"><table class="bucket-table"><thead><tr><th>Account / Lot</th><th>Policy</th><th class="r">Start Balance</th><th class="r">Current-Year Draw</th><th class="r">Short Bucket</th><th class="r">Intermediate Bucket</th><th class="r">Long / Growth</th><th>Annual Review Guidance</th></tr></thead><tbody>'+rowHtml+'</tbody></table></div>';
+}
+
 
 function getIRMAATierLabel(magi, filing, tables) {
   if (tables) {
@@ -3787,6 +4278,24 @@ function applyMigrations(merged) {
   if (merged.widowSSA44Relief == null) merged.widowSSA44Relief = false;
   if (merged.irmaaMaxBracket == null) merged.irmaaMaxBracket = '';
   if (merged.irmaaBracketHeadroom == null || isNaN(merged.irmaaBracketHeadroom)) merged.irmaaBracketHeadroom = 0;
+  if (merged.bucketShortYears == null || isNaN(merged.bucketShortYears)) merged.bucketShortYears = 3;
+  if (merged.bucketIntermediateYears == null || isNaN(merged.bucketIntermediateYears)) merged.bucketIntermediateYears = 5;
+  const migratedBucketShort = parseInt(merged.bucketShortYears);
+  const migratedBucketIntermediate = parseInt(merged.bucketIntermediateYears);
+  merged.bucketShortYears = Math.max(1, Math.min(10, isNaN(migratedBucketShort) ? 3 : migratedBucketShort));
+  merged.bucketIntermediateYears = Math.max(0, Math.min(20, isNaN(migratedBucketIntermediate) ? 5 : migratedBucketIntermediate));
+  if (merged.bucketPlanYear == null || isNaN(merged.bucketPlanYear)) merged.bucketPlanYear = 0;
+  if (!merged.bucketPolicies || typeof merged.bucketPolicies !== 'object' || Array.isArray(merged.bucketPolicies)) merged.bucketPolicies = {};
+  Object.keys(merged.bucketPolicies).forEach(key => {
+    const policy = merged.bucketPolicies[key] || {};
+    const shortYears = parseInt(policy.shortYears);
+    const intermediateYears = parseInt(policy.intermediateYears);
+    policy.enabled = policy.enabled === true;
+    policy.shortYears = Math.max(0, Math.min(10, isNaN(shortYears) ? 0 : shortYears));
+    policy.intermediateYears = Math.max(0, Math.min(20, isNaN(intermediateYears) ? 0 : intermediateYears));
+    merged.bucketPolicies[key] = policy;
+  });
+  ensureInheritedLotIds(merged);
   if (merged.irmaaFillMode == null || merged.irmaaFillMode === 'S') merged.irmaaFillMode = '';
   if (!['','F','R'].includes(merged.irmaaFillMode)) merged.irmaaFillMode = '';
   merged.rothConvSource = normalizeRothConvSource(merged.rothConvSource);
@@ -4043,6 +4552,7 @@ function ST(name){
   if(name==='dashboard')  renderDash();
   if(name==='setup')      renderSetupGuide();
   if(name==='rothlab')    renderRothLab();
+  if(name==='portfolio')  renderPortfolioPlan();
   if(name==='taxtables')  renderTaxTables();
   if(name==='cashflow')   renderCF();
   if(name==='taxes')      renderTax();
@@ -4091,6 +4601,7 @@ function IC(){
       if(id==='dashboard')renderDash();
   if(id==='taxtables')renderTaxTables();
   if(id==='rothlab')renderRothLab();
+  if(id==='portfolio')renderPortfolioPlan();
   if(id==='action')renderAP();
       if(id==='cashflow')renderCF();
       if(id==='taxes')renderTax();
@@ -4243,6 +4754,7 @@ function readPost2020InhLots(){
     lots[i][k]=el.value;
   });
   S.post2020InhLots=lots;
+  ensureInheritedLotIds(S);
 }
 function renderPre2020InhLots(){
   const body=document.getElementById('pre2020-inh-body'); if(!body)return;
@@ -4275,12 +4787,13 @@ function readPre2020InhLots(){
     lots[i][k]=el.value;
   });
   S.pre2020InhLots=lots.filter(pre2020LotHasData);
+  ensureInheritedLotIds(S);
   syncLegacyPre2020FromLots(S);
 }
 function addPre2020InhLot(){
   readPre2020InhLots();
   if(!Array.isArray(S.pre2020InhLots))S.pre2020InhLots=[];
-  S.pre2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',notes:''});
+  S.pre2020InhLots.push({id:createInheritedLotId('pre2020', {beneficiary:'1',startYear:S.startYear}, S.pre2020InhLots.length), beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',notes:''});
   syncLegacyPre2020FromLots(S);
   saveState(S);renderPre2020InhLots();IC();
 }
@@ -4289,6 +4802,8 @@ function deletePre2020InhLot(i){
   const lot = (S.pre2020InhLots||[])[i] || {};
   const label = lot.notes ? 'Pre-2020 inherited IRA lot "'+lot.notes+'"' : 'Pre-2020 Inherited IRA Lot '+(i+1);
   if(!confirm('Delete '+label+'?')) return;
+  if (S.bucketPolicies && lot.id) delete S.bucketPolicies['pre2020:'+lot.id];
+  if (S.bucketPolicies) delete S.bucketPolicies['pre2020-'+i];
   S.pre2020InhLots.splice(i,1);
   syncLegacyPre2020FromLots(S);
   saveState(S);renderPre2020InhLots();IC();
@@ -4296,7 +4811,7 @@ function deletePre2020InhLot(i){
 function addPost2020InhLot(){
   readPost2020InhLots();
   if(!Array.isArray(S.post2020InhLots))S.post2020InhLots=[];
-  S.post2020InhLots.push({beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',strategy:'none',pct:'',notes:''});
+  S.post2020InhLots.push({id:createInheritedLotId('post2020', {beneficiary:'1',startYear:S.startYear,strategy:'none'}, S.post2020InhLots.length), beneficiary:'1',balance:'',startYear:S.startYear,ownerBy:'',deathYear:'',strategy:'none',pct:'',notes:''});
   saveState(S);renderPost2020InhLots();IC();
 }
 function deletePost2020InhLot(i){
@@ -4304,6 +4819,8 @@ function deletePost2020InhLot(i){
   const lot = (S.post2020InhLots||[])[i] || {};
   const label = lot.notes ? `Inherited IRA lot "${lot.notes}"` : `Inherited IRA Lot ${i+1}`;
   if(!confirm(`Delete ${label}?`)) return;
+  if (S.bucketPolicies && lot.id) delete S.bucketPolicies['post2020:'+lot.id];
+  if (S.bucketPolicies) delete S.bucketPolicies['post2020-'+i];
   S.post2020InhLots.splice(i,1);
   saveState(S);renderPost2020InhLots();IC();
 }
@@ -5289,6 +5806,7 @@ function renderYD(){
     agiIRADraws>0 && (r.fundingOrder||[])[0]==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : '',
     taxExemptInterest>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a5a1a;background:#eef8ee;border-left:3px solid #1a6a1a;padding:5px 8px;margin-top:6px">Tax-exempt bond interest is excluded from regular federal AGI but included for Social Security provisional income and Medicare MAGI.</div>' : ''
   ].filter(Boolean).join('');
+  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Bucket Targets'});
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
       <div class="sh">Funding Sources</div>
@@ -5323,6 +5841,7 @@ function renderYD(){
       <div class="dr tot" style="margin-top:6px"><span class="dl">Total Funding Used</span><span class="dv">${f$(r.totalFunding)}</span></div>
       ${r.unfunded>0?dr('<span style="color:var(--red)">⚠ Unfunded Gap</span>','<span style="color:var(--red)">'+f$(r.unfunded)+'</span>'):''}
     </div>
+    ${bucketTargets ? '<div class="yd-panel"><div class="sh">Bucket Lab</div>'+bucketTargets+'</div>' : ''}
     <div class="yd-panel">
       <div class="sh">Spending &amp; Cash</div>
       ${dr('Spending',f$(r.spending))}
@@ -6306,6 +6825,7 @@ function apCard(yr){
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
                     (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
+  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Bucket Targets', compact:true});
 
   return `<div style="background:#fffdf5;border:1px solid #ddd0a8;border-radius:8px;padding:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -6359,6 +6879,7 @@ function apCard(yr){
     ${flag(p1()+' Roth Withdrawal', r.rothDraw1||0, '#6b0080')}
     ${flag(p2()+' Roth Withdrawal', r.rothDraw2||0, '#6b0080')}
     ${rothConv>0 ? flag('Roth Conv — '+convSrc+' → Roth', rothConv, '#1a3a6a') : ''}
+    ${bucketTargets}
 
     ${hdr('TAX PICTURE')}
     ${row('Adjusted Gross Income', r.agi, true)}
@@ -7001,6 +7522,7 @@ function buildReportPayload(){
     spendInfl: S.spendInfl, ssCola: S.ssCola, wageGrowth: S.wageGrowth,
     bracketInfl: S.bracketInfl, irmaaInfl: S.irmaaInfl, medicareCostInfl: S.medicareCostInfl ?? S.irmaaInfl,
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
+    bucketShortYears:S.bucketShortYears, bucketIntermediateYears:S.bucketIntermediateYears, bucketPolicies:S.bucketPolicies||{},
     fundingOrder: normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH'),
     irmaaFillMode: S.irmaaFillMode||'',
     rothConvSource: S.rothConvSource || 'HIGH', rothConvP1Pct: S.rothConvP1Pct || 50,
@@ -7032,6 +7554,7 @@ function buildReportPayload(){
     pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0, pre2020InhAddl1:r.pre2020InhAddl1||0, pre2020InhAddl2:r.pre2020InhAddl2||0, pre2020InhAddl:r.pre2020InhAddl||0,
     post2020InhRMD:r.post2020InhRMD||0, post2020InhExtra:r.post2020InhExtra||0, post2020InhFinal:r.post2020InhFinal||0, post2020InhDiscretionary:r.post2020InhDiscretionary||0, post2020InhDraw:r.post2020InhDraw||0,
     pre2020LotDetails:r.pre2020LotDetails||[],
+    post2020LotDetails:r.post2020LotDetails||[],
     pre2020InhStartYear1:r.pre2020InhStartYear1||0, pre2020InhStartYear2:r.pre2020InhStartYear2||0,
     pre2020InhOwnerReachedRMD1:!!r.pre2020InhOwnerReachedRMD1, pre2020InhOwnerReachedRMD2:!!r.pre2020InhOwnerReachedRMD2,
     pre2020InhDivisor1:r.pre2020InhDivisor1||0, pre2020InhDivisor2:r.pre2020InhDivisor2||0,
@@ -7092,7 +7615,8 @@ function buildReportPayload(){
   const defaultActionYear = Math.max(S.startYear, Math.min(currentCalYear, S.endYear - 2));
   const reportActionStartYear = parseInt(document.getElementById('ap-year-sel')?.value) || defaultActionYear;
   const apRows = rows.filter(r => r.yr >= reportActionStartYear && r.yr <= Math.min(S.endYear, reportActionStartYear + 2));
-  return { assumptions, rows, apRows, reportActionStartYear, overrides };
+  const bucketPlan = buildPortfolioBucketPlan(rows, S, reportActionStartYear);
+  return { assumptions, rows, apRows, reportActionStartYear, overrides, bucketPlan };
 }
 
 function exportReportData(){
@@ -7152,6 +7676,7 @@ function generateReport(){
   const thr=(t)=>`<th class="r">${t}</th>`;
   const td=(v,cls='')=>`<td class="${cls}">${v}</td>`;
   const rows_by_yr = Object.fromEntries(rows.map(r=>[r.yr,r]));
+  const bucketPlan = P.bucketPlan || buildPortfolioBucketPlan(rows, S, P.reportActionStartYear || A.startYear);
   const irmaaLevelLabel = (level, yr=A.startYear) => {
     const lvl = parseInt(level);
     if (lvl == null || isNaN(lvl)) return 'Off';
@@ -7253,12 +7778,22 @@ function generateReport(){
     .cf-print-table th{font-size:6.7pt;padding:3px 4px;}
     .cf-print-table td{padding:2px 4px;}
     .print-break-after-overrides{display:none;}
+    .action-plan-start{break-before:page;page-break-before:always;}
     .r{text-align:right;}
     .bold{font-weight:700;}
     .red{color:#8b1a1a;}
     .grn{color:#1a5a1a;}
     .gold{color:#8a6800;}
     .yr-band{background:#f0ebe0;border:0.5px solid #ddd;padding:4px 8px;margin:10px 0 4px;font-weight:700;font-size:8.5pt;color:#6a4e00;}
+    .ap-year{display:grid;grid-template-columns:minmax(0,1fr) 1.9in;gap:10px;align-items:start;break-inside:avoid;}
+    .ap-year-buckets{grid-template-columns:minmax(0,1fr) 1.55in 1.75in;}
+    .ap-actions,.ap-buckets{border:1px solid #d6caa8;background:#faf7f2;padding:7px 8px;margin-top:0;}
+    .ap-buckets{background:#fffaf0;}
+    .ap-bucket-row{border-top:1px solid #e1d6b8;padding-top:4px;margin-top:4px;font-size:7.4pt;line-height:1.25;}
+    .ap-bucket-row:first-of-type{border-top:0;padding-top:0;margin-top:0;}
+    .ap-bucket-name{font-weight:800;color:#4a3500;margin-bottom:2px;}
+    .ap-bucket-line{color:#111;}
+    .ap-bucket-note{color:#6a4e00;font-size:6.8pt;margin-top:1px;}
     .yr-tbl table{font-size:7pt;}
     .yr-tbl th{padding:2px 4px;}
     .yr-tbl td{padding:2px 4px;}
@@ -7304,13 +7839,18 @@ function generateReport(){
       .side{break-after:page;}
       .side table th,.yr-tbl th{background:#e8dfc8;color:#111;}
       .ap-year{display:grid;grid-template-columns:minmax(0,1fr) 1.9in;gap:10px;align-items:start;break-inside:avoid;}
+      .ap-year-buckets{grid-template-columns:minmax(0,1fr) 1.55in 1.75in;}
       .ap-actions{border:1px solid #b9aa80;background:#faf7f2;padding:7px 8px;margin-top:0;}
+      .ap-buckets{border:1px solid #b9aa80;background:#fffaf0;padding:7px 8px;margin-top:0;}
+      .ap-bucket-row{font-size:7.8pt;}
+      .ap-bucket-note{font-size:7.1pt;}
       .ap-actions-title{font-size:9.5pt;color:#111;font-weight:800;margin-bottom:4px;}
       .ap-actions .actions{margin:0;font-size:8.8pt;}
       .portfolio-plan-table{font-size:8pt;}
       .portfolio-plan-table th{font-size:7.4pt;}
       .portfolio-plan-table .focus{font-size:7.4pt;}
       .print-break-after-overrides{display:block;break-after:page;}
+      .action-plan-start{break-before:page;page-break-before:always;}
       .yr-band{font-size:10pt;padding:6px 8px;}
       .yr-tbl table{font-size:8.7pt;}
       .yr-tbl th{font-size:8pt;padding:4px 5px;}
@@ -7438,6 +7978,52 @@ function generateReport(){
     </tr></thead><tbody>${portfolioPlanRows}${portfolioTotalsRow}</tbody></table>
     <p class="note">Advisor focus: decide how the traditional IRA and inherited IRA should hold enough stable assets for planned draws, while identifying growth assets that may be good in-kind Roth conversion candidates.</p>
   ` : '';
+  const bucketReportAccounts = bucketPlan.enabledAccounts || [];
+  const bucketPlanHtml = bucketReportAccounts.length ? (() => {
+    const bMoney = v => fd(v || 0);
+    const rowsHtml = bucketReportAccounts.map(a => {
+      const guidance = bucketPlanGuidance(a, bMoney).map(x=>setupEsc(x)).join('<br>');
+      const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0, isCustom:false};
+      const policyText = (policy.isCustom ? 'Custom' : 'Default') + ' policy ' + bucketPlanPolicyText(policy);
+      const shortDetail = setupEsc(bucketPlanWindowLabel(a.shortStart, a.shortEnd)) +
+        '<br><span style="font-size:7pt;color:#6a4e00">' + setupEsc(bucketPlanBreakdownText(a.shortBreakdown, bMoney)) + '</span>';
+      const intermediateDetail = setupEsc(bucketPlanWindowLabel(a.intermediateStart, a.intermediateEnd)) +
+        '<br><span style="font-size:7pt;color:#6a4e00">' + setupEsc(bucketPlanBreakdownText(a.intermediateBreakdown, bMoney)) + '</span>';
+      const longText = bMoney(a.longTarget || 0) +
+        ((a.unassignedBalance || 0) > 0 ? '<br><span style="font-size:7pt;color:#6a4e00">Timing cushion '+bMoney(a.unassignedBalance)+'</span>' : '');
+      return '<tr>'+
+        '<td><strong>'+setupEsc(a.name)+'</strong><br><span style="font-size:7pt;color:#6a4e00">'+setupEsc(a.type)+'</span><br><span style="font-size:7pt;color:#6a4e00">'+setupEsc(policyText)+'</span></td>'+
+        '<td class="r">'+bMoney(a.startBalance||0)+'</td>'+
+        '<td class="r">'+bMoney(a.currentWithdrawal||0)+'</td>'+
+        '<td class="r bold">'+bMoney(a.shortTarget||0)+'<br><span style="font-size:7pt;font-weight:400;color:#6a4e00">'+shortDetail+'</span></td>'+
+        '<td class="r bold">'+bMoney(a.intermediateTarget||0)+'<br><span style="font-size:7pt;font-weight:400;color:#6a4e00">'+intermediateDetail+'</span></td>'+
+        '<td class="r bold">'+longText+'</td>'+
+        '<td>'+guidance+'</td>'+
+      '</tr>';
+    }).join('');
+    return '<h2>Bucket Lab</h2>'+
+      '<div class="callout"><strong>Review year '+bucketPlan.reviewYear+':</strong> This optional lab is included because at least one account is turned on. Each enabled account uses its own Short / Intermediate policy. Roth conversions are excluded from withdrawal targets.</div>'+
+      '<table><thead><tr>'+[th('Account / Lot'),thr('Start\nBalance'),thr('Current\nDraw'),thr('Short\nBucket'),thr('Intermediate\nBucket'),thr('Long /\nGrowth'),th('Mechanical Guidance')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+      '<p class="note">The app calculates dollar targets only. It does not track actual holdings by bucket or recommend specific securities.</p>';
+  })() : '';
+  const bucketActionPlanHtmlForYear = yr => {
+    if (!bucketReportAccounts.length) return '';
+    const yrPlan = buildPortfolioBucketPlan(rows, S, yr);
+    const enabled = yrPlan.enabledAccounts || [];
+    if (!enabled.length) return '';
+    const rowsHtml = enabled.map(a => {
+      const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0};
+      const current = (a.currentWithdrawal || 0) > 0 ? 'Draw '+fd(a.currentWithdrawal,true)+' · ' : '';
+      const longLine = (a.longTarget || 0) > 0 ? '<div class="ap-bucket-note">Long/Growth '+fd(a.longTarget,true)+'</div>' : '';
+      return '<div class="ap-bucket-row">'+
+        '<div class="ap-bucket-name">'+setupEsc(a.name)+'</div>'+
+        '<div class="ap-bucket-line">'+current+'Short '+fd(a.shortTarget||0,true)+' · Inter '+fd(a.intermediateTarget||0,true)+'</div>'+
+        '<div class="ap-bucket-note">Policy '+setupEsc(bucketPlanPolicyText(policy))+' · '+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+' / '+setupEsc(bucketPlanWindowLabel(a.intermediateStart,a.intermediateEnd))+'</div>'+
+        longLine+
+      '</div>';
+    }).join('');
+    return '<div class="ap-buckets"><div class="ap-actions-title">Bucket Targets</div>'+rowsHtml+'</div>';
+  };
 
   // ── 3-Year Action Plan ──
   let apHtml = '';
@@ -7555,15 +8141,17 @@ function generateReport(){
     if(rc>0)   acts.push(`Roth Conv — ${convSrc} → Roth: ${fd(rc)}`);
     if(unfunded>0) acts.push(`<span class="red">⚠ WARNING: Funding shortfall of ${fd(unfunded)}</span>`);
     if(!acts.length) acts.push('No draws or conversions needed');
+    const bucketTargetsHtml = bucketActionPlanHtmlForYear(yr);
 
     apHtml+=`
       <div class="yr-band">${yr} — Ages ${age(full)} — Adjusted Gross Income ${fd(full.agi)} — Marginal ${fp(full.margRate)} — Effective ${fp(full.effRate)}</div>
-      <div class="ap-year">
+      <div class="ap-year${bucketTargetsHtml?' ap-year-buckets':''}">
         <div class="yr-tbl"><table>
           <thead><tr><th>Starting Balances</th><th class="r">Amount</th><th>Funding Sources</th><th class="r">Amount</th><th>Income, Tax &amp; Medicare</th><th class="r">Amount</th></tr></thead>
           <tbody>${rows3}</tbody>
         </table></div>
         <div class="ap-actions"><div class="ap-actions-title">Action Plan</div><ul class="actions">${acts.map(a=>`<li>${a}</li>`).join('')}</ul></div>
+        ${bucketTargetsHtml}
       </div>`;
   }
 
@@ -7727,6 +8315,7 @@ function generateReport(){
   const apHasWages=ap.some(r=>((r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0))>0);
   const apHasIncomeTax=ap.some(r=>(r.incomeTax||0)>0 || (r.fundingTax||0)>0);
   const advisorQuestions=[
+    ...(bucketReportAccounts.length ? ['Do the Bucket Lab targets match the actual short-term, intermediate, and long-term holdings in each enabled account?'] : []),
     ...(apHasRothConv ? ['Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?'] : []),
     ...(apHasIRMAA ? ['Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?'] : []),
     ...(apHasIncomeTax ? [apHasWages ? 'Should payroll withholding be adjusted for the first three action-plan years?' : 'Should estimated tax payments be changed for the first three action-plan years?'] : []),
@@ -7865,8 +8454,9 @@ function generateReport(){
   ${(survivorOn || Object.values(P.overrides||{}).some(x=>x&&x.length)) ? '<div class="print-break-after-overrides"></div>' : ''}
 
   ${portfolioPlanHtml}
+  ${bucketPlanHtml}
 
-  <h2>3-Year Action Plan</h2>
+  <h2 class="action-plan-start">3-Year Action Plan</h2>
   ${apHtml}
 
   <h2>Discussion Questions</h2>
@@ -9156,6 +9746,7 @@ function renderAll(){
   if(!active)return;
   const id=active.id.replace('pane-','');
   if(id==='taxtables')renderTaxTables();
+  if(id==='portfolio')renderPortfolioPlan();
   if(id==='action')renderAP();
   if(id==='cashflow')renderCF();
   if(id==='taxes')renderTax();

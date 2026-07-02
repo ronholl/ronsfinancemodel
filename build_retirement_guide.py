@@ -229,14 +229,14 @@ story = []
 story += [
     Spacer(1, 0.36 * inch),
     p("Ron's Retirement Finance Model V1", "GuideTitle"),
-    p("A plain-English onboarding guide for setup, Roth Lab, check-ins, and advisor conversations", "GuideSub"),
+    p("A plain-English onboarding guide for setup, Roth Lab, Bucket Lab, check-ins, and advisor conversations", "GuideSub"),
     p("Start with the Setup Guide. It is the front door to the model. It asks for information in a safer order, explains what each answer means, checks what is missing, and keeps most people away from the raw tables.", "Callout"),
-    p("Quick translation: you do not need to understand every finance term before using the app. Build a reasonable baseline, use Readiness to find missing pieces, then use Roth Lab or Strategy Builder only when you are ready to test choices.", "GoodCallout"),
+    p("Quick translation: you do not need to understand every finance term before using the app. Build a reasonable baseline, use Readiness to find missing pieces, then use Roth Lab, Bucket Lab, or Strategy Builder only when you are ready to test choices.", "GoodCallout"),
     Spacer(1, 0.08 * inch),
     cards([
         ("Use this guide first", "Read the first sections to understand why the app exists and how to get a useful first report."),
         ("Use reference later", "The field details are near the back. Do not start there unless a screen or field is confusing."),
-        ("Advisor use", "The Roth Lab Advisor Report is designed to create better questions, not to replace professional advice."),
+        ("Advisor use", "The Roth Lab and Bucket Lab report sections are designed to create better questions, not to replace professional advice."),
         ("Not advice", "This is a planning tool. It is not tax, legal, investment, Medicare, or financial advice."),
     ], cols=2),
 ]
@@ -253,12 +253,13 @@ story += [
         ("3. Strategy engine", "Lets you test future decisions: Roth conversion targets, Roth conversion sources, IRMAA targets, tax bracket caps, spending changes, survivor planning, cash floors, growth scenarios, and funding order changes."),
     ]),
 ]
-story += subhead("Two Active Planning Functions")
+story += subhead("Three Active Planning Functions")
 story += [
-    p("Beyond tracking portfolio movement, the app actively models two decision systems."),
+    p("Beyond tracking portfolio movement, the app actively models three decision systems."),
     cards([
         ("Funding buckets", "The app decides which buckets fund life: wages, Social Security, RMDs, inherited IRA draws, dividends, cash, taxable brokerage, IRA/401k, and Roth."),
         ("Roth conversion income", "The app can intentionally create taxable income by converting IRA money to Roth, using rules such as IRMAA tiers or federal tax bracket caps."),
+        ("Portfolio Bucket Lab", "Optional. You turn it on by account to translate future planned withdrawals into Short, Intermediate, and Long/Growth portfolio targets."),
     ], cols=2),
 ]
 story += subhead("Who Benefits Most")
@@ -281,7 +282,8 @@ story += [
         ("3. Generate Report", "Read the summary, active strategies, and first few action years. Do not worry about every detailed table yet."),
         ("4. Save Backup", "Export a JSON backup after the baseline makes sense."),
         ("5. Open Roth Lab", "If Roth conversions matter, save the Current Plan as a User Scenario, then compare a few Roth income targets."),
-        ("6. Print Advisor Report", "Use the concise Roth Lab report for discussion with a tax or financial advisor."),
+        ("6. Open Bucket Lab", "If you want mechanical portfolio withdrawal targets, turn on only the accounts you want to bucket."),
+        ("7. Print Advisor Report", "Use the concise report for discussion with a tax or financial advisor. Bucket Lab appears only when at least one account is enabled."),
     ]),
     p("A good baseline beats a perfect-looking plan that nobody understands. Get the model roughly right, then improve one thing at a time.", "GoodCallout"),
 ]
@@ -289,6 +291,7 @@ story += subhead("What Not To Do First")
 story += bullets([
     "Do not start in raw Inputs, Start of Year, or Override Tables unless you already know why you need them.",
     "Do not compare Roth strategies before the household, balances, income, and Medicare lookback are reasonable.",
+    "Do not turn on Bucket Lab for every account automatically. Use it only for accounts where bucket targets will guide actual portfolio management.",
     "Do not change five assumptions at once. Change one major thing, rerun, and see what moved.",
 ])
 story.append(PageBreak())
@@ -304,6 +307,7 @@ story += [
         ("Roth conversions", "A Roth conversion is not spending. It moves money from IRA to Roth and creates taxable income now, usually to reduce future taxable IRA/RMD pressure."),
         ("Roth conversion source", "The source setting controls which person's IRA supplies the conversion dollars. The Cash Flow tab shows the split by person so the taxable conversion can be audited."),
         ("Taxable account buckets", "Taxable brokerage income is estimated from entered balances. Regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds receive different tax treatment."),
+        ("Bucket Lab targets", "Optional portfolio targets. Bucket Lab does not change cash flow, tax, Roth conversion, or funding calculations. It summarizes future planned withdrawals for accounts you turn on."),
     ]),
     p("Important cash-flow convention: annual spending is the household spending budget and is assumed to include normal Medicare premiums. Income taxes are modeled separately. IRMAA is shown separately for planning comparison, but it is not added as a second separate spending withdrawal unless you include it in spending.", "Callout"),
 ]
@@ -312,6 +316,7 @@ story += bullets([
     "A Roth conversion can improve future account location but raise current tax or IRMAA.",
     "An IRA draw used to fund spending is taxable income, so funding choices can change tax results.",
     "A survivor case can change filing status, tax brackets, Social Security, Medicare count, and account pressure.",
+    "Bucket Lab is a portfolio implementation aid. It helps decide how much of an enabled account might belong in near-term, intermediate, and long/growth holdings.",
 ])
 story.append(PageBreak())
 
@@ -331,7 +336,8 @@ story += [simple_steps([
     ("1. Baseline", "Complete Setup Guide and Readiness."),
     ("2. Medicare", "Enter prior MAGI and review IRMAA assumptions."),
     ("3. Roth Lab", "Use IRMAA Base through Tier 4 to see how different income targets change taxes, IRMAA, IRA depletion, Roth balance, and net worth."),
-    ("4. Advisor Report", "Select up to five useful scenarios and print the report."),
+    ("4. Bucket Lab", "If you manage withdrawals by portfolio buckets, enable the IRA, inherited IRA, taxable, or Roth accounts where bucket targets are useful."),
+    ("5. Advisor Report", "Select up to five useful scenarios and print the report."),
 ])]
 story += subhead("Working User Workflow")
 story += [simple_steps([
@@ -361,6 +367,7 @@ story += [
 story += subhead("Taxable Brokerage And Bond Balances")
 story += [
     p("Opening Year and Annual Check-In ask for taxable-account balances, not annual interest. Put ordinary taxable brokerage holdings in Taxable Stocks/Funds. Use the U.S. Treasury bucket for Treasury or federal-obligation balances, CA Municipal Bond for California municipal bonds, and Other-State Municipal Bond for municipal bonds taxable by California.", "Callout"),
+    p("These taxable-account buckets are tax-treatment categories. They are separate from Bucket Lab, which is an optional portfolio-planning tool for withdrawal targets.", "GoodCallout"),
     p("The model applies the Brokerage Dividend / Interest Rate to those balances to estimate annual income, while the full taxable account still shares the overall Investment Growth Rate.", "GoodCallout"),
     info_table(("Bucket", "Tax Treatment"), [
         ("Taxable Stocks/Funds", "Federally taxable and generally taxable by California."),
@@ -433,13 +440,64 @@ story += [
 ]
 story.append(PageBreak())
 
+# Bucket Lab
+story += section("8. Bucket Lab And Portfolio Buckets")
+story += [
+    p("Bucket Lab is an optional portfolio implementation tool. It answers a different question than the funding engine: if the plan expects future withdrawals from an account, how much of that account should be set aside for near-term, intermediate, and long/growth purposes?", "Callout"),
+    p("Bucket Lab is off by default. Nothing appears in reports, the dashboard, or Year Detail until you turn on at least one account. This keeps the guide and reports quiet for users who do not manage portfolios with buckets.", "GoodCallout"),
+]
+story += subhead("What Bucket Lab Does")
+story += [
+    info_table(("Bucket Lab Item", "Plain-English Meaning"), [
+        ("Review year", "The year you are planning from. Changing the Review Year recalculates targets using the projected withdrawals after that year."),
+        ("On by account", "Turn on only the accounts where bucket targets are useful. For example, you might enable a traditional IRA and an inherited IRA, but leave Roth off."),
+        ("Short bucket", "Planned withdrawals inside that account's short window. This is usually the most stable money, intended for near-term draws."),
+        ("Intermediate bucket", "Planned withdrawals after the short window but inside the intermediate window. This is the refill runway."),
+        ("Long/Growth", "The remaining enabled account balance after short and intermediate targets. This is not a withdrawal target; it is the amount left for longer-term positioning."),
+        ("Policy", "The Short / Intermediate year setting for one account, such as 3/5 for a traditional IRA or 2/0 for an inherited IRA."),
+    ]),
+]
+story += subhead("What Bucket Lab Does Not Do")
+story += bullets([
+    "It does not change the funding engine or account draw order.",
+    "It does not change taxes, Roth conversions, RMDs, IRMAA, or cash-flow results.",
+    "It does not recommend specific securities.",
+    "It does not track whether your real portfolio actually holds those bucket amounts. It calculates targets you can compare with your real holdings.",
+])
+story += subhead("Typical Bucket Policies")
+story += [
+    p("The right bucket policy depends on how the account is used. These are starting examples, not rules.", "GoodCallout"),
+    info_table(("Example Account", "Possible Bucket Policy"), [
+        ("Traditional IRA", "3/5 might mean three years of expected IRA withdrawals in Short and the following five years in Intermediate."),
+        ("Post-2020 inherited IRA", "2/0 might be enough when the goal is a shorter required drawdown runway."),
+        ("Roth IRA", "0/0 keeps Roth entirely in Long/Growth unless the plan has explicit Roth withdrawals."),
+        ("Taxable securities", "2/3 may help if taxable brokerage is expected to fund spending or cash gaps."),
+        ("HSA", "1/0 may be enough when only current or near-term medical withdrawals are planned."),
+    ]),
+]
+story += subhead("How To Use Bucket Lab")
+story += [simple_steps([
+    ("1. Build the baseline first", "Bucket targets are only useful after spending, income, balances, inherited IRA lots, and funding order are reasonable."),
+    ("2. Open Bucket Lab", "Use the Review Year dropdown to pick the year you are planning from."),
+    ("3. Turn on accounts", "Enable only accounts where bucket targets should appear. The lab remains invisible elsewhere until something is turned on."),
+    ("4. Set account windows", "Enter Short and Intermediate years for each enabled account. Use zero when a bucket should not exist."),
+    ("5. Compare to real holdings", "Use the dashboard, Year Detail, and report to compare calculated targets with how the actual account is invested."),
+    ("6. Review annually", "At each annual check-in, update balances, choose the new Review Year, and refill Short or Intermediate according to the targets."),
+])]
+story += [
+    p("A simple example: in 2028, a 3/5 traditional IRA policy means Short covers projected IRA withdrawals for 2028-2030. Intermediate covers the next five projected withdrawal years after that. The Long/Growth number is what remains after those targets.", "Callout"),
+    p("For inherited IRA lots, Bucket Lab uses stable lot IDs behind the scenes, so a saved policy stays attached to the intended lot rather than to its row position.", "GoodCallout"),
+]
+story.append(PageBreak())
+
 # Advisor report
-story += section("8. Advisor Report")
+story += section("9. Advisor Report")
 story += [
     p("The Advisor Report is the clean conversation piece. It is meant to be short enough to discuss and detailed enough to avoid vague guesses."),
     info_table(("Report Area", "Why It Is There"), [
         ("Key assumptions", "Shows the assumptions that could change the answer, such as growth, inflation, survivor plan, Medicare lookback, tax filing, and Roth Lab window."),
         ("Scenario comparison", "Compares the selected Roth strategies side by side."),
+        ("Bucket Lab", "Appears only when at least one account is enabled. It shows account bucket targets and adds yearly targets to the 3-Year Action Plan."),
         ("Year-by-year detail", "Shows the first few years or the selected detail range for each scenario."),
         ("Advisor questions", "Prompts the discussion: which income target is reasonable, whether IRMAA is worth paying, whether survivor planning changes the answer, and whether the strategy should stop at a tier or bracket."),
     ]),
@@ -448,6 +506,8 @@ story += subhead("Good Advisor Questions")
 story += bullets([
     "Is the selected IRMAA tier worth paying to reduce future IRA and RMD pressure?",
     "Should conversions stop at an IRMAA tier, a federal bracket, or a custom MAGI amount?",
+    "For enabled Bucket Lab accounts, do the Short and Intermediate targets match how the portfolio is actually invested?",
+    "Should any inherited IRA lot have a shorter bucket runway than a regular IRA?",
     "Does the answer change if growth is lower, growth is higher, or one spouse dies earlier?",
     "Should taxes be paid from cash, taxable brokerage, IRA, or Roth in specific years?",
     "Are estate goals more important than lowest lifetime tax in this plan?",
@@ -458,7 +518,7 @@ story += [
 story.append(PageBreak())
 
 # Check-ins / strategies
-story += section("9. Annual Check-In And Strategy Builder")
+story += section("10. Annual Check-In And Strategy Builder")
 story += [
     p("The first setup is only the starting map. Annual Check-In and Strategy Builder keep the map useful."),
     cards([
@@ -470,6 +530,7 @@ story += subhead("Annual Check-In")
 story += [simple_steps([
     ("Pick year", "Choose the year being updated."),
     ("Enter actuals", "Update spending, income, HSA, inherited IRA values, and balances. For taxable accounts, enter the balance split between taxable investments, Treasuries, CA munis, and other-state munis."),
+    ("Review Bucket Lab", "If bucket targets are enabled, compare the new Review Year targets with actual account holdings and decide what needs refilling."),
     ("Rerun report", "Generate a fresh report so the action plan reflects reality."),
 ])]
 story += subhead("Strategy Builder")
@@ -490,7 +551,7 @@ story += [
 story.append(PageBreak())
 
 # Reference setup
-story += section("10. Setup Reference")
+story += section("11. Setup Reference")
 story += [
     p("Use this section when a field is confusing. You do not need to memorize it before using the app."),
     info_table(("Area", "Key Plain-English Notes"), [
@@ -511,7 +572,7 @@ story += [
 story.append(PageBreak())
 
 # Inherited IRA reference
-story += section("11. Inherited IRA Reference")
+story += section("12. Inherited IRA Reference")
 story += [
     p("Use inherited IRA setup only for inherited retirement accounts. Regular IRA, 401k, Roth, and HSA balances belong in Opening Year."),
     info_table(("Field", "Meaning"), [
@@ -527,7 +588,7 @@ story += [
 ]
 
 # Advanced / backups / glossary
-story += section("12. Advanced Mode, Backups, And Glossary")
+story += section("13. Advanced Mode, Backups, And Glossary")
 story += [
     p("Advanced Mode shows the raw machine room: Inputs, Start of Year, Override Tables, Year Detail, Cash Flow, Tax Summary, Tax Tables, and Export/Import. Most users can leave it off."),
     p("Use Export/Import for JSON backups. Make a backup after setup, after annual check-ins, before major strategy testing, and after changes you would not want to recreate.", "Callout"),
@@ -540,6 +601,10 @@ story += [
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
         ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
         ("Tax-free bond buckets", "Taxable-account balance entries for U.S. Treasuries and municipal bonds so federal and California tax treatment can differ."),
+        ("Bucket Lab", "Optional account-by-account portfolio bucket planner. It is off by default and appears in reports only after at least one account is enabled."),
+        ("Short bucket", "The enabled account target for planned withdrawals inside the short window."),
+        ("Intermediate bucket", "The enabled account target for planned withdrawals after the short window but inside the intermediate window."),
+        ("Long/Growth", "The remaining enabled account balance after Short and Intermediate targets."),
         ("Funding order", "The order used when the model needs extra money from accounts."),
         ("Cash floor", "The cash reserve target the model tries to protect."),
         ("Cushion / headroom", "A safety amount below a target, such as staying $4,000 below an IRMAA tier."),
