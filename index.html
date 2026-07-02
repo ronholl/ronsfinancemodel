@@ -3325,15 +3325,16 @@ function bucketPlanPolicyText(policy){
 }
 function bucketTargetsCardHtml(year, options){
   if (!proj || !proj.length) return '';
-  const cfg = Object.assign({title:'Bucket Targets', compact:false}, options || {});
+  const cfg = Object.assign({title:'Start-of-Year Bucket Targets', compact:false}, options || {});
   const plan = buildPortfolioBucketPlan(proj, S, year);
   const accounts = plan.enabledAccounts || [];
   if (!accounts.length) return '';
   const money = v => f$(v || 0, true);
+  const timingNote = '<div class="bucket-target-note">Targets to have in place at the start of '+setupEsc(year)+' before that year&rsquo;s planned withdrawals.</div>';
   const rows = accounts.map(a=>{
     const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0};
     const current = (a.currentWithdrawal || 0) > 0
-      ? '<div class="bucket-target-line"><span>Current draw</span><span>'+money(a.currentWithdrawal)+'</span></div>' : '';
+      ? '<div class="bucket-target-line"><span>Draw during year</span><span>'+money(a.currentWithdrawal)+'</span></div>' : '';
     const longLine = cfg.compact ? '' : '<div class="bucket-target-line"><span>Long/Growth</span><span>'+money(a.longTarget||0)+'</span></div>';
     return '<div class="bucket-target-row">'+
       '<div class="bucket-target-name">'+setupEsc(a.name)+'</div>'+
@@ -3344,7 +3345,7 @@ function bucketTargetsCardHtml(year, options){
       '<div class="bucket-target-note">Policy '+setupEsc(bucketPlanPolicyText(policy))+' · '+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+' / '+setupEsc(bucketPlanWindowLabel(a.intermediateStart,a.intermediateEnd))+'</div>'+
     '</div>';
   }).join('');
-  return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+rows+'</div>';
+  return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+timingNote+rows+'</div>';
 }
 function bucketPlanDefaultYear(state, rows){
   const currentYear = new Date().getFullYear();
@@ -3411,14 +3412,14 @@ function bucketPlanGuidance(account, moneyFn){
     return notes;
   }
   if ((account.currentWithdrawal || 0) > 0) {
-    notes.push('Current-year planned withdrawal: ' + moneyFn(account.currentWithdrawal) + '.');
+    notes.push('Planned withdrawal during the target year: ' + moneyFn(account.currentWithdrawal) + '.');
   }
   if ((policy.shortYears || 0) <= 0) {
     notes.push('Short bucket is disabled for this account.');
   } else if ((account.nextShortReplenish || 0) > 0) {
-    notes.push('At next annual review, move ' + moneyFn(account.nextShortReplenish) + ' for ' + account.nextShortYear + ' from Intermediate to Short.');
+    notes.push('At the next start-of-year review, move ' + moneyFn(account.nextShortReplenish) + ' for ' + account.nextShortYear + ' from Intermediate to Short.');
   } else {
-    notes.push('No Short bucket refill is projected at the next annual review.');
+    notes.push('No Short bucket refill is projected at the next start-of-year review.');
   }
   if ((policy.intermediateYears || 0) <= 0) {
     notes.push('Intermediate bucket is disabled for this account.');
@@ -3427,7 +3428,7 @@ function bucketPlanGuidance(account, moneyFn){
   } else if (account.forceLongZero) {
     notes.push('No Long-Term refill is expected because this inherited IRA uses a defined drawdown path.');
   } else {
-    notes.push('No Intermediate refill is projected from Long-Term at the next annual review.');
+    notes.push('No Intermediate refill is projected from Long-Term at the next start-of-year review.');
   }
   if ((account.currentConversion || 0) > 0) {
     notes.push('Roth conversion candidate this year: ' + moneyFn(account.currentConversion) + ' from Long-Term, excluded from bucket targets.');
@@ -3620,13 +3621,13 @@ function renderPortfolioPlan(){
   S.bucketPlanYear = selectedYear;
   const plan = buildPortfolioBucketPlan(proj, S, selectedYear);
   const money = v => f$(v || 0, true);
-  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div><div class="note" style="font-size:12px;max-width:860px;line-height:1.55"><strong>What this is:</strong> Bucket Lab is an optional portfolio-planning overlay. It does not change the funding engine, tax projection, Roth conversion logic, or cash-flow results. It simply translates future planned withdrawals into target amounts for each enabled account: Short bucket, Intermediate bucket, and Long/Growth balance.<br><br><strong>How to use it:</strong> pick the review year, turn on only the accounts you want to manage with buckets, then set that account&rsquo;s Short and Intermediate windows. Use 0 years to disable a bucket. Nothing from this lab appears in the printable report until at least one account is turned on.</div></div><button class="btn btn-dark btn-sm" onclick="generateReport()">Print Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div></div></div>';
+  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div><div class="note" style="font-size:12px;max-width:860px;line-height:1.55"><strong>What this is:</strong> Bucket Lab is an optional portfolio-planning overlay. It does not change the funding engine, tax projection, Roth conversion logic, or cash-flow results. It simply translates future planned withdrawals into start-of-year target amounts for each enabled account: Short bucket, Intermediate bucket, and Long/Growth balance.<br><br><strong>Timing:</strong> Targets are meant to be in place at the start of the selected Review Year, before that year&rsquo;s planned withdrawals. A 2027 Bucket target is for positioning at the start of 2027, not a late-2027 action to prepare for 2028.<br><br><strong>How to use it:</strong> pick the review year, turn on only the accounts you want to manage with buckets, then set that account&rsquo;s Short and Intermediate windows. Use 0 years to disable a bucket. Nothing from this lab appears in the printable report until at least one account is turned on.</div></div><button class="btn btn-dark btn-sm" onclick="generateReport()">Print Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div></div></div>';
   if (!plan.accounts.length) {
     root.innerHTML = controls + '<div class="bucket-empty">No active retirement or inherited IRA accounts have balances, planned withdrawals, or Roth conversions in the selected review year. Enter opening balances or inherited IRA lots first, then return here.</div>';
     return;
   }
   const summary = '<div class="bucket-summary">'+
-    '<div class="bucket-metric"><div class="bucket-metric-label">Review Year</div><div class="bucket-metric-value">'+plan.reviewYear+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Target Year</div><div class="bucket-metric-value">'+plan.reviewYear+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Enabled Accounts</div><div class="bucket-metric-value">'+(plan.enabledAccounts?plan.enabledAccounts.length:0)+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Short Target</div><div class="bucket-metric-value">'+money(plan.totals.shortTarget)+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Intermediate Target</div><div class="bucket-metric-value">'+money(plan.totals.intermediateTarget)+'</div></div>'+
@@ -3660,7 +3661,7 @@ function renderPortfolioPlan(){
       '<td class="bucket-guidance">'+guidance+warning+'</td>'+
     '</tr>';
   }).join('');
-  root.innerHTML = controls + summary + '<div class="bucket-table-wrap"><table class="bucket-table"><thead><tr><th>Account / Lot</th><th>Policy</th><th class="r">Start Balance</th><th class="r">Current-Year Draw</th><th class="r">Short Bucket</th><th class="r">Intermediate Bucket</th><th class="r">Long / Growth</th><th>Annual Review Guidance</th></tr></thead><tbody>'+rowHtml+'</tbody></table></div>';
+  root.innerHTML = controls + summary + '<div class="bucket-table-wrap"><table class="bucket-table"><thead><tr><th>Account / Lot</th><th>Policy</th><th class="r">Start-of-Year Balance</th><th class="r">Draw During Year</th><th class="r">Short Bucket</th><th class="r">Intermediate Bucket</th><th class="r">Long / Growth</th><th>Start-of-Year Review Guidance</th></tr></thead><tbody>'+rowHtml+'</tbody></table></div>';
 }
 
 
@@ -5182,12 +5183,18 @@ function renderIRMAAWatchlist(){
   const kpi = document.getElementById('kpi-row');
   if (!kpi) return;
   let el = document.getElementById('irmaa-watchlist-panel');
+  const options = {limit:6, title:'IRMAA Watchlist', copy:'Roth-conversion warning list for Medicare IRMAA. It only shows years where Roth conversion pushes AGI above a selected target or creates a higher IRMAA tier. Income-only crossings are not flagged here.'};
+  const items = buildIRMAAWatchlist(proj, S, options);
+  if (!items.length) {
+    if (el) el.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement('div');
     el.id = 'irmaa-watchlist-panel';
     kpi.insertAdjacentElement('afterend', el);
   }
-  el.innerHTML = renderIRMAAWatchlistPanel(proj, S, {limit:6, title:'IRMAA Watchlist', copy:'Roth-conversion warning list for Medicare IRMAA. It only shows years where Roth conversion pushes AGI above a selected target or creates a higher IRMAA tier. Income-only crossings are not flagged here.'});
+  el.innerHTML = renderIRMAAWatchlistPanel(proj, S, options);
 }
 function rothLabRenderIRMAAWatchlist(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
@@ -5806,7 +5813,7 @@ function renderYD(){
     agiIRADraws>0 && (r.fundingOrder||[])[0]==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : '',
     taxExemptInterest>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a5a1a;background:#eef8ee;border-left:3px solid #1a6a1a;padding:5px 8px;margin-top:6px">Tax-exempt bond interest is excluded from regular federal AGI but included for Social Security provisional income and Medicare MAGI.</div>' : ''
   ].filter(Boolean).join('');
-  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Bucket Targets'});
+  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Start-of-Year Bucket Targets'});
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
       <div class="sh">Funding Sources</div>
@@ -6825,7 +6832,7 @@ function apCard(yr){
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
                     (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
-  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Bucket Targets', compact:true});
+  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Start-of-Year Bucket Targets', compact:true});
 
   return `<div style="background:#fffdf5;border:1px solid #ddd0a8;border-radius:8px;padding:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -8002,8 +8009,8 @@ function generateReport(){
       '</tr>';
     }).join('');
     return '<h2>Bucket Lab</h2>'+
-      '<div class="callout"><strong>Review year '+bucketPlan.reviewYear+':</strong> This optional lab is included because at least one account is turned on. Each enabled account uses its own Short / Intermediate policy. Roth conversions are excluded from withdrawal targets.</div>'+
-      '<table><thead><tr>'+[th('Account / Lot'),thr('Start\nBalance'),thr('Current\nDraw'),thr('Short\nBucket'),thr('Intermediate\nBucket'),thr('Long /\nGrowth'),th('Mechanical Guidance')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+      '<div class="callout"><strong>Start-of-year targets for '+bucketPlan.reviewYear+':</strong> This optional lab is included because at least one account is turned on. Targets are meant to be in place at the start of the review year, before that year&rsquo;s planned withdrawals. Each enabled account uses its own Short / Intermediate policy. Roth conversions are excluded from withdrawal targets.</div>'+
+      '<table><thead><tr>'+[th('Account / Lot'),thr('Start-of-Year\nBalance'),thr('Draw During\nYear'),thr('Short\nBucket'),thr('Intermediate\nBucket'),thr('Long /\nGrowth'),th('Mechanical Guidance')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
       '<p class="note">The app calculates dollar targets only. It does not track actual holdings by bucket or recommend specific securities.</p>';
   })() : '';
   const bucketActionPlanHtmlForYear = yr => {
@@ -8022,7 +8029,7 @@ function generateReport(){
         longLine+
       '</div>';
     }).join('');
-    return '<div class="ap-buckets"><div class="ap-actions-title">Bucket Targets</div>'+rowsHtml+'</div>';
+    return '<div class="ap-buckets"><div class="ap-actions-title">Start-of-Year Bucket Targets</div>'+rowsHtml+'</div>';
   };
 
   // ── 3-Year Action Plan ──
@@ -8315,7 +8322,7 @@ function generateReport(){
   const apHasWages=ap.some(r=>((r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0))>0);
   const apHasIncomeTax=ap.some(r=>(r.incomeTax||0)>0 || (r.fundingTax||0)>0);
   const advisorQuestions=[
-    ...(bucketReportAccounts.length ? ['Do the Bucket Lab targets match the actual short-term, intermediate, and long-term holdings in each enabled account?'] : []),
+    ...(bucketReportAccounts.length ? ['At the start of the review year, do the Bucket Lab targets match the actual short-term, intermediate, and long-term holdings in each enabled account?'] : []),
     ...(apHasRothConv ? ['Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?'] : []),
     ...(apHasIRMAA ? ['Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?'] : []),
     ...(apHasIncomeTax ? [apHasWages ? 'Should payroll withholding be adjusted for the first three action-plan years?' : 'Should estimated tax payments be changed for the first three action-plan years?'] : []),
