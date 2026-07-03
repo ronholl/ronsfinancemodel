@@ -554,6 +554,11 @@ table.soy-ov tr.soy-entered:hover .soy-cell{background:#d0ead0}
 .bucket-target-line span:last-child{font-family:'JetBrains Mono',monospace;color:var(--ink);font-weight:700;white-space:nowrap}
 .bucket-target-note{font-size:9.5px;line-height:1.35;color:#6a5830;margin-top:2px}
 .bucket-target-refill{margin-top:5px;background:#eef8ee;border-left:3px solid #1a6a1a;border-radius:4px;padding:4px 6px;font-size:9.8px;line-height:1.35;color:#25512a}
+.bucket-target-actions{margin-top:8px;border-top:1px solid #e3d5ae;padding-top:7px}
+.bucket-target-actions-title{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.bucket-target-action{border-left:3px solid var(--gold);background:#fffdf7;border-radius:4px;padding:4px 6px;margin-top:4px;font-size:9.8px;line-height:1.35;color:#4a3500}
+.bucket-target-action strong{color:var(--ink);font-weight:850}
+.bucket-target-action span{display:block;color:#6a5830;font-size:9.2px;margin-top:1px}
 
 /* ── CONFLICT BADGE ── */
 .badge-warn{display:inline-block;background:#fff3cd;border:1px solid #c8a000;color:var(--warn);font-size:9px;padding:1px 5px;border-radius:2px;font-family:'JetBrains Mono',monospace}
@@ -3373,11 +3378,11 @@ function bucketPlanPolicyLabel(policy){
   const shortYears = policy && policy.shortYears != null ? policy.shortYears : 0;
   const intermediateYears = policy && policy.intermediateYears != null ? policy.intermediateYears : 0;
   const word = n => Number(n) === 1 ? 'year' : 'years';
-  return 'Short '+shortYears+' '+word(shortYears)+' · Intermediate '+intermediateYears+' '+word(intermediateYears);
+  return 'Short-Term '+shortYears+' '+word(shortYears)+' · Intermediate '+intermediateYears+' '+word(intermediateYears);
 }
 function bucketTargetsCardHtml(year, options){
   if (!proj || !proj.length) return '';
-  const cfg = Object.assign({title:'Start-of-Year Bucket Targets', compact:false}, options || {});
+  const cfg = Object.assign({title:'Start-of-Year Bucket Targets', compact:false, showActions:true, includeTargetActions:false}, options || {});
   const plan = buildPortfolioBucketPlan(proj, S, year);
   const accounts = plan.enabledAccounts || [];
   if (!accounts.length) return '';
@@ -3400,7 +3405,8 @@ function bucketTargetsCardHtml(year, options){
       refillNote+
     '</div>';
   }).join('');
-  return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+timingNote+rows+'</div>';
+  const actionHtml = cfg.showActions ? bucketPlanDueActionsCardHtml(plan, money, {includeTargets:cfg.includeTargetActions}) : '';
+  return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+timingNote+rows+actionHtml+'</div>';
 }
 function bucketPlanDefaultYear(state, rows){
   const currentYear = new Date().getFullYear();
@@ -3614,6 +3620,37 @@ function bucketPlanActionItems(account, moneyFn, year){
     actions.push({kind:'Review gap', from:'Plan Target', to:'Available Balance', amount:account.targetGap, why:'Targets exceed starting balance'});
   }
   return actions;
+}
+function bucketPlanActionLabel(action, moneyFn){
+  const amount = moneyFn(action.amount || 0);
+  if (action.kind === 'Set Short-Term target') {
+    return '<strong>Set Short-Term target '+setupEsc(amount)+'</strong><span>'+setupEsc(action.why || '')+'</span>';
+  }
+  if (action.kind === 'Refill Short-Term') {
+    return '<strong>Move '+setupEsc(amount)+' '+setupEsc(action.from)+' → Short-Term</strong><span>'+setupEsc(action.why || '')+'</span>';
+  }
+  if (action.kind === 'Replenish Intermediate') {
+    return '<strong>Move '+setupEsc(amount)+' '+setupEsc(action.from)+' → Intermediate</strong><span>'+setupEsc((action.why || '') + (action.timing ? ' · '+action.timing : ''))+'</span>';
+  }
+  if (action.kind === 'Review gap') {
+    return '<strong>Review target gap '+setupEsc(amount)+'</strong><span>'+setupEsc(action.why || '')+'</span>';
+  }
+  return '<strong>'+setupEsc(action.kind)+': '+setupEsc(amount)+'</strong><span>'+setupEsc(action.why || '')+'</span>';
+}
+function bucketPlanDueActionsCardHtml(plan, moneyFn, options){
+  const cfg = Object.assign({includeTargets:false, title:'Bucket Actions Required'}, options || {});
+  const rows = [];
+  (plan.enabledAccounts || []).forEach(account => {
+    const actions = bucketPlanActionItems(account, moneyFn, plan.reviewYear)
+      .filter(action => cfg.includeTargets || action.kind !== 'Set Short-Term target');
+    if (!actions.length) return;
+    rows.push('<div class="bucket-target-row">'+
+      '<div class="bucket-target-name">'+setupEsc(account.name)+'</div>'+
+      actions.map(action => '<div class="bucket-target-action">'+bucketPlanActionLabel(action, moneyFn)+'</div>').join('')+
+    '</div>');
+  });
+  if (!rows.length) return '';
+  return '<div class="bucket-target-actions"><div class="bucket-target-actions-title">'+setupEsc(cfg.title)+'</div>'+rows.join('')+'</div>';
 }
 function bucketPlanActionsHtml(account, moneyFn, year){
   if (!account.enabled) return '<div class="bucket-action-empty">Bucket Lab is off for this account.</div>';
@@ -3948,7 +3985,7 @@ function renderPortfolioPlan(){
       '<label>Short-Term<input type="number" min="0" max="10" value="'+policy.shortYears+'" onchange="setBucketAccountPolicy('+keyAttr+','+shortFieldAttr+',this.value)"></label>'+
       '<label>Inter<input type="number" min="0" max="20" value="'+policy.intermediateYears+'" onchange="setBucketAccountPolicy('+keyAttr+','+intermediateFieldAttr+',this.value)"></label>'+
       (policy.isCustom ? '<button class="btn btn-light btn-sm" onclick="resetBucketAccountPolicy('+keyAttr+')">Default</button>' : '')+
-    '</div><div class="bucket-policy-note">'+(a.enabled?'On':'Off')+' · '+(policy.isCustom?'Custom bucket window':'Default bucket window')+': '+bucketPlanPolicyLabel(policy)+'; default Short '+policy.defaultShortYears+' / Intermediate '+policy.defaultIntermediateYears+'</div>';
+    '</div><div class="bucket-policy-note">'+(a.enabled?'On':'Off')+' · '+(policy.isCustom?'Custom bucket window':'Default bucket window')+': '+bucketPlanPolicyLabel(policy)+'; default Short-Term '+policy.defaultShortYears+' / Intermediate '+policy.defaultIntermediateYears+'</div>';
     const offText = '<span class="bucket-year-list">Off</span>';
     const shortPurpose = a.shortYears > 0
       ? 'Purpose: funds planned withdrawals during the next '+a.shortYears+' year'+(a.shortYears===1?'':'s')+'.'
