@@ -3511,6 +3511,8 @@ function bucketPlanTransferRowsHtml(items, moneyFn, title, emptyText, reviewYear
   const hasReviewYear = !isNaN(yr);
   const dueRows = hasReviewYear ? items.filter(x=>parseInt(x.transferYear,10)===yr) : items;
   const futureRows = hasReviewYear ? items.filter(x=>parseInt(x.transferYear,10)!==yr) : [];
+  const futurePreviewRows = futureRows.slice(0, 5);
+  const futureSummaryCount = futurePreviewRows.length;
   const timingNote = hasReviewYear
     ? '<div class="bucket-schedule-empty">'+(dueRows.length ? 'Due now at this start-of-year review.' : 'No refill transfer is due in '+yr+'.')+'</div>'
     : '';
@@ -3519,7 +3521,7 @@ function bucketPlanTransferRowsHtml(items, moneyFn, title, emptyText, reviewYear
   ).join('');
   const dueHtml = dueRows.length ? rowHtml(dueRows) : '';
   const futureHtml = futureRows.length
-    ? '<details class="bucket-schedule-more"><summary>Show future refill ladder ('+futureRows.length+')</summary>'+rowHtml(futureRows)+'</details>'
+    ? '<details class="bucket-schedule-more"><summary>Show future refill ladder ('+futureSummaryCount+')</summary>'+rowHtml(futurePreviewRows)+'</details>'
     : '';
   return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div>'+timingNote+dueHtml+futureHtml+'</div>';
 }
@@ -3532,6 +3534,8 @@ function bucketPlanIntermediateRefillRowsHtml(items, moneyFn, reviewYear){
   const hasReviewYear = !isNaN(yr);
   const dueRows = hasReviewYear ? items.filter(x=>parseInt(x.transferYear,10)===yr) : items;
   const futureRows = hasReviewYear ? items.filter(x=>parseInt(x.transferYear,10)!==yr) : [];
+  const futurePreviewRows = futureRows.slice(0, 5);
+  const futureSummaryCount = futurePreviewRows.length;
   const timingNote = hasReviewYear
     ? '<div class="bucket-schedule-empty">'+(dueRows.length ? 'Due now at this start-of-year review.' : 'No Intermediate refill is due in '+yr+'.')+'</div>'
     : '';
@@ -3540,7 +3544,7 @@ function bucketPlanIntermediateRefillRowsHtml(items, moneyFn, reviewYear){
   ).join('');
   const dueHtml = dueRows.length ? rowHtml(dueRows) : '';
   const futureHtml = futureRows.length
-    ? '<details class="bucket-schedule-more"><summary>Show future Intermediate ladder ('+futureRows.length+')</summary>'+rowHtml(futureRows)+'</details>'
+    ? '<details class="bucket-schedule-more"><summary>Show future refill ladder ('+futureSummaryCount+')</summary>'+rowHtml(futurePreviewRows)+'</details>'
     : '';
   return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div>'+timingNote+dueHtml+futureHtml+'</div>';
 }
@@ -3994,7 +3998,7 @@ function renderPortfolioPlan(){
   const summary = '<div class="bucket-summary">'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Target Year</div><div class="bucket-metric-value">'+plan.reviewYear+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Enabled Accounts</div><div class="bucket-metric-value">'+(plan.enabledAccounts?plan.enabledAccounts.length:0)+'</div></div>'+
-    '<div class="bucket-metric"><div class="bucket-metric-label">Short Target</div><div class="bucket-metric-value">'+money(plan.totals.shortTarget)+'</div></div>'+
+    '<div class="bucket-metric"><div class="bucket-metric-label">Short-Term Target</div><div class="bucket-metric-value">'+money(plan.totals.shortTarget)+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Intermediate Target</div><div class="bucket-metric-value">'+money(plan.totals.intermediateTarget)+'</div></div>'+
     '<div class="bucket-metric"><div class="bucket-metric-label">Next Bucket Move</div><div class="bucket-metric-value">'+money(plan.totals.nextShortReplenish)+'</div><div class="bucket-metric-note">'+(plan.totals.upcomingShortRefillYear ? ('Due '+plan.totals.upcomingShortRefillYear+' · '+setupEsc(plan.totals.upcomingShortRefillSource || 'Bucket')+' → Short-Term') : 'None scheduled')+'</div></div>'+
   '</div>';
