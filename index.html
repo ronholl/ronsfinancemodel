@@ -346,6 +346,14 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .bucket-metric-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
 .bucket-metric-value{font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:850;color:var(--ink);line-height:1.1}
 .bucket-metric-note{font-size:10px;line-height:1.3;color:#6a5830;margin-top:3px}
+.bucket-lab-intro{max-width:1180px;margin-top:6px;color:var(--ink2)}
+.bucket-lab-lead{font-size:13.5px;line-height:1.55;max-width:1100px;margin-bottom:10px}
+.bucket-lab-lead strong{color:var(--ink);font-weight:900}
+.bucket-lab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-top:8px}
+.bucket-lab-card{border:1px solid #e3d5ae;border-left:4px solid var(--gold);border-radius:7px;background:#fffdf7;padding:9px 10px;font-size:11.5px;line-height:1.42;color:#5f4a22}
+.bucket-lab-card strong{display:block;font-family:'JetBrains Mono',monospace;font-size:8.8px;letter-spacing:.08em;text-transform:uppercase;color:#8a6400;margin-bottom:4px}
+.bucket-lab-note{margin-top:9px;border:1px solid #eadbb7;border-radius:7px;background:#fffaf0;padding:8px 10px;font-size:11.5px;line-height:1.45;color:#6a5830}
+.bucket-lab-note strong{color:var(--ink);font-weight:900}
 .bucket-flow-intro{margin-top:10px;border:1px solid #e3d5ae;border-radius:8px;background:#fffaf0;padding:10px 12px;max-width:900px}
 .bucket-flow-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:900;color:#4a3500;letter-spacing:.03em;text-transform:uppercase;margin-top:6px}
 .bucket-flow-line span{display:inline-flex;align-items:center}
@@ -3604,7 +3612,7 @@ function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortY
 }
 function bucketPlanFlowIntroHtml(){
   return '<div class="bucket-flow-intro">'+
-    '<strong>The Bucket Lab converts the retirement funding plan into annual portfolio implementation targets.</strong>'+
+    '<strong>Simple flow: keep near-term withdrawals protected, refill them from Intermediate, and leave the rest positioned for longer-term growth.</strong>'+
     '<div class="bucket-flow-line"><span>Long-Term</span><span class="bucket-flow-arrow">→</span><span>Intermediate</span><span class="bucket-flow-arrow">→</span><span>Short-Term</span><span class="bucket-flow-arrow">→</span><span>Planned Withdrawals</span></div>'+
     '<div class="bucket-purpose-grid">'+
       '<div class="bucket-purpose"><strong>Short-Term</strong>Money to protect for near-term planned withdrawals.</div>'+
@@ -3990,7 +3998,17 @@ function renderPortfolioPlan(){
   S.bucketPlanYear = selectedYear;
   const plan = buildPortfolioBucketPlan(proj, S, selectedYear);
   const money = v => f$(v || 0, true);
-  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div><div class="note" style="font-size:12px;max-width:860px;line-height:1.55"><strong>What this is:</strong> Bucket Lab is an optional portfolio implementation overlay. It translates the cash-flow plan into plain-English buckets: near-term withdrawals, staged refills, and long-term growth. It does not change taxes, Roth conversions, or cash-flow results.<br><br><strong>Timing:</strong> Targets are meant to be in place at the start of the selected Review Year, before that year&rsquo;s planned withdrawals. A 2027 Bucket target is for positioning at the start of 2027, not a late-2027 action to prepare for 2028.<br><br><strong>How to use it:</strong> pick the review year, turn on only the accounts you want to manage with buckets, then set that account&rsquo;s Short-Term and Intermediate windows. Use 0 years to disable a bucket. Nothing from this lab appears in the printable report until at least one account is turned on.</div></div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Bucket Report</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
+  const bucketIntroHtml = '<div class="bucket-lab-intro">'+
+    '<div class="bucket-lab-lead"><strong>Bucket Lab turns the cash-flow plan into an investment-positioning checklist.</strong> The projection already says which accounts are expected to fund withdrawals, taxes, and Roth conversions. Bucket Lab helps decide how much of each account should be held safely for near-term needs, staged for later needs, or left invested for long-term growth.</div>'+
+    '<div class="bucket-lab-grid">'+
+      '<div class="bucket-lab-card"><strong>What it answers</strong>How much should be in Short-Term, Intermediate, and Long-Term/Future buckets at the start of the selected review year?</div>'+
+      '<div class="bucket-lab-card"><strong>Why it helps</strong>It gives you and your advisor a practical way to prepare for planned withdrawals and conversions without selling growth assets at the wrong time.</div>'+
+      '<div class="bucket-lab-card"><strong>How to use it</strong>Pick a Review Year, turn on only the accounts you want to manage with buckets, then choose each account&rsquo;s Short-Term and Intermediate windows.</div>'+
+      '<div class="bucket-lab-card"><strong>How to read it</strong>Short-Term is money needed soon. Intermediate is staged refill money. Annual Bucket Moves are the shifts to make at this review.</div>'+
+    '</div>'+
+    '<div class="bucket-lab-note"><strong>Important:</strong> Bucket Lab is an overlay, not a second projection. It does not change taxes, Roth conversions, balances, or cash-flow results. Targets are meant to be in place at the <strong>start</strong> of the review year, before that year&rsquo;s planned withdrawals.</div>'+
+  '</div>';
+  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div>'+bucketIntroHtml+'</div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Bucket Report</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
   if (!plan.accounts.length) {
     root.innerHTML = controls + '<div class="bucket-empty">No active retirement or inherited IRA accounts have balances, planned withdrawals, or Roth conversions in the selected review year. Enter opening balances or inherited IRA lots first, then return here.</div>';
     return;
