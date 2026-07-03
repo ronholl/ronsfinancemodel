@@ -3575,9 +3575,28 @@ function bucketPlanFundingRowsHtml(items, moneyFn, title, emptyText){
     return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div><div class="bucket-schedule-empty">'+setupEsc(emptyText || 'No planned funding from this bucket.')+'</div></div>';
   }
   const rows = items.map(x =>
-    '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>Planned funding year</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>'
+    '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>Planned withdrawal year</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>'
   ).join('');
   return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div>'+rows+'</div>';
+}
+function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortYears){
+  const boxTitle = 'Intermediate Funding Years';
+  if (!items || !items.length) {
+    return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div><div class="bucket-schedule-empty">No planned withdrawals assigned to Intermediate.</div></div>';
+  }
+  const transferByFundingYear = new Map((transfers || []).map(x => [String(x.fundingYear), x]));
+  const firstTransfer = (transfers || [])[0];
+  const intro = firstTransfer
+    ? 'These are future withdrawal years held in Intermediate at this review. Example: '+firstTransfer.fundingYear+' funding should move to Short-Term in '+firstTransfer.transferYear+' with a '+(shortYears||0)+'-year Short-Term window.'
+    : 'These are future withdrawal years held in Intermediate at this review. Move them to Short-Term when they enter the Short-Term window.';
+  const rows = items.map(x => {
+    const transfer = transferByFundingYear.get(String(x.yr));
+    const detail = transfer
+      ? x.yr+' withdrawal; move to Short-Term in '+transfer.transferYear
+      : 'Planned withdrawal year';
+    return '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>'+setupEsc(detail)+'</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>';
+  }).join('');
+  return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div><div class="bucket-schedule-empty">'+setupEsc(intro)+'</div>'+rows+'</div>';
 }
 function bucketPlanFlowIntroHtml(){
   return '<div class="bucket-flow-intro">'+
@@ -3995,7 +4014,7 @@ function renderPortfolioPlan(){
       : offText;
     const intermediateCell = a.enabled
       ? (a.intermediateYears > 0
-        ? '<div class="bucket-bucket-total">'+money(a.intermediateTarget)+'</div><div class="bucket-purpose-note">Funds future Short-Term replenishments.</div>'+bucketPlanFundingRowsHtml(a.intermediateBreakdown, money, 'Intermediate Funding Years')+bucketPlanIntermediateRefillRowsHtml(a.intermediateReplenishSchedule, money, plan.reviewYear)
+        ? '<div class="bucket-bucket-total">'+money(a.intermediateTarget)+'</div><div class="bucket-purpose-note">Funds future Short-Term replenishments. Funding year is the withdrawal year; move year is when it should enter Short-Term.</div>'+bucketPlanIntermediateFundingRowsHtml(a.intermediateBreakdown, a.intermediateTransferSchedule, money, a.shortYears)+bucketPlanIntermediateRefillRowsHtml(a.intermediateReplenishSchedule, money, plan.reviewYear)
         : '<div class="bucket-bucket-total">$0</div>'+bucketPlanDisabledIntermediateHtml())
       : offText;
     const longDisplayAmount = (a.futureRefillTarget || 0) > 0 ? a.futureRefillTarget : (a.longTarget || 0);
@@ -9001,6 +9020,16 @@ function generateBucketLabReport(){
     ? items.map(x=>'<tr><td>'+setupEsc(x.yr)+'</td><td>Planned withdrawal covered</td><td class="r">'+fullMoney(x.amount||0)+'</td></tr>').join('')+
       '<tr class="total-row"><td colspan="2">'+setupEsc(totalLabel || 'Total bucket target')+'</td><td class="r">'+fullMoney(items.reduce((sum,x)=>sum+(x.amount||0),0))+'</td></tr>'
     : '<tr><td colspan="3" class="muted">No planned funding years.</td></tr>';
+  const rowsIntermediateFunding = (items, transfers, totalLabel) => {
+    if (!items || !items.length) return '<tr><td colspan="3" class="muted">No planned funding years.</td></tr>';
+    const transferByFundingYear = new Map((transfers || []).map(x => [String(x.fundingYear), x]));
+    return items.map(x => {
+      const transfer = transferByFundingYear.get(String(x.yr));
+      const detail = transfer ? 'Planned withdrawal; move to Short-Term in '+setupEsc(transfer.transferYear) : 'Planned withdrawal covered';
+      return '<tr><td>'+setupEsc(x.yr)+'</td><td>'+detail+'</td><td class="r">'+fullMoney(x.amount||0)+'</td></tr>';
+    }).join('')+
+      '<tr class="total-row"><td colspan="2">'+setupEsc(totalLabel || 'Total Intermediate target')+'</td><td class="r">'+fullMoney(items.reduce((sum,x)=>sum+(x.amount||0),0))+'</td></tr>';
+  };
   const rowsTransfer = (items, targetLabel) => (items && items.length)
     ? items.map(x=>'<tr><td>'+setupEsc(x.transferYear)+'</td><td>'+setupEsc(x.source || 'Intermediate')+' → '+setupEsc(targetLabel || 'Short-Term')+'</td><td>'+setupEsc(x.fundingYear)+' planned withdrawal'+(x.availableYear ? '; then Short-Term in '+setupEsc(x.availableYear) : '')+'</td><td class="r">'+fullMoney(x.transferAmount || x.amount || 0)+'</td></tr>').join('')
     : '<tr><td colspan="4" class="muted">No scheduled transfers.</td></tr>';
@@ -9021,7 +9050,7 @@ function generateBucketLabReport(){
       '<h3>Actions Due at '+reviewYear+' Review</h3>'+actionsHtml(a)+
       '<div class="grid2"><div><h3>Short-Term Bucket Coverage</h3><p class="table-note">Amount to hold in Short-Term at the start of '+reviewYear+' for the planned withdrawals below.</p><table><thead><tr>'+[th('Funding Year'),th('What This Covers'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsFunding(a.shortBreakdown, 'Total Short-Term target')+'</tbody></table></div>'+ 
       '<div><h3>Scheduled Moves Into Short-Term</h3><p class="table-note">Report horizon: '+setupEsc(reportHorizonLabel)+'. Move Year is when the bucket transfer is due; Funding Year is the withdrawal year it prepares for.</p><table><thead><tr>'+[th('Move Year'),th('Move'),th('Funding Year Covered'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(shortMoves,'Short-Term')+'</tbody></table></div></div>'+ 
-      '<div class="grid2"><div><h3>Intermediate Bucket Coverage</h3><p class="table-note">Amount to hold in Intermediate for later withdrawals that will refill Short-Term in future reviews.</p><table><thead><tr>'+[th('Funding Year'),th('What This Covers'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsFunding(a.intermediateBreakdown, 'Total Intermediate target')+'</tbody></table></div>'+ 
+      '<div class="grid2"><div><h3>Intermediate Bucket Coverage</h3><p class="table-note">Funding Year is the planned withdrawal year. The row also shows when that amount should move from Intermediate into Short-Term.</p><table><thead><tr>'+[th('Funding Year'),th('What This Covers'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsIntermediateFunding(a.intermediateBreakdown, a.intermediateTransferSchedule, 'Total Intermediate target')+'</tbody></table></div>'+ 
       '<div><h3>Scheduled Moves Into Intermediate</h3><p class="table-note">Report horizon: '+setupEsc(reportHorizonLabel)+'. These moves refill Intermediate from Long/Future so that money is available for a later Short-Term refill.</p><table><thead><tr>'+[th('Move Year'),th('Move'),th('Funding Year Covered'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(intermediateMoves,'Intermediate')+'</tbody></table></div></div>'+ 
     '</section>';
   }).join('');
