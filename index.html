@@ -6269,7 +6269,15 @@ function renderYD(){
     agiIRADraws>0 && (r.fundingOrder||[])[0]==='IRA' ? '<div style="font-size:10px;line-height:1.5;color:#7a5200;background:#fff8e8;border-left:3px solid #c8960c;padding:5px 8px;margin-top:6px">IRA-first funding is making account draws taxable.</div>' : '',
     taxExemptInterest>0 ? '<div style="font-size:10px;line-height:1.5;color:#1a5a1a;background:#eef8ee;border-left:3px solid #1a6a1a;padding:5px 8px;margin-top:6px">Tax-exempt bond interest is excluded from regular federal AGI but included for Social Security provisional income and Medicare MAGI.</div>' : ''
   ].filter(Boolean).join('');
-  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Start-of-Year Bucket Targets'});
+  const bucketPrepYear = yr < (S.endYear || yr) ? yr + 1 : yr;
+  const bucketSeedYear = bucketPlanSeedYear(S, proj, bucketPrepYear);
+  const bucketTargets = bucketTargetsCardHtml(bucketPrepYear, {
+    title:bucketPrepYear === yr ? 'Start-of-Year Bucket Targets' : 'Bucket Prep for '+bucketPrepYear,
+    actionTitle:bucketPrepYear === yr ? 'Bucket Actions Required' : 'Bucket Actions to Prepare for '+bucketPrepYear,
+    includeTargetActions:true,
+    prepYear:bucketPrepYear === yr ? null : yr,
+    seedYear:bucketSeedYear
+  });
   document.getElementById('yd-grid').innerHTML=`
     <div class="yd-panel">
       <div class="sh">Funding Sources</div>
