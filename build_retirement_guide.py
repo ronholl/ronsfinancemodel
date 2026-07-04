@@ -307,7 +307,7 @@ story += [
         ("Roth conversions", "A Roth conversion is not spending. It moves money from IRA to Roth and creates taxable income now, usually to reduce future taxable IRA/RMD pressure."),
         ("Roth conversion source", "The source setting controls which person's IRA supplies the conversion dollars. The Cash Flow tab shows the split by person so the taxable conversion can be audited."),
         ("Taxable account buckets", "Taxable brokerage income is estimated from entered balances. Regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds receive different tax treatment."),
-        ("Bucket Lab targets", "Optional portfolio implementation targets. Bucket Lab does not change cash flow, tax, Roth conversion, or funding calculations. It separates the Initial Setup Year from later Review Years so first-year seed actions do not repeat every year."),
+        ("Bucket Lab targets", "Optional portfolio implementation targets. Bucket Lab does not change cash flow, tax, Roth conversion, or funding calculations. It separates the pre-setup seed year, the Initial Setup Year, and later Review Years so first-year seed actions do not repeat every year."),
     ]),
     p("Important cash-flow convention: annual spending is the household spending budget and is assumed to include normal Medicare premiums. Income taxes are modeled separately. IRMAA is shown separately for planning comparison, but it is not added as a second separate spending withdrawal unless you include it in spending.", "Callout"),
 ]
@@ -450,11 +450,11 @@ story += [
 story += subhead("What Bucket Lab Does")
 story += [
     info_table(("Bucket Lab Item", "Plain-English Meaning"), [
-        ("Initial Setup Year", "The first year the bucket system should be in place. Seed actions appear only for this year, because this is when you establish the Short-Term and Intermediate buckets for the first time."),
+        ("Initial Setup Year", "The first year the bucket system should be in place and operating. The prior year is the setup-prep year that shows seed actions; earlier years show planning context only and do not schedule bucket moves."),
         ("Review Year", "The year being reviewed for start-of-year targets. Use it for annual check-ins after the initial setup. Dashboard cards show actions in the current year to prepare the next Review Year."),
         ("On by account", "Turn on only the accounts where bucket targets are useful. For example, you might enable a traditional IRA and an inherited IRA, but leave Roth off."),
-        ("Short-Term bucket", "Money protected for the near-term planned withdrawals shown in the bucket window. In the Initial Setup Year, the app shows a seed action to establish this bucket."),
-        ("Intermediate bucket", "Money staged for future Short-Term refills. In the Initial Setup Year, the app shows a seed action to buy or assign the staged lots for the Intermediate window."),
+        ("Short-Term bucket", "Money protected for the near-term planned withdrawals shown in the bucket window. In the setup-prep year, the app shows a seed action to establish this bucket before the Initial Setup Year begins."),
+        ("Intermediate bucket", "Money staged for future Short-Term refills. In the setup-prep year, the app shows a seed action to buy or assign the staged lots for the Intermediate window before the Initial Setup Year begins."),
         ("Scheduled moves", "Shows money due to move between buckets. Move Year is when the bucket transfer is due; Withdrawal Year is the planned withdrawal year being prepared for."),
         ("Long/Growth", "Long-term growth and future bucket replenishment."),
         ("Annual Bucket Moves", "Checklist items that distinguish initial seed actions from later maintenance moves. Planned withdrawals and Roth conversions are handled elsewhere."),
@@ -488,12 +488,12 @@ story += [simple_steps([
     ("5. Turn on accounts", "Enable only accounts where bucket targets should appear. The lab remains invisible elsewhere until something is turned on."),
     ("6. Set account windows", "Enter Short-Term and Intermediate years for each enabled account. Use zero when a bucket should not exist."),
     ("7. Compare to real holdings", "Use the Dashboard, Year Detail, and main report to compare calculated targets with how the actual account is invested. Use Print Bucket Lab Report when you want detailed withdrawal-year coverage and scheduled moves."),
-    ("8. Review annually", "At each annual check-in, update balances, choose the new Review Year, and use the listed maintenance moves. Seed actions should appear only for the Initial Setup Year."),
+    ("8. Review annually", "At each annual check-in, update balances, choose the new Review Year, and use the listed maintenance moves. The schedule rows are readiness checks for the selected year; the action cards show what to seed or move for the next bucket year."),
 ])]
 story += [
     p("A simple example: if Initial Setup Year is 2027 and the account uses a 3/5 rule, the 2026 Dashboard card can show actions to seed buckets so 2027 starts ready. Short-Term might cover 2027-2029; Intermediate might cover 2030-2034; Long/Growth is what remains after those targets.", "Callout"),
     p("Intermediate Bucket amounts are labeled by Withdrawal Year, which means the future year the dollars are ultimately meant to cover. That does not mean you wait until that year to act. Example: with a 3-year Short-Term window, the 2030 withdrawal should move from Intermediate into Short-Term during the 2028 review, because the 2028 Short-Term Bucket covers 2028-2030. The app does not recommend specific investments, but users who use maturity-based holdings can use the move year as an availability date.", "GoodCallout"),
-    p("Dashboard, Year Detail, and the main retirement report use prep-year language: a 2026 card can show bucket actions to prepare for 2027, so initial seed actions and later maintenance moves are visible where users review annual details. The Bucket Lab tab shows the selected Review Year as a start-of-year target review. The separate Bucket Lab Report remains the detailed appendix for withdrawal-year coverage, total bucket targets, and scheduled moves between buckets. Use a shorter report horizon for annual maintenance, or Full Ladder when you want to see all future move years.", "GoodCallout"),
+    p("Dashboard, Year Detail, and the main retirement report use prep-year language: a 2026 card can show bucket actions to prepare for 2027, so initial seed actions and later maintenance moves are visible where users review annual details. In the Bucket Lab tab, years before the setup-prep year show the start/seed years and inactive account previews, but no active bucket moves. The year before Initial Setup shows only seed/setup actions; the Initial Setup Year is the first operating year. The separate Bucket Lab Report separates start-of-year targets from actions to do during the Review Year to prepare the next year. Use a shorter report horizon for annual maintenance, or Full Ladder when you want to see all future move years.", "GoodCallout"),
     p("For inherited IRA drawdown lots, the Short-Term target is capped at the available account balance. If the last planned draw is slightly larger than the current balance because the projection assumes future growth before depletion, Bucket Lab explains that as a drawdown note rather than a target gap.", "GoodCallout"),
     p("For inherited IRA lots, Bucket Lab uses stable lot IDs behind the scenes, so a saved rule stays attached to the intended lot rather than to its row position.", "GoodCallout"),
 ]
@@ -540,7 +540,7 @@ story += subhead("Annual Check-In")
 story += [simple_steps([
     ("Pick year", "Choose the year being updated."),
     ("Enter actuals", "Update spending, income, HSA, inherited IRA values, and balances. For taxable accounts, enter the balance split between taxable investments, Treasuries, CA munis, and other-state munis."),
-    ("Review Bucket Lab", "If bucket targets are enabled, confirm the Initial Setup Year, compare the Review Year start-of-year targets with actual holdings, and use scheduled maintenance moves to decide what needs moving."),
+    ("Review Bucket Lab", "If bucket targets are enabled, confirm the Initial Setup Year. Years before setup-prep are informational only; in the prior setup-prep year, use only the seed actions. In operating years, compare start-of-year targets with actual holdings and use annual maintenance moves to decide what needs moving."),
     ("Rerun report", "Generate a fresh report so the action plan reflects reality."),
 ])]
 story += subhead("Strategy Builder")
