@@ -2251,7 +2251,7 @@ function defaultState() {
     reinvestDivs:'yes',
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
-    bucketShortYears:3, bucketIntermediateYears:5, bucketPlanYear:0, bucketReportYears:3,
+    bucketShortYears:3, bucketIntermediateYears:5, bucketPlanYear:0, bucketSeedYear:0, bucketReportYears:3,
     bucketPolicies:{},
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
     rothConvSource:'HIGH', rothConvP1Pct:50,
@@ -3395,11 +3395,14 @@ function bucketTargetsCardHtml(year, options){
   const accounts = plan.enabledAccounts || [];
   if (!accounts.length) return '';
   const money = v => f$(v || 0, true);
-  const timingNote = '<div class="bucket-target-note">Bucket targets to have ready at the start of '+setupEsc(year)+' before that year&rsquo;s planned withdrawals.</div>';
+  const timingNote = cfg.prepYear
+    ? '<div class="bucket-target-note">Actions shown here are preparation steps during '+setupEsc(cfg.prepYear)+' so these buckets are ready at the start of '+setupEsc(year)+'.</div>'
+    : '<div class="bucket-target-note">Bucket targets to have ready at the start of '+setupEsc(year)+' before that year&rsquo;s planned withdrawals.</div>';
   const rows = accounts.map(a=>{
     const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0};
+    const withdrawalLabel = cfg.prepYear ? 'Withdrawal in '+year : 'Withdrawal this year';
     const current = (a.currentWithdrawal || 0) > 0
-      ? '<div class="bucket-target-line"><span>Withdrawal this year</span><span>'+money(a.currentWithdrawal)+'</span></div>' : '';
+      ? '<div class="bucket-target-line"><span>'+setupEsc(withdrawalLabel)+'</span><span>'+money(a.currentWithdrawal)+'</span></div>' : '';
     const longLine = cfg.compact ? '' : '<div class="bucket-target-line"><span>Long-Term / Future</span><span>'+money(a.longTarget||0)+'</span></div>';
     const refillDue = bucketPlanTransferDueText(a.intermediateTransferSchedule, year, money);
     const refillNote = refillDue ? '<div class="bucket-target-refill">'+setupEsc(refillDue)+'</div>' : '';
@@ -3413,7 +3416,7 @@ function bucketTargetsCardHtml(year, options){
       refillNote+
     '</div>';
   }).join('');
-  const actionHtml = cfg.showActions ? bucketPlanDueActionsCardHtml(plan, money, {includeTargets:cfg.includeTargetActions}) : '';
+  const actionHtml = cfg.showActions ? bucketPlanDueActionsCardHtml(plan, money, {includeTargets:cfg.includeTargetActions, title:cfg.actionTitle || 'Bucket Actions Required', seedYear:cfg.seedYear}) : '';
   return '<div class="bucket-targets-card"><div class="bucket-targets-title">'+setupEsc(cfg.title)+'</div>'+timingNote+rows+actionHtml+'</div>';
 }
 function bucketPlanDefaultYear(state, rows){
@@ -3422,6 +3425,22 @@ function bucketPlanDefaultYear(state, rows){
   const end = parseInt(state.endYear) || start;
   const saved = parseInt(state.bucketPlanYear);
   if (!isNaN(saved) && saved >= start && saved <= end) return saved;
+  const rowYears = (rows || []).map(r=>r.yr).filter(Boolean);
+  if (rowYears.length) return Math.max(rowYears[0], Math.min(currentYear, rowYears[rowYears.length - 1]));
+  return Math.max(start, Math.min(currentYear, end));
+}
+function bucketPlanSeedYear(state, rows, fallbackYear){
+  const currentYear = new Date().getFullYear();
+  const start = parseInt(state && state.startYear) || currentYear;
+  const end = parseInt(state && state.endYear) || start;
+  const saved = parseInt(state && state.bucketSeedYear);
+  if (!isNaN(saved) && saved >= start && saved <= end) return saved;
+  const firstPrepYear = start < end ? start + 1 : start;
+  if (firstPrepYear >= start && firstPrepYear <= end) return firstPrepYear;
+  const fallback = parseInt(fallbackYear);
+  if (!isNaN(fallback) && fallback >= start && fallback <= end) return fallback;
+  const planYear = parseInt(state && state.bucketPlanYear);
+  if (!isNaN(planYear) && planYear >= start && planYear <= end) return planYear;
   const rowYears = (rows || []).map(r=>r.yr).filter(Boolean);
   if (rowYears.length) return Math.max(rowYears[0], Math.min(currentYear, rowYears[rowYears.length - 1]));
   return Math.max(start, Math.min(currentYear, end));
@@ -3621,32 +3640,47 @@ function bucketPlanFlowIntroHtml(){
     '</div>'+
   '</div>';
 }
-function bucketPlanActionItems(account, moneyFn, year){
+function bucketPlanActionItems(account, moneyFn, year, options){
   const yr = parseInt(year != null ? year : account.reviewYear, 10) || account.reviewYear;
+  const seedYear = options && options.seedYear != null ? parseInt(options.seedYear, 10) : bucketPlanSeedYear(S || {}, proj || [], yr);
+  const isSeedYear = !isNaN(seedYear) && yr === seedYear;
   const actions = [];
-  if ((account.shortTarget || 0) > 0 && (account.shortYears || 0) > 0) {
+  if (isSeedYear && (account.shortTarget || 0) > 0 && (account.shortYears || 0) > 0) {
     actions.push({
-      kind:'Set Short-Term target',
+      kind:'Seed Short-Term target',
       from:'Account Holdings',
       to:'Short-Term',
       amount:account.shortTarget,
-      why:'Have this in Short-Term at the start of '+yr+' to cover '+bucketPlanWindowLabel(account.shortStart, account.shortEnd)+' planned withdrawals',
+      why:'Establish this at the start of '+yr+' to cover '+bucketPlanWindowLabel(account.shortStart, account.shortEnd)+' planned withdrawals',
       timing:'Includes '+bucketPlanBreakdownText(account.shortBreakdown, moneyFn)
     });
   }
-  (account.shortRefillSchedule || []).filter(x=>parseInt(x.transferYear,10)===yr).forEach(x=>{
-    actions.push({kind:'Refill Short-Term', from:x.source || 'Intermediate', to:'Short-Term', amount:x.transferAmount || x.amount || 0, why:'Move the '+x.fundingYear+' withdrawal into the Short-Term bucket'});
-  });
-  (account.intermediateReplenishSchedule || []).filter(x=>parseInt(x.transferYear,10)===yr).forEach(x=>{
+  if (isSeedYear && (account.intermediateTarget || 0) > 0 && (account.intermediateYears || 0) > 0) {
+    const intermediateLots = (account.intermediateBreakdown || []).length;
     actions.push({
-      kind:'Replenish Intermediate',
-      from:x.source || 'Long-Term',
+      kind:'Seed Intermediate target',
+      from:'Account Holdings',
       to:'Intermediate',
-      amount:x.transferAmount || x.amount || 0,
-      why:'For the '+x.fundingYear+' withdrawal',
-      timing:x.availableYear ? ('Available for Intermediate → Short-Term in '+x.availableYear) : ''
+      amount:account.intermediateTarget,
+      why:'Stage this at the start of '+yr+' for '+bucketPlanWindowLabel(account.intermediateStart, account.intermediateEnd)+' planned withdrawals',
+      timing:(intermediateLots ? 'Builds '+intermediateLots+' staged lot'+(intermediateLots===1?'':'s')+': ' : 'Includes ')+bucketPlanBreakdownText(account.intermediateBreakdown, moneyFn)
     });
-  });
+  }
+  if (!isSeedYear) {
+    (account.shortRefillSchedule || []).filter(x=>parseInt(x.transferYear,10)===yr).forEach(x=>{
+      actions.push({kind:'Refill Short-Term', from:x.source || 'Intermediate', to:'Short-Term', amount:x.transferAmount || x.amount || 0, why:'Move the '+x.fundingYear+' withdrawal into the Short-Term bucket'});
+    });
+    (account.intermediateReplenishSchedule || []).filter(x=>parseInt(x.transferYear,10)===yr).forEach(x=>{
+      actions.push({
+        kind:'Replenish Intermediate',
+        from:x.source || 'Long-Term',
+        to:'Intermediate',
+        amount:x.transferAmount || x.amount || 0,
+        why:'For the '+x.fundingYear+' withdrawal',
+        timing:x.availableYear ? ('Available for Intermediate → Short-Term in '+x.availableYear) : ''
+      });
+    });
+  }
   if ((account.targetGap || 0) > 0) {
     actions.push({kind:'Review gap', from:'Plan Target', to:'Available Balance', amount:account.targetGap, why:'Targets exceed starting balance'});
   }
@@ -3654,8 +3688,11 @@ function bucketPlanActionItems(account, moneyFn, year){
 }
 function bucketPlanActionLabel(action, moneyFn){
   const amount = moneyFn(action.amount || 0);
-  if (action.kind === 'Set Short-Term target') {
-    return '<strong>Set Short-Term target '+setupEsc(amount)+'</strong><span>'+setupEsc(action.why || '')+'</span>';
+  if (action.kind === 'Seed Short-Term target') {
+    return '<strong>Seed Short-Term target '+setupEsc(amount)+'</strong><span>'+setupEsc((action.why || '') + (action.timing ? ' · '+action.timing : ''))+'</span>';
+  }
+  if (action.kind === 'Seed Intermediate target') {
+    return '<strong>Seed Intermediate target '+setupEsc(amount)+'</strong><span>'+setupEsc((action.why || '') + (action.timing ? ' · '+action.timing : ''))+'</span>';
   }
   if (action.kind === 'Refill Short-Term') {
     return '<strong>Move '+setupEsc(amount)+' '+setupEsc(action.from)+' → Short-Term</strong><span>'+setupEsc(action.why || '')+'</span>';
@@ -3672,8 +3709,8 @@ function bucketPlanDueActionsCardHtml(plan, moneyFn, options){
   const cfg = Object.assign({includeTargets:false, title:'Bucket Actions Required'}, options || {});
   const rows = [];
   (plan.enabledAccounts || []).forEach(account => {
-    const actions = bucketPlanActionItems(account, moneyFn, plan.reviewYear)
-      .filter(action => cfg.includeTargets || action.kind !== 'Set Short-Term target');
+    const actions = bucketPlanActionItems(account, moneyFn, plan.reviewYear, {seedYear:cfg.seedYear})
+      .filter(action => cfg.includeTargets || !['Seed Short-Term target','Seed Intermediate target'].includes(action.kind));
     if (!actions.length) return;
     rows.push('<div class="bucket-target-row">'+
       '<div class="bucket-target-name">'+setupEsc(account.name)+'</div>'+
@@ -3716,6 +3753,9 @@ function bucketPlanGuidance(account, moneyFn){
   }
   if ((account.shortTarget || 0) > 0) {
     notes.push('Set or maintain Short-Term at ' + moneyFn(account.shortTarget) + ' for ' + bucketPlanWindowLabel(account.shortStart, account.shortEnd) + '.');
+  }
+  if ((account.intermediateTarget || 0) > 0) {
+    notes.push('Set or maintain Intermediate at ' + moneyFn(account.intermediateTarget) + ' for ' + bucketPlanWindowLabel(account.intermediateStart, account.intermediateEnd) + '.');
   }
   const currentRefill = bucketPlanTransferDueText(account.shortRefillSchedule, account.reviewYear, moneyFn);
   if (currentRefill) {
@@ -3952,6 +3992,11 @@ function setBucketPlanYear(value){
   if (!isNaN(yr)) S.bucketPlanYear = yr;
   saveState(S); showSaved(); renderPortfolioPlan();
 }
+function setBucketSeedYear(value){
+  const yr = parseInt(value);
+  if (!isNaN(yr)) S.bucketSeedYear = yr;
+  saveState(S); showSaved(); renderPortfolioPlan();
+}
 function setBucketReportYears(value){
   S.bucketReportYears = value === 'full' ? 'full' : bucketReportYearsValue({bucketReportYears:value});
   saveState(S); showSaved(); renderPortfolioPlan();
@@ -3997,18 +4042,20 @@ function renderPortfolioPlan(){
   const selectedYear = bucketPlanDefaultYear(S, proj);
   S.bucketPlanYear = selectedYear;
   const plan = buildPortfolioBucketPlan(proj, S, selectedYear);
+  const seedYear = bucketPlanSeedYear(S, proj, selectedYear);
+  S.bucketSeedYear = seedYear;
   const money = v => f$(v || 0, true);
   const bucketIntroHtml = '<div class="bucket-lab-intro">'+
     '<div class="bucket-lab-lead"><strong>Bucket Lab turns the cash-flow plan into an investment-positioning checklist.</strong> The projection already says which accounts are expected to fund withdrawals, taxes, and Roth conversions. Bucket Lab helps decide how much of each account should be held safely for near-term needs, staged for later needs, or left invested for long-term growth.</div>'+
     '<div class="bucket-lab-grid">'+
       '<div class="bucket-lab-card"><strong>What it answers</strong>How much should be in Short-Term, Intermediate, and Long-Term/Future buckets at the start of the selected review year?</div>'+
       '<div class="bucket-lab-card"><strong>Why it helps</strong>It gives you and your advisor a practical way to prepare for planned withdrawals and conversions without selling growth assets at the wrong time.</div>'+
-      '<div class="bucket-lab-card"><strong>How to use it</strong>Pick a Review Year, turn on only the accounts you want to manage with buckets, then choose each account&rsquo;s Short-Term and Intermediate windows.</div>'+
+      '<div class="bucket-lab-card"><strong>How to use it</strong>Set the Initial Setup Year once, then use Review Year for annual check-ins. Turn on only the accounts you want to manage with buckets.</div>'+
       '<div class="bucket-lab-card"><strong>How to read it</strong>Short-Term is money needed soon. Intermediate is staged refill money. Annual Bucket Moves are the shifts to make at this review.</div>'+
     '</div>'+
-    '<div class="bucket-lab-note"><strong>Important:</strong> Bucket Lab is an overlay, not a second projection. It does not change taxes, Roth conversions, balances, or cash-flow results. Targets are meant to be in place at the <strong>start</strong> of the review year, before that year&rsquo;s planned withdrawals.</div>'+
+    '<div class="bucket-lab-note"><strong>Important:</strong> Bucket Lab is an overlay, not a second projection. It does not change taxes, Roth conversions, balances, or cash-flow results. Seed actions appear only in the Initial Setup Year; later Review Years show maintenance moves.</div>'+
   '</div>';
-  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div>'+bucketIntroHtml+'</div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Bucket Report</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
+  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div>'+bucketIntroHtml+'</div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Initial Setup Year</label><select onchange="setBucketSeedYear(this.value)">'+bucketPlanYearOptions(proj, seedYear)+'</select></div><div class="field"><label>Bucket Report</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
   if (!plan.accounts.length) {
     root.innerHTML = controls + '<div class="bucket-empty">No active retirement or inherited IRA accounts have balances, planned withdrawals, or Roth conversions in the selected review year. Enter opening balances or inherited IRA lots first, then return here.</div>';
     return;
@@ -4694,6 +4741,7 @@ function applyMigrations(merged) {
   merged.bucketShortYears = Math.max(1, Math.min(10, isNaN(migratedBucketShort) ? 3 : migratedBucketShort));
   merged.bucketIntermediateYears = Math.max(0, Math.min(20, isNaN(migratedBucketIntermediate) ? 5 : migratedBucketIntermediate));
   if (merged.bucketPlanYear == null || isNaN(merged.bucketPlanYear)) merged.bucketPlanYear = 0;
+  if (merged.bucketSeedYear == null || isNaN(merged.bucketSeedYear)) merged.bucketSeedYear = 0;
   if (!merged.bucketPolicies || typeof merged.bucketPolicies !== 'object' || Array.isArray(merged.bucketPolicies)) merged.bucketPolicies = {};
   Object.keys(merged.bucketPolicies).forEach(key => {
     const policy = merged.bucketPolicies[key] || {};
@@ -7240,7 +7288,16 @@ function apCard(yr){
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
                     (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
-  const bucketTargets = bucketTargetsCardHtml(yr, {title:'Start-of-Year Bucket Targets', compact:true});
+  const bucketPrepYear = yr < (S.endYear || yr) ? yr + 1 : yr;
+  const bucketSeedYear = bucketPlanSeedYear(S, proj, bucketPrepYear);
+  const bucketTargets = bucketTargetsCardHtml(bucketPrepYear, {
+    title:bucketPrepYear === yr ? 'Start-of-Year Bucket Targets' : 'Bucket Prep for '+bucketPrepYear,
+    actionTitle:bucketPrepYear === yr ? 'Bucket Actions Required' : 'Bucket Actions to Prepare for '+bucketPrepYear,
+    compact:true,
+    includeTargetActions:true,
+    prepYear:bucketPrepYear === yr ? null : yr,
+    seedYear:bucketSeedYear
+  });
 
   return `<div style="background:#fffdf5;border:1px solid #ddd0a8;border-radius:8px;padding:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -7937,7 +7994,7 @@ function buildReportPayload(){
     spendInfl: S.spendInfl, ssCola: S.ssCola, wageGrowth: S.wageGrowth,
     bracketInfl: S.bracketInfl, irmaaInfl: S.irmaaInfl, medicareCostInfl: S.medicareCostInfl ?? S.irmaaInfl,
     stkGainPct: S.stkGainPct, cashFloor: S.cashFloor,
-    bucketShortYears:S.bucketShortYears, bucketIntermediateYears:S.bucketIntermediateYears, bucketPolicies:S.bucketPolicies||{},
+    bucketShortYears:S.bucketShortYears, bucketIntermediateYears:S.bucketIntermediateYears, bucketPlanYear:S.bucketPlanYear||0, bucketSeedYear:S.bucketSeedYear||0, bucketReportYears:S.bucketReportYears||3, bucketPolicies:S.bucketPolicies||{},
     fundingOrder: normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH'),
     irmaaFillMode: S.irmaaFillMode||'',
     rothConvSource: S.rothConvSource || 'HIGH', rothConvP1Pct: S.rothConvP1Pct || 50,
@@ -8030,8 +8087,9 @@ function buildReportPayload(){
   const defaultActionYear = Math.max(S.startYear, Math.min(currentCalYear, S.endYear - 2));
   const reportActionStartYear = parseInt(document.getElementById('ap-year-sel')?.value) || defaultActionYear;
   const apRows = rows.filter(r => r.yr >= reportActionStartYear && r.yr <= Math.min(S.endYear, reportActionStartYear + 2));
-  const bucketPlan = buildPortfolioBucketPlan(rows, S, reportActionStartYear);
-  return { assumptions, rows, apRows, reportActionStartYear, overrides, bucketPlan };
+  const reportBucketTargetYear = reportActionStartYear < S.endYear ? reportActionStartYear + 1 : reportActionStartYear;
+  const bucketPlan = buildPortfolioBucketPlan(rows, S, reportBucketTargetYear);
+  return { assumptions, rows, apRows, reportActionStartYear, reportBucketTargetYear, overrides, bucketPlan };
 }
 
 function exportReportData(){
@@ -8091,7 +8149,10 @@ function generateReport(){
   const thr=(t)=>`<th class="r">${t}</th>`;
   const td=(v,cls='')=>`<td class="${cls}">${v}</td>`;
   const rows_by_yr = Object.fromEntries(rows.map(r=>[r.yr,r]));
-  const bucketPlan = P.bucketPlan || buildPortfolioBucketPlan(rows, S, P.reportActionStartYear || A.startYear);
+  const reportBucketActionYear = P.reportActionStartYear || A.startYear;
+  const reportBucketTargetYear = P.reportBucketTargetYear || (reportBucketActionYear < A.endYear ? reportBucketActionYear + 1 : reportBucketActionYear);
+  const bucketSeedYear = bucketPlanSeedYear(S, rows, reportBucketTargetYear);
+  const bucketPlan = P.bucketPlan || buildPortfolioBucketPlan(rows, S, reportBucketTargetYear);
   const irmaaLevelLabel = (level, yr=A.startYear) => {
     const lvl = parseInt(level);
     if (lvl == null || isNaN(lvl)) return 'Off';
@@ -8418,30 +8479,10 @@ function generateReport(){
   const bucketReportAccounts = bucketPlan.enabledAccounts || [];
   const bucketPlanHtml = bucketReportAccounts.length ? (() => {
     const bMoney = v => fd(v || 0, true);
-    const nextReviewYear = bucketPlan.reviewYear + 1;
-    const nextPlan = nextReviewYear <= A.endYear ? buildPortfolioBucketPlan(rows, S, nextReviewYear) : null;
+    const nextPrepActionYear = reportBucketActionYear + 1;
+    const nextPrepTargetYear = reportBucketTargetYear < A.endYear ? reportBucketTargetYear + 1 : reportBucketTargetYear;
+    const nextPlan = nextPrepTargetYear <= A.endYear ? buildPortfolioBucketPlan(rows, S, nextPrepTargetYear) : null;
     const nextByKey = new Map(((nextPlan && nextPlan.enabledAccounts) || []).map(a => [a.key, a]));
-    const yearLabel = y => y ? String(y) : '—';
-    const dueTransfers = (items, yr) => (items || []).filter(x => parseInt(x.transferYear, 10) === parseInt(yr, 10));
-    const transferLines = (items, yr, toLabel) => dueTransfers(items, yr).map(x => {
-      const amount = bMoney(x.transferAmount || x.amount || 0);
-      const source = setupEsc(x.source || (toLabel === 'Intermediate' ? 'Long-Term' : 'Intermediate'));
-      const target = setupEsc(toLabel || 'Short-Term');
-      const available = x.availableYear ? '; available for Short-Term in '+setupEsc(x.availableYear) : '';
-      return '<div class="bucket-report-action"><strong>Move '+amount+'</strong> '+source+' → '+target+' for the '+setupEsc(x.fundingYear)+' withdrawal'+available+'.</div>';
-    });
-    const actionSummary = (a, yr, includeTarget) => {
-      const lines = [];
-      if (includeTarget && (a.shortTarget || 0) > 0) {
-        lines.push('<div class="bucket-report-action"><strong>Short-Term target '+bMoney(a.shortTarget)+'</strong> for '+setupEsc(bucketPlanWindowLabel(a.shortStart, a.shortEnd))+'.</div>');
-      }
-      lines.push(...transferLines(a.shortRefillSchedule || [], yr, 'Short-Term'));
-      lines.push(...transferLines(a.intermediateReplenishSchedule || [], yr, 'Intermediate'));
-      if ((a.futureGrowthGap || 0) > 0) {
-        lines.push('<div class="bucket-report-sub">Inherited drawdown note: planned window draws exceed current balance by '+bMoney(a.futureGrowthGap)+'; target is capped at available balance.</div>');
-      }
-      return lines.length ? lines.join('') : '<span class="bucket-report-sub">No bucket action due.</span>';
-    };
     const bucketTargets = a => {
       const longDisplay = (a.futureRefillTarget || 0) > 0 ? a.futureRefillTarget : (a.longTarget || 0);
       return [
@@ -8456,54 +8497,58 @@ function generateReport(){
       const interText = (p.intermediateYears || 0) > 0 ? 'Intermediate '+p.intermediateYears+' year'+(p.intermediateYears===1?'':'s') : 'No Intermediate bucket';
       return shortText+' · '+interText;
     };
+    const reportBucketActionLine = action => {
+      const amount = bMoney(action.amount || 0);
+      const timing = action.timing ? ' · '+setupEsc(action.timing) : '';
+      return '<div class="bucket-report-action"><strong>'+setupEsc(action.kind)+' '+amount+'</strong><br>'+setupEsc(action.from||'')+' → '+setupEsc(action.to||'')+'<br><span class="bucket-report-sub">'+setupEsc(action.why || '')+timing+'</span></div>';
+    };
+    const actionSummary = (a, targetYear) => {
+      const actions = bucketPlanActionItems(a, bMoney, targetYear, {seedYear:bucketSeedYear});
+      const lines = actions.map(reportBucketActionLine);
+      if ((a.futureGrowthGap || 0) > 0) {
+        lines.push('<div class="bucket-report-sub">Inherited drawdown note: planned window draws exceed current balance by '+bMoney(a.futureGrowthGap)+'; target is capped at available balance.</div>');
+      }
+      return lines.length ? lines.join('') : '<span class="bucket-report-sub">No bucket action due.</span>';
+    };
     const previewSummary = a => {
       const next = nextByKey.get(a.key);
-      if (!next) return '<span class="bucket-report-sub">No next-year bucket preview.</span>';
-      return '<div><strong>'+nextReviewYear+' preview</strong></div>'+actionSummary(next, nextReviewYear, true);
+      if (!next || nextPrepActionYear > A.endYear) return '<span class="bucket-report-sub">No next-year bucket preview.</span>';
+      return '<div><strong>'+nextPrepActionYear+' prep for '+nextPrepTargetYear+'</strong></div>'+actionSummary(next, nextPrepTargetYear);
     };
     const rowsHtml = bucketReportAccounts.map(a => {
       return '<tr>'+ 
         '<td><div class="bucket-report-account">'+setupEsc(a.name)+'</div><div class="bucket-report-sub">'+setupEsc(a.type)+'<br>'+setupEsc(bucketWindowText(a))+'</div></td>'+ 
         '<td class="r">'+bMoney(a.startBalance||0)+'</td>'+ 
         '<td>'+bucketTargets(a)+'</td>'+ 
-        '<td>'+actionSummary(a, bucketPlan.reviewYear, true)+'</td>'+ 
+        '<td>'+actionSummary(a, reportBucketTargetYear)+'</td>'+ 
         '<td>'+previewSummary(a)+'</td>'+ 
       '</tr>';
     }).join('');
     return '<h2>Bucket Lab Summary</h2>'+ 
-      '<div class="callout"><strong>Bucket Lab is an implementation checklist.</strong> This main report shows start-of-year targets, actions due for '+bucketPlan.reviewYear+', and a '+nextReviewYear+' preview. Full bucket-cover and refill ladders are available from the separate Bucket Lab Report.</div>'+ 
-      '<table class="bucket-report-table"><thead><tr>'+[th('Account / Lot'),thr('Start Balance'),th('Bucket Targets'),th(bucketPlan.reviewYear+' Actions Due'),th(nextReviewYear+' Preview')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table>';
+      '<div class="callout"><strong>Bucket Lab is an implementation checklist.</strong> This main report mirrors the Dashboard: actions shown for '+reportBucketActionYear+' are preparation steps so buckets are ready at the start of '+reportBucketTargetYear+'. Seed actions appear only for the Initial Setup Year ('+bucketSeedYear+'); later years show maintenance moves.</div>'+ 
+      '<table class="bucket-report-table"><thead><tr>'+[th('Account / Lot'),thr('Start Balance'),th('Bucket Targets for '+reportBucketTargetYear),th(reportBucketActionYear+' Actions to Prepare for '+reportBucketTargetYear),th(nextPrepActionYear+' Preview')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table>';
   })() : '';
   const bucketActionPlanHtmlForYear = yr => {
     if (!bucketReportAccounts.length) return '';
-    const yrPlan = buildPortfolioBucketPlan(rows, S, yr);
+    const targetYear = yr < A.endYear ? yr + 1 : yr;
+    const yrPlan = buildPortfolioBucketPlan(rows, S, targetYear);
     const enabled = yrPlan.enabledAccounts || [];
     if (!enabled.length) return '';
-    const due = (items, toLabel) => (items || []).filter(x=>parseInt(x.transferYear,10)===parseInt(yr,10)).map(x=>{
-      const source = x.source || (toLabel === 'Intermediate' ? 'Long-Term' : 'Intermediate');
-      return {
-        amount:x.transferAmount || x.amount || 0,
-        source,
-        fundingYear:x.fundingYear,
-        availableYear:x.availableYear,
-        toLabel
-      };
-    });
     const rowsHtml = enabled.map(a => {
-      const shortDue = due(a.shortRefillSchedule, 'Short-Term');
-      const interDue = due(a.intermediateReplenishSchedule, 'Intermediate');
-      if (!(a.shortTarget || a.intermediateTarget || shortDue.length || interDue.length || a.futureGrowthGap)) return '';
-      const lines = [];
-      if ((a.shortTarget || 0) > 0) lines.push('Short-Term target '+fd(a.shortTarget,true)+' for '+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd)));
-      shortDue.forEach(x=>lines.push('Move '+fd(x.amount,true)+' '+setupEsc(x.source)+' → Short-Term for the '+setupEsc(x.fundingYear)+' withdrawal'));
-      interDue.forEach(x=>lines.push('Move '+fd(x.amount,true)+' '+setupEsc(x.source)+' → Intermediate for the '+setupEsc(x.fundingYear)+' withdrawal'+(x.availableYear ? ' (to Short-Term in '+setupEsc(x.availableYear)+')' : '')));
+      const actions = bucketPlanActionItems(a, v => fd(v, true), targetYear, {seedYear:bucketSeedYear});
+      const lines = actions.map(action => {
+        const route = (action.from || '') + ' → ' + (action.to || '');
+        const timing = action.timing ? ' · '+action.timing : '';
+        return action.kind+': '+route+' '+fd(action.amount || 0, true)+' — '+(action.why || '')+timing;
+      });
       if ((a.futureGrowthGap || 0) > 0) lines.push('Drawdown note: target capped to balance; final draw depends on projected growth');
+      if (!lines.length) return '';
       return '<div class="ap-bucket-row">'+
         '<div class="ap-bucket-name">'+setupEsc(a.name)+'</div>'+
         '<div class="ap-bucket-line">'+lines.map(setupEsc).join('<br>')+'</div>'+
       '</div>';
     }).filter(Boolean).join('');
-    return rowsHtml ? '<div class="ap-buckets"><div class="ap-actions-title">Bucket Actions</div>'+rowsHtml+'</div>' : '';
+    return rowsHtml ? '<div class="ap-buckets"><div class="ap-actions-title">Bucket Actions to Prepare for '+targetYear+'</div>'+rowsHtml+'</div>' : '';
   };
 
   // ── 3-Year Action Plan ──
