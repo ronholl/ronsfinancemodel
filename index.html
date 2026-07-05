@@ -378,6 +378,8 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .bucket-schedule-row span{min-width:0}
 .bucket-schedule-row:first-of-type{border-top:0}
 .bucket-schedule-row strong{font-family:'JetBrains Mono',monospace;color:var(--ink);font-size:10px;white-space:nowrap}
+.bucket-schedule-row.bucket-schedule-total{background:#fff3cc;border-top:1px solid #d9b44a;font-weight:800;color:var(--ink)}
+.bucket-schedule-row.bucket-schedule-total span{grid-column:1 / span 2}
 .bucket-schedule-empty{padding:5px 6px;font-size:10px;line-height:1.3;color:#8a7040;font-style:italic}
 .bucket-schedule-more{border-top:1px solid #efe3c2;background:#fffdf7}
 .bucket-schedule-more summary{cursor:pointer;padding:5px 6px;font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#8a6400}
@@ -3461,9 +3463,9 @@ function bucketReportYearsValue(state){
 function bucketReportYearsOptions(selected){
   const value = bucketReportYearsValue({bucketReportYears:selected});
   const opts = [
-    {value:'1', label:'1 row'},
-    {value:'3', label:'3 rows'},
-    {value:'5', label:'5 rows'},
+    {value:'1', label:'1 year'},
+    {value:'3', label:'3 years'},
+    {value:'5', label:'5 years'},
     {value:'full', label:'Full plan'}
   ];
   return opts.map(o=>'<option value="'+o.value+'" '+(String(value)===o.value?'selected':'')+'>'+o.label+'</option>').join('');
@@ -3477,14 +3479,22 @@ function bucketReviewHorizonEnd(reviewYear, state){
 function bucketRowsInReviewHorizon(items, reviewYear, state){
   const yr = parseInt(reviewYear, 10);
   if (isNaN(yr)) return items || [];
-  const setting = bucketReportYearsValue(state || S || {});
-  const rows = (items || [])
+  const endYear = bucketReviewHorizonEnd(yr, state || S || {});
+  return (items || [])
     .filter(x => {
-      const transferYear = parseInt(x.transferYear, 10);
-      return !isNaN(transferYear) && transferYear >= yr;
+      const fundingYear = parseInt(x.fundingYear != null ? x.fundingYear : x.yr, 10);
+      if (isNaN(fundingYear) || fundingYear < yr) return false;
+      return endYear === Infinity || fundingYear <= endYear;
     })
-    .sort((a,b)=>(parseInt(a.transferYear,10)||0)-(parseInt(b.transferYear,10)||0) || (parseInt(a.fundingYear,10)||0)-(parseInt(b.fundingYear,10)||0));
-  return setting === 'full' ? rows : rows.slice(0, setting);
+    .sort((a,b)=>(parseInt(a.fundingYear,10)||0)-(parseInt(b.fundingYear,10)||0) || (parseInt(a.transferYear,10)||0)-(parseInt(b.transferYear,10)||0));
+}
+function bucketReviewHorizonLabel(reviewYear, state){
+  const yr = parseInt(reviewYear, 10);
+  if (isNaN(yr)) return 'Selected years';
+  const setting = bucketReportYearsValue(state || S || {});
+  if (setting === 'full') return 'Full plan';
+  const end = yr + setting - 1;
+  return end === yr ? String(yr) : yr + '–' + end;
 }
 function bucketPlanRowsByYear(rows){
   const map = {};
@@ -3585,7 +3595,7 @@ function bucketPlanTransferRowsHtml(items, moneyFn, title, emptyText, reviewYear
   const hasReviewYear = !isNaN(yr);
   const horizonRows = hasReviewYear ? bucketRowsInReviewHorizon(items, yr, S) : (items || []);
   const timingNote = hasReviewYear
-    ? '<div class="bucket-schedule-empty">'+(horizonRows.length ? 'Withdrawal year is shown first; rows follow the selected Ladder Rows setting.' : 'No Short-Term refill rows in the selected Ladder Rows setting.')+'</div>'
+    ? '<div class="bucket-schedule-empty">'+(horizonRows.length ? 'Withdrawal year is shown first; rows use the selected Ladder Years period.' : 'No Short-Term refill rows in the selected Ladder Years period.')+'</div>'
     : '';
   const rowHtml = list => list.map(x =>
     '<div class="bucket-schedule-row"><span>'+setupEsc(x.fundingYear)+'</span><span>'+setupEsc(bucketPlanShortScheduleDetail(x))+'</span><strong>'+moneyFn(x.transferAmount || x.amount)+'</strong></div>'
@@ -3601,7 +3611,7 @@ function bucketPlanIntermediateRefillRowsHtml(items, moneyFn, reviewYear){
   const hasReviewYear = !isNaN(yr);
   const horizonRows = hasReviewYear ? bucketRowsInReviewHorizon(items, yr, S) : (items || []);
   const timingNote = hasReviewYear
-    ? '<div class="bucket-schedule-empty">'+(horizonRows.length ? 'Withdrawal year is shown first; rows follow the selected Ladder Rows setting.' : 'No Intermediate refill rows in the selected Ladder Rows setting.')+'</div>'
+    ? '<div class="bucket-schedule-empty">'+(horizonRows.length ? 'Withdrawal year is shown first; rows use the selected Ladder Years period.' : 'No Intermediate refill rows in the selected Ladder Years period.')+'</div>'
     : '';
   const rowHtml = list => list.map(x =>
     '<div class="bucket-schedule-row"><span>'+setupEsc(x.fundingYear)+'</span><span>'+setupEsc(bucketPlanIntermediateScheduleDetail(x))+'</span><strong>'+moneyFn(x.transferAmount || x.amount)+'</strong></div>'
@@ -3641,7 +3651,10 @@ function bucketPlanFundingRowsHtml(items, moneyFn, title, emptyText){
   const rows = items.map(x =>
     '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>Planned withdrawal</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>'
   ).join('');
-  return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div>'+rows+'</div>';
+  const total = (items || []).reduce((sum,x)=>sum+(x.amount || 0),0);
+  const totalLabel = boxTitle.indexOf('Short-Term') >= 0 ? 'Total Short-Term target' : 'Total bucket target';
+  const totalRow = '<div class="bucket-schedule-row bucket-schedule-total"><span>'+setupEsc(totalLabel)+'</span><strong>'+moneyFn(total)+'</strong></div>';
+  return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div>'+rows+totalRow+'</div>';
 }
 function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortYears){
   const boxTitle = 'Intermediate Bucket Covers';
@@ -3660,7 +3673,9 @@ function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortY
       : 'Planned withdrawal';
     return '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>'+setupEsc(detail)+'</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>';
   }).join('');
-  return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div><div class="bucket-schedule-empty">'+setupEsc(intro)+'</div>'+rows+'</div>';
+  const total = (items || []).reduce((sum,x)=>sum+(x.amount || 0),0);
+  const totalRow = '<div class="bucket-schedule-row bucket-schedule-total"><span>Total Intermediate target</span><strong>'+moneyFn(total)+'</strong></div>';
+  return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div><div class="bucket-schedule-empty">'+setupEsc(intro)+'</div>'+rows+totalRow+'</div>';
 }
 function bucketPlanFlowIntroHtml(){
   return '<div class="bucket-flow-intro">'+
@@ -4097,7 +4112,7 @@ function renderPortfolioPlan(){
     '</div>'+
     '<div class="bucket-lab-note"><strong>Important:</strong> Bucket Lab is an overlay, not a second projection. It does not change taxes, Roth conversions, balances, or cash-flow results. The year before Initial Setup shows only seed/setup actions; earlier years stay quiet; later Review Years show annual maintenance moves.</div>'+
   '</div>';
-  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div>'+bucketIntroHtml+'</div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Initial Setup Year</label><select onchange="setBucketSeedYear(this.value)">'+bucketPlanYearOptions(proj, seedYear)+'</select></div><div class="field"><label>Ladder Rows</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
+  const controls = '<div class="panel"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><div class="sh" style="margin-bottom:4px">Bucket Lab</div>'+bucketIntroHtml+'</div><button class="btn btn-dark btn-sm" onclick="generateBucketLabReport()">Print Bucket Lab Report</button></div><div class="bucket-controls"><div class="field"><label>Review Year</label><select onchange="setBucketPlanYear(this.value)">'+bucketPlanYearOptions(proj, selectedYear)+'</select></div><div class="field"><label>Initial Setup Year</label><select onchange="setBucketSeedYear(this.value)">'+bucketPlanYearOptions(proj, seedYear)+'</select></div><div class="field"><label>Ladder Years</label><select onchange="setBucketReportYears(this.value)">'+bucketReportYearsOptions(S.bucketReportYears)+'</select></div></div>'+bucketPlanFlowIntroHtml()+'</div>';
   const phaseNote = isBeforeBucketPrepYear
     ? '<div class="bucket-empty"><strong>Bucket Lab starts in '+seedYear+'.</strong> '+selectedYear+' is before the setup-prep year, so no account is active for bucket funding or maintenance. Select '+(seedYear-1)+' to seed buckets for '+seedYear+', or '+seedYear+' to see the first operating year.</div>'
     : isPreInitialPrepYear
@@ -9165,7 +9180,7 @@ function generateBucketLabReport(){
   }
   const reportYearsSetting = bucketReportYearsValue(S);
   const reportEndYear = endYear;
-  const reportHorizonLabel = reportYearsSetting === 'full' ? 'Full plan' : (reportYearsSetting + ' scheduled row' + (reportYearsSetting === 1 ? '' : 's'));
+  const reportHorizonLabel = bucketReviewHorizonLabel(targetYear, S);
   const actionTargetYear = reviewYear < reportSeedYear ? reportSeedYear : (reviewYear < endYear ? reviewYear + 1 : reviewYear);
   const actionSeedYear = reportSeedYear;
   const actionSourceYear = actionTargetYear > reportSeedYear ? targetYear : actionTargetYear;
@@ -9240,14 +9255,14 @@ function generateBucketLabReport(){
       ((a.futureGrowthGap||0)>0 ? '<div class="note-box">Inherited drawdown note: planned window draws exceed current balance by '+money(a.futureGrowthGap)+'. The Short-Term target is capped at available balance; projected growth may help fund the final draw.</div>' : '')+
       '<h3>'+setupEsc(actionHeading)+'</h3><p class="table-note">'+setupEsc(actionNote)+'</p>'+actionsHtml(a)+
       '<div class="grid2"><div><h3>Short-Term Bucket Coverage</h3><p class="table-note">Amount to hold in Short-Term at the start of '+targetYear+' for the planned withdrawals below.</p><table><thead><tr>'+[th('Withdrawal Year'),th('What This Covers'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsFunding(a.shortBreakdown, 'Total Short-Term target')+'</tbody></table></div>'+ 
-      '<div><h3>Scheduled Moves Into Short-Term</h3><p class="table-note">Ladder rows: '+setupEsc(reportHorizonLabel)+'. Withdrawal Year is shown first. Instruction shows when that withdrawal should move into Short-Term. Example: with 2 Short-Term years, the 2029 withdrawal moves to Short-Term by the start of 2028 because Short-Term then covers 2028–2029.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Ready By Year'),th('Instruction'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(shortMoves,'Short-Term')+'</tbody></table></div></div>'+ 
+      '<div><h3>Scheduled Moves Into Short-Term</h3><p class="table-note">Ladder years: '+setupEsc(reportHorizonLabel)+'. Withdrawal Year is shown first. Rows stay inside this withdrawal-year period unless Full plan is selected. Example: with 2 Short-Term years, the 2029 withdrawal moves to Short-Term by the start of 2028 because Short-Term then covers 2028–2029.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Ready By Year'),th('Instruction'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(shortMoves,'Short-Term')+'</tbody></table></div></div>'+ 
       '<div class="grid2"><div><h3>Intermediate Bucket Coverage</h3><p class="table-note">These are future withdrawals staged in Intermediate. The row also shows when each amount should move into Short-Term.</p><table><thead><tr>'+[th('Withdrawal Year'),th('What This Covers'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsIntermediateFunding(a.intermediateBreakdown, a.intermediateTransferSchedule, 'Total Intermediate target')+'</tbody></table></div>'+ 
-      '<div><h3>Scheduled Moves Into Intermediate</h3><p class="table-note">Ladder rows: '+setupEsc(reportHorizonLabel)+'. Withdrawal Year is shown first. Instruction shows when to stage that withdrawal in Intermediate and when it later moves to Short-Term.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Ready By Year'),th('Instruction'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(intermediateMoves,'Intermediate')+'</tbody></table></div></div>'+ 
+      '<div><h3>Scheduled Moves Into Intermediate</h3><p class="table-note">Ladder years: '+setupEsc(reportHorizonLabel)+'. Withdrawal Year is shown first. Rows stay inside this withdrawal-year period unless Full plan is selected. Instruction shows when to stage that withdrawal in Intermediate and when it later moves to Short-Term.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Ready By Year'),th('Instruction'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsTransfer(intermediateMoves,'Intermediate')+'</tbody></table></div></div>'+ 
     '</section>';
   }).join('');
   let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bucket Lab Report</title><style>
     *{box-sizing:border-box} body{font-family:Helvetica,Arial,sans-serif;color:#1a1208;background:#fff;padding:.45in;font-size:9pt;line-height:1.3} h1{font-size:22pt;color:#8a6800;margin:0 0 2px} h2{font-size:13pt;color:#5e4700;border-bottom:2px solid #c8960c;margin:16px 0 4px;padding-bottom:2px} h3{font-size:9.5pt;color:#111;margin:10px 0 2px}.cover{margin-bottom:12px}.sub{font-size:10pt;color:#6a4e00}.subline{font-size:8pt;color:#6a4e00;margin:0 0 8px}.callout{border-left:4px solid #c8960c;background:#fffaf0;padding:8px 10px;margin:8px 0 12px}.acct{break-inside:avoid;border-top:1px solid #e2d6b4;padding-top:4px;margin-top:10px}.target-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.target-grid div{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px}.target-grid span{display:block;text-transform:uppercase;letter-spacing:.04em;color:#6a4e00;font-size:7pt;font-weight:700}.target-grid strong{display:block;font-size:14pt;margin-top:2px}.target-grid em{display:block;color:#6a4e00;font-size:7pt;font-style:normal}.grid2{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:start}.table-note{font-size:7.5pt;color:#6a4e00;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:8pt}th{background:#1e1a0e;color:#fff;text-align:left;padding:4px 5px;font-size:7pt}td{border-bottom:1px solid #ddd;padding:3px 5px;vertical-align:top}tr:nth-child(even) td{background:#f5f0e5}.total-row td{background:#fff3cc!important;font-weight:800;border-top:1px solid #c8960c}.r{text-align:right}.muted{color:#6a4e00;font-style:italic}.note-box{border-left:3px solid #8a6800;background:#fffaf0;padding:6px 8px;margin:6px 0;color:#4a3500}ul{margin:4px 0 8px 16px;padding:0}li{margin-bottom:4px}li span{color:#6a4e00}.no-print{margin-top:14px}@media print{body{padding:0}.no-print{display:none}.acct{break-inside:avoid}.grid2{grid-template-columns:1fr 1.35fr}h2{break-after:avoid}@page{size:letter portrait;margin:.45in}}
-  </style></head><body><div class="cover"><h1>Bucket Lab Report</h1><div class="sub">${setupEsc(names)} · Review Year ${reviewYear}${targetYear!==reviewYear?' · Target Year '+targetYear:''} · Ladder Rows ${setupEsc(reportHorizonLabel)} · Generated ${setupEsc(today)}</div></div><div class="callout"><strong>Purpose:</strong> This detailed report separates start-of-year targets from annual actions. Targets show what should already be in place at the start of the target year. Actions show what to do during the review year to prepare the next year&rsquo;s buckets. Scheduled move tables show the larger ladder; <strong>Withdrawal Year</strong> is the planned withdrawal year being prepared for.</div>${accountHtml}<div class="no-print"><button onclick="window.print()" style="padding:8px 20px;background:#8a6800;color:#fff;border:none;border-radius:4px;font-size:10pt;cursor:pointer;font-weight:700">🖨 Print / Save as PDF</button></div></body></html>`;
+  </style></head><body><div class="cover"><h1>Bucket Lab Report</h1><div class="sub">${setupEsc(names)} · Review Year ${reviewYear}${targetYear!==reviewYear?' · Target Year '+targetYear:''} · Ladder Years ${setupEsc(reportHorizonLabel)} · Generated ${setupEsc(today)}</div></div><div class="callout"><strong>Purpose:</strong> This detailed report separates start-of-year targets from annual actions. Targets show what should already be in place at the start of the target year. Actions show what to do during the review year to prepare the next year&rsquo;s buckets. Scheduled move tables show the larger ladder; <strong>Withdrawal Year</strong> is the planned withdrawal year being prepared for.</div>${accountHtml}<div class="no-print"><button onclick="window.print()" style="padding:8px 20px;background:#8a6800;color:#fff;border:none;border-radius:4px;font-size:10pt;cursor:pointer;font-weight:700">🖨 Print / Save as PDF</button></div></body></html>`;
   const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent || '');
   if(isSafari){ renderSafariInlineReport(html); return; }
   const reportWin = window.open('', '_blank');
