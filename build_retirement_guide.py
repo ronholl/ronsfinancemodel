@@ -459,6 +459,8 @@ story += [
         ("Long/Growth", "Long-term growth and future bucket replenishment."),
         ("Annual Bucket Moves", "Checklist items that distinguish initial seed actions from later maintenance moves. Planned withdrawals and Roth conversions are handled elsewhere."),
         ("Bucket window", "The Short-Term / Intermediate year setting for one account. For example, Short-Term 2 years and Intermediate 5 years means two planned withdrawal years in Short-Term, then the next five in Intermediate. The app does not choose this for you."),
+        ("Bucket Implementation", "The account-by-account funding tracker. It compares each spending year's calculated requirement with the money-market, Treasury, bond, CD, cash, or other holdings you record."),
+        ("Funding status", "Not Funded, Partially Funded, Funded, or Overfunded. Green plan and implementation rows are funded; yellow rows are partially funded."),
     ]),
 ]
 story += subhead("What Bucket Lab Does Not Do")
@@ -466,7 +468,7 @@ story += bullets([
     "It does not change the funding engine or account draw order.",
     "It does not change taxes, Roth conversions, RMDs, IRMAA, or cash-flow results.",
     "It does not recommend specific securities.",
-    "It does not track whether your real portfolio actually holds those bucket amounts. It calculates targets you can compare with your real holdings.",
+    "It does not connect to a brokerage or infer trades. You record and maintain actual funding holdings yourself.",
 ])
 story += subhead("Choosing Bucket Windows")
 story += [
@@ -486,13 +488,17 @@ story += [simple_steps([
     ("4. Choose future action years", "The Future Action Years selector controls the scheduled move rows shown after the coverage tables. Coverage rows are always shown from the account's Short-Term and Intermediate windows. Choose No Future Actions for a shorter report, Five Years for the next future move window, or Full Plan for the whole remaining ladder."),
     ("5. Turn on accounts", "Enable only accounts where bucket targets should appear. Accounts are Off by default and have no preset window."),
     ("6. Set account windows", "Enter Short-Term and Intermediate years for each enabled account. Use zero when a bucket should not exist; do not treat any prior example as a recommendation."),
-    ("7. Compare to real holdings", "Use the Dashboard, Year Detail, and main report to compare calculated targets with how the actual account is invested. Use Print Bucket Lab Report when you want detailed withdrawal-year coverage and scheduled moves."),
-    ("8. Review annually", "At each annual check-in, update balances, choose the new Review Year, and use the listed maintenance moves. The schedule rows are readiness checks for the selected year; the action cards show what to seed or move for the next bucket year."),
+    ("7. Record actual funding", "In Bucket Implementation, add a holding, choose the IRA, HSA, taxable, inherited, or other enabled account it funds, and allocate an amount to one or more spending years. One holding may cover several years within the same account, but it never funds another account."),
+    ("8. Read progress", "Required remains the calculated plan amount. Funded is the total recorded for that account-year, and Remaining is what still needs action. Green means funded; yellow means partially funded. Use By Year or By Account, expand or collapse groups, and click a funding source to edit it."),
+    ("9. Move between plan and funding", "Use Go to Funding on an account plan card to jump directly to its implementation group. Use View Plan or the account name in implementation to return to the matching expanded plan card."),
+    ("10. Review annually", "At each annual check-in, update balances, choose the new Review Year, and recheck implementation against the recalculated requirements. Recorded holdings remain attached to their account and year; the app does not automatically reassign them when the plan changes."),
 ])]
 story += [
     p("A simple example: if Initial Setup Year is 2027 and an account uses a 2/5 window, the 2026 Dashboard card can show actions to seed buckets so 2027 starts ready. Short-Term might cover 2027-2028; Intermediate might cover 2029-2033; Long/Growth is what remains after those targets. Use whatever window you intentionally choose.", "Callout"),
     p("Bucket Lab separates Withdrawal Year from Action Year. Withdrawal Year is the future year the dollars are ultimately meant to fund. Action Year is the year to plan or make the bucket move. Example: with a 2-year Short-Term window and 2027 as the first operating year, the 2027 Short-Term bucket covers 2027-2028. The 2029 withdrawal appears as a 2027 action because it should be lined up during 2027 so the 2028 Short-Term bucket covers 2028-2029. The instruction stays simple: move Intermediate to Short-Term. A later Intermediate row works the same way: move Long-Term to Intermediate in its Action Year, then follow the later Short-Term schedule as that withdrawal gets closer.", "GoodCallout"),
-    p("Dashboard, Year Detail, and the main retirement report use prep-year language: a 2026 card can show bucket actions to prepare for 2027, so initial seed actions and later maintenance moves are visible where users review annual details. In the Bucket Lab tab, years before the setup-prep year show the start/seed years and inactive account previews, but no active bucket moves. The year before Initial Setup shows only seed/setup actions; the Initial Setup Year is the first operating year. The separate Bucket Lab Report separates start-of-year coverage from future scheduled moves: Short-Term and Intermediate coverage appear side by side first, and Future Action Years controls whether the later move tables appear below. Use No Future Actions for a concise coverage-only report, or Full Plan when you want to see all future move years.", "GoodCallout"),
+    p("Dashboard, Year Detail, and the main retirement report use prep-year language: a 2026 card can show bucket actions to prepare for 2027, so initial seed actions and later maintenance moves are visible where users review annual details. In the Bucket Lab tab, years before the setup-prep year show the start/seed years and inactive account previews, but no active bucket moves. The year before Initial Setup shows only seed/setup actions; the Initial Setup Year is the first operating year. The separate Bucket Lab Report presents each account as one story: start-of-year coverage, account-specific implementation with green/yellow status, then optional Future Scheduled Moves. Use No Future Actions for a concise coverage-and-implementation report, or Full Plan when you want the whole future move ladder.", "GoodCallout"),
+    p("Money markets and cash need only a useful name plus spending-year amounts. Fixed-maturity holdings add purchase date if useful, maturity or availability date, and face or maturity value. Purchase cost and ticker/CUSIP are not required by Bucket Lab. For a discounted Treasury or bond, allocate the amount expected to be available for spending, not automatically the purchase cost.", "GoodCallout"),
+    p("Funding entries are private plan data stored with the app's normal local data and optional private GitHub sync. They are included in JSON backup, Bucket Funding CSV, and the detailed Bucket Lab Report.", "GoodCallout"),
     p("For inherited IRA drawdown lots, the Short-Term target is capped at the available account balance. If the last planned draw is slightly larger than the current balance because the projection assumes future growth before depletion, Bucket Lab explains that as a drawdown note rather than a target gap.", "GoodCallout"),
     p("For inherited IRA lots, Bucket Lab uses stable lot IDs behind the scenes, so a saved rule stays attached to the intended lot rather than to its row position.", "GoodCallout"),
 ]
@@ -505,7 +511,7 @@ story += [
     info_table(("Report Area", "Why It Is There"), [
         ("Key assumptions", "Shows the assumptions that could change the answer, such as growth, inflation, survivor plan, Medicare lookback, tax filing, and Roth Lab window."),
         ("Scenario comparison", "Compares the selected Roth strategies side by side."),
-        ("Bucket Lab", "Appears only when at least one account is enabled. The main report mirrors the Dashboard: actions in the report year prepare buckets for the following year. Use the separate Bucket Lab Report for side-by-side coverage targets and optional future scheduled moves."),
+        ("Bucket Lab", "Appears only when at least one account is enabled. The detailed Bucket Lab Report keeps coverage, actual implementation, funding status, and optional future scheduled moves together inside each account section."),
         ("Year-by-year detail", "Shows the first few years or the selected detail range for each scenario."),
         ("Advisor questions", "Prompts the discussion: which income target is reasonable, whether IRMAA is worth paying, whether survivor planning changes the answer, and whether the strategy should stop at a tier or bracket."),
     ]),
@@ -610,7 +616,8 @@ story += [
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
         ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
         ("Tax-free bond buckets", "Taxable-account balance entries for U.S. Treasuries and municipal bonds so federal and California tax treatment can differ."),
-        ("Bucket Lab", "Optional account-by-account portfolio bucket planner for initial seed targets, start-of-year review targets, and scheduled bucket moves. It is off by default and appears in reports only after at least one account is enabled."),
+        ("Bucket Lab", "Optional account-by-account portfolio bucket planner and implementation tracker for initial targets, actual funded holdings, remaining gaps, and scheduled bucket moves. It is off by default and appears in reports only after at least one account is enabled."),
+        ("Bucket Implementation", "Actual funding recorded for one enabled account and one or more spending years. It stays separate from the calculated requirement so plan changes reveal a new remaining gap rather than overwriting history."),
         ("Short-Term bucket", "The enabled account target for planned withdrawals inside the near-term funding window."),
         ("Intermediate bucket", "The enabled account target for planned withdrawals after the short window but inside the intermediate window."),
         ("Long/Growth", "The remaining enabled account balance after Short and Intermediate targets."),
