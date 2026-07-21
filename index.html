@@ -384,6 +384,8 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .bucket-schedule-head{font-family:'JetBrains Mono',monospace;font-size:7.2px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#8a6400;background:#fff7df;border-top:0;border-bottom:1px solid #e3d5ae}
 .bucket-schedule-head strong{color:#8a6400;font-size:7.2px;text-align:right}
 .bucket-schedule-row.bucket-schedule-total{background:#fff3cc;border-top:1px solid #d9b44a;font-weight:800;color:var(--ink)}
+.bucket-schedule-row.bucket-funded-year{background:#e8f6e9;border-left:4px solid #27833f;padding-left:2px}.bucket-schedule-row.bucket-funded-year span:first-child{color:#17602e;font-weight:900}.bucket-funded-mark{display:inline-block;color:#17602e;font-family:'JetBrains Mono',monospace;font-size:7.5px;font-style:normal;font-weight:900;margin-left:8px;text-transform:uppercase;white-space:nowrap}
+.bucket-schedule-row.bucket-partial-year{background:#fff5cf;border-left:4px solid #d3a52c;padding-left:2px}.bucket-schedule-row.bucket-partial-year span:first-child{color:#795800;font-weight:900}.bucket-partial-mark{display:inline-block;color:#795800;font-family:'JetBrains Mono',monospace;font-size:7.5px;font-style:normal;font-weight:900;margin-left:8px;text-transform:uppercase;white-space:nowrap}
 .bucket-schedule-row.bucket-schedule-total span{grid-column:1 / span 2}
 .bucket-schedule-row.bucket-schedule-cover-four.bucket-schedule-total span{grid-column:1 / span 3}
 .bucket-schedule-empty{padding:5px 6px;font-size:10px;line-height:1.3;color:#8a7040;font-style:italic}
@@ -418,12 +420,35 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .bucket-card-label{font-family:'JetBrains Mono',monospace;font-size:8.2px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#8a6400;margin-bottom:3px}
 .bucket-card-value{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:900;color:var(--ink)}
 .bucket-card-body{display:grid;grid-template-columns:minmax(220px,1fr) minmax(280px,1.25fr) minmax(260px,1.1fr) minmax(260px,1.1fr);gap:12px;padding:12px 14px}
+.bucket-account-toggle{margin-top:7px;display:inline-flex;align-items:center;gap:5px}
+.bucket-account-nav{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.bucket-jump-link{appearance:none;border:0;background:transparent;padding:0;color:var(--ink);font:inherit;font-weight:900;cursor:pointer;text-decoration:underline;text-decoration-color:#c8960c;text-underline-offset:3px}.bucket-jump-link:hover{color:#8a6400}
 .bucket-card-section{min-width:0;border:1px solid #eadbb7;border-radius:8px;background:#fffef9;padding:9px 10px}
 .bucket-card-section-title{font-family:'JetBrains Mono',monospace;font-size:8.6px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:#8a6400;margin-bottom:6px}
 .bucket-card-section .bucket-bucket-total{text-align:left}
 @media(max-width:1500px){.bucket-card-head{grid-template-columns:1fr}.bucket-card-body{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:850px){.bucket-card-body{grid-template-columns:1fr}.bucket-card-metrics{grid-template-columns:1fr}}
 .bucket-empty{border:1px dashed var(--cream3);border-radius:8px;background:#fffaf0;padding:18px;color:#6a5830;font-size:13px;line-height:1.5}
+.bucket-impl{margin-top:16px}
+.bucket-impl-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.bucket-impl-actions{display:flex;gap:7px;flex-wrap:wrap}
+.bucket-impl-table{width:100%;min-width:1050px;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums}
+.bucket-impl-table th{background:#fff1cf;color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:8.2px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:8px;border-bottom:2px solid var(--gold2);text-align:left;white-space:nowrap}
+.bucket-impl-table td{padding:8px;border-bottom:1px solid var(--cream3);vertical-align:top}
+.bucket-impl-table .r{text-align:right;white-space:nowrap}
+.bucket-progress{height:6px;background:#eadfca;border-radius:99px;overflow:hidden;margin-top:4px;min-width:70px}.bucket-progress span{display:block;height:100%;background:#257a3e}
+.bucket-status{display:inline-block;border-radius:99px;padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.bucket-status.not-funded{background:#eee8db;color:#6a5830}.bucket-status.partially-funded{background:#fff0bf;color:#795800}.bucket-status.funded{background:#dff2e3;color:#17602e}.bucket-status.overfunded{background:#dcecf8;color:#175577}.bucket-status.no-longer-required{background:#eee4f5;color:#604175}
+.bucket-impl-source{font-weight:800;color:var(--ink)}.bucket-impl-sub{font-size:9.5px;color:#6a5830;margin-top:2px}.bucket-impl-warning{color:#8b1a1a;font-weight:800;font-size:9.5px;margin-top:3px}
+.bucket-source-edit{appearance:none;border:0;background:transparent;padding:0;color:var(--ink);font:inherit;font-weight:850;cursor:pointer;text-decoration:underline;text-decoration-color:#c8960c;text-underline-offset:3px}.bucket-source-edit:hover{color:#8a6400}
+.bucket-impl-table tr.bucket-row-editable{cursor:pointer}.bucket-impl-table tr.bucket-row-editable:hover td{background:#fff8e5}
+.bucket-group-row td{background:#fff1cf!important;border-top:2px solid #d3a52c;border-bottom:1px solid #d7c38d;padding:7px 9px!important}.bucket-group-head{display:flex;align-items:center;gap:10px}.bucket-group-toggle{appearance:none;border:0;background:transparent;padding:0;flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);font:inherit;font-weight:900;text-align:left;cursor:pointer}.bucket-group-toggle span:last-child{font-family:'JetBrains Mono',monospace;font-size:8px;color:#795800;text-transform:uppercase}
+.bucket-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(28,20,8,.58);display:flex;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto}
+.bucket-modal{width:min(920px,100%);background:#fffdf7;border:1px solid #d7c38d;border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:18px}
+.bucket-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.bucket-modal-head h3{margin:0;font-family:'Playfair Display',Georgia,serif;font-size:23px}
+.bucket-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.bucket-form-grid .field{margin:0}.bucket-form-grid .span2{grid-column:span 2}.bucket-form-grid .span3{grid-column:1/-1}
+.bucket-alloc-box{grid-column:1/-1;border:1px solid #e3d5ae;border-radius:8px;background:#fffaf0;padding:10px}.bucket-alloc-row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(180px,1fr) auto;gap:7px;align-items:end;margin-top:7px;max-width:620px}.bucket-alloc-row .field{min-width:0}
+.bucket-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+@media(max-width:760px){.bucket-form-grid{grid-template-columns:1fr}.bucket-form-grid .span2,.bucket-form-grid .span3{grid-column:1}.bucket-alloc-row{grid-template-columns:1fr 1fr}.bucket-alloc-row button{align-self:end}}
 .post2020-lots{display:flex;flex-direction:column;gap:8px}
 .post2020-lot{border:1px solid var(--cream3);background:var(--cream2);border-radius:4px;padding:8px}
 .post2020-lot-head{display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.06em;margin-bottom:6px}
@@ -2260,7 +2285,7 @@ function defaultState() {
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
     bucketShortYears:0, bucketIntermediateYears:0, bucketPlanYear:0, bucketSeedYear:0, bucketReportYears:3,
-    bucketPolicies:{},
+    bucketPolicies:{}, bucketFundingHoldings:[], bucketFundingSchemaVersion:1, bucketFundingView:'year', bucketAccountExpanded:{}, bucketFundingGroupExpanded:{},
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
     rothConvSource:'HIGH', rothConvP1Pct:50,
     stkGainPct:0.30,
@@ -3678,21 +3703,25 @@ function bucketPlanFundingReportHtml(items, moneyFn){
   if (!items || !items.length) return 'No planned withdrawals';
   return items.map(x=>setupEsc(x.yr)+' '+setupEsc(moneyFn(x.amount || 0))).join('<br>');
 }
-function bucketPlanFundingRowsHtml(items, moneyFn, title, emptyText){
+function bucketPlanYearFundingState(accountKey,year,required){
+  if(!accountKey)return {funded:0,status:'Not Funded',complete:false,partial:false};
+  const funded=bucketFundingAmount(accountKey,year,null,S),status=bucketFundingStatus(required,funded);
+  return {funded,status,complete:['Funded','Overfunded'].includes(status),partial:status==='Partially Funded'};
+}
+function bucketPlanFundingRowsHtml(items, moneyFn, title, emptyText, accountKey){
   const boxTitle = title || 'Bucket Covers';
   if (!items || !items.length) {
     return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div><div class="bucket-schedule-empty">'+setupEsc(emptyText || 'No planned withdrawals in this bucket.')+'</div></div>';
   }
   const header = '<div class="bucket-schedule-row bucket-schedule-head"><span>Withdrawal Year</span><span>Action</span><strong>Amount</strong></div>';
-  const rows = items.map(x =>
-    '<div class="bucket-schedule-row"><span>'+setupEsc(x.yr)+'</span><span>Hold in Short-Term</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>'
-  ).join('');
+  const rows = items.map(x => {const funding=bucketPlanYearFundingState(accountKey,x.yr,x.amount||0),rowClass=funding.complete?'bucket-funded-year':(funding.partial?'bucket-partial-year':''),mark=funding.complete?'<em class="bucket-funded-mark">✓ Funded</em>':(funding.partial?'<em class="bucket-partial-mark">◐ Partially Funded</em>':'');return '<div class="bucket-schedule-row '+rowClass+'"><span>'+setupEsc(x.yr)+'</span><span>Hold in Short-Term'+mark+'</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>';
+  }).join('');
   const total = (items || []).reduce((sum,x)=>sum+(x.amount || 0),0);
   const totalLabel = boxTitle.indexOf('Short-Term') >= 0 ? 'Total Short-Term target' : 'Total bucket target';
   const totalRow = '<div class="bucket-schedule-row bucket-schedule-total"><span>'+setupEsc(totalLabel)+'</span><strong>'+moneyFn(total)+'</strong></div>';
   return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+setupEsc(boxTitle)+'</div>'+header+rows+totalRow+'</div>';
 }
-function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortYears){
+function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortYears, accountKey){
   const boxTitle = 'Intermediate Bucket Covers';
   if (!items || !items.length) {
     return '<div class="bucket-schedule-box"><div class="bucket-schedule-title">'+boxTitle+'</div><div class="bucket-schedule-empty">No planned withdrawals assigned to the Intermediate bucket.</div></div>';
@@ -3706,7 +3735,9 @@ function bucketPlanIntermediateFundingRowsHtml(items, transfers, moneyFn, shortY
     const detail = transfer
       ? bucketPlanShortMoveDetail(x.yr, transfer.transferYear)
       : 'Hold in Intermediate';
-    return '<div class="bucket-schedule-row bucket-schedule-cover-four"><span>'+setupEsc(x.yr)+'</span><span>'+setupEsc(shortTermYear)+'</span><span>'+setupEsc(detail)+'</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>';
+    const funding=bucketPlanYearFundingState(accountKey,x.yr,x.amount||0);
+    const rowClass=funding.complete?'bucket-funded-year':(funding.partial?'bucket-partial-year':''),mark=funding.complete?'<em class="bucket-funded-mark">✓ Funded</em>':(funding.partial?'<em class="bucket-partial-mark">◐ Partially Funded</em>':'');
+    return '<div class="bucket-schedule-row bucket-schedule-cover-four '+rowClass+'"><span>'+setupEsc(x.yr)+'</span><span>'+setupEsc(shortTermYear)+'</span><span>'+setupEsc(detail)+mark+'</span><strong>'+moneyFn(x.amount || 0)+'</strong></div>';
   }).join('');
   const total = (items || []).reduce((sum,x)=>sum+(x.amount || 0),0);
   const totalRow = '<div class="bucket-schedule-row bucket-schedule-cover-four bucket-schedule-total"><span>Total Intermediate target</span><strong>'+moneyFn(total)+'</strong></div>';
@@ -4125,6 +4156,208 @@ function resetBucketAccountPolicy(key){
   S.bucketPolicies[key] = {enabled:false, shortYears:0, intermediateYears:0};
   saveState(S); showSaved(); renderPortfolioPlan();
 }
+function toggleBucketAccountExpanded(key){
+  if(!key)return;if(!S.bucketAccountExpanded||typeof S.bucketAccountExpanded!=='object')S.bucketAccountExpanded={};
+  S.bucketAccountExpanded[key]=S.bucketAccountExpanded[key]===false;saveState(S);showSaved();renderPortfolioPlan();
+}
+function bucketAccountDomId(key){return String(key||'account').replace(/[^a-zA-Z0-9_-]+/g,'-');}
+function jumpToBucketFunding(accountKey){
+  if(!accountKey)return;S.bucketFundingView='account';if(!S.bucketFundingGroupExpanded||typeof S.bucketFundingGroupExpanded!=='object')S.bucketFundingGroupExpanded={};S.bucketFundingGroupExpanded['account:'+accountKey]=true;
+  saveState(S);renderPortfolioPlan();setTimeout(()=>{const el=document.getElementById('bucket-funding-account-'+bucketAccountDomId(accountKey));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},0);
+}
+function jumpToBucketPlan(accountKey){
+  if(!accountKey)return;if(!S.bucketAccountExpanded||typeof S.bucketAccountExpanded!=='object')S.bucketAccountExpanded={};S.bucketAccountExpanded[accountKey]=true;
+  saveState(S);renderPortfolioPlan();setTimeout(()=>{const el=document.getElementById('bucket-plan-account-'+bucketAccountDomId(accountKey));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},0);
+}
+function bucketFundingId(prefix){
+  return (prefix || 'bf')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+}
+function bucketFundingHoldings(state){
+  return Array.isArray((state || S).bucketFundingHoldings) ? (state || S).bucketFundingHoldings : [];
+}
+function bucketFundingCounts(holding){
+  return holding && holding.countsTowardFunding !== false && !['planned','used'].includes(String(holding.lifecycle || '').toLowerCase());
+}
+function bucketFundingAllocations(state){
+  return bucketFundingHoldings(state).flatMap(h => (h.allocations || []).map(a => Object.assign({}, a, {holding:h})))
+    .filter(x => bucketFundingCounts(x.holding) && (parseFloat(x.amount) || 0) > 0);
+}
+function bucketFundingRequiredRows(plan){
+  return bucketFundingRequiredAccountRows(plan);
+}
+function bucketFundingRequiredAccountRows(plan){
+  return (plan.enabledAccounts||[]).flatMap(a=>
+    (a.shortBreakdown||[]).map(x=>({accountKey:a.key,accountName:a.name,year:parseInt(x.yr,10),stage:'Short-Term',required:Math.max(0,x.amount||0)}))
+      .concat((a.intermediateBreakdown||[]).map(x=>({accountKey:a.key,accountName:a.name,year:parseInt(x.yr,10),stage:'Intermediate',required:Math.max(0,x.amount||0)})))
+  );
+}
+function bucketFundingAmount(accountKey, year, stages, state){
+  return bucketFundingAllocations(state).filter(x => x.holding.accountKey===accountKey && parseInt(x.year,10)===parseInt(year,10))
+    .reduce((sum,x)=>sum+(parseFloat(x.amount)||0),0);
+}
+function bucketFundingStatus(required, funded){
+  required=Math.max(0,parseFloat(required)||0); funded=Math.max(0,parseFloat(funded)||0);
+  if (required <= .49) return funded > .49 ? 'No Longer Required' : 'Funded';
+  if (funded <= .49) return 'Not Funded';
+  const tolerance=Math.max(500,required*.01);
+  if (funded < required-tolerance) return 'Partially Funded';
+  return funded > required+tolerance ? 'Overfunded' : 'Funded';
+}
+function bucketFundingRemaining(required,funded){
+  required=Math.max(0,parseFloat(required)||0);funded=Math.max(0,parseFloat(funded)||0);
+  const remaining=Math.max(0,required-funded),tolerance=Math.max(500,required*.01);
+  return remaining<=tolerance?0:remaining;
+}
+function bucketFundingStatusClass(status){return String(status||'').toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,'');}
+function bucketFundingDateText(value){
+  if (!value) return '';
+  const parts=String(value).split('-');
+  if(parts.length===3) return parseInt(parts[1],10)+'/'+parseInt(parts[2],10)+'/'+parts[0];
+  return String(value);
+}
+function bucketFundingWarning(holding, allocation, row){
+  const fixed=['Treasury','Individual Bond','Brokered CD','Fixed Annuity / MYGA'].includes(holding.vehicleType);
+  if(fixed && !holding.availabilityDate) return 'Add a maturity or availability date.';
+  if(!holding.availabilityDate) return '';
+  const availableYear=parseInt(String(holding.availabilityDate).slice(0,4),10), spendingYear=parseInt(allocation.year,10);
+  if(availableYear>spendingYear) return 'Available after the spending year.';
+  return '';
+}
+function bucketFundingAccountOptions(plan, selected){
+  return '<option value="">Choose account…</option>'+(plan.enabledAccounts || []).map(a=>'<option value="'+setupEsc(a.key)+'" '+(a.key===selected?'selected':'')+'>'+setupEsc(a.name)+'</option>').join('');
+}
+function bucketFundingYearOptions(selected){
+  const start=parseInt(S.startYear,10)||new Date().getFullYear(), end=parseInt(S.endYear,10)||start+30;
+  let html=''; for(let y=start;y<=end;y++) html+='<option value="'+y+'" '+(y===parseInt(selected,10)?'selected':'')+'>'+y+'</option>';
+  return html;
+}
+function bucketFundingAllocationRowHtml(plan, allocation, idx){
+  const a=allocation||{};
+  const accountKey=(document.getElementById('bf-plan-account')||{}).value||'';
+  const req=(bucketFundingRequiredRows(plan).find(r=>r.accountKey===accountKey&&r.year===parseInt(a.year,10))||{}).required||0;
+  const funded=bucketFundingAmount(accountKey,a.year,null,S),remaining=bucketFundingRemaining(req,funded);
+  return '<div class="bucket-alloc-row" data-bucket-allocation>'+
+    '<div class="field"><label>Spending Year</label><select data-af="year" onchange="bucketFundingYearChanged(this)">'+bucketFundingYearOptions(a.year)+'</select><div class="bucket-impl-sub" data-required-summary>Required '+f$(req,true)+' · Funded '+f$(funded,true)+' · Remaining '+f$(remaining,true)+'</div></div>'+
+    '<div class="field"><label>Amount Funded for This Year</label><input type="number" min="0" step="0.01" data-af="amount" value="'+setupEsc(a.amount||'')+'"></div>'+
+    '<button type="button" class="btn btn-danger btn-sm" onclick="bucketFundingRemoveAllocation(this)" aria-label="Remove allocation">×</button></div>';
+}
+function bucketFundingPlanForEditor(){
+  if(!proj||!proj.length)proj=runProjection(S);
+  return buildPortfolioBucketPlan(proj,S,Math.max(bucketPlanSeedYear(S,proj,bucketPlanDefaultYear(S,proj)),bucketPlanDefaultYear(S,proj)));
+}
+function bucketFundingRefreshAllocationRow(select,prefill){
+  const row=select&&select.closest('[data-bucket-allocation]');if(!row)return;
+  const accountKey=(document.getElementById('bf-plan-account')||{}).value||'',year=parseInt(select.value,10),req=(bucketFundingRequiredRows(bucketFundingPlanForEditor()).find(r=>r.accountKey===accountKey&&r.year===year)||{}).required||0;
+  const funded=bucketFundingAmount(accountKey,year,null,S),remaining=bucketFundingRemaining(req,funded),summary=row.querySelector('[data-required-summary]'),amount=row.querySelector('[data-af="amount"]');
+  if(summary)summary.textContent='Required '+f$(req,true)+' · Funded '+f$(funded,true)+' · Remaining '+f$(remaining,true);
+  if(prefill&&amount&&!String(amount.value||'').trim())amount.value=remaining>0?Math.round(remaining*100)/100:'';
+}
+function bucketFundingYearChanged(select){const row=select&&select.closest('[data-bucket-allocation]'),amount=row&&row.querySelector('[data-af="amount"]');if(amount)amount.value='';bucketFundingRefreshAllocationRow(select,true);}
+function bucketFundingRefreshAllAllocations(prefill){document.querySelectorAll('#bf-allocations [data-af="year"]').forEach(el=>bucketFundingRefreshAllocationRow(el,!!prefill));}
+function openBucketFundingEditor(accountKey, year, holdingId, stage){
+  if(!proj||!proj.length) proj=runProjection(S);
+  const planYear=Math.max(bucketPlanSeedYear(S,proj,bucketPlanDefaultYear(S,proj)),bucketPlanDefaultYear(S,proj));
+  const plan=buildPortfolioBucketPlan(proj,S,planYear);
+  const existing=bucketFundingHoldings(S).find(h=>h.id===holdingId);
+  const h=existing ? JSON.parse(JSON.stringify(existing)) : {id:'',accountKey:accountKey||'',vehicleType:'Money Market',lifecycle:'funded',countsTowardFunding:true,allocations:[{year:year||planYear,amount:''}]};
+  const vehicleTypes=['Money Market','Treasury','Individual Bond','Brokered CD','Fixed Annuity / MYGA','Target-Maturity ETF','Bond Fund','Cash','Other'];
+  const html='<div id="bucket-funding-modal" class="bucket-modal-backdrop" onclick="if(event.target===this)closeBucketFundingEditor()"><div class="bucket-modal" role="dialog" aria-modal="true">'+
+    '<div class="bucket-modal-head"><h3>'+(existing?'Edit Funding Holding':'Add Funding Holding')+'</h3><button type="button" class="btn btn-light btn-sm" onclick="closeBucketFundingEditor()">Close</button></div>'+
+    '<input type="hidden" id="bf-id" value="'+setupEsc(h.id||'')+'"><div class="bucket-form-grid">'+
+    '<div class="field"><label>Account to Fund</label><select id="bf-plan-account" onchange="bucketFundingRefreshAllAllocations(true)">'+bucketFundingAccountOptions(plan,h.accountKey||'')+'</select></div>'+
+    '<div class="field"><label>Funding Vehicle</label><select id="bf-vehicle" onchange="bucketFundingUpdateVehicleFields()">'+vehicleTypes.map(v=>'<option '+(h.vehicleType===v?'selected':'')+'>'+v+'</option>').join('')+'</select></div>'+
+    '<div class="field span2"><label>Name or Description</label><input id="bf-security" value="'+setupEsc(h.security||'')+'" placeholder="e.g., FZDXX or 2028 Treasury"></div>'+
+    '<div id="bf-fixed-fields" class="span3 bucket-form-grid"><div class="field"><label>Purchase Date <span style="font-weight:400">(optional)</span></label><input id="bf-purchase-date" type="date" value="'+setupEsc(h.purchaseDate||'')+'"></div><div class="field"><label>Maturity / Availability Date</label><input id="bf-availability-date" type="date" value="'+setupEsc(h.availabilityDate||'')+'"></div><div class="field"><label>Face / Maturity Value</label><input id="bf-face" type="number" min="0" step="0.01" value="'+setupEsc(h.faceValue||'')+'"></div></div>'+
+    '<input id="bf-symbol" type="hidden" value="'+setupEsc(h.symbol||'')+'"><input id="bf-cost" type="hidden" value="'+setupEsc(h.purchaseCost||'')+'">'+
+    '<input id="bf-value" type="hidden" value="'+setupEsc(h.fundingValue||'')+'"><input id="bf-account" type="hidden" value=""><input id="bf-lifecycle" type="hidden" value="funded"><input id="bf-counts" type="hidden" value="yes">'+
+    '<div class="field span3"><label>Notes</label><textarea id="bf-notes" rows="2">'+setupEsc(h.notes||'')+'</textarea></div>'+
+    '<div class="bucket-alloc-box"><strong>Years Funded</strong><div class="bucket-impl-sub">Enter the amount this money market, bond, or other holding provides for each spending year.</div><div id="bf-allocations">'+(h.allocations||[]).map((a,i)=>bucketFundingAllocationRowHtml(plan,a,i)).join('')+'</div><button type="button" class="btn btn-light btn-sm" style="margin-top:8px" onclick="bucketFundingAddAllocation()">+ Add Another Year</button></div></div>'+
+    '<div id="bf-form-warning" class="bucket-impl-warning"></div><div class="bucket-modal-actions">'+(existing?'<button type="button" class="btn btn-danger" onclick="bucketFundingDeleteHolding(&quot;'+setupEsc(h.id)+'&quot;)">Delete Holding</button>':'')+'<button type="button" class="btn btn-light" onclick="closeBucketFundingEditor()">Cancel</button><button type="button" class="btn btn-dark" onclick="bucketFundingSaveHolding()">Save Funding</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);bucketFundingUpdateVehicleFields();
+  document.querySelectorAll('#bf-allocations [data-af="year"]').forEach(el=>bucketFundingRefreshAllocationRow(el,!existing));
+}
+function bucketFundingUpdateVehicleFields(){
+  const vehicle=document.getElementById('bf-vehicle'),fixed=document.getElementById('bf-fixed-fields');if(!vehicle||!fixed)return;
+  fixed.style.display=['Treasury','Individual Bond','Brokered CD','Fixed Annuity / MYGA','Target-Maturity ETF','Bond Fund'].includes(vehicle.value)?'grid':'none';
+}
+function closeBucketFundingEditor(){const el=document.getElementById('bucket-funding-modal');if(el)el.remove();}
+function bucketFundingAddAllocation(){
+  const box=document.getElementById('bf-allocations'); if(!box)return;
+  const plan=buildPortfolioBucketPlan(proj,S,Math.max(bucketPlanSeedYear(S,proj,bucketPlanDefaultYear(S,proj)),bucketPlanDefaultYear(S,proj)));
+  box.insertAdjacentHTML('beforeend',bucketFundingAllocationRowHtml(plan,{year:bucketPlanDefaultYear(S,proj)},box.children.length));
+  const row=box.lastElementChild;if(row)bucketFundingRefreshAllocationRow(row.querySelector('[data-af="year"]'),true);
+}
+function bucketFundingRemoveAllocation(button){const row=button.closest('[data-bucket-allocation]');if(row)row.remove();}
+function bucketFundingSaveHolding(){
+  const val=id=>document.getElementById(id).value, num=id=>{const n=parseFloat(val(id));return isNaN(n)?'':n;};
+  const accountKey=val('bf-plan-account');
+  if(!accountKey){document.getElementById('bf-form-warning').textContent='Choose the IRA, HSA, taxable, or other account this holding funds.';return;}
+  const allocations=Array.from(document.querySelectorAll('#bf-allocations [data-bucket-allocation]')).map(row=>{const get=f=>row.querySelector('[data-af="'+f+'"]').value;return {id:bucketFundingId('alloc'),year:parseInt(get('year'),10),amount:Math.max(0,parseFloat(get('amount'))||0)};}).filter(a=>a.year&&a.amount>0);
+  if(!allocations.length){document.getElementById('bf-form-warning').textContent='Add at least one allocation with an amount.';return;}
+  const id=val('bf-id')||bucketFundingId('holding'), existing=bucketFundingHoldings(S).find(h=>h.id===id);
+  const holding={id,accountKey,account:val('bf-account').trim(),vehicleType:val('bf-vehicle'),security:val('bf-security').trim(),symbol:val('bf-symbol').trim(),purchaseDate:val('bf-purchase-date'),availabilityDate:val('bf-availability-date'),purchaseCost:num('bf-cost'),faceValue:num('bf-face'),fundingValue:num('bf-value'),lifecycle:val('bf-lifecycle'),countsTowardFunding:val('bf-counts')==='yes',notes:val('bf-notes').trim(),allocations,createdAt:existing&&existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const total=allocations.reduce((s,a)=>s+a.amount,0), limit=parseFloat(holding.fundingValue)||parseFloat(holding.faceValue)||0;
+  if(limit>0 && total>limit+.01 && !confirm('Allocations total '+f$(total,true)+' but the tracked funding value is '+f$(limit,true)+'. Save anyway?'))return;
+  if(!Array.isArray(S.bucketFundingHoldings))S.bucketFundingHoldings=[];
+  const idx=S.bucketFundingHoldings.findIndex(h=>h.id===id); if(idx>=0)S.bucketFundingHoldings[idx]=holding;else S.bucketFundingHoldings.push(holding);
+  S.bucketFundingSchemaVersion=1;saveState(S);showSaved();closeBucketFundingEditor();renderPortfolioPlan();
+}
+function bucketFundingDeleteHolding(id){
+  if(!confirm('Delete this holding and all of its spending-year allocations?'))return;
+  S.bucketFundingHoldings=bucketFundingHoldings(S).filter(h=>h.id!==id);saveState(S);showSaved();closeBucketFundingEditor();renderPortfolioPlan();
+}
+function exportBucketFundingCSV(){
+  if(!proj||!proj.length)proj=runProjection(S);
+  const plan=buildPortfolioBucketPlan(proj,S,Math.max(bucketPlanSeedYear(S,proj,bucketPlanDefaultYear(S,proj)),bucketPlanDefaultYear(S,proj)));
+  const req=new Map(bucketFundingRequiredRows(plan).map(r=>[r.accountKey+'|'+r.year,r]));
+  const accountNames=new Map((plan.accounts||[]).map(a=>[a.key,a.name]));
+  const headings=['Account to Fund','Spending Year','Required Amount','Amount Funded','Remaining Amount','Funding Vehicle','Name or Description','Purchase Date','Availability Date','Face or Maturity Value','Status','Notes'];
+  const csvCell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=bucketFundingAllocations(S).map(a=>{const h=a.holding,r=req.get((h.accountKey||'')+'|'+parseInt(a.year,10))||{required:0},funded=bucketFundingAmount(h.accountKey,a.year,null,S);return [accountNames.get(h.accountKey)||'Unassigned',a.year,r.required,a.amount,bucketFundingRemaining(r.required,funded),h.vehicleType,h.security,h.purchaseDate,h.availabilityDate,h.faceValue,bucketFundingStatus(r.required,funded),h.notes];});
+  const csv=[headings,...rows].map(row=>row.map(csvCell).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=exportFileName('bucket_funding','csv');link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+}
+function setBucketFundingView(value){
+  S.bucketFundingView=value==='account'?'account':'year';saveState(S);showSaved();renderPortfolioPlan();
+}
+function toggleBucketFundingGroup(key){
+  if(!key)return;if(!S.bucketFundingGroupExpanded||typeof S.bucketFundingGroupExpanded!=='object')S.bucketFundingGroupExpanded={};
+  S.bucketFundingGroupExpanded[key]=S.bucketFundingGroupExpanded[key]===false;saveState(S);showSaved();renderPortfolioPlan();
+}
+function bucketFundingImplementationHtml(plan){
+  const view=S.bucketFundingView==='account'?'account':'year';
+  const requiredRows=bucketFundingRequiredRows(plan), allocations=bucketFundingAllocations(S), rowMap=new Map();
+  const accountNames=new Map((plan.accounts||[]).map(a=>[a.key,a.name]));
+  requiredRows.forEach(r=>rowMap.set(r.accountKey+'|'+r.year,Object.assign({},r)));
+  allocations.forEach(a=>{const accountKey=a.holding.accountKey||'',k=accountKey+'|'+parseInt(a.year,10);if(!rowMap.has(k))rowMap.set(k,{accountKey,accountName:accountNames.get(accountKey)||'Unassigned — edit funding source',year:parseInt(a.year,10),stage:'Recorded funding',required:0});});
+  const rows=Array.from(rowMap.values()).sort(view==='account'
+    ? (a,b)=>String(a.accountName).localeCompare(String(b.accountName))||a.year-b.year
+    : (a,b)=>a.year-b.year||String(a.accountName).localeCompare(String(b.accountName)));
+  let totalRequired=0,totalFunded=0,totalRemaining=0; const fullyByYear=new Map();
+  const rowEntries=rows.map(r=>{
+    const matched=allocations.filter(a=>(a.holding.accountKey||'')===r.accountKey&&parseInt(a.year,10)===r.year), funded=matched.reduce((s,a)=>s+(parseFloat(a.amount)||0),0), remaining=bucketFundingRemaining(r.required,funded), status=bucketFundingStatus(r.required,funded), pct=r.required>0?funded/r.required*100:(funded>0?100:0);
+    totalRequired+=r.required;totalFunded+=funded;totalRemaining+=remaining;
+    if(r.required>0)fullyByYear.set(r.year,(fullyByYear.has(r.year)?fullyByYear.get(r.year):true)&&['Funded','Overfunded'].includes(status));
+    const sources=matched.length?matched.map(a=>{const h=a.holding,w=bucketFundingWarning(h,a,r);return '<div><button type="button" class="bucket-source-edit" onclick="event.stopPropagation();openBucketFundingEditor(null,null,&quot;'+setupEsc(h.id)+'&quot;)">'+setupEsc(h.security||h.vehicleType||'Holding')+'</button> · '+f$(a.amount,true)+(h.symbol?' <span class="bucket-impl-sub">'+setupEsc(h.symbol)+'</span>':'')+(w?'<div class="bucket-impl-warning">'+setupEsc(w)+'</div>':'')+'</div>';}).join(''):'—';
+    const availability=matched.length?Array.from(new Set(matched.map(a=>a.holding.availabilityDate?bucketFundingDateText(a.holding.availabilityDate):(['Money Market','Cash'].includes(a.holding.vehicleType)?'Available now':'—')))).join(', '):'—';
+    const accountKeyAttr=setupJsString(r.accountKey).replace(/"/g,'&quot;'),yearCell='<td><strong>'+r.year+'</strong><div class="bucket-impl-sub">'+setupEsc(r.stage||'Planned spending')+'</div></td>',accountCell='<td><button type="button" class="bucket-jump-link" onclick="event.stopPropagation();jumpToBucketPlan('+accountKeyAttr+')">'+setupEsc(r.accountName)+'</button></td>';
+    const rowEdit=matched.length===1?' class="bucket-row-editable" onclick="openBucketFundingEditor(null,null,&quot;'+setupEsc(matched[0].holding.id)+'&quot;)"':'';
+    return {row:r,html:'<tr'+rowEdit+'>'+(view==='account'?accountCell+yearCell:yearCell+accountCell)+'<td class="r">'+f$(r.required,true)+'</td><td class="r">'+f$(funded,true)+'</td><td class="r">'+f$(remaining,true)+'</td><td><span class="bucket-status '+bucketFundingStatusClass(status)+'">'+setupEsc(status)+'</span><div class="bucket-progress"><span style="width:'+(['Funded','Overfunded'].includes(status)?100:Math.min(100,Math.max(0,pct)))+'%"></span></div></td><td>'+sources+'</td><td>'+setupEsc(availability)+'</td><td><button class="btn btn-add btn-sm" onclick="event.stopPropagation();openBucketFundingEditor(&quot;'+setupEsc(r.accountKey)+'&quot;,'+r.year+')">Add Funding</button></td></tr>'};
+  });
+  const yearCount=fullyByYear.size, fullCount=Array.from(fullyByYear.values()).filter(Boolean).length;
+  const tableHead='<tr>'+(view==='account'?'<th>Account to Fund</th><th>Spending Year</th>':'<th>Spending Year</th><th>Account to Fund</th>')+'<th class="r">Required</th><th class="r">Funded</th><th class="r">Remaining</th><th>Status</th><th>Funding Source</th><th>Availability</th><th>Action</th></tr>';
+  const groups=new Map();
+  rowEntries.forEach(entry=>{const raw=view==='account'?(entry.row.accountKey||'unassigned'):String(entry.row.year),key=view+':'+raw,label=view==='account'?entry.row.accountName:('Spending Year '+entry.row.year);if(!groups.has(key))groups.set(key,{key,label,entries:[]});groups.get(key).entries.push(entry);});
+  const body=Array.from(groups.values()).map(group=>{
+    const expanded=!S.bucketFundingGroupExpanded||S.bucketFundingGroupExpanded[group.key]!==false,keyAttr=setupJsString(group.key).replace(/"/g,'&quot;');
+    const groupAccountKey=view==='account'&&group.entries.length?group.entries[0].row.accountKey:'',groupAccountAttr=setupJsString(groupAccountKey).replace(/"/g,'&quot;'),groupId=groupAccountKey?' id="bucket-funding-account-'+bucketAccountDomId(groupAccountKey)+'"':'';
+    const header='<tr class="bucket-group-row"'+groupId+'><td colspan="9"><div class="bucket-group-head"><button type="button" class="bucket-group-toggle" onclick="toggleBucketFundingGroup('+keyAttr+')"><span>'+(expanded?'▾ ':'▸ ')+setupEsc(group.label)+'</span><span>'+group.entries.length+' planned '+(group.entries.length===1?'row':'rows')+'</span></button>'+(groupAccountKey?'<button type="button" class="btn btn-light btn-sm" onclick="jumpToBucketPlan('+groupAccountAttr+')">View Plan ↑</button>':'')+'</div></td></tr>';
+    return header+(expanded?group.entries.map(x=>x.html).join(''):'');
+  }).join('');
+  return '<div class="panel bucket-impl"><div class="bucket-impl-head"><div><div class="sh">Bucket Implementation</div><div class="bucket-guidance">Track what is actually protected, how it is held, and what remains. Planning targets remain unchanged.</div></div><div class="bucket-impl-actions"><label style="font-family:JetBrains Mono,monospace;font-size:9px;font-weight:900;text-transform:uppercase">View <select onchange="setBucketFundingView(this.value)" style="margin-left:5px"><option value="year" '+(view==='year'?'selected':'')+'>By Year</option><option value="account" '+(view==='account'?'selected':'')+'>By Account</option></select></label><button class="btn btn-light btn-sm" onclick="exportBucketFundingCSV()">Export CSV</button><button class="btn btn-dark btn-sm" onclick="openBucketFundingEditor()">+ Add Holding</button></div></div>'+
+    '<div class="bucket-summary"><div class="bucket-metric"><div class="bucket-metric-label">Protected Years Funded</div><div class="bucket-metric-value">'+fullCount+' of '+yearCount+'</div></div><div class="bucket-metric"><div class="bucket-metric-label">Total Required</div><div class="bucket-metric-value">'+f$(totalRequired,true)+'</div></div><div class="bucket-metric"><div class="bucket-metric-label">Total Allocated</div><div class="bucket-metric-value">'+f$(totalFunded,true)+'</div></div><div class="bucket-metric"><div class="bucket-metric-label">Total Remaining</div><div class="bucket-metric-value">'+f$(totalRemaining,true)+'</div></div></div>'+
+    '<div class="bucket-table-wrap"><table class="bucket-impl-table"><thead>'+tableHead+'</thead><tbody>'+(body||'<tr><td colspan="9">Turn on a Bucket Lab account and set its bucket years to create implementation targets.</td></tr>')+'</tbody></table></div><div class="bucket-impl-sub" style="margin-top:6px">Funding is isolated by account. Click a funding source to edit it; rows with one source are also clickable.</div></div>';
+}
 function renderPortfolioPlan(){
   const root = document.getElementById('portfolio-plan-root');
   if (!root) return;
@@ -4192,6 +4425,7 @@ function renderPortfolioPlan(){
     '<div class="bucket-metric"><div class="bucket-metric-label">'+summaryActionLabel+'</div><div class="bucket-metric-value">'+summaryActionValue+'</div><div class="bucket-metric-note">'+summaryActionNote+'</div></div>'+
   '</div>';
   const cardHtml = plan.accounts.map(a=>{
+    const expanded=!S.bucketAccountExpanded||S.bucketAccountExpanded[a.key]!==false;
     const actionAccount = actionTargetYear ? bucketActionAccountForKey(a.key) : null;
     const actionItems = actionAccount && actionAccount.enabled ? bucketPlanActionItems(actionAccount, money, actionTargetYear, {seedYear}) : [];
     const actionEmptyText = isPreInitialPrepYear
@@ -4220,34 +4454,34 @@ function renderPortfolioPlan(){
       ? 'Purpose: funds planned withdrawals during the next '+a.shortYears+' year'+(a.shortYears===1?'':'s')+'.'
       : 'Purpose: no Short-Term bucket is enabled for this account.';
     const shortCell = a.enabled
-      ? '<div class="bucket-bucket-total">'+money(a.shortTarget)+'</div><div class="bucket-year-list">'+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+'</div><div class="bucket-purpose-note">'+setupEsc(shortPurpose.replace('Purpose: ',''))+'</div>'+bucketPlanFundingRowsHtml(a.shortBreakdown, money, 'Short-Term Bucket Covers', 'No planned withdrawals in this Short-Term window.')+bucketPlanTransferRowsHtml(a.shortRefillSchedule, money, isPreInitialPrepYear ? 'Future Short-Term Refill Schedule' : 'Short-Term Refill Schedule', 'No Short-Term refills scheduled.', plan.reviewYear, (a.shortEnd || plan.reviewYear) + 1)
+      ? '<div class="bucket-bucket-total">'+money(a.shortTarget)+'</div><div class="bucket-year-list">'+setupEsc(bucketPlanWindowLabel(a.shortStart,a.shortEnd))+'</div><div class="bucket-purpose-note">'+setupEsc(shortPurpose.replace('Purpose: ',''))+'</div>'+bucketPlanFundingRowsHtml(a.shortBreakdown, money, 'Short-Term Bucket Covers', 'No planned withdrawals in this Short-Term window.', a.key)+bucketPlanTransferRowsHtml(a.shortRefillSchedule, money, isPreInitialPrepYear ? 'Future Short-Term Refill Schedule' : 'Short-Term Refill Schedule', 'No Short-Term refills scheduled.', plan.reviewYear, (a.shortEnd || plan.reviewYear) + 1)
       : offText;
     const intermediateCell = a.enabled
       ? (a.intermediateYears > 0
-        ? '<div class="bucket-bucket-total">'+money(a.intermediateTarget)+'</div><div class="bucket-purpose-note">Staged for future withdrawals. Move each year into Short-Term as it gets closer.</div>'+bucketPlanIntermediateFundingRowsHtml(a.intermediateBreakdown, a.intermediateTransferSchedule, money, a.shortYears)+bucketPlanIntermediateRefillRowsHtml(a.intermediateReplenishSchedule, money, plan.reviewYear, (a.intermediateEnd || (a.shortEnd || plan.reviewYear)) + 1)
+        ? '<div class="bucket-bucket-total">'+money(a.intermediateTarget)+'</div><div class="bucket-purpose-note">Staged for future withdrawals. Move each year into Short-Term as it gets closer.</div>'+bucketPlanIntermediateFundingRowsHtml(a.intermediateBreakdown, a.intermediateTransferSchedule, money, a.shortYears, a.key)+bucketPlanIntermediateRefillRowsHtml(a.intermediateReplenishSchedule, money, plan.reviewYear, (a.intermediateEnd || (a.shortEnd || plan.reviewYear)) + 1)
         : '<div class="bucket-bucket-total">$0</div>'+bucketPlanDisabledIntermediateHtml())
       : offText;
     const longDisplayAmount = (a.futureRefillTarget || 0) > 0 ? a.futureRefillTarget : (a.longTarget || 0);
     const longPurpose = (a.futureRefillTarget || 0) > 0 ? 'Future refill reserve; not in current Short-Term target.' : 'Growth and later bucket refills.';
     const longCell = a.enabled ? '<div class="bucket-bucket-total">'+money(longDisplayAmount)+'</div><div class="bucket-purpose-note">'+setupEsc(longPurpose)+'</div>' : offText;
-    return '<div class="bucket-account-card">'+
+    return '<div class="bucket-account-card" id="bucket-plan-account-'+bucketAccountDomId(a.key)+'">'+
       '<div class="bucket-card-head">'+
-        '<div><div class="bucket-account-name">'+setupEsc(a.name)+'</div><div class="bucket-account-meta">'+setupEsc(a.type)+'</div><div class="bucket-year-list">'+setupEsc(a.purpose||'')+'</div></div>'+
+        '<div><div class="bucket-account-name">'+setupEsc(a.name)+'</div><div class="bucket-account-meta">'+setupEsc(a.type)+'</div><div class="bucket-year-list">'+setupEsc(a.purpose||'')+'</div><div class="bucket-account-nav"><button type="button" class="btn btn-light btn-sm bucket-account-toggle" onclick="toggleBucketAccountExpanded('+keyAttr+')">'+(expanded?'▾ Hide Account Details':'▸ Show Account Details')+'</button><button type="button" class="btn btn-dark btn-sm bucket-account-toggle" onclick="jumpToBucketFunding('+keyAttr+')">Go to Funding ↓</button></div></div>'+
         '<div>'+policyControls+'</div>'+
         '<div class="bucket-card-metrics">'+
           '<div class="bucket-card-metric"><div class="bucket-card-label">Start Balance</div><div class="bucket-card-value">'+money(a.startBalance)+'</div></div>'+
           '<div class="bucket-card-metric"><div class="bucket-card-label">Withdrawal in '+plan.reviewYear+'</div><div class="bucket-card-value">'+(a.enabled?money(a.currentWithdrawal):'Off')+'</div></div>'+
         '</div>'+
       '</div>'+
-      '<div class="bucket-card-body">'+
+      (expanded?'<div class="bucket-card-body">'+
         '<div class="bucket-card-section"><div class="bucket-card-section-title">Short-Term Target</div>'+shortCell+'</div>'+
         '<div class="bucket-card-section"><div class="bucket-card-section-title">Intermediate Bucket</div>'+intermediateCell+'</div>'+
         '<div class="bucket-card-section"><div class="bucket-card-section-title">Long-Term / Future</div>'+longCell+'</div>'+
         '<div class="bucket-card-section"><div class="bucket-card-section-title">'+(isPreInitialPrepYear?'Initial Setup Actions':(actionTargetYear && actionTargetYear!==selectedYear ? selectedYear+' Actions to Prepare for '+actionTargetYear:'Annual Bucket Moves'))+'</div>'+actions+warning+drawdownInfo+'</div>'+
-      '</div>'+
+      '</div>':'')+
     '</div>';
   }).join('');
-  root.innerHTML = controls + phaseNote + summary + '<div class="bucket-card-list">'+cardHtml+'</div>';
+  root.innerHTML = controls + phaseNote + summary + '<div class="bucket-card-list">'+cardHtml+'</div>' + bucketFundingImplementationHtml(plan);
 }
 
 
@@ -4873,6 +5107,17 @@ function applyMigrations(merged) {
   merged.bucketIntermediateYears = Math.max(0, Math.min(20, isNaN(migratedBucketIntermediate) ? 0 : migratedBucketIntermediate));
   if (merged.bucketPlanYear == null || isNaN(merged.bucketPlanYear)) merged.bucketPlanYear = 0;
   if (merged.bucketSeedYear == null || isNaN(merged.bucketSeedYear)) merged.bucketSeedYear = 0;
+  if (!Array.isArray(merged.bucketFundingHoldings)) merged.bucketFundingHoldings = [];
+  merged.bucketFundingSchemaVersion = 1;
+  if (!['year','account'].includes(merged.bucketFundingView)) merged.bucketFundingView = 'year';
+  if (!merged.bucketAccountExpanded || typeof merged.bucketAccountExpanded !== 'object' || Array.isArray(merged.bucketAccountExpanded)) merged.bucketAccountExpanded = {};
+  if (!merged.bucketFundingGroupExpanded || typeof merged.bucketFundingGroupExpanded !== 'object' || Array.isArray(merged.bucketFundingGroupExpanded)) merged.bucketFundingGroupExpanded = {};
+  merged.bucketFundingHoldings.forEach(h => {
+    if (!h.id) h.id = bucketFundingId('holding');
+    if (!Array.isArray(h.allocations)) h.allocations = [];
+    if (h.countsTowardFunding == null) h.countsTowardFunding = !['planned','used'].includes(String(h.lifecycle||'').toLowerCase());
+    h.allocations.forEach(a => { if (!a.id) a.id = bucketFundingId('alloc'); });
+  });
   if (!merged.bucketPolicies || typeof merged.bucketPolicies !== 'object' || Array.isArray(merged.bucketPolicies)) merged.bucketPolicies = {};
   Object.keys(merged.bucketPolicies).forEach(key => {
     const policy = merged.bucketPolicies[key] || {};
@@ -9334,6 +9579,18 @@ function generateBucketLabReport(){
     '<div class="summary-card"><span>Intermediate Target</span><strong>'+money(plan.totals.intermediateTarget||0)+'</strong></div>'+ 
     '<div class="summary-card"><span>'+setupEsc(summaryActionLabel)+'</span><strong>'+summaryActionValue+'</strong><em>'+summaryActionNote+'</em></div>'+ 
   '</div>';
+  const implementationHtmlForAccount = account => {
+    const planRows=bucketFundingRequiredRows(plan).filter(r=>r.accountKey===account.key).sort((a,b)=>a.year-b.year);
+    if(!planRows.length)return '';
+    const rowsHtml=planRows.map(r=>{
+      const allocs=bucketFundingAllocations(S).filter(x=>x.holding.accountKey===account.key&&parseInt(x.year,10)===r.year),funded=allocs.reduce((s,x)=>s+(parseFloat(x.amount)||0),0),remaining=bucketFundingRemaining(r.required,funded),status=bucketFundingStatus(r.required,funded);
+      const sources=allocs.length?allocs.map(x=>setupEsc(x.holding.security||x.holding.vehicleType||'Holding')+' '+fullMoney(x.amount)).join('<br>'):'—';
+      const availability=allocs.length?Array.from(new Set(allocs.map(x=>x.holding.availabilityDate?bucketFundingDateText(x.holding.availabilityDate):(['Money Market','Cash'].includes(x.holding.vehicleType)?'Available now':'—')))).join(', '):'—';
+      const cls=status==='Partially Funded'?' class="impl-partial"':(['Funded','Overfunded'].includes(status)?' class="impl-funded"':'');
+      return '<tr'+cls+'><td>'+r.year+'</td><td>'+setupEsc(r.stage)+'</td><td class="r">'+fullMoney(r.required)+'</td><td class="r">'+fullMoney(funded)+'</td><td class="r">'+fullMoney(remaining)+'</td><td><strong>'+setupEsc(status)+'</strong></td><td>'+sources+'</td><td>'+setupEsc(availability)+'</td></tr>';
+    }).join('');
+    return '<div class="implementation-detail"><h3>Bucket Implementation</h3><p class="table-note">What is funded in this account, by spending year. Green is funded; yellow is partially funded.</p><table><thead><tr>'+[th('Year'),th('Bucket'),th('Required'),th('Funded'),th('Remaining'),th('Status'),th('Funding Source'),th('Availability')].join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+  };
   const accountHtml = accounts.map(a => {
     const policy = a.policy || {shortYears:a.shortYears||0, intermediateYears:a.intermediateYears||0};
     const policyText = ((policy.shortYears||0)>0 ? 'Short-Term window: '+policy.shortYears+' year'+(policy.shortYears===1?'':'s') : 'No Short-Term bucket') + ' · ' + ((policy.intermediateYears||0)>0 ? 'Intermediate window: '+policy.intermediateYears+' year'+(policy.intermediateYears===1?'':'s') : 'No Intermediate bucket');
@@ -9353,11 +9610,12 @@ function generateBucketLabReport(){
       '<h3>'+setupEsc(actionHeading)+'</h3><p class="table-note">'+setupEsc(actionNote)+'</p>'+actionsHtml(a)+
       '<div class="grid2 coverage-grid"><div><h3>Short-Term Bucket Coverage</h3><p class="table-note">Amount to hold in Short-Term at the start of '+targetYear+'.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsFunding(a.shortBreakdown, 'Total Short-Term target')+'</tbody></table></div>'+ 
       '<div><h3>Intermediate Bucket Coverage</h3><p class="table-note">Withdrawal Year = when it is expected to be spent; Short-Term Year = when it becomes near-term money.</p><table><thead><tr>'+[th('Withdrawal Year'),th('Short-Term Year'),th('Amount')].join('')+'</tr></thead><tbody>'+rowsIntermediateFunding(a.intermediateBreakdown, a.intermediateTransferSchedule, 'Total Intermediate target')+'</tbody></table></div></div>'+ 
+      implementationHtmlForAccount(a)+
       futureMovesHtml+
     '</section>';
   }).join('');
   let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bucket Lab Report</title><style>
-    *{box-sizing:border-box} body{font-family:Helvetica,Arial,sans-serif;color:#1a1208;background:#fff;padding:.45in;font-size:9pt;line-height:1.3} h1{font-size:22pt;color:#8a6800;margin:0 0 2px} h2{font-size:13pt;color:#5e4700;border-bottom:2px solid #c8960c;margin:16px 0 4px;padding-bottom:2px} h3{font-size:9.5pt;color:#111;margin:10px 0 2px}.cover{margin-bottom:12px}.sub{font-size:10pt;color:#6a4e00}.subline{font-size:8pt;color:#6a4e00;margin:0 0 8px}.callout{border-left:4px solid #c8960c;background:#fffaf0;padding:8px 10px;margin:8px 0 12px}.acct{break-inside:avoid;border-top:1px solid #e2d6b4;padding-top:4px;margin-top:10px}.report-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:8px 0 12px}.summary-card{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px}.summary-card span{display:block;text-transform:uppercase;letter-spacing:.04em;color:#6a4e00;font-size:6.7pt;font-weight:700}.summary-card strong{display:block;font-size:13pt;margin-top:2px;color:#1a1208}.summary-card em{display:block;color:#6a4e00;font-size:7pt;font-style:normal;line-height:1.2;margin-top:1px}.target-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.target-grid div{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px}.target-grid span{display:block;text-transform:uppercase;letter-spacing:.04em;color:#6a4e00;font-size:7pt;font-weight:700}.target-grid strong{display:block;font-size:14pt;margin-top:2px}.target-grid em{display:block;color:#6a4e00;font-size:7pt;font-style:normal}.grid2{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:start}.coverage-grid{grid-template-columns:.82fr 1.18fr}.future-moves{margin-top:10px;border-top:1px solid #e2d6b4;padding-top:6px}.future-moves h4{font-size:8.5pt;color:#5e4700;margin:8px 0 2px}.all-moves{break-inside:avoid;border-top:2px solid #c8960c;margin-top:14px;padding-top:8px}.all-moves table{font-size:7.5pt}.table-note{font-size:7.5pt;color:#6a4e00;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:8pt}th{background:#1e1a0e;color:#fff;text-align:left;padding:4px 5px;font-size:7pt}td{border-bottom:1px solid #ddd;padding:3px 5px;vertical-align:top}tr:nth-child(even) td{background:#f5f0e5}.total-row td{background:#fff3cc!important;font-weight:800;border-top:1px solid #c8960c}.r{text-align:right}.muted{color:#6a4e00;font-style:italic}.note-box{border-left:3px solid #8a6800;background:#fffaf0;padding:6px 8px;margin:6px 0;color:#4a3500}ul{margin:4px 0 8px 16px;padding:0}li{margin-bottom:4px}li span{color:#6a4e00}.no-print{margin-top:14px}@media print{body{padding:0}.no-print{display:none}.acct{break-inside:avoid}.grid2{grid-template-columns:1fr 1.35fr}.coverage-grid{grid-template-columns:.82fr 1.18fr}h2{break-after:avoid}@page{size:letter portrait;margin:.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}}
+    *{box-sizing:border-box} body{font-family:Helvetica,Arial,sans-serif;color:#1a1208;background:#fff;padding:.45in;font-size:9pt;line-height:1.3} h1{font-size:22pt;color:#8a6800;margin:0 0 2px} h2{font-size:13pt;color:#5e4700;border-bottom:2px solid #c8960c;margin:16px 0 4px;padding-bottom:2px} h3{font-size:9.5pt;color:#111;margin:10px 0 2px}.cover{margin-bottom:12px}.sub{font-size:10pt;color:#6a4e00}.subline{font-size:8pt;color:#6a4e00;margin:0 0 8px}.callout{border-left:4px solid #c8960c;background:#fffaf0;padding:8px 10px;margin:8px 0 12px}.acct{break-inside:avoid;border-top:1px solid #e2d6b4;padding-top:4px;margin-top:10px}.report-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:8px 0 12px}.summary-card{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px}.summary-card span{display:block;text-transform:uppercase;letter-spacing:.04em;color:#6a4e00;font-size:6.7pt;font-weight:700}.summary-card strong{display:block;font-size:13pt;margin-top:2px;color:#1a1208}.summary-card em{display:block;color:#6a4e00;font-size:7pt;font-style:normal;line-height:1.2;margin-top:1px}.target-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.target-grid div{border:1px solid #d8c48a;background:#faf7f2;border-radius:4px;padding:7px}.target-grid span{display:block;text-transform:uppercase;letter-spacing:.04em;color:#6a4e00;font-size:7pt;font-weight:700}.target-grid strong{display:block;font-size:14pt;margin-top:2px}.target-grid em{display:block;color:#6a4e00;font-size:7pt;font-style:normal}.grid2{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:start}.coverage-grid{grid-template-columns:.82fr 1.18fr}.implementation-detail{margin-top:10px;border-top:1px solid #e2d6b4;padding-top:6px;break-inside:avoid}.implementation-detail table{font-size:7.5pt}.implementation-detail tr.impl-funded td{background:#e8f6e9!important}.implementation-detail tr.impl-partial td{background:#fff5cf!important}.implementation-detail tr.impl-funded td:first-child{border-left:4px solid #27833f}.implementation-detail tr.impl-partial td:first-child{border-left:4px solid #d3a52c}.future-moves{margin-top:10px;border-top:1px solid #e2d6b4;padding-top:6px}.future-moves h4{font-size:8.5pt;color:#5e4700;margin:8px 0 2px}.all-moves{break-inside:avoid;border-top:2px solid #c8960c;margin-top:14px;padding-top:8px}.all-moves table{font-size:7.5pt}.table-note{font-size:7.5pt;color:#6a4e00;margin:0 0 4px}table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:8pt}th{background:#1e1a0e;color:#fff;text-align:left;padding:4px 5px;font-size:7pt}td{border-bottom:1px solid #ddd;padding:3px 5px;vertical-align:top}tr:nth-child(even) td{background:#f5f0e5}.total-row td{background:#fff3cc!important;font-weight:800;border-top:1px solid #c8960c}.r{text-align:right}.muted{color:#6a4e00;font-style:italic}.note-box{border-left:3px solid #8a6800;background:#fffaf0;padding:6px 8px;margin:6px 0;color:#4a3500}ul{margin:4px 0 8px 16px;padding:0}li{margin-bottom:4px}li span{color:#6a4e00}.no-print{margin-top:14px}@media print{body{padding:0}.no-print{display:none}.acct{break-inside:avoid}.grid2{grid-template-columns:1fr 1.35fr}.coverage-grid{grid-template-columns:.82fr 1.18fr}h2{break-after:avoid}@page{size:letter portrait;margin:.45in;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-family:Helvetica,Arial,sans-serif;font-size:8pt;color:#555;}}}
   </style></head><body><div class="cover"><h1>Bucket Lab Report</h1><div class="sub">${setupEsc(names)} · Review Year ${reviewYear}${targetYear!==reviewYear?' · Target Year '+targetYear:''} · Generated ${setupEsc(today)}</div></div><div class="callout"><strong>Purpose:</strong> This detailed report separates start-of-year targets from annual actions. Targets show what should already be in place at the start of the target year. Actions show what to do during the review year to prepare the next year&rsquo;s buckets.</div>${reportSummaryHtml}${accountHtml}${allMovesSummaryHtml}<div class="no-print"><button onclick="window.print()" style="padding:8px 20px;background:#8a6800;color:#fff;border:none;border-radius:4px;font-size:10pt;cursor:pointer;font-weight:700">🖨 Print / Save as PDF</button></div></body></html>`;
   const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent || '');
   if(isSafari){ renderSafariInlineReport(html); return; }
