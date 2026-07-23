@@ -355,7 +355,7 @@ story += [
         ("Household", "Names, one-person or two-person plan, tax filing, state, plan start year, and plan length."),
         ("Survivor Plan", "Only needed for two-person plans when testing one spouse dying during the plan."),
         ("Assumptions", "Global defaults for growth, inflation, dividends, cash interest, spending growth, Social Security COLA, tax bracket inflation, IRMAA MAGI threshold inflation, Medicare cost inflation, cash floor, and draw order."),
-        ("Opening Year", "First-year spending and balances. Taxable brokerage is split into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds before IRA/401k, Roth, HSA, and inherited accounts."),
+        ("Opening Year", "First-year spending and balances. Taxable brokerage is split into regular taxable investments, U.S. Treasuries, CA municipal bonds, and other-state municipal bonds before IRA/401k, Roth, HSA, and inherited accounts. Restricted Until Maturity is optional when part of an account cannot yet fund spending."),
         ("Inherited IRAs", "Rule details for inherited retirement accounts. Use this only if inherited accounts exist."),
         ("Income", "Work income and Social Security. Retired users can skip work income if it does not apply."),
         ("401k Defaults", "Global contribution defaults for people still working."),
@@ -375,6 +375,20 @@ story += [
         ("CA Municipal Bond", "Exempt from regular federal and California tax, but included for Social Security provisional income and Medicare MAGI."),
         ("Other-State Municipal Bond", "Federally tax-exempt municipal interest that is taxable by California."),
     ]),
+]
+story += subhead("Restricted Until Maturity (Optional)")
+story += [
+    p("Use Restricted Until Maturity only when part of an account balance cannot be used for discretionary funding until a future date, such as a fixed annuity, individual bond, Treasury, or CD intended to be held to maturity. Most users can ignore this feature.", "Callout"),
+    p("The restricted value is already included in the account balance. Do not enter it again. The restriction changes availability, not ownership: the value remains in the account, continues to count in net worth, and uses the account's normal projected growth treatment.", "WarnCallout"),
+    info_table(("Field", "What To Enter"), [
+        ("Account", "The taxable securities, traditional IRA, Roth IRA, or HSA balance that already includes the investment."),
+        ("Description", "A short identifying name, such as Fixed annuity batch 1 or Treasury maturing 12/31/2032."),
+        ("Restricted value", "The portion of the account balance that should not be used for discretionary draws yet."),
+        ("Maturity / availability date", "When the restriction ends. A maturity during a calendar year becomes available at the start of the following projection year; January 1 is available in that year."),
+    ]),
+    p("Before availability, the funding engine cannot use the restricted portion for discretionary spending draws or Roth conversions. When accessible money in that account is exhausted, the model continues to the next source in the selected funding order. For example, if IRA is followed by Securities and then Roth, an inaccessible annuity balance can cause the remaining need to move to Securities and then Roth.", "GoodCallout"),
+    p("The existing U.S. Treasury and municipal bond balance fields remain unchanged because they control taxable-account income and federal/California tax treatment. Restricted Until Maturity is a separate liquidity instruction and does not replace those tax categories.", "GoodCallout"),
+    p("Required minimum distributions still remain tax obligations. Year Detail warns when a restricted IRA value leaves insufficient accessible IRA funds for the modeled RMD so the contract's distribution options or other IRA liquidity can be reviewed.", "WarnCallout"),
 ]
 story += subhead("Tax Tables And Inflation Assumptions")
 story += [
@@ -497,7 +511,7 @@ story += [
     p("A simple example: if Initial Setup Year is 2027 and an account uses a 2/5 window, the 2026 Dashboard card can show actions to seed buckets so 2027 starts ready. Short-Term might cover 2027-2028; Intermediate might cover 2029-2033; Long/Growth is what remains after those targets. Use whatever window you intentionally choose.", "Callout"),
     p("Bucket Lab separates Withdrawal Year from Action Year. Withdrawal Year is the future year the dollars are ultimately meant to fund. Action Year is the year to plan or make the bucket move. Example: with a 2-year Short-Term window and 2027 as the first operating year, the 2027 Short-Term bucket covers 2027-2028. The 2029 withdrawal appears as a 2027 action because it should be lined up during 2027 so the 2028 Short-Term bucket covers 2028-2029. The instruction stays simple: move Intermediate to Short-Term. A later Intermediate row works the same way: move Long-Term to Intermediate in its Action Year, then follow the later Short-Term schedule as that withdrawal gets closer.", "GoodCallout"),
     p("Dashboard, Year Detail, and the main retirement report use prep-year language: a 2026 card can show bucket actions to prepare for 2027, so initial seed actions and later maintenance moves are visible where users review annual details. In the Bucket Lab tab, years before the setup-prep year show the start/seed years and inactive account previews, but no active bucket moves. The year before Initial Setup shows only seed/setup actions; the Initial Setup Year is the first operating year. The separate Bucket Lab Report presents each account as one story: start-of-year coverage, account-specific implementation with green/yellow status, then optional Future Scheduled Moves. Use No Future Actions for a concise coverage-and-implementation report, or Full Plan when you want the whole future move ladder.", "GoodCallout"),
-    p("Money markets and cash need only a useful name plus spending-year amounts. Fixed-maturity holdings add purchase date if useful, maturity or availability date, and face or maturity value. Purchase cost and ticker/CUSIP are not required by Bucket Lab. For a discounted Treasury or bond, allocate the amount expected to be available for spending, not automatically the purchase cost.", "GoodCallout"),
+    p("Money markets and cash need only a useful name plus spending-year amounts. Fixed-maturity holdings used as actual Bucket Funding add purchase date if useful, maturity or availability date, and face or maturity value. Purchase cost and ticker/CUSIP are not required by Bucket Lab. For a discounted Treasury or bond, allocate the amount expected to be available for spending, not automatically the purchase cost. This is different from Restricted Until Maturity: restriction records when part of an account cannot be drawn, while Bucket Implementation records dollars intentionally assigned to a spending year.", "GoodCallout"),
     p("Funding entries are private plan data stored with the app's normal local data and optional private GitHub sync. They are included in JSON backup, Bucket Funding CSV, and the detailed Bucket Lab Report.", "GoodCallout"),
     p("For inherited IRA drawdown lots, the Short-Term target is capped at the available account balance. If the last planned draw is slightly larger than the current balance because the projection assumes future growth before depletion, Bucket Lab explains that as a drawdown note rather than a target gap.", "GoodCallout"),
     p("For inherited IRA lots, Bucket Lab uses stable lot IDs behind the scenes, so a saved rule stays attached to the intended lot rather than to its row position.", "GoodCallout"),
@@ -616,6 +630,7 @@ story += [
         ("Roth conversion", "Moving IRA money to Roth and paying tax now so future qualified Roth withdrawals may be tax-free."),
         ("Roth conversion source", "The IRA account used for conversion dollars. This can be higher IRA, lower IRA, a named person first, or a percent split."),
         ("Tax-free bond buckets", "Taxable-account balance entries for U.S. Treasuries and municipal bonds so federal and California tax treatment can differ."),
+        ("Restricted Until Maturity", "Optional liquidity restriction for a value already included in Securities, IRA, Roth, or HSA. It stays in the account and net worth but cannot fund discretionary draws or Roth conversions until its availability date."),
         ("Bucket Lab", "Optional account-by-account portfolio bucket planner and implementation tracker for initial targets, actual funded holdings, remaining gaps, and scheduled bucket moves. It is off by default and appears in reports only after at least one account is enabled."),
         ("Bucket Implementation", "Actual funding recorded for one enabled account and one or more spending years. It stays separate from the calculated requirement so plan changes reveal a new remaining gap rather than overwriting history."),
         ("Short-Term bucket", "The enabled account target for planned withdrawals inside the near-term funding window."),

@@ -447,6 +447,8 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .bucket-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.bucket-modal-head h3{margin:0;font-family:'Playfair Display',Georgia,serif;font-size:23px}
 .bucket-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.bucket-form-grid .field{margin:0}.bucket-form-grid .span2{grid-column:span 2}.bucket-form-grid .span3{grid-column:1/-1}
 .bucket-alloc-box{grid-column:1/-1;border:1px solid #e3d5ae;border-radius:8px;background:#fffaf0;padding:10px}.bucket-alloc-row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(180px,1fr) auto;gap:7px;align-items:end;margin-top:7px;max-width:620px}.bucket-alloc-row .field{min-width:0}
+.bucket-assignment-choice{grid-column:1/-1;border:1px solid #e3d5ae;border-radius:8px;background:#fffdf7;padding:9px 10px}.bucket-assignment-choice label{display:flex;align-items:flex-start;gap:8px;font-family:'Lora',Georgia,serif!important;font-size:12px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important}.bucket-assignment-choice input{width:auto!important;margin-top:2px}
+.bucket-fixed-section{grid-column:1/-1}.bucket-fixed-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}.bucket-fixed-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:7px;margin-top:8px}.bucket-fixed-lot{border:1px solid #e3d5ae;border-left:4px solid var(--gold);border-radius:7px;background:#fffaf0;padding:8px;text-align:left;cursor:pointer;color:var(--ink);font:inherit}.bucket-fixed-lot:hover{background:#fff5dc}.bucket-fixed-lot-title{font-weight:900}.bucket-fixed-lot-meta{font-size:10px;color:#6a5830;line-height:1.4;margin-top:2px}.bucket-fixed-lot-status{display:inline-block;margin-top:4px;border-radius:99px;padding:2px 6px;background:#eee8db;color:#6a5830;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:900;text-transform:uppercase}.bucket-fixed-lot-status.assigned{background:#dff2e3;color:#17602e}
 .bucket-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
 @media(max-width:760px){.bucket-form-grid{grid-template-columns:1fr}.bucket-form-grid .span2,.bucket-form-grid .span3{grid-column:1}.bucket-alloc-row{grid-template-columns:1fr 1fr}.bucket-alloc-row button{align-self:end}}
 .post2020-lots{display:flex;flex-direction:column;gap:8px}
@@ -2286,6 +2288,7 @@ function defaultState() {
     cashFloor:0,
     bucketShortYears:0, bucketIntermediateYears:0, bucketPlanYear:0, bucketSeedYear:0, bucketReportYears:3,
     bucketPolicies:{}, bucketFundingHoldings:[], bucketFundingSchemaVersion:1, bucketFundingView:'year', bucketAccountExpanded:{}, bucketFundingGroupExpanded:{},
+    restrictedInvestments:[],
     irmaaTarget:'', irmaaHeadroom:0, irmaaMaxBracket:'', irmaaBracketHeadroom:0, medicareMagi2:0, medicareMagi1:0,
     rothConvSource:'HIGH', rothConvP1Pct:50,
     stkGainPct:0.30,
@@ -2355,6 +2358,19 @@ function defaultState() {
 }
 
 // ── Projection engine ────────────────────────────────────────────────────────
+function restrictedInvestmentLots(state){
+  return Array.isArray((state||{}).restrictedInvestments)?state.restrictedInvestments:[];
+}
+function restrictedInvestmentAmount(accountKey, year, state){
+  const yr=parseInt(year,10);
+  return restrictedInvestmentLots(state).filter(lot=>{
+    if(lot.accountKey!==accountKey)return false;
+    const date=String(lot.availableDate||''),parts=date.split('-'),maturityYear=parseInt(parts[0],10);
+    if(!maturityYear)return false;
+    const availableAtStart=maturityYear+(date.slice(5)==='01-01'?0:1);
+    return yr<availableAtStart;
+  }).reduce((sum,lot)=>sum+Math.max(0,parseFloat(lot.value)||0),0);
+}
 function runProjection(S) {
   const rows = [];
   const hp2 = S.householdMode !== 'single' && !!(S.name2 && S.name2.trim());
@@ -2863,6 +2879,14 @@ function runProjection(S) {
     // ── Required funding ──────────────────────────────────────────────────
     const step1Total = mandatoryFunding + hsaWith;
     const cashGapNeeded = Math.max(0, cashFloor - startCashBal);
+    const restrictedSec = restrictedInvestmentAmount('sec',yr,S);
+    const restrictedIra1 = restrictedInvestmentAmount('ira1',yr,S);
+    const restrictedIra2 = restrictedInvestmentAmount('ira2',yr,S);
+    const restrictedRoth1 = restrictedInvestmentAmount('roth1',yr,S);
+    const restrictedRoth2 = restrictedInvestmentAmount('roth2',yr,S);
+    const restrictedHsa = restrictedInvestmentAmount('hsa',yr,S);
+    const restrictedRmdWarning1 = rmd1>Math.max(0,ira1-restrictedIra1)+.49;
+    const restrictedRmdWarning2 = rmd2>Math.max(0,ira2-restrictedIra2)+.49;
 
     // ── Iterative tax solver loop ─────────────────────────────────────────
     // Each pass: waterfall draws based on taxEst → compute actual tax → repeat
@@ -2958,8 +2982,8 @@ function runProjection(S) {
     }
     const drawRothFunding = () => {
       const buckets = [
-        {i:1, avail:Math.max(0, roth1 - rothDraw1_inner)},
-        ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - rothDraw2_inner)}] : [])
+        {i:1, avail:Math.max(0, roth1 - restrictedRoth1 - rothDraw1_inner)},
+        ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - restrictedRoth2 - rothDraw2_inner)}] : [])
       ].sort((a,b)=>b.avail-a.avail);
       for (const b of buckets) {
         if (remainingShortfall <= 0 || b.avail <= 0) continue;
@@ -2979,15 +3003,15 @@ function runProjection(S) {
         }
       }
       if (bucket === 'SEC') {
-        const d = Math.min(remainingShortfall, sec - secDraw_inner);
+        const d = Math.min(remainingShortfall, Math.max(0,sec-restrictedSec-secDraw_inner));
         secDraw_inner += Math.max(0, d);
         remainingShortfall -= Math.max(0, d);
       } else if (bucket === 'IRA') {
         drawPre2020ForFunding('before');
         if (remainingShortfall > 0) {
           const buckets = [
-            {i:1, avail:Math.max(0, ira1 - ira1Draw_inner)},
-            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - ira2Draw_inner)}] : [])
+            {i:1, avail:Math.max(0, ira1 - rmd1 - restrictedIra1 - ira1Draw_inner)},
+            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - rmd2 - restrictedIra2 - ira2Draw_inner)}] : [])
           ].sort((a,b)=>b.avail-a.avail);
           for (const b of buckets) {
             if (remainingShortfall <= 0 || b.avail <= 0) continue;
@@ -3030,8 +3054,8 @@ function runProjection(S) {
     let rothModeWith1=0, rothModeWith2=0;
     // Roth conversions can only use IRA dollars not already used for RMDs or cash-flow funding.
     // This prevents an extreme conversion year from drawing the same IRA dollars for taxes and also moving them to Roth.
-    const rothConvAvail1 = Math.max(0, ira1 - rmd1 - ira1Addl);
-    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - rmd2 - ira2Addl) : 0;
+    const rothConvAvail1 = Math.max(0, ira1 - rmd1 - ira1Addl - restrictedIra1);
+    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - rmd2 - ira2Addl - restrictedIra2) : 0;
     const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
     const assignRothConversionDraws = () => {
       const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
@@ -3338,6 +3362,8 @@ function runProjection(S) {
       // Spending / cash
       spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + fundingTax + cashGapNeeded,
       excessFunds, cashSweep, shortfall, unfunded, fundingChoice, fundingOrder,
+      restrictedSec, restrictedIra1, restrictedIra2, restrictedRoth1, restrictedRoth2, restrictedHsa,
+      restrictedRmdWarning1, restrictedRmdWarning2,
       // Roth activity
       rothConv, rothConvDraw1, rothConvDraw2, rothConvSource:rothConvSourceCfg.source, rothConvSourceLabel:rothConvSourceCfg.label, rothConvP1Pct:rothConvSourceCfg.p1Pct, rothModeWith1, rothModeWith2,
       // HSA / 401K
@@ -4172,6 +4198,40 @@ function jumpToBucketPlan(accountKey){
 function bucketFundingId(prefix){
   return (prefix || 'bf')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
 }
+function restrictedInvestmentAccountLabel(key){
+  const labels={sec:'Taxable Securities',ira1:p1()+' Traditional IRA',ira2:p2()+' Traditional IRA',roth1:p1()+' Roth IRA',roth2:p2()+' Roth IRA',hsa:'HSA'};
+  return labels[key]||key||'Account';
+}
+function restrictedInvestmentAccountOptions(selected){
+  const keys=['sec','ira1'].concat(hasP2()?['ira2']:[]).concat(['roth1']).concat(hasP2()?['roth2']:[]).concat(['hsa']);
+  return keys.map(key=>'<option value="'+key+'" '+(key===selected?'selected':'')+'>'+setupEsc(restrictedInvestmentAccountLabel(key))+'</option>').join('');
+}
+function restrictedInvestmentsSummaryHtml(){
+  const lots=restrictedInvestmentLots(S),total=lots.reduce((sum,lot)=>sum+(parseFloat(lot.value)||0),0);
+  return '<div class="setup-check '+(lots.length?'done':'warn')+'" style="grid-column:1/-1"><div class="setup-check-title">Restricted Until Maturity'+(lots.length?' · '+lots.length+' '+(lots.length===1?'item':'items')+' · '+f$(total,true):' · Optional')+'</div><div class="setup-check-body">Use only when part of an account cannot fund spending until a future date. The value stays in the account balance and net worth; it is not entered again.</div><div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="openRestrictedInvestmentsEditor()">Manage Restricted Investments</button></div></div>';
+}
+function openRestrictedInvestmentsEditor(editId){
+  const old=document.getElementById('restricted-investments-modal');if(old)old.remove();
+  const current=restrictedInvestmentLots(S).find(lot=>lot.id===editId)||{id:'',accountKey:'ira1',description:'',value:'',availableDate:''};
+  const list=restrictedInvestmentLots(S).map(lot=>'<div class="bucket-fixed-lot" style="cursor:default"><div class="bucket-fixed-lot-title">'+setupEsc(lot.description||'Restricted investment')+'</div><div class="bucket-fixed-lot-meta">'+setupEsc(restrictedInvestmentAccountLabel(lot.accountKey))+' · '+f$(lot.value,true)+' · Available '+setupEsc(bucketFundingDateText(lot.availableDate)||'date needed')+'</div><div class="setup-mini-actions" style="margin-top:6px"><button type="button" class="btn btn-light btn-sm" onclick="openRestrictedInvestmentsEditor(&quot;'+setupEsc(lot.id)+'&quot;)">Edit</button><button type="button" class="btn btn-danger btn-sm" onclick="deleteRestrictedInvestment(&quot;'+setupEsc(lot.id)+'&quot;)">Delete</button></div></div>').join('');
+  const html='<div id="restricted-investments-modal" class="bucket-modal-backdrop" onclick="if(event.target===this)closeRestrictedInvestmentsEditor()"><div class="bucket-modal" role="dialog" aria-modal="true"><div class="bucket-modal-head"><div><h3>Restricted Until Maturity</h3><div class="bucket-impl-sub">Optional. These values are already included in the account balances and are not added again.</div></div><button type="button" class="btn btn-light btn-sm" onclick="closeRestrictedInvestmentsEditor()">Close</button></div>'+
+    (list?'<div class="bucket-fixed-list" style="margin-bottom:14px">'+list+'</div>':'')+
+    '<input type="hidden" id="ri-id" value="'+setupEsc(current.id||'')+'"><div class="bucket-form-grid"><div class="field"><label>Account</label><select id="ri-account">'+restrictedInvestmentAccountOptions(current.accountKey)+'</select></div><div class="field span2"><label>Description</label><input id="ri-description" value="'+setupEsc(current.description||'')+'" placeholder="e.g., Fixed annuity batch 1"></div><div class="field"><label>Restricted Value</label><input id="ri-value" type="number" min="0" step="0.01" value="'+setupEsc(current.value||'')+'"></div><div class="field"><label>Maturity / Availability Date</label><input id="ri-date" type="date" value="'+setupEsc(current.availableDate||'')+'"></div></div><div class="bucket-impl-sub" style="margin-top:8px">A maturity during a calendar year becomes available for funding at the start of the following year. A January 1 date is available that year.</div><div id="ri-warning" class="bucket-impl-warning"></div><div class="bucket-modal-actions"><button type="button" class="btn btn-light" onclick="closeRestrictedInvestmentsEditor()">Cancel</button><button type="button" class="btn btn-dark" onclick="saveRestrictedInvestment()">Save Restriction</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+function closeRestrictedInvestmentsEditor(){const el=document.getElementById('restricted-investments-modal');if(el)el.remove();}
+function saveRestrictedInvestment(){
+  const id=(document.getElementById('ri-id')||{}).value||bucketFundingId('restricted'),accountKey=document.getElementById('ri-account').value,description=document.getElementById('ri-description').value.trim(),value=Math.max(0,parseFloat(document.getElementById('ri-value').value)||0),availableDate=document.getElementById('ri-date').value;
+  if(!description||value<=0||!availableDate){document.getElementById('ri-warning').textContent='Enter a description, restricted value, and maturity or availability date.';return;}
+  if(!Array.isArray(S.restrictedInvestments))S.restrictedInvestments=[];
+  const existing=S.restrictedInvestments.find(lot=>lot.id===id),lot={id,accountKey,description,value,availableDate,createdAt:existing&&existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()},idx=S.restrictedInvestments.findIndex(x=>x.id===id);
+  if(idx>=0)S.restrictedInvestments[idx]=lot;else S.restrictedInvestments.push(lot);
+  saveState(S);proj=runProjection(S);showSaved();closeRestrictedInvestmentsEditor();renderAll();if(document.getElementById('pane-setup').classList.contains('active'))renderSetupGuide();
+}
+function deleteRestrictedInvestment(id){
+  if(!confirm('Delete this maturity restriction? The account balance itself will not be changed.'))return;
+  S.restrictedInvestments=restrictedInvestmentLots(S).filter(lot=>lot.id!==id);saveState(S);proj=runProjection(S);showSaved();openRestrictedInvestmentsEditor();renderAll();if(document.getElementById('pane-setup').classList.contains('active'))renderSetupGuide();
+}
 function bucketFundingHoldings(state){
   return Array.isArray((state || S).bucketFundingHoldings) ? (state || S).bucketFundingHoldings : [];
 }
@@ -4271,8 +4331,8 @@ function openBucketFundingEditor(accountKey, year, holdingId, stage){
     '<input id="bf-symbol" type="hidden" value="'+setupEsc(h.symbol||'')+'"><input id="bf-cost" type="hidden" value="'+setupEsc(h.purchaseCost||'')+'">'+
     '<input id="bf-value" type="hidden" value="'+setupEsc(h.fundingValue||'')+'"><input id="bf-account" type="hidden" value=""><input id="bf-lifecycle" type="hidden" value="funded"><input id="bf-counts" type="hidden" value="yes">'+
     '<div class="field span3"><label>Notes</label><textarea id="bf-notes" rows="2">'+setupEsc(h.notes||'')+'</textarea></div>'+
-    '<div class="bucket-alloc-box"><strong>Years Funded</strong><div class="bucket-impl-sub">Enter the amount this money market, bond, or other holding provides for each spending year.</div><div id="bf-allocations">'+(h.allocations||[]).map((a,i)=>bucketFundingAllocationRowHtml(plan,a,i)).join('')+'</div><button type="button" class="btn btn-light btn-sm" style="margin-top:8px" onclick="bucketFundingAddAllocation()">+ Add Another Year</button></div></div>'+
-    '<div id="bf-form-warning" class="bucket-impl-warning"></div><div class="bucket-modal-actions">'+(existing?'<button type="button" class="btn btn-danger" onclick="bucketFundingDeleteHolding(&quot;'+setupEsc(h.id)+'&quot;)">Delete Holding</button>':'')+'<button type="button" class="btn btn-light" onclick="closeBucketFundingEditor()">Cancel</button><button type="button" class="btn btn-dark" onclick="bucketFundingSaveHolding()">Save Funding</button></div></div></div>';
+    '<div id="bf-allocation-box" class="bucket-alloc-box"><strong>Years Funded</strong><div class="bucket-impl-sub">Enter the amount this money market, bond, or other holding provides for each spending year.</div><div id="bf-allocations">'+(h.allocations||[]).map((a,i)=>bucketFundingAllocationRowHtml(plan,a,i)).join('')+'</div><button type="button" class="btn btn-light btn-sm" style="margin-top:8px" onclick="bucketFundingAddAllocation()">+ Add Another Year</button></div></div>'+
+    '<div id="bf-form-warning" class="bucket-impl-warning"></div><div class="bucket-modal-actions">'+(existing?'<button type="button" class="btn btn-danger" onclick="bucketFundingDeleteHolding(&quot;'+setupEsc(h.id)+'&quot;)">Delete Holding</button>':'')+'<button type="button" class="btn btn-light" onclick="closeBucketFundingEditor()">Cancel</button><button id="bf-save-button" type="button" class="btn btn-dark" onclick="bucketFundingSaveHolding()">Save Funding</button></div></div></div>';
   document.body.insertAdjacentHTML('beforeend',html);bucketFundingUpdateVehicleFields();
   document.querySelectorAll('#bf-allocations [data-af="year"]').forEach(el=>bucketFundingRefreshAllocationRow(el,!existing));
 }
@@ -4295,7 +4355,7 @@ function bucketFundingSaveHolding(){
   const allocations=Array.from(document.querySelectorAll('#bf-allocations [data-bucket-allocation]')).map(row=>{const get=f=>row.querySelector('[data-af="'+f+'"]').value;return {id:bucketFundingId('alloc'),year:parseInt(get('year'),10),amount:Math.max(0,parseFloat(get('amount'))||0)};}).filter(a=>a.year&&a.amount>0);
   if(!allocations.length){document.getElementById('bf-form-warning').textContent='Add at least one allocation with an amount.';return;}
   const id=val('bf-id')||bucketFundingId('holding'), existing=bucketFundingHoldings(S).find(h=>h.id===id);
-  const holding={id,accountKey,account:val('bf-account').trim(),vehicleType:val('bf-vehicle'),security:val('bf-security').trim(),symbol:val('bf-symbol').trim(),purchaseDate:val('bf-purchase-date'),availabilityDate:val('bf-availability-date'),purchaseCost:num('bf-cost'),faceValue:num('bf-face'),fundingValue:num('bf-value'),lifecycle:val('bf-lifecycle'),countsTowardFunding:val('bf-counts')==='yes',notes:val('bf-notes').trim(),allocations,createdAt:existing&&existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const holding={id,accountKey,account:val('bf-account').trim(),vehicleType:val('bf-vehicle'),security:val('bf-security').trim(),symbol:val('bf-symbol').trim(),purchaseDate:val('bf-purchase-date'),availabilityDate:val('bf-availability-date'),purchaseCost:num('bf-cost'),faceValue:num('bf-face'),fundingValue:num('bf-value'),lifecycle:'funded',countsTowardFunding:true,notes:val('bf-notes').trim(),allocations,createdAt:existing&&existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const total=allocations.reduce((s,a)=>s+a.amount,0), limit=parseFloat(holding.fundingValue)||parseFloat(holding.faceValue)||0;
   if(limit>0 && total>limit+.01 && !confirm('Allocations total '+f$(total,true)+' but the tracked funding value is '+f$(limit,true)+'. Save anyway?'))return;
   if(!Array.isArray(S.bucketFundingHoldings))S.bucketFundingHoldings=[];
@@ -5108,6 +5168,16 @@ function applyMigrations(merged) {
   if (merged.bucketPlanYear == null || isNaN(merged.bucketPlanYear)) merged.bucketPlanYear = 0;
   if (merged.bucketSeedYear == null || isNaN(merged.bucketSeedYear)) merged.bucketSeedYear = 0;
   if (!Array.isArray(merged.bucketFundingHoldings)) merged.bucketFundingHoldings = [];
+  if (!Array.isArray(merged.restrictedInvestments)) merged.restrictedInvestments = [];
+  merged.restrictedInvestments=merged.restrictedInvestments.filter(lot=>lot&&lot.accountKey).map(lot=>({
+    id:lot.id||bucketFundingId('restricted'),
+    accountKey:String(lot.accountKey||''),
+    description:String(lot.description||''),
+    value:Math.max(0,parseFloat(lot.value)||0),
+    availableDate:String(lot.availableDate||''),
+    createdAt:lot.createdAt||new Date().toISOString(),
+    updatedAt:lot.updatedAt||new Date().toISOString()
+  }));
   merged.bucketFundingSchemaVersion = 1;
   if (!['year','account'].includes(merged.bucketFundingView)) merged.bucketFundingView = 'year';
   if (!merged.bucketAccountExpanded || typeof merged.bucketAccountExpanded !== 'object' || Array.isArray(merged.bucketAccountExpanded)) merged.bucketAccountExpanded = {};
@@ -6705,6 +6775,12 @@ function renderYD(){
       ${r.excessFunds>0?dr('Excess → Securities',f$(r.excessFunds)):''}
       ${dr('Funded from Accounts',f$(r.shortfall))}
       ${dr('Funding Order',formatFundingOrder(r.fundingOrder||[r.fundingChoice||'SEC','IRA','ROTH']))}
+      ${(r.restrictedSec||0)>0?dr('Securities Restricted Until Maturity',f$(r.restrictedSec)):''}
+      ${(r.restrictedIra1||0)>0?dr(p1()+' IRA Restricted Until Maturity',f$(r.restrictedIra1)):''}
+      ${(r.restrictedIra2||0)>0?dr(p2()+' IRA Restricted Until Maturity',f$(r.restrictedIra2)):''}
+      ${(r.restrictedRoth1||0)>0?dr(p1()+' Roth Restricted Until Maturity',f$(r.restrictedRoth1)):''}
+      ${(r.restrictedRoth2||0)>0?dr(p2()+' Roth Restricted Until Maturity',f$(r.restrictedRoth2)):''}
+      ${(r.restrictedRmdWarning1||r.restrictedRmdWarning2)?'<div style="font-size:10px;line-height:1.5;color:#8b0000;background:#fff0f0;border-left:3px solid #8b0000;padding:5px 8px;margin-top:6px">Restricted IRA value leaves insufficient accessible funds for the modeled RMD. Review the restriction, contract distribution options, or other IRA liquidity.</div>':''}
       <div class="sh">Tax Funding Loop</div>
       ${dr('Spending',f$(r.spending))}
       ${dr('Funded Tax',f$(fundingTax))}
@@ -7060,6 +7136,7 @@ function editSOY(yr){
       ${hasP2()?fld('pre2020Inh2',p2()+' Pre-2020 Inherited IRA(s) ($)','Uses the person-specific inherited IRA RMD settings from Inputs'):''}
       ${fld('post2020Inh','Post-2020 Inherited IRA Lots Total ($)','Optional total reset for active post-2020 lots; allocated proportionally across active lots')}
     </div>
+    <div style="margin-top:10px">${restrictedInvestmentsSummaryHtml()}</div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-light btn-sm" onclick="clearSOY(${yr})">✕ Clear All Entries for ${yr}</button>
       <span style="font-size:11px;color:#aaa;line-height:28px">Clearing restores projected defaults as pre-fills</span>
@@ -9229,12 +9306,26 @@ function generateReport(){
       Medicare/IRMAA counts follow the surviving spouse.
       ${A.widowSSA44Relief?'SSA-44 IRMAA relief is assumed for survivor years whose two-year Medicare lookback still points to the pre-death or death-year joint period; those years use projected survivor MAGI and filing status instead.':'SSA-44 IRMAA relief is not assumed; survivor IRMAA uses the strict two-year lookback even if that points to pre-death joint income.'}
     </div>` : '';
+  const restrictedLots=restrictedInvestmentLots(S).slice().sort((a,b)=>String(a.accountKey||'').localeCompare(String(b.accountKey||''))||String(a.availableDate||'').localeCompare(String(b.availableDate||'')));
+  const restrictedAccountCounts=restrictedLots.reduce((m,lot)=>(m[lot.accountKey]=(m[lot.accountKey]||0)+1,m),{});
+  const restrictedAccountTotals=restrictedLots.reduce((m,lot)=>(m[lot.accountKey]=(m[lot.accountKey]||0)+(parseFloat(lot.value)||0),m),{});
+  const restrictedRmdYears=rows.filter(r=>r.restrictedRmdWarning1||r.restrictedRmdWarning2).map(r=>r.yr);
+  const restrictedHtml=restrictedLots.length ? `
+    <h2>Restricted Until Maturity</h2>
+    <div class="callout">These values are already included in the reported account balances. They remain part of net worth, but cannot fund discretionary draws or Roth conversions until the listed availability date.</div>
+    <table><thead><tr>${th('Account')}${th('Investment')}${thr('Restricted Value')}${th('Available')}</tr></thead><tbody>
+      ${restrictedLots.map(lot=>`<tr>${td(setupEsc(restrictedInvestmentAccountLabel(lot.accountKey)))}${td(setupEsc(lot.description||'Restricted investment'))}${td(fd(lot.value),'r')}${td(setupEsc(bucketFundingDateText(lot.availableDate)||'—'))}</tr>`).join('')}
+    </tbody></table>
+    ${Object.keys(restrictedAccountCounts).some(key=>restrictedAccountCounts[key]>1)?'<table class="assumption-subtable"><thead><tr>'+th('Account Total')+thr('Restricted Value')+'</tr></thead><tbody>'+Object.keys(restrictedAccountTotals).map(key=>'<tr>'+td(setupEsc(restrictedInvestmentAccountLabel(key)))+td(fd(restrictedAccountTotals[key]),'r bold')+'</tr>').join('')+'</tbody></table>':''}
+    ${restrictedRmdYears.length?'<div class="callout red"><strong>RMD liquidity warning:</strong> Restricted IRA value leaves insufficient accessible IRA funds for the modeled RMD in '+setupEsc(restrictedRmdYears.join(', '))+'. Review contract distribution options or other IRA liquidity.</div>':''}
+  ` : '';
   const hasOverrides=Object.values(P.overrides||{}).some(x=>x&&x.length);
   const apHasRothConv=ap.some(r=>(r.rothConv||0)>0);
   const apHasIRMAA=ap.some(r=>(r.irmaaTx||0)>0);
   const apHasWages=ap.some(r=>((r.grossWages1||0)+(r.grossWages2||0)+(r.ptWages1||0)+(r.ptWages2||0))>0);
   const apHasIncomeTax=ap.some(r=>(r.incomeTax||0)>0 || (r.fundingTax||0)>0);
   const advisorQuestions=[
+    ...(restrictedLots.length ? ['Do the restricted values and maturity dates match the actual contracts, and is enough accessible IRA liquidity available for RMDs?'] : []),
     ...(bucketReportAccounts.length ? ['At the start of the review year, do the Bucket Lab targets match the actual short-term, intermediate, and long-term holdings in each enabled account?'] : []),
     ...(apHasRothConv ? ['Do the Roth conversion years and amounts fit our tax bracket, cash-flow, and estate goals?'] : []),
     ...(apHasIRMAA ? ['Are the IRMAA targets worth the tradeoff between lower surcharge exposure and lower Roth conversion room?'] : []),
@@ -9301,6 +9392,7 @@ function generateReport(){
     <div><table><thead><tr>${th('Tax & Funding Setting')}<th class="r">Value</th></tr></thead><tbody>${rightRates}</tbody></table>${rothRatesHtml}</div>
   </div>
   ${survivorHtml}
+  ${restrictedHtml}
 
   ${(()=>{
     const ov = P.overrides||{};
@@ -11673,6 +11765,7 @@ function renderSetupBalancesStep(){
     setupSOYInput(p1()+' Pre-2020 Inherited IRA(s) Reset ($)',yr,'pre2020Inh1','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p1()+'. The app allocates the reset across that person\'s active lots; the Inherited IRAs step holds the rule details.'}),
     has2 ? setupSOYInput(p2()+' Pre-2020 Inherited IRA(s) Reset ($)',yr,'pre2020Inh2','number',{min:0,note:'Optional total reset for active pre-2020 inherited IRA lots for '+p2()+'. The app allocates the reset across that person\'s active lots; the Inherited IRAs step holds the rule details.'}) : '',
     setupSOYInput('Post-2020 Inherited IRA Active-Lot Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for post-2020 lots that are active in this check-in year. Add each actual lot in the Inherited IRAs step so the model has deadline and draw rules.'}),
+    restrictedInvestmentsSummaryHtml(),
     '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Inherited IRA setup</div><div class="setup-check-body">Inherited accounts need rule details, not just balances. If inherited accounts exist, open the next step to enter death year, beneficiary, owner birth year, and draw strategy.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRAs</button></div></div>'
   ].join('');
 }
@@ -12014,7 +12107,7 @@ function renderSetupAnnualView(){
     setupSOYInput('Post-2020 Inherited IRA Active-Lot Reset ($)',yr,'post2020Inh','number',{min:0,note:'Optional total reset for lots active in this check-in year; add new lots in Inherited IRA Setup.'})
   ].join('');
   const inheritedNote = '<div class="setup-check warn" style="margin:12px 0"><div class="setup-check-title">Inherited IRA changes</div><div class="setup-check-body">If a new inherited IRA appears, or if the death year / beneficiary / draw strategy needs correction, update the Inherited IRAs setup. This Annual Check-In only resets balances.</div><div class="setup-mini-actions"><button class="btn btn-light btn-sm" onclick="setupOpenInterviewStep(\'inherited\')">Open Inherited IRA Setup</button></div></div>';
-  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">Taxable Account Balances</div><div class="setup-section-copy">Enter balances, not income. The app applies the Brokerage Dividend / Interest Rate to these balances and taxes each bucket correctly.</div><div class="setup-field-grid">'+taxableAccountBalances+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
+  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Annual Check-In</div><div class="setup-section-copy">Confirm reality for a plan year. Entered values become actuals; blank fields continue using projected values where the existing Start of Year logic supports defaults.</div></div><div class="setup-field" style="min-width:180px"><label>Check-In Year</label><select onchange="setupCheckYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div></div><div class="sh">Income & Spending</div><div class="setup-field-grid">'+income+'</div><div class="sh">Taxable Account Balances</div><div class="setup-section-copy">Enter balances, not income. The app applies the Brokerage Dividend / Interest Rate to these balances and taxes each bucket correctly.</div><div class="setup-field-grid">'+taxableAccountBalances+'</div><div class="sh">401k Overrides for This Year</div><div class="setup-section-copy">Leave these blank to use the global 401k defaults from the interview.</div><div class="setup-field-grid">'+k401+'</div><div class="sh">Starting Balances</div><div class="setup-field-grid">'+bals+restrictedInvestmentsSummaryHtml()+'</div>'+inheritedNote+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'soy\')">Open Expert SOY Table</button><button class="btn btn-dark" onclick="ST(\'dashboard\')">Review Dashboard</button></div></div>';
 }
 function setupStrategyOptions(){
   return [
