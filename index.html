@@ -1186,6 +1186,17 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
       </div>
 
       <div class="ov-section-inner">
+        <div class="ov-section-label">Social Security Benefit Stress <span id="ovpill-ssstress"></span></div>
+        <div class="ov-intent">Reduce projected gross Social Security benefits for a saved plan year range. Use this for long-term Social Security solvency stress tests; Roth Lab still has its own temporary lens for analysis-only comparisons.</div>
+        <div id="conf-ssstress" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl" id="ov-ssstress">
+          <thead><tr><th>Reduction (%)</th><th>Apply To</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-ssstress"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('ssstress')">+ Add Row</button>
+      </div>
+
+      <div class="ov-section-inner">
         <div class="ov-section-label">Inflation Assumptions <span id="ovpill-inflation"></span></div>
         <div class="ov-intent">Override tax-bracket inflation, IRMAA threshold inflation, or Medicare cost inflation for a future year range. Leave a field blank to inherit the global Tax Tables setting.</div>
         <div id="conf-inflation" class="ov-conflicts" style="display:none"></div>
@@ -2237,6 +2248,18 @@ function resolveOverrideNonBlank(table, year, valueKey) {
   }
   return result;
 }
+function resolveOverrideRowNonBlank(table, year, valueKey) {
+  if (!table || !table.length) return null;
+  let result = null;
+  for (const row of table) {
+    const s = parseInt(row.startYear)||0, e = parseInt(row.endYear)||9999;
+    const val = row[valueKey];
+    if (year>=s && year<=e && val !== null && val !== undefined && val !== '') {
+      result = row;
+    }
+  }
+  return result;
+}
 function findLayeredOverrides(table) {
   const notes = [];
   for (let i=0; i<table.length; i++) {
@@ -2265,6 +2288,7 @@ function defaultState() {
     ssmo1:0, ssmo2:0,
     ssEnd1:9999, ssEnd2:9999,
     ssCola:0.025,
+    ssStressPct:0, ssStressStartYear:'', ssStressPerson:'both',
     irmaaFillMode:'',
     fundingOrder1:'SEC', fundingOrder2:'IRA', fundingOrder3:'ROTH',
     widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true, widowSSA44Relief:false,
@@ -2318,6 +2342,7 @@ function defaultState() {
     ovRothSource:[],     // {source:'HIGH'|'LOW'|'P1'|'P2'|'SPLIT', p1Pct, startYear, endYear, notes}
     ovInflation:[],      // {bracketInfl, irmaaInfl, medicareCostInfl, startYear, endYear, notes} percent values
     ovStateTax:[],       // {state:'NONE'|'CA', startYear, endYear, notes}
+    ovSSStress:[],       // {reductionPct, person:'both'|'1'|'2', startYear, endYear, notes}
     // Start-of-year actuals (keyed by year string)
     soy:{},
     // Tax tables (editable, default = 2026 IRS values)
@@ -2594,12 +2619,24 @@ function runProjection(S) {
       if (p1Survivor) { grossSS1 = survivorBenefit; grossSS2 = 0; }
       else if (p2Survivor) { grossSS1 = 0; grossSS2 = survivorBenefit; }
     }
-    const ssStressPct = Math.max(0, Math.min(100, parseF(S.ssStressPct || 0))) / 100;
-    const ssStressStart = parseInt(S.ssStressStartYear, 10) || 0;
-    if (ssStressPct > 0 && ssStressStart && yr >= ssStressStart) {
-      const ssStressFactor = 1 - ssStressPct;
-      grossSS1 *= ssStressFactor;
-      grossSS2 *= ssStressFactor;
+    const ssStressLegacyPct = Math.max(0, Math.min(100, parseF(S.ssStressPct || 0)));
+    const ssStressLegacyStart = parseInt(S.ssStressStartYear, 10) || 0;
+    let ssStressPctApplied = 0;
+    let ssStressPersonApplied = 'both';
+    if (ssStressLegacyPct > 0 && ssStressLegacyStart && yr >= ssStressLegacyStart) {
+      ssStressPctApplied = ssStressLegacyPct;
+      ssStressPersonApplied = normalizeSSStressPerson(S.ssStressPerson || 'both');
+    } else {
+      const ssStressRow = resolveOverrideRowNonBlank(S.ovSSStress || [], yr, 'reductionPct');
+      if (ssStressRow) {
+        ssStressPctApplied = Math.max(0, Math.min(100, parseF(ssStressRow.reductionPct || 0)));
+        ssStressPersonApplied = normalizeSSStressPerson(ssStressRow.person || 'both');
+      }
+    }
+    if (ssStressPctApplied > 0) {
+      const ssStressFactor = 1 - (ssStressPctApplied / 100);
+      if (ssStressPersonApplied !== '2') grossSS1 *= ssStressFactor;
+      if (ssStressPersonApplied !== '1') grossSS2 *= ssStressFactor;
     }
     const grossSS = grossSS1 + grossSS2;
 
@@ -3352,6 +3389,7 @@ function runProjection(S) {
       cashDraw,
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
+      ssStressPct: ssStressPctApplied, ssStressPerson: ssStressPersonApplied,
       rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
       post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails, pre2020LotDetails,
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
@@ -5153,7 +5191,11 @@ function applyMigrations(merged) {
     const s = parseInt(row.startYear), e = parseInt(row.endYear);
     if (!isNaN(s) && !isNaN(e) && s > e) row.endYear = s;
   };
-  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovInflation','ovStateTax','ovDeductions','ovWageGrowth'].forEach(k => {
+  if (!Array.isArray(merged.ovSSStress)) merged.ovSSStress = [];
+  if (merged.ssStressPct == null || isNaN(merged.ssStressPct)) merged.ssStressPct = 0;
+  if (merged.ssStressStartYear == null) merged.ssStressStartYear = '';
+  if (merged.ssStressPerson == null) merged.ssStressPerson = 'both';
+  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovInflation','ovStateTax','ovDeductions','ovWageGrowth','ovSSStress'].forEach(k => {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
@@ -7301,6 +7343,22 @@ function clearSOY(yr){
 }
 
 // ── Override Tables ───────────────────────────────────────────────────────
+function normalizeSSStressPerson(v){
+  const x = String(v || 'both').toLowerCase();
+  if (x === '1' || x === 'p1' || x === 'person1') return '1';
+  if (x === '2' || x === 'p2' || x === 'person2') return '2';
+  return 'both';
+}
+function ssStressPersonOptions(){
+  return [['both','Both people'], ['1',p1()], ...(hasP2() ? [['2',p2()]] : [])];
+}
+function ssStressPersonLabel(v){
+  const x = normalizeSSStressPerson(v);
+  if (x === '1') return p1();
+  if (x === '2') return p2();
+  return hasP2() ? 'Both people' : p1();
+}
+
 const OV_DEFS = {
   funding:{key:'ovFundingOrder',fields:[
     {k:'draw1',lbl:'Draw 1',type:'select',opts:FUNDING_ORDER_OPTIONS,w:110},
@@ -7353,6 +7411,13 @@ const OV_DEFS = {
     {k:'startYear',lbl:'Start Year',type:'number',w:90},
     {k:'endYear',lbl:'End Year',type:'number',w:90},
     {k:'notes',lbl:'Notes',type:'text',w:160},
+  ]},
+  ssstress:{key:'ovSSStress',fields:[
+    {k:'reductionPct',lbl:'Reduction (%)',type:'number',w:115},
+    {k:'person',lbl:'Apply To',type:'select',opts:ssStressPersonOptions,w:135},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:190},
   ]},
   inflation:{key:'ovInflation',fields:[
     {k:'bracketInfl',lbl:'Tax Bracket Infl (%)',type:'number',w:145},
@@ -7430,7 +7495,7 @@ function updateOvBadges(){
   const groups={
     'spending-taxes': ['spending','deductions'],
     'conversion':     ['irmaa','income','taxfill','rothsource'],
-    'portfolio':      ['growth','incomerates','stkgain','wagegrowth','inflation','funding','cashfloor','hsadep','statetax'],
+    'portfolio':      ['growth','incomerates','stkgain','wagegrowth','ssstress','inflation','funding','cashfloor','hsadep','statetax'],
   };
   // Summary bar at top
   const bar=document.getElementById('ov-summary-bar');
@@ -7443,7 +7508,7 @@ function updateOvBadges(){
       const ovNames = {
         spending:'Spending', deductions:'Deductions', irmaa:'IRMAA', income:'Income',
         taxfill:'Tax Fill', rothsource:'Roth Source', growth:'Growth', incomerates:'Income Rates',
-        stkgain:'Stock Gain', wagegrowth:'Wage Growth', inflation:'Inflation',
+        stkgain:'Stock Gain', wagegrowth:'Wage Growth', ssstress:'SS Stress', inflation:'Inflation',
         funding:'Funding', cashfloor:'Cash Floor', hsadep:'HSA Deposit', statetax:'State Tax'
       };
       bar.innerHTML=active.map(n=>{
@@ -7601,6 +7666,7 @@ function addOvRow(name){
   if(name==='incomerates'){newRow.divRate=pct(S.divRate);newRow.divReinvestPct=pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0));newRow.intRate=pct(S.intRate||0);}
   if(name==='stkgain')newRow.rate=pct(S.stkGainPct);
   if(name==='wagegrowth')newRow.rate=pct(S.wageGrowth);
+  if(name==='ssstress'){newRow.reductionPct=20;newRow.person='both';newRow.notes='Social Security stress test';}
   if(name==='inflation'){newRow.bracketInfl=pct(S.bracketInfl);newRow.irmaaInfl=pct(S.irmaaInfl);newRow.medicareCostInfl=pct(S.medicareCostInfl ?? S.irmaaInfl);}
   if(name==='funding'){
     const ord=normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH');
@@ -8479,6 +8545,7 @@ function buildReportPayload(){
     rothConvSource: S.rothConvSource || 'HIGH', rothConvP1Pct: S.rothConvP1Pct || 50,
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
+    ssStressPct: S.ssStressPct || 0, ssStressStartYear: S.ssStressStartYear || '', ssStressPerson: S.ssStressPerson || 'both',
     widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
     widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false, widowSSA44Relief: S.widowSSA44Relief === true,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
@@ -8501,6 +8568,7 @@ function buildReportPayload(){
     atWages:r.atWages||0, atWages1:r.atWages1||0, atWages2:r.atWages2||0,
     ptWages1:r.ptWages1||0, ptWages2:r.ptWages2||0,
     grossSS1:r.grossSS1||0, grossSS2:r.grossSS2||0,
+    ssStressPct:r.ssStressPct||0, ssStressPerson:r.ssStressPerson||'',
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
     pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0, pre2020InhAddl1:r.pre2020InhAddl1||0, pre2020InhAddl2:r.pre2020InhAddl2||0, pre2020InhAddl:r.pre2020InhAddl||0,
     post2020InhRMD:r.post2020InhRMD||0, post2020InhExtra:r.post2020InhExtra||0, post2020InhFinal:r.post2020InhFinal||0, post2020InhDiscretionary:r.post2020InhDiscretionary||0, post2020InhDraw:r.post2020InhDraw||0,
@@ -8555,6 +8623,7 @@ function buildReportPayload(){
   addOverride('incomeRates', S.ovIncomeRates,  ['divRate','divReinvestPct','intRate','notes']);
   addOverride('stockGainPct',S.ovStkGainPct,   ['rate','notes']);
   addOverride('wageGrowth',  S.ovWageGrowth,   ['rate']);
+  addOverride('ssStress',    S.ovSSStress,     ['reductionPct','person','notes']);
   addOverride('inflation',   S.ovInflation,    ['bracketInfl','irmaaInfl','medicareCostInfl','notes']);
   addOverride('rothSource',  S.ovRothSource,   ['source','p1Pct','notes']);
   addOverride('funding',     S.ovFundingOrder, ['draw1','draw2','draw3','choice']);
@@ -9415,7 +9484,7 @@ function generateReport(){
       spending:'Spending Strategy',irmaa:'Roth Conversion Target Strategy',incomeLevel:'Income Level Target Strategy',
       taxFill:'Tax Bracket Fill Strategy',growth:'Portfolio Growth Rate Strategy',wageGrowth:'Wage Growth Rate Strategy',
       incomeRates:'Brokerage Dividend & Cash Interest Rate Strategy',stockGainPct:'Stock Sales Taxable Gain Strategy',
-      inflation:'Inflation Assumption Strategy',rothSource:'Roth Conversion Source Strategy',
+      inflation:'Inflation Assumption Strategy',ssStress:'Social Security Benefit Stress Strategy',rothSource:'Roth Conversion Source Strategy',
       funding:'Funding Order Strategy',cashFloor:'Cash Floor Strategy',deductions:'Deduction Strategy',
       hsaDep:'HSA Deposit Strategy',stateTax:'State Tax Strategy'
     };
@@ -9436,6 +9505,8 @@ function generateReport(){
         const rateLabel = key==='growth' ? 'Portfolio growth ' : key==='wageGrowth' ? 'Wage growth ' : key==='stockGainPct' ? 'Taxable stock gain ' : '';
         parts.push(rateLabel + row.rate+'%');
       }
+      if(row.reductionPct!=null&&row.reductionPct!=='') parts.push('Reduce Social Security '+row.reductionPct+'%');
+      if(key==='ssStress' && row.person) parts.push('Applies to '+ssStressPersonLabel(row.person));
       if(row.bracketInfl!=null&&row.bracketInfl!=='') parts.push('Bracket inflation '+row.bracketInfl+'%');
       if(row.irmaaInfl!=null&&row.irmaaInfl!=='') parts.push('IRMAA MAGI threshold inflation '+row.irmaaInfl+'%');
       if(row.medicareCostInfl!=null&&row.medicareCostInfl!=='') parts.push('Medicare cost inflation '+row.medicareCostInfl+'%');
@@ -11625,7 +11696,7 @@ function setupReadiness(){
     add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k Defaults', 'interview-savings');
   }
   add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open Assumptions', 'interview-assumptions');
-  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
+  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovSSStress','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
   add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
   const done = items.filter(i => i.status === 'done').length;
   const missing = items.filter(i => i.status === 'missing').length;
@@ -12141,6 +12212,7 @@ function setupStrategyOptions(){
     ['hsa-deposit','HSA deposit'],
     ['growth','Portfolio growth rate'],
     ['wage-growth','Wage growth change'],
+    ['ss-stress','Social Security benefit stress'],
     ['inflation','Inflation assumption change'],
     ['funding','Funding order change']
   ];
@@ -12214,6 +12286,10 @@ function setupStrategyDescription(){
     'wage-growth': {
       title:'Wage growth change',
       body:'Use this when wages or non-wage taxable income should grow differently than the global default. This can model promotions, slowing work, consulting income changes, or flat income years.'
+    },
+    'ss-stress': {
+      title:'Social Security benefit stress',
+      body:'Use this to make the saved plan assume lower Social Security benefits starting in a future year. It is useful for conservative planning around possible trust-fund benefit reductions; unlike the Roth Lab lens, this changes the main projection.'
     },
     'inflation': {
       title:'Inflation assumption change',
@@ -12303,6 +12379,7 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Annual HSA Deposit ($)',val('amount',''),{min:0})+stratText('notes','Notes',val('notes','HSA deposit'));
   else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Growth Rate (%)',val('rate',''),{step:'0.1',min:-100})+stratText('notes','Notes',val('notes','Portfolio growth rate'));
   else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Wage Growth (%)',val('rate',''),{step:'0.1',min:0})+stratText('notes','Notes',val('notes','Wage growth scenario'));
+  else if (setupStrategyType === 'ss-stress') fields = stratInput('start','Start Year',val('startYear',Math.min(Math.max(2034, yr), end)),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('reduction','Benefit Reduction (%)',val('reductionPct','20'),{step:'1',min:0,note:'Example: 20 means projected gross Social Security is reduced by 20% starting in the selected year.'})+stratSelect('person','Apply To',val('person','both'),ssStressPersonOptions(), 'Usually Both people for a solvency stress test. Choose one person only for a custom benefit haircut.')+stratText('notes','Notes',val('notes','Social Security benefit stress'));
   else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA MAGI Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting for IRMAA MAGI income-tier thresholds.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
   else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
   const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
@@ -12355,6 +12432,7 @@ function applySetupStrategy(){
   else if (setupStrategyType === 'hsa-deposit') writeOv('ovHSADeposit', {amount:stratVal('amount'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'growth') writeOv('ovGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'wage-growth') writeOv('ovWageGrowth', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'ss-stress') writeOv('ovSSStress', {reductionPct:clampPct(stratVal('reduction'), 20), person:normalizeSSStressPerson(stratVal('person')), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'inflation') writeOv('ovInflation', {bracketInfl:stratVal('bracket'), irmaaInfl:stratVal('irmaa'), medicareCostInfl:stratVal('medicare'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'funding') {
     const ord = normalizeFundingOrder(stratVal('draw1'), stratVal('draw2'), stratVal('draw3'));
@@ -12507,6 +12585,12 @@ function setupCollectStrategyRows(filterType){
     const parts = [];
     setupPushPart(parts, 'Wage growth', setupPercentLabel(row.rate));
     add('Wage Growth', row, parts, ['wage-growth'], {tableKey:'ovWageGrowth', rowIndex:idx, editType:'wage-growth'});
+  });
+  (S.ovSSStress || []).forEach((row, idx) => {
+    const parts = [];
+    setupPushPart(parts, 'Benefit reduction', setupPercentLabel(row.reductionPct));
+    setupPushPart(parts, 'Applies to', ssStressPersonLabel(row.person));
+    add('Social Security Benefit Stress', row, parts, ['ss-stress'], {tableKey:'ovSSStress', rowIndex:idx, editType:'ss-stress'});
   });
   (S.ovInflation || []).forEach((row, idx) => {
     const parts = [];
