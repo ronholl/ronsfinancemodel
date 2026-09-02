@@ -1136,7 +1136,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <div class="ov-group-header" onclick="toggleOvGroup('portfolio')">
       <span class="ov-chevron open" id="ovg-chevron-portfolio">▶</span>
       <span class="ov-group-title">Portfolio &amp; Accounts</span>
-      <span class="ov-group-desc">Growth, income rates, inflation assumptions, funding order, cash floor, HSA deposits</span>
+      <span class="ov-group-desc">Growth, income rates, Social Security stress, inflation assumptions, funding order, cash floor, HSA deposits</span>
       <span class="ov-group-badges" id="ovg-badges-portfolio"></span>
     </div>
     <div class="ov-group-body" id="ovg-body-portfolio">
@@ -7666,7 +7666,12 @@ function addOvRow(name){
   if(name==='incomerates'){newRow.divRate=pct(S.divRate);newRow.divReinvestPct=pct(S.divReinvestPct ?? ((S.reinvestDivs||'no')==='yes'?1:0));newRow.intRate=pct(S.intRate||0);}
   if(name==='stkgain')newRow.rate=pct(S.stkGainPct);
   if(name==='wagegrowth')newRow.rate=pct(S.wageGrowth);
-  if(name==='ssstress'){newRow.reductionPct=20;newRow.person='both';newRow.notes='Social Security stress test';}
+  if(name==='ssstress'){
+    const defaultStart = Math.min(parseInt(S.endYear)||2034, Math.max(parseInt(S.startYear)||new Date().getFullYear(), 2034));
+    newRow.startYear = defaultStart;
+    newRow.endYear = parseInt(S.endYear)||defaultStart;
+    newRow.reductionPct=20;newRow.person='both';newRow.notes='Social Security stress test';
+  }
   if(name==='inflation'){newRow.bracketInfl=pct(S.bracketInfl);newRow.irmaaInfl=pct(S.irmaaInfl);newRow.medicareCostInfl=pct(S.medicareCostInfl ?? S.irmaaInfl);}
   if(name==='funding'){
     const ord=normalizeFundingOrder(S.fundingOrder1||'SEC', S.fundingOrder2||'IRA', S.fundingOrder3||'ROTH');
@@ -12312,9 +12317,10 @@ function stratInput(id,label,value,opts){
   opts = opts || {};
   const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
   const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
+  const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
   const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
   const v = value == null ? '' : value;
-  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(v)+"'"+step+min+placeholder+">", opts.note || '');
+  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(v)+"'"+step+min+max+placeholder+">", opts.note || '');
 }
 function stratText(id,label,value,note){
   const v = value == null ? '' : value;
@@ -12379,7 +12385,7 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'hsa-deposit') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('amount','Annual HSA Deposit ($)',val('amount',''),{min:0})+stratText('notes','Notes',val('notes','HSA deposit'));
   else if (setupStrategyType === 'growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Growth Rate (%)',val('rate',''),{step:'0.1',min:-100})+stratText('notes','Notes',val('notes','Portfolio growth rate'));
   else if (setupStrategyType === 'wage-growth') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Wage Growth (%)',val('rate',''),{step:'0.1',min:0})+stratText('notes','Notes',val('notes','Wage growth scenario'));
-  else if (setupStrategyType === 'ss-stress') fields = stratInput('start','Start Year',val('startYear',Math.min(Math.max(2034, yr), end)),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('reduction','Benefit Reduction (%)',val('reductionPct','20'),{step:'1',min:0,note:'Example: 20 means projected gross Social Security is reduced by 20% starting in the selected year.'})+stratSelect('person','Apply To',val('person','both'),ssStressPersonOptions(), 'Usually Both people for a solvency stress test. Choose one person only for a custom benefit haircut.')+stratText('notes','Notes',val('notes','Social Security benefit stress'));
+  else if (setupStrategyType === 'ss-stress') fields = stratInput('start','Start Year',val('startYear',Math.min(Math.max(2034, yr), end)),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('reduction','Benefit Reduction (%)',val('reductionPct','20'),{step:'1',min:0,max:100,note:'Example: 20 means projected gross Social Security is reduced by 20% starting in the selected year.'})+stratSelect('person','Apply To',val('person','both'),ssStressPersonOptions(), 'Usually Both people for a solvency stress test. Choose one person only for a custom benefit haircut.')+stratText('notes','Notes',val('notes','Social Security benefit stress'));
   else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA MAGI Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting for IRMAA MAGI income-tier thresholds.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
   else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
   const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
