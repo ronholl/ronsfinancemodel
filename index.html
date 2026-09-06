@@ -278,6 +278,10 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .roth-report-table td:first-child{white-space:normal;min-width:190px}
 .roth-report-table .r{text-align:right}
 .roth-report-table .bold{font-weight:850}
+.roth-report-pv-table{min-width:0;table-layout:fixed}
+.roth-report-pv-table th,.roth-report-pv-table td{padding:7px 8px}
+.roth-report-pv-table th{white-space:normal}
+.roth-report-pv-table td:first-child{min-width:0;width:28%}
 .roth-report-score-table{min-width:1320px;table-layout:fixed}
 .roth-report-score-table th,.roth-report-score-table td{padding:7px 6px}
 .roth-report-score-table td:first-child{white-space:normal;min-width:0}
@@ -6150,6 +6154,15 @@ function rothLabRenderIRMAAWatchlist(scenarios, cfg){
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────
+function todayDollarNetWorthForRow(r){
+  return todayDollarValueForYear((r && r.netWorth) || 0, (r && r.yr) || S.startYear);
+}
+function todayDollarValueForYear(value, year){
+  const baseYear = (proj && proj[0] && proj[0].yr) || S.startYear || year || new Date().getFullYear();
+  const rawRate = parseF(S.spendInfl);
+  const discountRate = Math.max(0, rawRate || rawRate === 0 ? rawRate : 0);
+  return (value || 0) * rothLabDiscountFactor(year || baseYear, baseYear, discountRate);
+}
 function renderDash(){
   if(!proj.length){
     const el=document.getElementById('kpi-row');
@@ -6281,6 +6294,7 @@ function renderSummaryTable(){
       {f:'startHSA',      h:'HSA'},
       {f:'startAllInh',   h:'Inherited\nIRA'},
       {f:'sowNetWorth',   h:'Net Worth',  bold:true},
+      {f:'sowNetWorthToday', h:'NW Today\n$(PV)', bold:true},
     ]},
   ];
 
@@ -6296,7 +6310,7 @@ function renderSummaryTable(){
     if (field === 'actualTax') return Math.abs(r.fundingTax||0) > 0.49;
     return Math.abs(r[field]||0) > 0.49;
   });
-  const alwaysSummaryCols = new Set(['yr','age1','age2','spending','totalRequired','totalFunding','agi','incomeTax','effRate','margRate','sowNetWorth']);
+  const alwaysSummaryCols = new Set(['yr','age1','age2','spending','totalRequired','totalFunding','agi','incomeTax','effRate','margRate','sowNetWorth','sowNetWorthToday']);
   groups = groups.map(g => Object.assign({}, g, {cols:g.cols.filter(c => alwaysSummaryCols.has(c.f) || hasSummaryColumnData(c.f))}))
                  .filter(g => g.cols.length);
 
@@ -6346,9 +6360,10 @@ function renderSummaryTable(){
     const rothSOY       = (r.startRoth1||0)+(r.startRoth2||0);
     const startAllInh   = (r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0);
     const sowNetWorth   = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+startAllInh+(r.startHSA||0);
+    const sowNetWorthToday = todayDollarValueForYear(sowNetWorth, r.yr);
     const cashDraw      = r.cashDraw || 0;
     const fundingWages   = (r.atWages||0) + (r.ptWages||0);
-    const derived       = {rmdTotal, iraTotal, inhDrawTotal, rothDrawTotal, cashDraw, actualTax, iraSOY, rothSOY, startAllInh, sowNetWorth, fundingWages};
+    const derived       = {rmdTotal, iraTotal, inhDrawTotal, rothDrawTotal, cashDraw, actualTax, iraSOY, rothSOY, startAllInh, sowNetWorth, sowNetWorthToday, fundingWages};
     let cells = '';
     groups.forEach((g, gi) => {
       g.cols.forEach((col, ci) => {
@@ -6486,6 +6501,7 @@ function renderCF(){
       {f:'startHSA',     h:'HSA'},
       {f:'startAllInh',  h:'Inherited\nIRA'},
       {f:'sowNetWorth',  h:'SOY Net\nWorth', bold:true, green:true},
+      {f:'sowNetWorthToday', h:'SOY NW\nToday $', bold:true},
     ]},
   ];
 
@@ -6600,9 +6616,10 @@ function renderCF(){
     const rothSOY     = (r.startRoth1||0)+(r.startRoth2||0);
     const startAllInh = (r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0);
     const sowNetWorth = (r.startCashBal||0)+(r.startSec||0)+iraSOY+rothSOY+startAllInh+(r.startHSA||0);
+    const sowNetWorthToday = todayDollarValueForYear(sowNetWorth, r.yr);
     const totalWages  = (r.w2AGI||0) + (r.ptWages||0);   // taxable wages (for TAXABLE INCOME section)
     const fundingWages = (r.atWages||0) + (r.ptWages||0); // cash received (for MANDATORY FUNDING section)
-    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, startAllInh, sowNetWorth, totalWages, fundingWages };
+    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, startAllInh, sowNetWorth, sowNetWorthToday, totalWages, fundingWages };
 
     groups.forEach((g,gi)=>{
       g.cols.forEach((col,ci)=>{
@@ -6900,6 +6917,7 @@ function renderYD(){
       ${dr(p1()+' Pre-2020 Inherited IRA',f$(r.pre2020Inh1||0))}
       ${hasP2()?dr(p2()+' Pre-2020 Inherited IRA',f$(r.pre2020Inh2||0)):''}
       ${dr('Net Worth',f$(r.netWorth),'big')}
+      ${dr('Net Worth Today $ (PV)',f$(todayDollarNetWorthForRow(r)))}
     </div>
   `;
 }
@@ -7921,6 +7939,7 @@ function apCard(yr){
     ${fundingDelta > 0 ? row('Funding Surplus', fundingDelta, false, '#1a4a1a') : ''}
     ${fundingDelta < 0 ? row('Funding Shortfall', Math.abs(fundingDelta), false, '#8b0000') : ''}
     ${row('Net Worth', r.netWorth, true)}
+    ${row('Net Worth Today $ (PV)', todayDollarNetWorthForRow(r), false, '#6a5830')}
     ${why.length ? `${hdr('WHY THIS YEAR LOOKS DIFFERENT')}${why.map(w=>`<div style="font-size:10.5px;color:#6a5830;background:#fff8e8;border-left:3px solid var(--gold);padding:3px 7px;margin:3px 0;border-radius:0 4px 4px 0">${w}</div>`).join('')}` : ''}
   </div>`;
 }
@@ -9264,11 +9283,12 @@ function generateReport(){
     const sec_soy=r.startSec||0;
     const cash_soy=r.startCashBal||0;
     const nw_soy=cash_soy+sec_soy+ira_soy+roth_soy+hsa_inh_soy;
+    const nw_soy_today=todayDollarValueForYear(nw_soy, r.yr);
     const taxFunding=r.fundingTax||0;
     const cashGap=r.cashGapNeeded||0;
     const fundingRequired=r.totalRequired || ((r.spending||0)+taxFunding+cashGap);
     const sf=(r.unfunded||0)>0;
-    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,preInhD,postInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
+    return {r,wages,ss,divs,rc,roth_wd,hsa_inh,hsaW,preInhD,postInhD,allInhD,totalFunded,ira_tot,ira_soy,roth_soy,hsa_inh_soy,sec_soy,cash_soy,nw_soy,nw_soy_today,taxFunding,cashGap,fundingRequired,sf,stkS,cashD,stkCash:stkS+cashD};
   };
   const dzGap=(v)=>Math.abs(v||0)>=50?fd(v,true):'—';
   const cfValueRows=rows.map(r=>({r,v:cfVals(r)}));
@@ -9300,6 +9320,7 @@ function generateReport(){
     {group:'Start-of-Year Balances',label:'Roth',show:cfAny((r,v)=>v.roth_soy),cell:(r,v)=>td(fd(v.roth_soy,true),'r')},
     {group:'Start-of-Year Balances',label:'HSA +\nInh IRA',show:cfAny((r,v)=>v.hsa_inh_soy),cell:(r,v)=>td(fd(v.hsa_inh_soy,true),'r')},
     {group:'Start-of-Year Balances',label:'Net\nWorth',cell:(r,v)=>td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')},
+    {group:'Start-of-Year Balances',label:'NW Today\n$(PV)',cell:(r,v)=>td(fd(v.nw_soy_today,true),v.sf?'r bold red':'r bold')},
   ];
   const cfVisibleCols=cfCols.filter(c=>c.show!==false);
   const cfGroups=[];
@@ -9342,7 +9363,7 @@ function generateReport(){
     return `<tr>
       ${td(r.yr)}${td(age(r))}
       ${td(fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
-      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}
+      ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}${td(fd(v.nw_soy_today,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
 
@@ -9581,11 +9602,11 @@ function generateReport(){
     </tr></thead><tbody>${cfRequiredRows}</tbody></table>
     <h3>Tax, Medicare &amp; Start-of-Year Balances</h3>
     <table class="cf-print-table"><thead><tr>
-      ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth')].join('')}
+      ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth'),thr('NW Today\n$(PV)')].join('')}
     </tr></thead><tbody>${cfTaxBalanceRows}</tbody></table>
   </div>
-  <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. Net Worth in red = shortfall year.</p>
-  <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together.</p>
+  <p class="note cf-screen-only">Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. NW Today $ (PV) discounts start-of-year net worth back to the plan start year using spending inflation. Net Worth in red = shortfall year.</p>
+  <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together. NW Today $ (PV) shows start-of-year net worth in plan-start-year purchasing power.</p>
   </div>
 
   <h2>Lifetime Tax Summary</h2>
@@ -9844,6 +9865,8 @@ let rothLabSettings = {
   fillMode:'',
   customMagi:'',
   heirTaxRate:'30',
+  valuationLens:'inflation',
+  discountRate:'',
   assumption:'current',
   ssStressMode:'current',
   ssStressPct:'20',
@@ -10257,6 +10280,59 @@ function rothLabHeirTaxRateLabel(){
   const pct = Math.round(rothLabHeirTaxPct() * 10) / 10;
   return String(pct).replace(/\.0$/, '') + '%';
 }
+function rothLabValuationLensSetting(){
+  const raw = String(rothLabSetting('valuationLens', 'inflation') || 'inflation');
+  return ['nominal','inflation','custom'].includes(raw) ? raw : 'inflation';
+}
+function rothLabCustomDiscountPct(){
+  const spendInfl = parseF(S.spendInfl);
+  const fallback = setupPct(spendInfl || spendInfl === 0 ? spendInfl : 0.025);
+  const pct = parseF(rothLabSetting('discountRate', fallback));
+  return pct || pct === 0 ? Math.max(0, Math.min(30, pct)) : fallback;
+}
+function rothLabDiscountRateForLens(lens){
+  const mode = lens || rothLabValuationLensSetting();
+  if (mode === 'custom') return rothLabCustomDiscountPct() / 100;
+  if (mode === 'inflation') {
+    const spendInfl = parseF(S.spendInfl);
+    return Math.max(0, spendInfl || spendInfl === 0 ? spendInfl : 0.025);
+  }
+  return 0;
+}
+function rothLabValuationActive(cfg){
+  const mode = (cfg && cfg.valuationLens) || rothLabValuationLensSetting();
+  return mode !== 'nominal';
+}
+function rothLabValuationLabel(cfg){
+  const mode = (cfg && cfg.valuationLens) || rothLabValuationLensSetting();
+  const rate = (cfg && cfg.discountRate != null) ? cfg.discountRate : rothLabDiscountRateForLens(mode);
+  if (mode === 'custom') return 'Present value using custom discount rate (' + fp(rate) + ')';
+  if (mode === 'inflation') return 'Present value using spending inflation (' + fp(rate) + ')';
+  return 'Nominal dollars only';
+}
+function rothLabValuationControlHtml(cfg){
+  const mode = (cfg && cfg.valuationLens) || rothLabValuationLensSetting();
+  const options = rothLabOptionList([
+    ['inflation', 'Present value (PV) - spending inflation'],
+    ['custom', 'Present value (PV) - custom discount rate'],
+    ['nominal', 'Nominal dollars only']
+  ], mode);
+  let html = setupField('Valuation Lens', rothLabControlSelect('valuationLens', options), 'PV means Present Value: future estate values and tax costs are shown in plan-start dollars. It does not change the projection.');
+  if (mode === 'custom') {
+    html += setupField('Discount Rate (%)', rothLabControlNumber('discountRate', rothLabCustomDiscountPct()), 'Discounts future taxes, Medicare costs, and ending estate value back to the plan start year.');
+  }
+  return html;
+}
+function rothLabDiscountFactor(year, baseYear, discountRate){
+  const yr = parseInt(year, 10);
+  const base = parseInt(baseYear, 10);
+  const rate = parseF(discountRate) || 0;
+  if (!yr || !base || rate <= 0) return 1;
+  return 1 / Math.pow(1 + rate, Math.max(0, yr - base));
+}
+function rothLabPresentValue(rows, baseYear, discountRate, fn){
+  return (rows || []).reduce((total, r) => total + ((fn(r) || 0) * rothLabDiscountFactor(r.yr, baseYear, discountRate)), 0);
+}
 function rothLabScenarioDefs(){
   const start = rothLabNumSetting('startYear', rothLabDefaultStart());
   const end = Math.max(start, rothLabNumSetting('endYear', rothLabDefaultEnd()));
@@ -10274,6 +10350,8 @@ function rothLabScenarioDefs(){
   const ssStressMode = rothLabSsStressModeSetting();
   const ssStressPct = rothLabSsStressPctSetting();
   const ssStressStartYear = rothLabSsStressStartYearSetting();
+  const valuationLens = rothLabValuationLensSetting();
+  const discountRate = rothLabDiscountRateForLens(valuationLens);
   const defs = [
     {kind:'current', label:'Current Plan', plain:rothLabCurrentPlanDescription(start, end), save:false},
     ...(rothLabSettings.userScenario ? [{kind:'user', label:'User Scenario', plain:rothLabUserScenarioDescription(rothLabSettings.userScenario), save:true, userScenario:rothLabSettings.userScenario}] : []),
@@ -10298,7 +10376,7 @@ function rothLabScenarioDefs(){
   if (customMagi > 0) {
     defs.push({kind:'magi', label:'Custom MAGI '+shortDollar(customMagi), plain:'Converts only up to the custom MAGI ceiling entered below.', save:true, customMagi});
   }
-  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, heirTaxRate, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear, defs};
+  return {start, end, irmaaHeadroom, bracketHeadroom, maxBracket, taxFillIrmaaGuard, fillMode, customMagi, heirTaxRate, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear, valuationLens, discountRate, defs};
 }
 function rothLabApplyTaxFillGuard(st, def, start, end){
   const base = JSON.parse(JSON.stringify(st));
@@ -10346,7 +10424,7 @@ function rothLabApplyScenario(st, def, start, end){
   }
   return st;
 }
-function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear){
+function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorDeathYear, ssStressMode, ssStressPct, ssStressStartYear, discountRate){
   const st = rothLabApplyAssumption(rothLabCloneState(), assumption);
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
   rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
@@ -10354,14 +10432,14 @@ function rothLabRunScenario(def, start, end, assumption, survivorLens, survivorD
   rothLabApplySurvivorLens(st, survivorLens, survivorDeathYear);
   rothLabApplySocialSecurityStress(st, ssStressMode, ssStressPct, ssStressStartYear);
   const rows = runProjection(st);
-  return {def, state:st, rows, summary:rothLabSummarize(def, rows, start, end)};
+  return {def, state:st, rows, summary:rothLabSummarize(def, rows, start, end, discountRate)};
 }
 function rothLabTierRank(label){
   if (!label || label === 'Base') return 0;
   const m = String(label).match(/\d+/);
   return m ? parseInt(m[0],10) : 0;
 }
-function rothLabSummarize(def, rows, start, end){
+function rothLabSummarize(def, rows, start, end, discountRate){
   const windowRows = rows.filter(r => r.yr >= start && r.yr <= end);
   const final = rows[rows.length-1] || {};
   const sum = (arr, fn) => arr.reduce((t, r) => t + (fn(r)||0), 0);
@@ -10378,6 +10456,16 @@ function rothLabSummarize(def, rows, start, end){
   const finalOther = finalNetWorth - finalIRA - finalRoth;
   const heirTaxRate = rothLabHeirTaxRate();
   const estateValue = finalOther + finalRoth + Math.max(0, finalIRA) * (1 - heirTaxRate);
+  const pvBaseYear = (rows[0] && rows[0].yr) || start;
+  const pvDiscountRate = Math.max(0, parseF(discountRate) || 0);
+  const terminalFactor = rothLabDiscountFactor(final.yr || pvBaseYear, pvBaseYear, pvDiscountRate);
+  const pvIncomeTax = rothLabPresentValue(rows, pvBaseYear, pvDiscountRate, r => r.incomeTax || 0);
+  const pvStateTax = rothLabPresentValue(rows, pvBaseYear, pvDiscountRate, r => r.stTax || 0);
+  const pvIRMAA = rothLabPresentValue(rows, pvBaseYear, pvDiscountRate, r => r.irmaaTx || 0);
+  const pvMedicare = rothLabPresentValue(rows, pvBaseYear, pvDiscountRate, r => r.medicareBase || 0);
+  const pvBurden = rothLabPresentValue(rows, pvBaseYear, pvDiscountRate, r => (r.incomeTax || 0) + (r.irmaaTx || 0) + (r.medicareBase || 0));
+  const pvEstateValue = estateValue * terminalFactor;
+  const pvFinalNetWorth = finalNetWorth * terminalFactor;
   return {
     label:def.label,
     plain:def.plain,
@@ -10395,6 +10483,15 @@ function rothLabSummarize(def, rows, start, end){
     finalNetWorth,
     heirTaxRate,
     estateValue,
+    pvBaseYear,
+    discountRate:pvDiscountRate,
+    pvIncomeTax,
+    pvStateTax,
+    pvIRMAA,
+    pvMedicare,
+    pvBurden,
+    pvEstateValue,
+    pvFinalNetWorth,
     // Compatibility alias for older render paths or saved UI state.
     taxAdjustedNetWorth: estateValue,
     futureTaxableIra:sum(futureRows, r => Math.max(0, (r.taxableRMDs||0) - (r.qualDivs||0))),
@@ -10410,7 +10507,7 @@ function rothLabBuildScenarios(){
   const assumption = rothLabSetting('assumption', 'current');
   const scenarios = [];
   cfg.defs.forEach(def => {
-    try { scenarios.push(rothLabRunScenario(def, cfg.start, cfg.end, assumption, cfg.survivorLens, cfg.survivorDeathYear, cfg.ssStressMode, cfg.ssStressPct, cfg.ssStressStartYear)); }
+    try { scenarios.push(rothLabRunScenario(def, cfg.start, cfg.end, assumption, cfg.survivorLens, cfg.survivorDeathYear, cfg.ssStressMode, cfg.ssStressPct, cfg.ssStressStartYear, cfg.discountRate)); }
     catch (e) { scenarios.push({def, rows:[], summary:{label:def.label, plain:'Could not run: '+e.message, save:false}}); }
   });
   return {cfg, scenarios};
@@ -10622,7 +10719,10 @@ function rothLabBestNotes(scenarios){
   const lowBurden = valid.reduce((m,x)=>x.summary.burden < m.summary.burden ? x : m, valid[0]);
   const highRoth = valid.reduce((m,x)=>x.summary.finalRoth > m.summary.finalRoth ? x : m, valid[0]);
   const lowIra = valid.reduce((m,x)=>x.summary.finalIRA < m.summary.finalIRA ? x : m, valid[0]);
-  return '<div class="setup-check done" style="margin-top:12px"><div class="setup-check-title">Conversation Starters</div><div class="setup-check-body"><div class="roth-discussion-lines"><div><strong>Lowest lifetime tax + Medicare impact:</strong> '+setupEsc(lowBurden.summary.label)+'</div><div><strong>Largest ending Roth balance:</strong> '+setupEsc(highRoth.summary.label)+'</div><div><strong>Lowest ending IRA balance:</strong> '+setupEsc(lowIra.summary.label)+'</div><div>These are not recommendations; they are prompts for advisor discussion.</div></div></div></div>';
+  const cfg = rothLabScenarioDefs();
+  const highPvEstate = rothLabValuationActive(cfg) ? valid.reduce((m,x)=>(x.summary.pvEstateValue||0) > (m.summary.pvEstateValue||0) ? x : m, valid[0]) : null;
+  const pvLine = highPvEstate ? '<div><strong>Highest present-value Estate Value:</strong> '+setupEsc(highPvEstate.summary.label)+'</div>' : '';
+  return '<div class="setup-check done" style="margin-top:12px"><div class="setup-check-title">Conversation Starters</div><div class="setup-check-body"><div class="roth-discussion-lines"><div><strong>Lowest lifetime tax + Medicare impact:</strong> '+setupEsc(lowBurden.summary.label)+'</div><div><strong>Largest ending Roth balance:</strong> '+setupEsc(highRoth.summary.label)+'</div><div><strong>Lowest ending IRA balance:</strong> '+setupEsc(lowIra.summary.label)+'</div>'+pvLine+'<div>These are not recommendations; they are prompts for advisor discussion.</div></div></div></div>';
 }
 function rothLabControlSelect(key, options){
   return '<select onchange="rothLabSet(&quot;'+setupEsc(key)+'&quot;,this.value)">'+options+'</select>';
@@ -10639,6 +10739,7 @@ function rothLabRenderControls(cfg){
   const detailOptions = '<option value="5" '+(rothLabSetting('detailYears','10')==='5'?'selected':'')+'>5 years</option><option value="10" '+(rothLabSetting('detailYears','10')==='10'?'selected':'')+'>10 years</option><option value="15" '+(rothLabSetting('detailYears','10')==='15'?'selected':'')+'>15 years</option><option value="all" '+(rothLabSetting('detailYears','10')==='all'?'selected':'')+'>Analysis window</option><option value="plan" '+(rothLabSetting('detailYears','10')==='plan'?'selected':'')+'>Full plan</option><option value="drained" '+(rothLabSetting('detailYears','10')==='drained'?'selected':'')+'>Until IRA drained</option>';
   const survivorControlHtml = rothLabSurvivorControlHtml(cfg);
   const ssStressControlHtml = rothLabSocialSecurityStressControlHtml(cfg);
+  const valuationControlHtml = rothLabValuationControlHtml(cfg);
   const currentPlan = rothLabCurrentPlanDescription(cfg.start, cfg.end);
   const userScenario = rothLabSettings.userScenario ? rothLabUserScenarioDescription(rothLabSettings.userScenario) : 'No saved User Plan yet. Use Save Current as User Plan on the Current Plan card when you want to freeze the current strategy before trying something else.';
   return '<div class="panel roth-lab-setup"><div class="sh">Roth Analysis Lab</div>'+ 
@@ -10649,6 +10750,7 @@ function rothLabRenderControls(cfg){
       setupField('Analysis Start Year', rothLabControlSelect('startYear', rothLabYearOptions(cfg.start)), 'First year to test Roth conversion targets.')+
       setupField('Analysis End Year', rothLabControlSelect('endYear', rothLabYearOptions(cfg.end)), 'Last year to test. Later years still calculate the downstream effect on balances and taxes.')+
       setupField('Assumption Lens', rothLabControlSelect('assumption', assumptionOptions), 'Rerun every scenario under one stress lens without changing the saved plan.')+
+      valuationControlHtml+
       ssStressControlHtml+
       survivorControlHtml+
       setupField('Detail Years', rothLabControlSelect('detailYears', detailOptions), 'How many annual rows to show. 5 years is usually best for a concise advisor report; Full plan is useful when the IRA does not drain quickly.')+
@@ -10803,6 +10905,31 @@ function rothLabRenderReportLauncher(scenarios, cfg){
   const chips = selected.length ? selected.map(sc => '<span class="roth-report-chip">'+setupEsc(sc.summary.label)+'</span>').join('') : '<span class="roth-report-chip">No scenarios selected</span>';
   return '<div class="panel roth-report-launcher"><div class="sh">Advisor Report Set</div><p style="font-size:13px;line-height:1.55;margin:0 0 10px">Choose up to '+rothLabReportMax()+' scenarios below. The advisor report updates immediately.</p><div class="roth-report-presets"><button type="button" class="btn btn-light btn-sm" onclick="rothLabSetReportPreset(&quot;retiree&quot;)">Retiree Preset</button><button type="button" class="btn btn-light btn-sm" onclick="rothLabSetReportPreset(&quot;worker&quot;)">Working / Tax Preset</button><button type="button" class="btn btn-dark btn-sm" onclick="rothLabPrintAdvisorReport()">Print Advisor Report</button></div>'+rothLabRenderReportScenarioPicker(scenarios)+'<div class="roth-report-selected">'+chips+'</div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="roth-badge">'+picks.length+' of '+rothLabReportMax()+' scenarios selected</span></div></div>';
 }
+function rothLabValuationCardHtml(x, base, cfg){
+  if (!rothLabValuationActive(cfg)) return '';
+  const pvEstateDelta = rothLabDelta((x.pvEstateValue || 0) - (base.pvEstateValue || 0));
+  return '<div class="roth-metric-section">Today $ lens (PV / NPV)</div>'+ 
+    '<div class="roth-metrics">'+ 
+      rothLabMetric('Discount rate', setupEsc(fp(x.discountRate || cfg.discountRate || 0)), 'small')+ 
+      rothLabMetric('Today $ tax + Medicare', rothLabMoney(x.pvBurden,true))+ 
+      rothLabMetric('Today $ Estate Value', rothLabMoney(x.pvEstateValue,true)+' <span style="font-size:12px">'+pvEstateDelta+'</span>')+ 
+    '</div>';
+}
+function rothLabRenderValuationReport(selected, base, cfg){
+  if (!rothLabValuationActive(cfg) || !selected || !selected.length) return '';
+  const baseYear = (selected[0].summary && selected[0].summary.pvBaseYear) || S.startYear || cfg.start;
+  const rows = selected.map(sc => {
+    const x = sc.summary || {};
+    const nominalEstateDelta = (x.label === (base.label || '')) ? '--' : ((x.estateValue || 0) - (base.estateValue || 0));
+    const estateDelta = (x.label === (base.label || '')) ? '--' : ((x.pvEstateValue || 0) - (base.pvEstateValue || 0));
+    return '<tr><td><strong>'+setupEsc(x.label || '')+'</strong></td>'+
+      '<td class="r">'+rothLabMoney(x.burden,true)+'</td>'+
+      '<td class="r bold">'+rothLabMoney(x.pvBurden,true)+'</td>'+
+      '<td class="r">'+rothLabMoney(x.estateValue,true)+'<div style="font-size:10px">'+(nominalEstateDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(nominalEstateDelta))+'</div></td>'+
+      '<td class="r bold">'+rothLabMoney(x.pvEstateValue,true)+'<div style="font-size:10px">'+(estateDelta === '--' ? '<span style="color:#8a7a5a">--</span>' : rothLabDelta(estateDelta))+'</div></td></tr>';
+  }).join('');
+  return '<div class="sh">Future $ vs Today $ (PV / NPV)</div><div class="roth-report-footnote"><strong>Future $</strong> are projected dollars in the year they occur. <strong>Today $ (PV)</strong> discounts those future dollars back to '+setupEsc(baseYear)+'. Lens: '+setupEsc(rothLabValuationLabel(cfg))+'. Key comparison: Estate Value Today $ (PV); Tax+Med Today $ helps explain tax/Medicare timing.</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-pv-table"><thead><tr><th>Scenario</th><th class="r">Tax+Med<br>Future $</th><th class="r">Tax+Med<br>Today $ (PV)</th><th class="r">Estate Value<br>Future $</th><th class="r">Estate Value<br>Today $ (PV)</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
 function rothLabRenderSummary(scenarios, cfg){
   if (!scenarios.length) return '<div class="panel">No Roth scenarios could be run.</div>';
   const base = scenarios[0].summary || {};
@@ -10854,9 +10981,11 @@ function rothLabRenderSummary(scenarios, cfg){
         rothLabMetric('Peak marginal', fp(x.peakMarg||0))+ 
         rothLabMetric('Peak IRMAA paid', setupEsc(x.peakTier || 'Base')+tierWarning, rothLabTierRank(x.peakTier) >= 5 ? 'warn small' : 'small')+ 
       '</div>'+ 
+      rothLabValuationCardHtml(x, base, cfg)+
     '</div>';
   }).join('');
-  return '<div class="panel"><div class="sh">Scenario Scorecard</div><div style="font-size:12px;color:#6a5830;line-height:1.45;margin-bottom:10px">Lifetime Income Tax includes federal plus state. State Tax is broken out separately so Roth conversions can be discussed by federal, state, and Medicare impact. Final Other Assets is the part of net worth not shown in Final IRA or Final Roth. Estate Value = Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough heir after-tax comparison, not an estate-tax or inherited-IRA projection.</div><div class="roth-scorecards">'+cards+'</div></div>';
+  const valuationNote = rothLabValuationActive(cfg) ? ' The present-value (PV) lens discounts future tax, Medicare, and estate values back to the plan start year so far-future dollars are not treated the same as current dollars.' : '';
+  return '<div class="panel"><div class="sh">Scenario Scorecard</div><div style="font-size:12px;color:#6a5830;line-height:1.45;margin-bottom:10px">Lifetime Income Tax includes federal plus state. State Tax is broken out separately so Roth conversions can be discussed by federal, state, and Medicare impact. Final Other Assets is the part of net worth not shown in Final IRA or Final Roth. Estate Value = Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough heir after-tax comparison, not an estate-tax or inherited-IRA projection.'+valuationNote+'</div><div class="roth-scorecards">'+cards+'</div></div>';
 }
 function rothLabAssumptionLensLabel(){
   const lens = rothLabSetting('assumption','current');
@@ -10913,6 +11042,7 @@ function rothLabAdvisorAssumptions(scenarios, cfg){
     ['Household and Tax', household + '; ' + filingLabel + '; ' + stateLabel + '; Estate Value heir IRA rate ' + rothLabHeirTaxRateLabel() + '.'],
     ['Survivor Lens', rothLabSurvivorLensAssumptionText(cfg, A)],
     ['Growth', fp(A.growthRate || 0) + ' portfolio growth; ' + fp(A.divRate || 0) + ' dividend rate; ' + fp(A.intRate || 0) + ' cash interest.'],
+    ['Valuation Lens', rothLabValuationLabel(cfg) + '; PV means Present Value, shown in plan-start dollars for comparison only.'],
     ['Inflation', fp(A.spendInfl || 0) + ' spending; ' + fp(A.ssCola || 0) + ' Social Security COLA; ' + fp(A.bracketInfl || 0) + ' tax brackets; ' + fp(A.irmaaInfl || 0) + ' IRMAA thresholds; ' + fp(A.medicareCostInfl ?? A.irmaaInfl ?? 0) + ' Medicare costs.'],
     ['Medicare Lookback', lookback]
   ];
@@ -10942,6 +11072,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
   const base = selected[0].summary || {};
   const sourceHeading = rothLabReportSource(scenarios, cfg);
   const taxTimingNote = rothLabScenarioTaxTimingNote(selected, cfg);
+  const valuationReport = rothLabRenderValuationReport(selected, base, cfg);
   const scoreRows = selected.map(sc => {
     const x = sc.summary || {};
     const first = (sc.rows || []).find(r => r.yr === cfg.start) || {};
@@ -10966,7 +11097,7 @@ function rothLabRenderAdvisorReport(scenarios, cfg){
     }).join('');
     return '<div style="margin-top:16px"><div class="sh">'+setupEsc(sc.summary.label)+' Detail</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-detail-table">'+rothLabDetailColgroup()+'<thead><tr><th>Year</th><th>Ages</th><th class="r">AGI</th><th class="r">Roth Conv</th><th class="r rate-col">Eff Rate</th><th class="r rate-col">Marg Rate</th><th class="irmaa-detail">IRMAA Created</th><th class="irmaa-detail">IRMAA Paid</th><th class="r">Income Tax</th><th class="r">End IRA</th><th class="r">End Roth</th><th class="r">End Other</th><th class="r">End NW</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   }).join('');
-  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-score-table">'+rothLabScoreColgroup()+'<thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r rate-col">Wt Eff</th><th class="r rate-col">Peak Marg Rate</th><th class="peak-irmaa-col">Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div><div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div>'+taxTimingNote+'<div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
+  return '<div class="panel roth-advisor-report" id="roth-advisor-report">'+sourceHeading+'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="roth-report-title">Roth Conversion Advisor Report</div><div class="roth-report-sub">Selected Roth conversion scenarios for advisor discussion. Income Tax includes federal plus state; IRMAA is shown separately. Estate Value applies the assumed heir IRA tax rate to remaining traditional IRA dollars.</div></div><button class="btn btn-dark" onclick="rothLabPrintAdvisorReport()">Print / Save PDF</button></div><div class="sh">Scenario Comparison</div><div class="roth-report-table-wrap"><table class="roth-report-table roth-report-score-table">'+rothLabScoreColgroup()+'<thead><tr><th>Scenario</th><th class="r">First AGI</th><th class="r">First Roth</th><th class="r">Window Roth</th><th class="r">Income Tax</th><th class="r">IRMAA</th><th class="r">Tax+Med</th><th class="r">Final IRA</th><th class="r">IRA Gone</th><th class="r">Final Roth</th><th class="r">Final Other</th><th class="r">Final NW</th><th class="r">Estate Value</th><th class="r rate-col">Wt Eff</th><th class="r rate-col">Peak Marg Rate</th><th class="peak-irmaa-col">Peak IRMAA</th></tr></thead><tbody>'+scoreRows+'</tbody></table></div>'+valuationReport+'<div class="roth-report-footnote"><strong>Estate Value formula:</strong> Final Other Assets + Final Roth + Final IRA x (1 - assumed heir IRA tax rate). Current assumed heir IRA tax rate: '+setupEsc(rothLabHeirTaxRateLabel())+'. This is a rough discussion estimate, not an estate-tax or inherited-IRA tax projection.</div>'+taxTimingNote+'<div class="sh">Advisor Questions</div><ul class="roth-report-questions"><li>Which income target is most reasonable after considering federal tax, state tax, Medicare IRMAA, and cash flow?</li><li>Is the selected IRMAA tier worth paying to reduce future IRA/RMD pressure?</li><li>Should conversions stop at an IRMAA tier, a federal tax bracket, or a custom MAGI amount?</li><li>Does the present-value comparison change which strategy is worth discussing, or do the nominal ending balances still tell the clearer story?</li></ul><div class="roth-report-details">'+detailBlocks+'</div></div>';
 }
 function rothLabRenderDetails(scenarios, cfg){
   const idx = Math.min(Math.max(0, parseInt(rothLabSetting('detail','1')) || 0), scenarios.length-1);
