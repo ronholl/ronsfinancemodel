@@ -1,11 +1,11 @@
 {
   "active": true,
-  "id": "message_2026_06_irmaa_report_updates",
+  "id": "message_2026_06_irmaa_report_pv_updates",
   "audience": "returning",
   "icon": "📣",
-  "title": "Medicare Assumption and Report Updates",
+  "title": "Medicare, Report, and PV Updates",
   "subtitle": "Message from Ron",
-  "intro": "This update clarifies Medicare/IRMAA inflation assumptions and adds a portfolio-focused report summary for advisor review.",
+  "intro": "This update clarifies Medicare/IRMAA inflation assumptions, adds portfolio-focused report details, and makes purchasing-power comparisons easier to see.",
   "items": [
     {
       "icon": "🏥",
@@ -21,6 +21,11 @@
       "icon": "🧭",
       "title": "Advisor review focus",
       "body": "Use the new summary to discuss the traditional IRA safety sleeve, inherited IRA runway, and in-kind Roth conversion candidates. Roth conversions move assets; they are not spending."
+    },
+    {
+      "icon": "💵",
+      "title": "Today $ (PV) added for purchasing-power context",
+      "body": "Cash Flow now shows start-of-year net worth in Today $ (PV), discounted back to the plan start year using spending inflation. Roth Lab also includes a Future $ vs Today $ valuation view so scenarios can be compared without treating far-future dollars the same as current dollars."
     }
   ],
   "actions": [
@@ -32,6 +37,14 @@
     {
       "label": "Open Tax Tables",
       "view": "taxtables"
+    },
+    {
+      "label": "Open Cash Flow",
+      "view": "cashflow"
+    },
+    {
+      "label": "Open Roth Lab",
+      "view": "rothlab"
     },
     {
       "label": "Generate Report",
