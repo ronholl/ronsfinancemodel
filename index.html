@@ -130,6 +130,38 @@ body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--ink);f
 .tab.active{color:var(--gold3);border-bottom-color:var(--gold3)}
 body:not(.advanced-on) .advanced-tab{display:none}
 
+/* ── RISK LAB ── */
+.risk-hero{background:linear-gradient(135deg,#201506,#392508);border:1px solid var(--gold);border-radius:8px;padding:20px 22px;color:#f7e8b0;margin-bottom:16px}
+.risk-hero h2{font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.08;margin:0 0 7px;color:#ffe48a}
+.risk-hero p{font-size:13px;line-height:1.55;max-width:1050px;color:#dbc994;margin:0}
+.risk-layout{display:grid;grid-template-columns:minmax(270px,350px) minmax(0,1fr);gap:16px;align-items:start}
+.risk-controls{position:sticky;top:118px}
+.risk-field{margin-bottom:12px}.risk-field label{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:11px;font-weight:800;color:var(--ink2);margin-bottom:4px}
+.risk-source{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:#876d31;font-weight:700}
+.risk-field input,.risk-field select{width:100%;padding:8px 9px;border:1px solid #c8aa61;border-radius:4px;background:#fffdf7;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:11px}
+.risk-help{font-size:10px;line-height:1.4;color:#76684b;margin-top:4px}
+.risk-grid{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:10px;margin-bottom:12px}
+.risk-kpi{border:1px solid var(--cream3);border-top:4px solid var(--gold);border-radius:6px;background:#fffdf7;padding:12px;min-height:92px}
+.risk-kpi .label{font-family:'JetBrains Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;color:#76684b;font-weight:800}
+.risk-kpi .value{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:23px;color:var(--ink);margin:7px 0 2px}
+.risk-kpi .sub{font-size:10px;color:#7b6d4f;line-height:1.35}
+.risk-interpretation{border-left:5px solid var(--green);background:#f7fbf3;padding:13px 15px;border-radius:5px;margin-bottom:12px;font-size:13px;line-height:1.55;color:var(--ink2)}
+.risk-chart{height:370px;position:relative}.risk-chart canvas{max-height:370px}
+.risk-compare{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:10px}
+.risk-compare th,.risk-compare td{padding:8px 9px;border-bottom:1px solid var(--cream3);text-align:right}.risk-compare th:first-child,.risk-compare td:first-child{text-align:left}
+.risk-progress{height:8px;background:var(--cream3);border-radius:999px;overflow:hidden;margin:9px 0}.risk-progress span{display:block;height:100%;background:var(--gold);width:0;transition:width .12s}
+.risk-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.risk-actions .btn{flex:1;min-width:120px}
+.risk-method-note{font-size:11px;line-height:1.48;color:#6e5c37;background:#fff8e8;border:1px solid var(--cream3);padding:10px;border-radius:5px;margin-bottom:12px}
+.risk-method-guide{display:grid;gap:7px;margin-bottom:13px}.risk-method-card{display:block;width:100%;border:1px solid var(--cream3);border-radius:5px;padding:9px 10px;background:#fffdf7;font:inherit;font-size:10.5px;line-height:1.42;color:#6e5c37;text-align:left;cursor:pointer}.risk-method-card strong{display:block;color:var(--ink);font-size:11px;margin-bottom:2px}.risk-method-card.active{border:2px solid var(--gold);background:#fff8e8;padding:8px 9px}.risk-method-card:hover{border-color:var(--gold)}
+.risk-run-summary{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}.risk-run-summary span{background:#fff8e8;border:1px solid var(--cream3);border-radius:999px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#6e5c37}
+.risk-history-wrap{max-height:310px;overflow:auto}.risk-history{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:9.5px}.risk-history th,.risk-history td{padding:7px;border-bottom:1px solid var(--cream3);text-align:right}.risk-history th:first-child,.risk-history td:first-child{text-align:left}
+.risk-history button{font:inherit;color:var(--blue);border:0;background:transparent;text-decoration:underline;cursor:pointer;font-weight:800}
+.risk-depletion-row{display:grid;grid-template-columns:70px minmax(80px,1fr) 58px;gap:8px;align-items:center;margin:6px 0;font-family:'JetBrains Mono',monospace;font-size:9px}.risk-depletion-bar{height:14px;background:var(--cream3);border:0;border-radius:99px;overflow:hidden;padding:0;cursor:pointer;width:100%}.risk-depletion-bar span{display:block;height:100%;background:var(--red)}.risk-depletion-bar:hover,.risk-depletion-bar:focus{outline:2px solid var(--gold);outline-offset:2px}.risk-detail-note{font-size:11px;line-height:1.5;color:#6e5c37;margin:10px 0}
+.risk-outcomes{width:100%;border-collapse:collapse;margin:8px 0 12px;font-family:'JetBrains Mono',monospace;font-size:10px}.risk-outcomes th,.risk-outcomes td{padding:8px;border-bottom:1px solid var(--cream3);text-align:right}.risk-outcomes th:first-child,.risk-outcomes td:first-child{text-align:left}.risk-concern{border-left:5px solid var(--gold);background:#fff8e8;border-radius:5px;padding:11px 13px;margin:12px 0;font-size:12px;line-height:1.52;color:var(--ink2)}
+.risk-empty{padding:34px 18px;text-align:center;color:#7c6c4a;font-size:13px;line-height:1.55}
+@media(max-width:1050px){.risk-layout{grid-template-columns:1fr}.risk-controls{position:static}.risk-grid{grid-template-columns:repeat(2,minmax(135px,1fr))}}
+@media(max-width:560px){.risk-grid{grid-template-columns:1fr}.risk-hero h2{font-size:23px}.risk-chart{height:300px}}
+
 /* ── CONTENT ── */
 #content{padding:24px 28px;max-width:1600px;margin:0 auto}
 .pane{display:none}.pane.active{display:block}
@@ -695,6 +727,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
   <button class="tab active" onclick="ST('dashboard')">Dashboard</button>
   <button class="tab" onclick="ST('setup')">Setup Guide</button>
   <button class="tab" onclick="ST('rothlab')">Roth Lab</button>
+  <button class="tab" onclick="ST('risklab')">Risk Lab</button>
   <button class="tab" onclick="ST('portfolio')">Bucket Lab</button>
   <button class="tab advanced-tab" onclick="ST('inputs')">Inputs</button>
   <button class="tab advanced-tab" onclick="ST('soy')">Start of Year</button>
@@ -774,6 +807,11 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ ROTH LAB ═══════════ -->
 <div id="pane-rothlab" class="pane">
   <div id="roth-lab-root"></div>
+</div>
+
+<!-- ═══════════ RETIREMENT RISK LAB ═══════════ -->
+<div id="pane-risklab" class="pane">
+  <div id="risk-lab-root"></div>
 </div>
 
 <!-- ═══════════ PORTFOLIO PLAN ═══════════ -->
@@ -2311,6 +2349,7 @@ function defaultState() {
     pre2020InhRmdYear1:'', pre2020InhRmdYear2:'', // legacy saved field
     // Key variables (global defaults)
     growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02,
+    riskStockPct:60,
     reinvestDivs:'yes',
     spendInfl:0.03, baseSpend:0, ovDeductions:[],
     cashFloor:0,
@@ -5502,6 +5541,7 @@ function ST(name){
   if(name==='dashboard')  renderDash();
   if(name==='setup')      renderSetupGuide();
   if(name==='rothlab')    renderRothLab();
+  if(name==='risklab')    renderRiskLab();
   if(name==='portfolio')  renderPortfolioPlan();
   if(name==='taxtables')  renderTaxTables();
   if(name==='cashflow')   renderCF();
@@ -5551,6 +5591,7 @@ function IC(){
       if(id==='dashboard')renderDash();
   if(id==='taxtables')renderTaxTables();
   if(id==='rothlab')renderRothLab();
+  if(id==='risklab')renderRiskLab();
   if(id==='portfolio')renderPortfolioPlan();
   if(id==='action')renderAP();
       if(id==='cashflow')renderCF();
@@ -12805,6 +12846,221 @@ function renderActiveStrategies(){
   const rows = setupCollectStrategyRows();
   if (!rows.length) return '<div class="setup-check warn"><div class="setup-check-title">No strategies yet</div><div class="setup-check-body">Add only the future changes you want to model. The base plan can remain simple.</div></div>';
   return setupRenderStrategyRows(rows, 'No strategies are active yet.');
+}
+
+// ── Retirement Risk Lab ──────────────────────────────────────────────────
+const RISK_LAB_SETTINGS_KEY='financeRiskLabV1';
+const RISK_LAB_HISTORY=[[1928,.4381,.0084,-.0116],[1929,-.083,.042,.0058],[1930,-.2512,.0454,-.064],[1931,-.4384,-.0256,-.0932],[1932,-.0864,.0879,-.1027],[1933,.4998,.0186,.0076],[1934,-.0119,.0796,.0152],[1935,.4674,.0447,.0299],[1936,.3194,.0502,.0145],[1937,-.3534,.0138,.0286],[1938,.2928,.0421,-.0278],[1939,-.011,.0441,0],[1940,-.1067,.054,.0071],[1941,-.1277,-.0202,.0993],[1942,.1917,.0229,.0903],[1943,.2506,.0249,.0296],[1944,.1903,.0258,.023],[1945,.3582,.038,.0225],[1946,-.0843,.0313,.1813],[1947,.052,.0092,.0884],[1948,.057,.0195,.0273],[1949,.183,.0466,-.0183],[1950,.3081,.0043,.058],[1951,.2368,-.003,.0596],[1952,.1815,.0227,.0091],[1953,-.0121,.0414,.006],[1954,.5256,.0329,-.0037],[1955,.326,-.0134,.0037],[1956,.0744,-.0226,.0283],[1957,-.1046,.068,.0304],[1958,.4372,-.021,.0176],[1959,.1206,-.0265,.0152],[1960,.0034,.1164,.0136],[1961,.2664,.0206,.0067],[1962,-.0881,.0569,.0123],[1963,.2261,.0168,.0165],[1964,.1642,.0373,.012],[1965,.124,.0072,.0192],[1966,-.0997,.0291,.0336],[1967,.238,-.0158,.0328],[1968,.1081,.0327,.0471],[1969,-.0824,-.0501,.059],[1970,.0356,.1675,.0557],[1971,.1422,.0979,.0327],[1972,.1876,.0282,.0341],[1973,-.1431,.0366,.0894],[1974,-.259,.0199,.121],[1975,.37,.0361,.0713],[1976,.2383,.1598,.0504],[1977,-.0698,.0129,.0668],[1978,.0651,-.0078,.0899],[1979,.1852,.0067,.1325],[1980,.3174,-.0299,.1235],[1981,-.047,.082,.0891],[1982,.2042,.3281,.0383],[1983,.2234,.032,.0379],[1984,.0615,.1373,.0404],[1985,.3124,.2571,.0379],[1986,.1849,.2428,.0119],[1987,.0581,-.0496,.0433],[1988,.1654,.0822,.0441],[1989,.3148,.1769,.0464],[1990,-.0306,.0624,.0625],[1991,.3023,.15,.0298],[1992,.0749,.0936,.0297],[1993,.0997,.1421,.0281],[1994,.0133,-.0804,.026],[1995,.372,.2348,.0253],[1996,.2268,.0143,.0338],[1997,.331,.0994,.017],[1998,.2834,.1492,.0161],[1999,.2089,-.0825,.0268],[2000,-.0903,.1666,.0344],[2001,-.1185,.0557,.016],[2002,-.2197,.1512,.0248],[2003,.2836,.0038,.0204],[2004,.1074,.0449,.0334],[2005,.0483,.0287,.0334],[2006,.1561,.0196,.0252],[2007,.0548,.1021,.0411],[2008,-.3655,.201,-.0002],[2009,.2594,-.1112,.0281],[2010,.1482,.0846,.0144],[2011,.021,.1604,.0306],[2012,.1589,.0297,.0176],[2013,.3215,-.091,.0151],[2014,.1352,.1075,.0065],[2015,.0138,.0128,.0064],[2016,.1177,.0069,.0205],[2017,.2161,.028,.0213],[2018,-.0423,-.0002,.02],[2019,.3121,.0964,.0231],[2020,.1802,.1133,.0132],[2021,.2847,-.0442,.0719],[2022,-.1804,-.1783,.0644],[2023,.2606,.0388,.0312]];
+let riskLabSettings=null,riskLabResults=null,riskLabChart=null,riskLabRunToken=0,riskLabSelectedHistory=null,riskLabHistoryLimit=0,riskLabSelectedDepletionYear=null,riskLabRestoreChecked=false;
+function riskDefaults(){
+  const savedStock=Math.max(0,Math.min(100,parseF(S&&S.riskStockPct)??60)),baseStock=savedStock/100,bondMean=.03;
+  const growth=Number.isFinite(parseF(S&&S.growthRate))?parseF(S.growthRate):.05;
+  const stockMean=baseStock>0?(growth-(1-baseStock)*bondMean)/baseStock:growth;
+  return {method:'bootstrap',simulations:1000,seed:20260914,baseStockPct:savedStock,stockPct:savedStock,spendAdj:0,endYear:S.endYear,
+    stockMeanPct:stockMean*100,bondMeanPct:bondMean*100,stockSdPct:18,bondSdPct:7,stockBondCorr:.10,
+    inflationMeanPct:(S.spendInfl||.03)*100,inflationSdPct:1.5,nominal:false};
+}
+function riskLoadSettings(){
+  const d=riskDefaults();
+  try{return Object.assign(d,JSON.parse(localStorage.getItem(RISK_LAB_SETTINGS_KEY)||'{}'));}catch(e){return d;}
+}
+function riskSaveSettings(){try{localStorage.setItem(RISK_LAB_SETTINGS_KEY,JSON.stringify(riskLabSettings));}catch(e){}}
+function riskEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function riskMoney(v){
+  if(!Number.isFinite(v))return 'n.a.';
+  const a=Math.abs(v),sign=v<0?'−':'';
+  if(a>=1000000)return sign+'$'+(a/1000000).toFixed(a>=10000000?1:2).replace(/\.0+$/,'')+'M';
+  if(a>=1000)return sign+'$'+Math.round(a/1000).toLocaleString()+'K';
+  return sign+'$'+Math.round(a).toLocaleString();
+}
+function riskPct(v,d=0){return Number.isFinite(v)?(v*100).toFixed(d)+'%':'n.a.';}
+function riskNum(v,fallback){const n=parseFloat(v);return Number.isFinite(n)?n:fallback;}
+function riskField(id,label,value,source,help,attrs){return '<div class="risk-field"><label><span>'+riskEsc(label)+'</span><span class="risk-source">'+riskEsc(source)+'</span></label><input id="'+id+'" value="'+riskEsc(value)+'" '+(attrs||'')+' onchange="riskReadControls()"><div class="risk-help">'+riskEsc(help)+'</div></div>';}
+function riskMethodNote(method){
+  if(method==='historical')return 'Replays real market history in its original order. For example, a 1966 start uses 1966, then 1967, then 1968, and so on. Use this to see how the Roadmap would have handled actual difficult periods.';
+  if(method==='bootstrap')return 'Builds many new futures by picking actual historical years at random. Each selected year keeps its stock return, bond return, and inflation together, but the years are rearranged. Use this for historical-looking outcomes that are not tied to one starting date.';
+  return 'Creates many possible futures with newly generated stock returns, bond returns, and inflation each year. The averages and variability come from the assumptions below. Use this to see a broad range of plausible outcomes.';
+}
+function riskMethodGuideHtml(selected){
+  const cards=[['bootstrap','Historical Bootstrap','Real years picked and rearranged at random. Best for creating many history-based combinations.'],['historical','Historical Sequence','Real years replayed in their actual order. Best for understanding periods such as 1966 and the 1970s.'],['montecarlo','Monte Carlo','Many computer-generated futures. Best for seeing the overall range of possible outcomes.']];
+  return '<div class="risk-method-guide" role="group" aria-label="Simulation method">'+cards.map(x=>'<button type="button" class="risk-method-card '+(selected===x[0]?'active':'')+'" aria-pressed="'+(selected===x[0]?'true':'false')+'" onclick="riskSelectMethod(\''+x[0]+'\')"><strong>'+x[1]+'</strong>'+x[2]+'</button>').join('')+'</div>';
+}
+function riskSelectMethod(method){riskLabRunToken++;riskReadControls();riskLabSettings.method=method;riskSaveSettings();riskLabResults=null;renderRiskLab();riskRun();}
+function riskReadControls(){
+  if(!riskLabSettings)riskLabSettings=riskLoadSettings();
+  const g=id=>document.getElementById(id);
+  const keys={simulations:'risk-sims',seed:'risk-seed',stockPct:'risk-stock',spendAdj:'risk-spend',endYear:'risk-end',stockMeanPct:'risk-stock-mean',bondMeanPct:'risk-bond-mean',stockSdPct:'risk-stock-sd',bondSdPct:'risk-bond-sd',stockBondCorr:'risk-corr',inflationMeanPct:'risk-infl-mean',inflationSdPct:'risk-infl-sd'};
+  Object.keys(keys).forEach(k=>{if(g(keys[k]))riskLabSettings[k]=riskNum(g(keys[k]).value,riskLabSettings[k]);});
+  riskLabSettings.stockPct=Math.max(0,Math.min(100,riskLabSettings.stockPct));
+  riskLabSettings.stockBondCorr=Math.max(-.95,Math.min(.95,riskLabSettings.stockBondCorr));
+  riskLabSettings.simulations=Math.max(100,Math.min(5000,Math.round(riskLabSettings.simulations)));
+  riskLabSettings.endYear=Math.max(S.startYear,Math.min(S.endYear,Math.round(riskLabSettings.endYear)));
+  riskSaveSettings();
+}
+function riskReset(){riskLabRunToken++;riskLabSettings=riskDefaults();riskLabSettings.hasRun=false;riskLabResults=null;riskSaveSettings();renderRiskLab();}
+function riskCancel(){riskLabRunToken++;const s=document.getElementById('risk-status');if(s)s.textContent='Run cancelled.';const b=document.getElementById('risk-run');if(b)b.disabled=false;}
+function riskControlsHtml(){
+  const c=riskLabSettings||riskLoadSettings(),endAge=hasRealBirthYear(S.by1,c.endYear)?c.endYear-parseInt(S.by1):null;
+  return '<div class="panel risk-controls"><div class="sh">Scenario controls</div>'+
+    '<div class="risk-field"><label><span>Choose a simulation method</span><span class="risk-source">Lab assumption</span></label></div>'+
+    riskMethodGuideHtml(c.method)+'<div class="risk-method-note"><strong>Selected method:</strong> '+riskEsc(riskMethodNote(c.method))+'</div>'+
+    riskField('risk-stock','Stock allocation (%)',c.stockPct,'Lab setting · Roadmap comparison: '+c.baseStockPct+'%','Enter the percentage invested in stocks. The rest is bonds. Example: 60 means 60% stocks and 40% bonds. The simulation rebalances to this mix each year. This tested value is saved automatically in this browser.','type="number" min="0" max="100" step="5"')+
+    riskField('risk-spend','Spending adjustment (%)',c.spendAdj,'Lab override','Changes every Roadmap spending amount for this test only. Enter 10 for 10% more spending or -10 for 10% less spending.','type="number" min="-75" max="200" step="1"')+
+    riskField('risk-end','Ending year',c.endYear,'Roadmap: '+S.endYear,'The last year the Lab Scenario must fund. This is temporary'+(endAge?' and corresponds to age '+endAge:'')+'.','type="number" min="'+S.startYear+'" max="'+S.endYear+'" step="1"')+
+    (c.method!=='historical'?riskField('risk-sims','Number of simulations',c.simulations,'Lab assumption','How many possible futures to test. More simulations make the percentiles steadier but take longer. Start with 1,000.','type="number" min="100" max="5000" step="100"'):'')+
+    (c.method!=='historical'?riskField('risk-seed','Random seed',c.seed,'Lab assumption','A whole number that controls the random draws. The same inputs and seed reproduce the same paths, which makes comparisons and testing fair. Changing it creates a different set of paths; a larger seed is not more optimistic or conservative.','type="number" step="1"'):'')+
+    (c.method==='montecarlo'?'<div class="sh">Market assumptions</div>'+riskField('risk-stock-mean','Average annual stock return (%)',Number(c.stockMeanPct).toFixed(2),'Lab assumption','The long-run arithmetic average used to generate annual stock returns. It is not a guaranteed return or compounded growth rate. The default is calibrated so the saved stock/bond mix approximately matches the Roadmap growth assumption.','type="number" min="-20" max="30" step="0.1"')+riskField('risk-bond-mean','Average annual bond return (%)',c.bondMeanPct,'Lab assumption','The long-run arithmetic average used to generate annual bond returns.','type="number" min="-20" max="30" step="0.1"')+riskField('risk-stock-sd','Stock variability (%)',c.stockSdPct,'Lab assumption','Standard deviation measures how widely annual stock returns move around their average. A higher number produces a wider range of good and bad years.','type="number" min="0" max="60" step="0.5"')+riskField('risk-bond-sd','Bond variability (%)',c.bondSdPct,'Lab assumption','Standard deviation for annual bond returns. A higher number produces more variable bond outcomes.','type="number" min="0" max="40" step="0.5"')+riskField('risk-corr','Stock / bond correlation',c.stockBondCorr,'Lab assumption','How often stocks and bonds move together. 1 means together, 0 means no consistent relationship, and -1 means opposite directions.','type="number" min="-0.95" max="0.95" step="0.05"')+riskField('risk-infl-mean','Average annual inflation (%)',c.inflationMeanPct,'Roadmap: '+((S.spendInfl||0)*100).toFixed(1)+'%','The long-run arithmetic average used to change the purchasing power of spending.','type="number" min="-5" max="20" step="0.1"')+riskField('risk-infl-sd','Inflation variability (%)',c.inflationSdPct,'Lab assumption','Standard deviation for annual inflation. A higher number creates a wider range of low- and high-inflation years.','type="number" min="0" max="10" step="0.1"'):'')+
+    '<div class="risk-actions"><button class="btn btn-dark" id="risk-run" onclick="riskRun()">Run Risk Lab</button><button class="btn btn-light" onclick="riskReset()">Restore Lab Defaults</button></div><div class="risk-help" style="margin-top:7px">The selected method and tested inputs are saved automatically in this browser. They do not alter the Roadmap. <strong>Restore Lab Defaults</strong> clears the displayed Lab result and restores Bootstrap, the Roadmap comparison allocation, no spending adjustment, the saved ending year, 1,000 simulations, and the standard seed.</div><div id="risk-progress-wrap" style="display:none"><div class="risk-progress"><span id="risk-progress-bar"></span></div><div class="risk-help" id="risk-status"></div><button class="btn btn-light btn-sm" id="risk-cancel" onclick="riskCancel()" style="margin-top:7px">Cancel</button></div></div>';
+}
+function riskEmptyHtml(){return '<div class="panel risk-empty"><strong>Run the Risk Lab to test this Roadmap across uncertain markets.</strong><br>The saved Roadmap will not be changed. Results use plan-start dollars and compare the Roadmap assumptions with the temporary Lab overrides.</div>';}
+function renderRiskLab(){
+  if(!riskLabSettings)riskLabSettings=riskLoadSettings();
+  const root=document.getElementById('risk-lab-root');if(!root)return;
+  root.innerHTML='<div class="risk-hero"><h2>Retirement Risk Lab</h2><p>Test the current Roadmap across many market and inflation environments. The lab reuses planned spending, income, taxes, Roth conversions, account balances, and the existing funding waterfall. Lab overrides remain temporary.</p></div><div class="risk-layout">'+riskControlsHtml()+'<div id="risk-results">'+(riskLabResults?riskResultsHtml(riskLabResults):riskEmptyHtml())+'</div></div>';
+  if(riskLabResults)setTimeout(()=>riskRenderChart(riskLabResults),0);
+  if(!riskLabRestoreChecked){riskLabRestoreChecked=true;if(!riskLabResults)riskRun();}
+}
+function riskRng(seed){let a=(Math.floor(seed)||1)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function riskNormal(rng){let spare=null;return function(){if(spare!==null){const z=spare;spare=null;return z;}let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();const m=Math.sqrt(-2*Math.log(u));spare=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);};}
+function riskMontePaths(c,n,years){
+  const rng=riskRng(c.seed),z=riskNormal(rng),paths=[],d=riskDefaults();
+  for(let p=0;p<n;p++){const stock=[],bond=[],infl=[],baseStock=[],baseBond=[],baseInfl=[];for(let i=0;i<years;i++){const zs=z(),rawBond=z(),zi=z(),zb=c.stockBondCorr*zs+Math.sqrt(1-c.stockBondCorr*c.stockBondCorr)*rawBond,zbBase=d.stockBondCorr*zs+Math.sqrt(1-d.stockBondCorr*d.stockBondCorr)*rawBond;stock.push(Math.max(-.95,c.stockMeanPct/100+c.stockSdPct/100*zs));bond.push(Math.max(-.95,c.bondMeanPct/100+c.bondSdPct/100*zb));infl.push(Math.max(-.03,Math.min(.20,c.inflationMeanPct/100+c.inflationSdPct/100*zi)));baseStock.push(Math.max(-.95,d.stockMeanPct/100+d.stockSdPct/100*zs));baseBond.push(Math.max(-.95,d.bondMeanPct/100+d.bondSdPct/100*zbBase));baseInfl.push(Math.max(-.03,Math.min(.20,d.inflationMeanPct/100+d.inflationSdPct/100*zi)));}paths.push({stock,bond,infl,baseStock,baseBond,baseInfl,label:'Simulation '+(p+1)});}return paths;
+}
+function riskHistoricalPaths(years){const out=[];for(let i=0;i+years<=RISK_LAB_HISTORY.length;i++){const rows=RISK_LAB_HISTORY.slice(i,i+years);out.push({stock:rows.map(r=>r[1]),bond:rows.map(r=>r[2]),infl:rows.map(r=>r[3]),label:String(rows[0][0]),startYear:rows[0][0],endHistoryYear:rows[rows.length-1][0]});}return out;}
+function riskBootstrapPaths(c,n,years){const rng=riskRng(c.seed),out=[];for(let p=0;p<n;p++){const rows=[];for(let i=0;i<years;i++)rows.push(RISK_LAB_HISTORY[Math.floor(rng()*RISK_LAB_HISTORY.length)]);out.push({stock:rows.map(r=>r[1]),bond:rows.map(r=>r[2]),infl:rows.map(r=>r[3]),sampleYears:rows.map(r=>r[0]),label:'Bootstrap '+(p+1)});}return out;}
+function riskPortfolioReturns(path,stockPct){const w=stockPct/100;return path.stock.map((r,i)=>Math.max(-.95,w*r+(1-w)*path.bond[i]));}
+function riskBaseSpendRows(endYear){const st=JSON.parse(JSON.stringify(S));st.endYear=endYear;return runProjection(st);}
+function riskScenarioState(c,path,isLab,roadRows){
+  const st=JSON.parse(JSON.stringify(S)),endYear=isLab?c.endYear:S.endYear,years=endYear-S.startYear+1;
+  st.endYear=endYear;
+  const stockPct=isLab?c.stockPct:c.baseStockPct;
+  const selectedPath=(!isLab&&path.baseStock)?Object.assign({},path,{stock:path.baseStock,bond:path.baseBond,infl:path.baseInfl}):path;
+  const returns=riskPortfolioReturns(selectedPath,stockPct);
+  st.ovGrowth=Array.from({length:years},(_,i)=>({rate:returns[i]*100,startYear:S.startYear+i,endYear:S.startYear+i,notes:'Risk Lab market path'}));
+  let simCpi=1,roadCpi=1;
+  st.ovSpending=Array.from({length:years},(_,i)=>{
+    if(i>0){simCpi*=1+(selectedPath.infl[i-1]||0);roadCpi*=1+(S.spendInfl||0);}
+    const roadmap=(roadRows[i]&&roadRows[i].spending)||0;
+    const amount=roadmap*(roadCpi?simCpi/roadCpi:1)*(isLab?(1+c.spendAdj/100):1);
+    return {amount,oneYear:'Y',startYear:S.startYear+i,endYear:S.startYear+i,notes:'Risk Lab inflation path'};
+  });
+  return {state:st,cpi:riskCpiPath(selectedPath.infl,years)};
+}
+function riskCpiPath(infl,years){const out=[1];for(let i=1;i<years;i++)out[i]=out[i-1]*(1+(infl[i-1]||0));return out;}
+function riskPathMetrics(rows,cpi,path){
+  const pv=rows.map((r,i)=>(r.netWorth||0)/(cpi[i]||1));
+  const first=rows.findIndex(r=>(r.unfunded||0)>.5),last=rows[rows.length-1]||{};
+  let peak=pv[0]||0,maxDraw=0;pv.forEach(v=>{peak=Math.max(peak,v);if(peak>0)maxDraw=Math.max(maxDraw,(peak-v)/peak);});
+  const annual=rows.map((r,i)=>({roadmapYear:r.yr,age:r.age1>0?r.age1:null,historyYear:path.startYear?path.startYear+i:null,portfolioPV:pv[i],portfolioReturn:r.gRate,stock:path.stock[i],bond:path.bond[i],inflation:path.infl[i],spendingPV:(r.spending||0)/(cpi[i]||1),unfundedPV:(r.unfunded||0)/(cpi[i]||1)}));
+  return {path,label:path.label,startYear:path.startYear||null,endHistoryYear:path.endHistoryYear||null,pv,annual,ending:pv[pv.length-1]||0,minimum:Math.min.apply(null,pv),depleted:first>=0,depletionIndex:first,depletionYear:first>=0?rows[first].yr:null,depletionAge:first>=0&&rows[first].age1>0?rows[first].age1:null,maxDraw,totalSpendPV:rows.reduce((s,r,i)=>s+(r.spending||0)/(cpi[i]||1),0),totalUnfundedPV:rows.reduce((s,r,i)=>s+(r.unfunded||0)/(cpi[i]||1),0)};
+}
+function riskQuantile(values,q){const a=values.filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!a.length)return 0;const p=(a.length-1)*q,b=Math.floor(p),d=p-b;return a[b+1]===undefined?a[b]:a[b]+d*(a[b+1]-a[b]);}
+function riskAggregate(items,years){
+  const endings=items.map(x=>x.ending),mins=items.map(x=>x.minimum),dep=items.filter(x=>x.depleted),draws=items.map(x=>x.maxDraw);
+  const bands={p10:[],p25:[],p50:[],p75:[],p90:[]};
+  for(let i=0;i<years;i++){const v=items.map(x=>x.pv[i]);bands.p10.push(riskQuantile(v,.10));bands.p25.push(riskQuantile(v,.25));bands.p50.push(riskQuantile(v,.50));bands.p75.push(riskQuantile(v,.75));bands.p90.push(riskQuantile(v,.90));}
+  const depAges=dep.map(x=>x.depletionAge).filter(Number.isFinite),depYears={};dep.forEach(x=>{depYears[x.depletionYear]=(depYears[x.depletionYear]||0)+1;});
+  return {count:items.length,survival:items.length?(items.length-dep.length)/items.length:0,depletionRate:items.length?dep.length/items.length:0,ending:{p10:riskQuantile(endings,.10),p25:riskQuantile(endings,.25),p50:riskQuantile(endings,.50),p75:riskQuantile(endings,.75),p90:riskQuantile(endings,.90)},medianMinimum:riskQuantile(mins,.50),medianDrawdown:riskQuantile(draws,.50),medianSpending:riskQuantile(items.map(x=>x.totalSpendPV),.50),medianDepletionAge:depAges.length?riskQuantile(depAges,.50):null,depletionYears:depYears,bands,items};
+}
+function riskInterpret(r){
+  const a=r.lab,b=r.base,delta=a.survival-b.survival,years=r.years;
+  let first=a.items.filter(x=>x.depleted).map(x=>x.depletionIndex).sort((x,y)=>x-y),medIdx=first.length?riskQuantile(first,.5):null;
+  let text=a.survival>=.90&&a.ending.p10>0?'The Lab Scenario appears resilient across most tested environments, including a positive 10th-percentile ending balance.':a.survival===1?'The Lab Scenario funds all planned years in the tested environments, although lower-range ending balances reach or approach zero.':a.survival>=.75?'The Lab Scenario remains viable in most tested environments, but lower-range outcomes show meaningful portfolio pressure.':'The Lab Scenario shows material vulnerability across the tested environments, with depletion occurring in a substantial share of paths.';
+  if(medIdx!==null)text+=' Among depletion scenarios, pressure typically begins '+(medIdx<years*.33?'in the first third of the Roadmap horizon.':medIdx<years*.67?'around the middle of the Roadmap horizon.':'in the later years of the Roadmap.');
+  if(Math.abs(delta)>=.02)text+=' The temporary Lab overrides '+(delta>0?'improve':'reduce')+' portfolio survival by '+Math.abs(delta*100).toFixed(1)+' percentage points versus the Current Roadmap under the same market paths.';
+  else if(Math.abs(r.config.spendAdj)>0||r.config.stockPct!==r.config.baseStockPct)text+=' The temporary overrides change portfolio survival by less than 2 percentage points in this run.';
+  return text;
+}
+function riskKpi(label,value,sub){return '<div class="risk-kpi"><div class="label">'+riskEsc(label)+'</div><div class="value">'+riskEsc(value)+'</div><div class="sub">'+riskEsc(sub||'')+'</div></div>';}
+function riskResultsHtml(r){
+  const a=r.lab,b=r.base,depTiming=a.medianDepletionAge!=null?('Age '+Math.round(a.medianDepletionAge)):(a.depletionRate?('Year '+Math.round(riskQuantile(a.items.filter(x=>x.depleted).map(x=>x.depletionYear),.5))):'No depletion');
+  const history=r.config.method==='historical'?riskHistoryHtml(a):'';
+  const methodName=r.config.method==='bootstrap'?'Historical Bootstrap':r.config.method==='historical'?'Historical Sequence':'Monte Carlo';
+  const runSummary='<div class="risk-run-summary"><span>Method: '+riskEsc(methodName)+'</span><span>Allocation: '+riskEsc(r.config.stockPct)+'% stocks / '+riskEsc(100-r.config.stockPct)+'% bonds</span>'+(r.config.method!=='historical'?'<span>Simulations: '+Number(r.config.simulations).toLocaleString()+'</span><span>Random seed: '+riskEsc(r.config.seed)+'</span>':'<span>All available historical starting periods</span>')+'</div>';
+  return runSummary+'<div class="risk-grid">'+riskKpi('Portfolio survival',riskPct(a.survival,1),a.count.toLocaleString()+' tested paths')+riskKpi('Median ending portfolio',riskMoney(a.ending.p50),'Plan-start dollars')+riskKpi('10th percentile ending',riskMoney(a.ending.p10),'Lower-range outcome')+riskKpi('Typical depletion timing',depTiming,a.depletionRate?riskPct(a.depletionRate,1)+' of paths depleted':'All planned years funded')+'</div><div class="risk-interpretation"><strong>Viability interpretation:</strong> '+riskEsc(riskInterpret(r))+'</div><div class="panel" style="margin-bottom:12px"><div class="sh">Portfolio range over time</div><div class="risk-chart"><canvas id="risk-fan-chart"></canvas></div><div class="risk-help"><strong>How to read this:</strong> The red line is the 10th-percentile balance in each year. It is a lower-range boundary assembled from all simulations, not one path and not a depletion line. The dashed line is your current Cash Flow Roadmap—the plan shown elsewhere in the app—using its saved return and inflation assumptions every year. Both lines include the Roadmap’s planned income, spending, taxes, conversions, withdrawals, and account balances, and both are displayed in present-value (plan-start) dollars. Ages appear below the years when birth years are available.</div></div>'+riskDepletionHtml(a)+'<div class="panel" style="margin-bottom:12px"><div class="sh">Current Roadmap versus Lab Scenario</div>'+riskCompareHtml(b,a,r.config)+'</div>'+history+'<div class="panel"><div class="sh">Method and definitions</div><div class="risk-method-note">'+riskEsc(riskMethodNote(r.config.method))+'</div><div class="risk-help" style="font-size:11px;line-height:1.55"><strong>Current Cash Flow Roadmap:</strong> the projection already shown in the app, including its saved cash flows and account activity. The dashed comparison line uses the Roadmap’s saved return and inflation assumptions every year without random market variation, and is shown in present-value (plan-start) dollars. <strong>Portfolio survival:</strong> every planned spending and tax-funding year was funded. <strong>Depletion scenario:</strong> at least one year had an unfunded amount after available accounts and the Roadmap funding order were used. Path inflation changes Roadmap spending; Social Security COLA and tax-table inflation continue to use their saved Roadmap rules. Historical data: S&amp;P 500 total returns, 10-year U.S. Treasury total returns, and inflation, 1928–2023. <a href="https://pages.stern.nyu.edu/adamodar/New_Home_Page/datafile/histret.html" target="_blank" rel="noopener">Historical data source</a>.</div></div>';
+}
+function riskDepletionHtml(a){
+  const summary=riskFundingOutcomeTable(a);
+  if(!a.depletionRate)return '<div class="panel" style="margin-bottom:12px"><div class="sh">Funding outcomes</div>'+summary+'<div class="risk-concern"><strong>How concerning is this?</strong> No tested path had an unfunded year. This is reassuring for this set of assumptions, but it does not guarantee future results. Try reasonable spending and allocation changes to see whether the result remains stable.</div></div>';
+  return '<div class="panel" style="margin-bottom:12px"><div class="sh">Funding outcomes</div>'+summary+riskConcernHtml(a)+'</div>';
+}
+function riskYearAgeText(year){const age=hasRealBirthYear(S.by1,year)?calcAgeForPlanYear(S.by1,year):null;return age>0?year+' · '+age:year;}
+function riskChartLabel(year){
+  const a1=hasRealBirthYear(S.by1,year)?calcAgeForPlanYear(S.by1,year):null,a2=hasP2()&&hasRealBirthYear(S.by2,year)?calcAgeForPlanYear(S.by2,year):null;
+  if(a1>0&&a2>0)return [String(year),'Ages '+a1+' / '+a2];
+  if(a1>0)return [String(year),'Age '+a1];
+  return String(year);
+}
+function riskFundingOutcomeTable(a){
+  const funded=a.items.filter(x=>!x.depleted).length,dep=a.count-funded,n=Math.max(1,(a.items[0]&&a.items[0].pv.length)||1),cut1=n/3,cut2=2*n/3;
+  const early=a.items.filter(x=>x.depleted&&x.depletionIndex<cut1).length,middle=a.items.filter(x=>x.depleted&&x.depletionIndex>=cut1&&x.depletionIndex<cut2).length,late=dep-early-middle;
+  const rows=[['Fully funded through the ending year',funded,riskPct(funded/a.count,1)],['Depleted in the first third of the horizon',early,riskPct(early/a.count,1)],['Depleted in the middle third',middle,riskPct(middle/a.count,1)],['Depleted in the final third',late,riskPct(late/a.count,1)],['Total depletion scenarios',dep,riskPct(dep/a.count,1)]];
+  return '<div class="risk-detail-note">“Fully funded” means every planned spending and tax-funding year was met. “Depleted” means at least one year had an unfunded amount after the Roadmap used available accounts.</div><table class="risk-outcomes"><thead><tr><th>Outcome</th><th>Number of simulations</th><th>Percent</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+x[0]+'</td><td>'+Number(x[1]).toLocaleString()+'</td><td>'+x[2]+'</td></tr>').join('')+'</tbody></table>';
+}
+function riskConcernHtml(a){
+  const rate=a.depletionRate;
+  const concern=rate<=.01?'Depletion was rare in this run. It is a tail outcome rather than the typical result.':rate<=.05?'A small but visible group depleted. Treat this as a lower-range vulnerability worth testing, especially if the first depletion years occur earlier than expected.':rate<=.15?'Depletion occurred often enough to be a meaningful planning concern. The Roadmap may be sensitive to poor return timing, inflation, or spending.':'Depletion affected a substantial share of paths. The Roadmap appears vulnerable under these assumptions and merits closer review.';
+  return '<div class="risk-concern"><strong>How concerning is this?</strong> '+concern+'<br><br><strong>What to test next:</strong> rerun one change at a time. Try spending 5% to 10% lower, then test stock allocation 10 percentage points higher and lower. Compare portfolio survival, the 10th-percentile ending balance, and how early depletion begins. More stocks can improve long-term growth but can also worsen early losses, so a higher stock percentage is not automatically better.</div>';
+}
+function riskSelectDepletionYear(year){riskLabSelectedDepletionYear=Number(year);const el=document.getElementById('risk-depletion-panel');if(el&&riskLabResults)el.outerHTML=riskDepletionHtml(riskLabResults.lab);}
+function riskDepletionDetailHtml(a,year){
+  const matches=a.items.filter(x=>x.depletionYear===Number(year)).sort((x,y)=>x.ending-y.ending);if(!matches.length)return '';
+  const example=matches[Math.floor(matches.length/2)],idx=example.depletionIndex,start=Math.max(0,idx-4),end=Math.min(example.annual.length,idx+2),rows=example.annual.slice(start,end);
+  const dep=example.annual[idx],prior=example.annual[Math.max(0,idx-1)],why='In this example, the portfolio ended the prior year at '+riskMoney(prior.portfolioPV)+' in plan-start dollars. In '+year+', the portfolio return was '+riskPct(dep.portfolioReturn,1)+', planned spending was '+riskMoney(dep.spendingPV)+', and the Roadmap could not fund '+riskMoney(dep.unfundedPV)+'. The shortfall is what marks this as depletion; a low balance by itself does not.';
+  return '<div class="sh">'+riskYearAgeText(Number(year))+' depletion detail</div><div class="risk-detail-note"><strong>'+matches.length.toLocaleString()+' path'+(matches.length===1?'':'s')+'</strong> first depleted in '+year+'. '+why+' The table shows a representative path near the middle of that group, beginning up to four years before depletion.</div><div class="risk-history-wrap"><table class="risk-history"><thead><tr><th>Roadmap year</th><th>Age</th><th>Portfolio PV</th><th>Portfolio return</th><th>Inflation</th><th>Spending PV</th><th>Unfunded PV</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+x.roadmapYear+'</td><td>'+(x.age==null?'—':Math.round(x.age))+'</td><td>'+riskMoney(x.portfolioPV)+'</td><td>'+riskPct(x.portfolioReturn,1)+'</td><td>'+riskPct(x.inflation,1)+'</td><td>'+riskMoney(x.spendingPV)+'</td><td>'+riskMoney(x.unfundedPV)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+function riskCompareHtml(b,a,c){
+  const depLabel=x=>x.medianDepletionAge!=null?'Age '+Math.round(x.medianDepletionAge):(x.depletionRate?'See timing above':'No depletion');
+  const rows=[['Portfolio survival',riskPct(b.survival,1),riskPct(a.survival,1),(a.survival-b.survival>=0?'+':'')+((a.survival-b.survival)*100).toFixed(1)+' pp'],['Median ending portfolio',riskMoney(b.ending.p50),riskMoney(a.ending.p50),riskMoney(a.ending.p50-b.ending.p50)],['10th percentile ending',riskMoney(b.ending.p10),riskMoney(a.ending.p10),riskMoney(a.ending.p10-b.ending.p10)],['25th percentile ending',riskMoney(b.ending.p25),riskMoney(a.ending.p25),riskMoney(a.ending.p25-b.ending.p25)],['75th percentile ending',riskMoney(b.ending.p75),riskMoney(a.ending.p75),riskMoney(a.ending.p75-b.ending.p75)],['90th percentile ending',riskMoney(b.ending.p90),riskMoney(a.ending.p90),riskMoney(a.ending.p90-b.ending.p90)],['Median minimum portfolio',riskMoney(b.medianMinimum),riskMoney(a.medianMinimum),riskMoney(a.medianMinimum-b.medianMinimum)],['Depletion scenarios',riskPct(b.depletionRate,1),riskPct(a.depletionRate,1),((a.depletionRate-b.depletionRate)*100).toFixed(1)+' pp'],['Typical depletion timing',depLabel(b),depLabel(a),'—'],['Median lifetime spending',riskMoney(b.medianSpending),riskMoney(a.medianSpending),riskMoney(a.medianSpending-b.medianSpending)],['Median maximum drawdown',riskPct(b.medianDrawdown,1),riskPct(a.medianDrawdown,1),((a.medianDrawdown-b.medianDrawdown)*100).toFixed(1)+' pp']];
+  const basis=c.method==='montecarlo'?'Current Roadmap uses its saved expected return and inflation. Both cases use the same underlying random draws.':'Both cases use the same historical return and inflation years.';
+  return '<table class="risk-compare"><thead><tr><th>Measure</th><th>Current Roadmap</th><th>Lab Scenario</th><th>Difference</th></tr></thead><tbody>'+rows.map(x=>'<tr>'+x.map(v=>'<td>'+riskEsc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><div class="risk-help" style="margin-top:9px">Current Roadmap uses the saved ending year, '+riskEsc(c.baseStockPct)+'% stocks / '+riskEsc(100-c.baseStockPct)+'% bonds, and no spending adjustment. Lab Scenario uses the temporary overrides. '+riskEsc(basis)+'</div>';
+}
+function riskSelectHistory(startYear){riskLabSelectedHistory=Number(startYear);const el=document.getElementById('risk-history-panel');if(el&&riskLabResults)el.outerHTML=riskHistoryHtml(riskLabResults.lab);}
+function riskSetHistoryLimit(limit){riskLabHistoryLimit=Number(limit)||0;if(!riskLabHistoryLimit)riskLabSelectedHistory=null;const el=document.getElementById('risk-history-panel');if(el&&riskLabResults)el.outerHTML=riskHistoryHtml(riskLabResults.lab);}
+function riskHistoryHtml(a){
+  const depleted=a.items.filter(x=>x.depleted).sort((x,y)=>(x.depletionIndex-y.depletionIndex)||(x.ending-y.ending));
+  const allFunded=!depleted.length,ranked=(allFunded?a.items.slice().sort((x,y)=>x.ending-y.ending):depleted).slice(0,12);
+  if(riskLabSelectedHistory&&!ranked.some(x=>x.startYear===riskLabSelectedHistory))riskLabSelectedHistory=null;
+  const selected=a.items.find(x=>x.startYear===riskLabSelectedHistory),detail=selected&&selected.annual?'<div class="sh">How the '+selected.startYear+' sequence maps to your Roadmap</div><div class="risk-detail-note">Your first Roadmap year uses the actual market returns and inflation from '+selected.startYear+'. Each following Roadmap year uses the next historical year in order.</div><div class="risk-history-wrap"><table class="risk-history"><thead><tr><th>Roadmap year</th><th>Historical year used</th><th>Portfolio PV</th><th>Stocks</th><th>Bonds</th><th>Inflation</th><th>Spending PV</th><th>Unfunded PV</th></tr></thead><tbody>'+selected.annual.map(x=>'<tr><td>'+x.roadmapYear+'</td><td>'+x.historyYear+'</td><td>'+riskMoney(x.portfolioPV)+'</td><td>'+riskPct(x.stock,1)+'</td><td>'+riskPct(x.bond,1)+'</td><td>'+riskPct(x.inflation,1)+'</td><td>'+riskMoney(x.spendingPV)+'</td><td>'+riskMoney(x.unfundedPV)+'</td></tr>').join('')+'</tbody></table></div>':'';
+  if(allFunded&&!riskLabHistoryLimit){const low=ranked[0];return '<div class="panel" id="risk-history-panel" style="margin-bottom:12px"><div class="sh">Historical sequence check</div><div class="risk-concern"><strong>All '+a.count.toLocaleString()+' available historical sequences were fully funded.</strong> The lowest ending balance was '+riskMoney(low&&low.ending)+' using the sequence beginning in '+(low&&low.startYear)+'. That starting year identifies the historical market and inflation sequence; it is not a depletion year.</div><button class="btn btn-light btn-sm" onclick="riskSetHistoryLimit(5)">Review the 5 lowest ending-balance periods</button></div>'}
+  const visible=ranked.slice(0,riskLabHistoryLimit||5),title=allFunded?'Lowest ending-balance historical periods':'Historical sequences with unfunded years';
+  return '<div class="panel" id="risk-history-panel" style="margin-bottom:12px"><div class="sh">'+title+'</div><div class="risk-detail-note"><strong>What the starting year means:</strong> a 1965 start applies the actual 1965 market returns and inflation to the first Roadmap year, 1966 to the second Roadmap year, and so forth. It is not a depletion year. Select a year only if you want to see that mapping.</div><div class="risk-history-wrap"><table class="risk-history"><thead><tr><th>Historical sequence starts</th><th>Ending portfolio</th><th>Funding result</th><th>First unfunded Roadmap year</th><th>Age</th></tr></thead><tbody>'+visible.map(x=>'<tr><td><button onclick="riskSelectHistory('+x.startYear+')">'+x.startYear+'</button></td><td>'+riskMoney(x.ending)+'</td><td>'+(x.depleted?'Had an unfunded year':'Fully funded')+'</td><td>'+(x.depletionYear||'—')+'</td><td>'+(x.depletionAge==null?'—':Math.round(x.depletionAge))+'</td></tr>').join('')+'</tbody></table></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">'+(ranked.length>5&&riskLabHistoryLimit<12?'<button class="btn btn-light btn-sm" onclick="riskSetHistoryLimit(12)">View more periods</button>':'')+(allFunded?'<button class="btn btn-light btn-sm" onclick="riskSetHistoryLimit(0)">Hide historical periods</button>':'')+'</div><div class="risk-help" style="margin-top:8px">'+(allFunded?'These are weaker fully funded outcomes, not unsuccessful plans. ':'Only sequences with an unfunded Roadmap year are shown. ')+'Available history ends in 2023.</div>'+detail+'</div>';
+}
+function riskRenderChart(r){
+  const canvas=document.getElementById('risk-fan-chart');if(!canvas||typeof Chart==='undefined')return;
+  if(riskLabChart)try{riskLabChart.destroy();}catch(e){}
+  const a=r.lab.bands,road=r.roadmapPV;
+  riskLabChart=new Chart(canvas,{type:'line',data:{labels:r.labels,datasets:[
+    {label:'90th percentile',data:a.p90,borderColor:'rgba(26,92,26,.45)',backgroundColor:'rgba(26,92,26,.08)',borderWidth:1,pointRadius:0,fill:'+4'},
+    {label:'75th percentile',data:a.p75,borderColor:'rgba(184,134,11,.55)',backgroundColor:'rgba(184,134,11,.16)',borderWidth:1,pointRadius:0,fill:'+2'},
+    {label:'Median',data:a.p50,borderColor:'#1a5c1a',borderWidth:3,pointRadius:0,fill:false},
+    {label:'25th percentile',data:a.p25,borderColor:'rgba(184,134,11,.55)',borderWidth:1,pointRadius:0,fill:false},
+    {label:'Lower range (10th percentile)',data:a.p10,borderColor:'rgba(139,26,10,.65)',borderWidth:1.5,pointRadius:0,fill:false},
+    {label:'Roadmap using fixed return',data:road,borderColor:'#1a1208',borderWidth:2,borderDash:[7,5],pointRadius:0,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:18,font:{size:10}}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+riskMoney(ctx.parsed.y)}}},scales:{x:{title:{display:true,text:'Roadmap year and age'}},y:{beginAtZero:true,title:{display:true,text:'Portfolio value (plan-start dollars)'},ticks:{callback:v=>riskMoney(v)}}}}});
+}
+async function riskRun(){
+  riskReadControls();const c=Object.assign({},riskLabSettings),token=++riskLabRunToken,years=c.endYear-S.startYear+1,baseYears=S.endYear-S.startYear+1,pathYears=Math.max(years,baseYears);
+  const btn=document.getElementById('risk-run'),wrap=document.getElementById('risk-progress-wrap'),bar=document.getElementById('risk-progress-bar'),status=document.getElementById('risk-status'),cancel=document.getElementById('risk-cancel'),target=document.getElementById('risk-results');if(btn)btn.disabled=true;if(wrap)wrap.style.display='block';if(cancel)cancel.style.display='inline-block';if(status)status.textContent='Preparing '+(c.method==='bootstrap'?'Historical Bootstrap':c.method==='historical'?'Historical Sequence':'Monte Carlo')+'…';if(bar)bar.style.width='1%';if(target)target.innerHTML='<div class="panel risk-empty"><strong>Risk Lab is running.</strong><br>Preparing the selected method and your current Roadmap cash flows…</div>';
+  await new Promise(res=>setTimeout(res,20));
+  try{
+    const roadRows=riskBaseSpendRows(S.endYear);
+    let paths=c.method==='historical'?riskHistoricalPaths(pathYears):c.method==='bootstrap'?riskBootstrapPaths(c,c.simulations,pathYears):riskMontePaths(c,c.simulations,pathYears);
+    if(!paths.length)throw new Error('The selected horizon is longer than the available 1928–2023 historical record. Shorten the ending year or choose another method.');
+    const baseItems=[],labItems=[],total=paths.length;
+    for(let i=0;i<total;i++){
+      if(token!==riskLabRunToken)return;
+      const bp=riskScenarioState(c,paths[i],false,roadRows),lp=riskScenarioState(c,paths[i],true,roadRows);
+      baseItems.push(riskPathMetrics(runProjection(bp.state),bp.cpi,paths[i]));
+      labItems.push(riskPathMetrics(runProjection(lp.state),lp.cpi,paths[i]));
+      if(i%5===4||i===total-1){const pct=(i+1)/total;if(bar)bar.style.width=(pct*100).toFixed(0)+'%';if(status)status.textContent='Testing path '+(i+1).toLocaleString()+' of '+total.toLocaleString()+'…';await new Promise(res=>setTimeout(res,0));}
+    }
+    const deterministic=riskBaseSpendRows(c.endYear),roadmapPV=deterministic.map((x,i)=>(x.netWorth||0)/Math.pow(1+(S.spendInfl||0),i));
+    riskLabResults={config:c,years,labels:Array.from({length:years},(_,i)=>riskChartLabel(S.startYear+i)),roadmapPV,base:riskAggregate(baseItems,baseYears),lab:riskAggregate(labItems,years)};
+    if(token!==riskLabRunToken)return;
+    riskLabSettings.hasRun=true;riskSaveSettings();
+    const target=document.getElementById('risk-results');if(target)target.innerHTML=riskResultsHtml(riskLabResults);if(status)status.textContent='Complete.';if(cancel)cancel.style.display='none';if(btn)btn.disabled=false;setTimeout(()=>riskRenderChart(riskLabResults),0);
+  }catch(e){if(status)status.textContent='Unable to run: '+String(e.message||e);if(btn)btn.disabled=false;if(bar)bar.style.width='0';console.error('Risk Lab:',e);}
 }
 
 function initApp() {
