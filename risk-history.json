@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "source": "Aswath Damodaran, NYU Stern",
+  "sourceUrl": "https://pages.stern.nyu.edu/adamodar/New_Home_Page/datafile/histretSP.html",
+  "updated": "2026-01-05",
+  "units": "decimal annual returns",
+  "columns": ["year", "sp500TotalReturn", "us10YearTreasuryTotalReturn", "inflation"],
+  "maintenance": "Download Damodaran's Excel workbook. On the Returns by year sheet use column B for S&P 500 (includes dividends), column E for US T. Bond (10-year), and column U for Inflation Rate. The HTML table does not currently show inflation. The app validates and caches the result.",
+  "data": [
+    [2024, 0.2488, -0.0164, 0.0289],
+    [2025, 0.1772, 0.0780, 0.0274]
+  ]
+}
