@@ -10666,14 +10666,48 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const baselineTax = Math.max(0,row.incomeTax||0);
   return Math.max(0, Math.min(1, (newFed.ordTax + newFed.ltcgTax + newState - baselineTax) / amount));
 }
+function rothLabNormalBetrFundingMix(row, amount){
+  let remaining = Math.max(0, amount||0);
+  const mix = {cash:0, ira:0, securities:0, roth:0, other:0};
+  const available = {
+    cash:Math.max(0,row.cashDraw||0),
+    ira:Math.max(0,(row.ira1Addl||0)+(row.ira2Addl||0)+(row.pre2020InhAddl||0)+(row.post2020InhDiscretionary||0)),
+    securities:Math.max(0,row.stkSales||0),
+    roth:Math.max(0,(row.rothDraw1||0)+(row.rothDraw2||0))
+  };
+  const keyForBucket = {IRA:'ira',SEC:'securities',ROTH:'roth'};
+  const sequence = ['cash'].concat((row.fundingOrder||[]).map(v=>keyForBucket[v]).filter(Boolean));
+  // Conversion tax is the marginal need, so attribute it to the last dollars
+  // used in the year's waterfall rather than proportionally to all spending draws.
+  sequence.slice().reverse().forEach(key => {
+    if (remaining <= 0) return;
+    const used = Math.min(remaining, available[key]||0);
+    mix[key] += used;
+    remaining -= used;
+  });
+  // If income or reduced annual saving absorbed part of the tax, use the
+  // securities opportunity cost as the conservative destination of that cash flow.
+  if (remaining > 0) mix.other = remaining;
+  return mix;
+}
+function rothLabBetrFundingMixText(mix){
+  const labels = {cash:'cash',ira:'IRA',securities:'securities',roth:'Roth',withheld:'withheld from conversion',other:'reduced saving / other cash flow'};
+  const total = Object.keys(labels).reduce((sum,key)=>sum+Math.max(0,(mix&&mix[key])||0),0);
+  if (total <= 0.49) return 'No separately identified conversion-tax funding';
+  return Object.keys(labels).filter(key=>((mix&&mix[key])||0)>0.49).map(key=>{
+    const amount = Math.max(0,mix[key]||0);
+    return Math.round(amount/total*100)+'% '+labels[key];
+  }).join(', ');
+}
 function rothLabBetrAnalysis(rows, state, start, end){
   const A = state || S;
   const horizonYear = rothLabBetrHorizonYear(end, start);
   const selected = (rows || []).filter(r => r.yr >= start && r.yr <= end && r.yr <= horizonYear && (r.rothConv||0) > 0.49);
-  const result = {available:false, rate:null, currentRate:0, futureRate:0, horizonYear, horizonYears:0, gross:0, tax:0, outsideFutureValue:0, method:'', methodLabel:'', outsideReturn:null, outsideReturnAuto:true};
+  const result = {available:false, rate:null, currentRate:0, futureRate:0, horizonYear, horizonYears:0, gross:0, tax:0, outsideFutureValue:0, fundingMix:{cash:0,ira:0,securities:0,roth:0,withheld:0,other:0}, method:'', methodLabel:'', outsideReturn:null, outsideReturnAuto:true};
   if (!selected.length) return result;
   const overrideReturn = rothLabBetrOutsideReturnOverride();
   let noConversionPreTaxFV = 0, conversionAfterTaxFV = 0, gross = 0, tax = 0, outsideFV = 0, weightedYears = 0;
+  const fundingMix = {cash:0,ira:0,securities:0,roth:0,withheld:0,other:0};
   const methods = new Set();
   selected.forEach(r => {
     const conversion = Math.max(0, r.rothConv||0);
@@ -10696,15 +10730,20 @@ function rothLabBetrAnalysis(rows, state, start, end){
       const rowOutsideFV = cashPaid*cashFactor + (secPaid+unclassified)*secFactor;
       rowConversionFV -= rowOutsideFV;
       outsideFV += rowOutsideFV;
+      fundingMix.cash += cashPaid;
+      fundingMix.securities += secPaid + unclassified;
     } else if (method === 'IRA') {
-      rowNoConversionFV += Math.max(0, r.rothConvTaxIraWithdrawal||0) * rothFactor;
+      const iraPaid = Math.max(0, r.rothConvTaxIraWithdrawal||0);
+      rowNoConversionFV += iraPaid * rothFactor;
+      fundingMix.ira += iraPaid;
+    } else if (method === 'WITHHOLD') {
+      fundingMix.withheld += Math.max(0,r.rothConvTaxWithheld||conversionTax);
     } else if (method === 'NORMAL') {
-      // Normal funding does not earmark account draws by tax component. Treat
-      // the incremental conversion tax as outside opportunity cost and label
-      // the result as an estimate rather than inventing account attribution.
-      const rowOutsideFV = conversionTax * secFactor;
-      rowConversionFV -= rowOutsideFV;
-      outsideFV += rowOutsideFV;
+      const mix = rothLabNormalBetrFundingMix(r, conversionTax);
+      rowConversionFV -= mix.cash*cashFactor + mix.securities*secFactor + mix.roth*rothFactor + mix.other*secFactor;
+      rowNoConversionFV += mix.ira*rothFactor;
+      outsideFV += mix.cash*cashFactor + mix.securities*secFactor + mix.other*secFactor;
+      Object.keys(mix).forEach(key=>{ fundingMix[key] += mix[key]||0; });
     }
     noConversionPreTaxFV += rowNoConversionFV;
     conversionAfterTaxFV += rowConversionFV;
@@ -10728,6 +10767,8 @@ function rothLabBetrAnalysis(rows, state, start, end){
     gross,
     tax,
     outsideFutureValue:outsideFV,
+    fundingMix,
+    fundingMixText:rothLabBetrFundingMixText(fundingMix),
     method,
     methodLabel:method === 'MIXED' ? 'Mixed funding methods' : rothTaxFundingLabel(method),
     outsideReturn:overrideReturn,
@@ -11388,7 +11429,7 @@ function rothLabBetrCardHtml(x){
   const fundingReason = b.method === 'WITHHOLD' ? ' Withholding raises the hurdle because part of the gross conversion pays tax instead of reaching Roth.'
     : b.method === 'OUTSIDE' ? ' Outside funding lets the full conversion reach Roth, but BETR subtracts the future value those tax-funding assets could have earned.'
     : b.method === 'IRA' ? ' A separate IRA tax withdrawal raises taxable income and consumes additional IRA dollars, including the gross-up needed to pay tax on that withdrawal.'
-    : ' Normal Funding uses an estimated opportunity cost because the plan does not earmark each ordinary account draw by individual tax component.';
+    : ' Normal Cash-Flow Funding attributes the conversion tax to the marginal last dollars used by the year&rsquo;s actual funding waterfall, then applies the appropriate cash, IRA, securities, or Roth cost.';
   const returnText = b.outsideReturnAuto ? 'Automatic from plan assumptions' : fp(b.outsideReturn||0);
   return '<div class="roth-metric-section">Break-Even Tax Rate (BETR) analysis</div><div class="roth-metrics">'+
     rothLabMetric('Break-even future tax rate', rothLabBetrRateText(b.rate))+
@@ -11398,6 +11439,7 @@ function rothLabBetrCardHtml(x){
     rothLabMetric('BETR reading', above?'Above BETR - favors conversion':'Below BETR - favors no conversion', above?'small':'warn small')+
     rothLabMetric('Evaluation horizon', setupEsc(b.horizonYear+' (~'+Math.round(b.horizonYears)+' years)'), 'small')+
     rothLabMetric('Tax funding', setupEsc(b.methodLabel), 'small')+
+    rothLabMetric('BETR tax-cost source', setupEsc(b.fundingMixText||rothLabBetrFundingMixText(b.fundingMix)), 'small')+
     rothLabMetric('Outside after-tax return', setupEsc(returnText), 'small')+
     '</div><div class="setup-check '+(above?'done':'warn')+'" style="margin-top:9px"><div class="setup-check-title">Why this signal is '+(above?'favorable':'not favorable')+'</div><div class="setup-check-body">'+setupEsc(relationship+fundingReason)+'<br><br><strong>What could change it:</strong> a higher future IRA tax rate, a longer growth period, a lower current conversion tax, or a lower opportunity cost for the assets paying the tax generally makes conversion more attractive. The future rate here estimates incremental federal and state tax on a withdrawal similar to the scenario\'s average annual conversion.<br><br>Use this as one decision aid, then check the full-plan results for RMDs, IRMAA, cash flow, survivor effects, and estate value.</div></div>';
 }
@@ -11441,7 +11483,7 @@ function rothLabRenderBetrReport(selected, cfg){
     const b = sc.summary.betr;
     const gap = b.futureRate-b.rate;
     const above = gap >= 0;
-    return '<tr><td><strong>'+setupEsc(sc.summary.label||'')+'</strong></td><td class="r bold">'+setupEsc(rothLabBetrRateText(b.rate))+'</td><td class="r">'+setupEsc(rothLabBetrRateText(b.currentRate))+'</td><td class="r">'+setupEsc(rothLabBetrRateText(b.futureRate))+'</td><td class="r '+(above?'':'red')+'">'+setupEsc((gap>=0?'+':'')+rothLabBetrRateText(gap))+'</td><td><strong>'+setupEsc(above?'Above BETR - favors conversion':'Below BETR - favors no conversion')+'</strong></td><td class="r">'+setupEsc(String(b.horizonYear))+'</td></tr>';
+    return '<tr><td><strong>'+setupEsc(sc.summary.label||'')+'</strong><div style="font-size:10px;color:#6a5830;line-height:1.25;margin-top:2px">Tax cost: '+setupEsc(b.fundingMixText||rothLabBetrFundingMixText(b.fundingMix))+'</div></td><td class="r bold">'+setupEsc(rothLabBetrRateText(b.rate))+'</td><td class="r">'+setupEsc(rothLabBetrRateText(b.currentRate))+'</td><td class="r">'+setupEsc(rothLabBetrRateText(b.futureRate))+'</td><td class="r '+(above?'':'red')+'">'+setupEsc((gap>=0?'+':'')+rothLabBetrRateText(gap))+'</td><td><strong>'+setupEsc(above?'Above BETR - favors conversion':'Below BETR - favors no conversion')+'</strong></td><td class="r">'+setupEsc(String(b.horizonYear))+'</td></tr>';
   }).join('');
   const comparisonRows = available.map(sc => {
     const c = sc.summary.betrFundingComparison || {};
