@@ -1380,7 +1380,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
             <select id="tt-year-sel" onchange="ttSelectYear()"
               style="font-family:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--gold);background:var(--cream);border-radius:4px;flex:1"></select>
             <button onclick="ttAddYear()" style="padding:5px 12px;background:#2a5934;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">+ Add Year</button>
-            <button onclick="ttLoadOfficialFederal2027()" title="Load official 2027 federal brackets and deductions" style="padding:5px 12px;background:#7a5700;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Load 2027 Federal</button>
+            <button id="tt-load-2027-btn" onclick="ttLoadOfficialFederal2027()" title="Load official 2027 federal brackets and deductions" style="padding:5px 12px;background:#7a5700;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Load 2027 Federal</button>
             <button id="tt-del-btn" onclick="ttDeleteYear()" title="Delete this year's table" style="padding:5px 10px;background:#8b0000;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap">Delete Year</button>
           </div>
           <div class="note">Each year uses exact brackets entered. Years between defined years use the prior year's table.</div>
@@ -8378,6 +8378,36 @@ function ttEnsureSourceStatus(T) {
   return T._sourceStatus;
 }
 
+function ttUpdateFederal2027Button() {
+  const btn = document.getElementById('tt-load-2027-btn');
+  if (!btn) return;
+  const table = S.taxTables && S.taxTables[2027];
+  const valuesMatch = !!table && Object.keys(OFFICIAL_FEDERAL_2027).every(key => JSON.stringify(table[key]) === JSON.stringify(OFFICIAL_FEDERAL_2027[key]));
+  const official = valuesMatch && table._sourceStatus && table._sourceStatus.federal === 'official';
+  if (official) {
+    btn.textContent = '✓ 2027 Federal Loaded';
+    btn.title = 'The official 2027 federal values are installed. Future-year updates appear under Official Tax-Data Updates.';
+    btn.disabled = true;
+    btn.style.background = '#2a6b35';
+    btn.style.opacity = '0.82';
+    btn.style.cursor = 'default';
+  } else if (table) {
+    btn.textContent = 'Restore Official 2027 Federal';
+    btn.title = 'Restore the official IRS 2027 federal brackets and deductions. Other 2027 sections will not change.';
+    btn.disabled = false;
+    btn.style.background = '#7a5700';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.textContent = 'Load 2027 Federal';
+    btn.title = 'Create 2027 and load the official IRS federal brackets and deductions.';
+    btn.disabled = false;
+    btn.style.background = '#7a5700';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }
+}
+
 function ttRenderSourceStatus() {
   const el = document.getElementById('tt-source-status');
   if (!el) return;
@@ -8392,6 +8422,7 @@ function ttRenderSourceStatus() {
         <option value="official" ${status[key]==='official'?'selected':''}>Official</option>
       </select>
     </label>`).join('');
+  ttUpdateFederal2027Button();
 }
 
 function ttSetSourceStatus(section, value) {
