@@ -1,0 +1,52 @@
+name: Annual tax-data reminder
+
+on:
+  schedule:
+    - cron: "17 15 * 9-12 1"
+    - cron: "17 15 * 1 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate-and-remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate tax update manifest
+        run: python -m json.tool tax-updates.json > /dev/null
+
+      - name: Determine update year
+        id: year
+        shell: bash
+        run: |
+          month=$(date -u +%m)
+          year=$(date -u +%Y)
+          if [ "$month" -ge 9 ]; then year=$((year + 1)); fi
+          echo "value=$year" >> "$GITHUB_OUTPUT"
+
+      - name: Create annual review issue if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATE_YEAR: ${{ steps.year.outputs.value }}
+        shell: bash
+        run: |
+          title="Review official ${UPDATE_YEAR} tax and Medicare releases"
+          existing=$(gh issue list --state open --search "${title} in:title" --json number --jq 'length')
+          if [ "$existing" -eq 0 ]; then
+            body=$(printf '%s\n' \
+              "The finance app is monitoring for official ${UPDATE_YEAR} values. Review each agency release before adding numbers to tax-updates.json." \
+              "" \
+              "- [ ] IRS federal brackets, deductions, and capital-gains thresholds: https://www.irs.gov/newsroom" \
+              "- [ ] California FTB brackets and deductions: https://www.ftb.ca.gov/file/personal/tax-calculator-tables-rates.asp" \
+              "- [ ] CMS Part B premium and IRMAA surcharges: https://www.cms.gov/newsroom" \
+              "- [ ] Add source URL and publication date to tax-updates.json" \
+              "- [ ] Validate the app's old-versus-new preview" \
+              "" \
+              "Do not mark a section Official until its values have been checked against the agency publication.")
+            gh issue create --title "$title" --body "$body" --label "tax-data" 2>/dev/null || gh issue create --title "$title" --body "$body"
+          fi
+ sc
