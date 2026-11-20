@@ -49,4 +49,3 @@ jobs:
               "Do not mark a section Official until its values have been checked against the agency publication.")
             gh issue create --title "$title" --body "$body" --label "tax-data" 2>/dev/null || gh issue create --title "$title" --body "$body"
           fi
- sc
