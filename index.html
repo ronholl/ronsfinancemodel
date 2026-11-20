@@ -1380,6 +1380,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
             <select id="tt-year-sel" onchange="ttSelectYear()"
               style="font-family:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--gold);background:var(--cream);border-radius:4px;flex:1"></select>
             <button onclick="ttAddYear()" style="padding:5px 12px;background:#2a5934;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">+ Add Year</button>
+            <button onclick="ttLoadOfficialFederal2027()" title="Load official 2027 federal brackets and deductions" style="padding:5px 12px;background:#7a5700;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Load 2027 Federal</button>
             <button id="tt-del-btn" onclick="ttDeleteYear()" title="Delete this year's table" style="padding:5px 10px;background:#8b0000;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap">Delete Year</button>
           </div>
           <div class="note">Each year uses exact brackets entered. Years between defined years use the prior year's table.</div>
@@ -1401,7 +1402,25 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
         </div>
       </div>
       <div style="padding:10px;background:#fffbf0;border:1px solid #e0cc80;border-radius:6px;font-size:12px;color:#5a4000">
-        <strong>Each November:</strong> Click <em>+ Add</em>, enter the new year, then fill in updated IRS brackets from <em>irs.gov/newsroom</em>, plus IRMAA thresholds, surcharge amounts, and standard Part B premiums from CMS/Medicare updates. Prior year tables are preserved exactly and used for historical calculations.
+        <strong>2027 federal update:</strong> <em>Load 2027 Federal</em> installs the official IRS ordinary-income and capital-gains brackets, standard deductions, and age/blind additions. It does not treat federal data as California or Medicare data: a newly created 2027 table projects those fields from the prior table, while an existing 2027 table keeps them unchanged. Source: IRS Revenue Procedure 2026-35. For other years, click <em>+ Add Year</em> and enter the published IRS, California, and CMS/Medicare values.
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:10px;letter-spacing:.1em;color:var(--gold);font-weight:700;margin-bottom:6px">SELECTED YEAR DATA STATUS</div>
+        <div id="tt-source-status" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div>
+        <div class="note" style="margin-top:5px">Projected means the app carried a prior table forward using your inflation assumptions. Entered means values were edited but the app cannot verify their source. Choose Official after checking the applicable IRS, California FTB, or CMS release.</div>
+      </div>
+      <div style="margin-top:12px;padding:10px;border:1px solid #cdb873;border-left:5px solid var(--gold);border-radius:6px;background:#fffdf7">
+        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:260px">
+            <label>Official Tax-Data Updates</label>
+            <select id="tt-update-select" onchange="taxUpdateRenderSelection()" style="width:100%;font-family:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--gold);background:var(--cream);border-radius:4px">
+              <option value="">Checking GitHub…</option>
+            </select>
+          </div>
+          <button class="btn btn-light" onclick="taxUpdateCheck(true)" style="padding:7px 11px">Check Now</button>
+          <button class="btn btn-dark" id="tt-update-apply" onclick="taxUpdateApplySelected()" style="padding:7px 11px;display:none">Review &amp; Apply</button>
+        </div>
+        <div id="tt-update-detail" class="note" style="margin-top:7px">The app checks the public update file in ronholl/ronsfinancemodel at most weekly. No plan data is sent.</div>
       </div>
     </div>
 
@@ -1692,6 +1711,20 @@ const DEFAULT_TAX_TABLE_2026 = {
   // CA — HOH (same as MFJ in CA)
   caOrdBktsHOH:    [[0,.01],[21969,.02],[51993,.04],[82094,.06],[105530,.08],[123210,.093],[640130,.103],[767950,.113],[1279550,.123]],
   caStdHOH:        11500,
+};
+
+// Official federal tax-year 2027 values from IRS Revenue Procedure 2026-35.
+// State and Medicare values come from separate California and CMS releases.
+const OFFICIAL_FEDERAL_2027 = {
+  fedOrdBkts:       [[0,.10],[25601,.12],[104051,.22],[218251,.24],[416651,.32],[529101,.35],[793651,.37]],
+  fedLtcgBkts:      [[0,0],[102101,.15],[633601,.20]],
+  fedStdBase:       33200, fedStdSr: 1700,
+  fedOrdBktsSingle: [[0,.10],[12801,.12],[52026,.22],[109126,.24],[208326,.32],[264551,.35],[661376,.37]],
+  fedLtcgBktsSingle:[[0,0],[51051,.15],[563201,.20]],
+  fedStdBaseSingle: 16600, fedStdSrSingle: 2100,
+  fedOrdBktsHOH:    [[0,.10],[18251,.12],[69651,.22],[109101,.24],[208301,.32],[264551,.35],[661351,.37]],
+  fedLtcgBktsHOH:   [[0,0],[68351,.15],[598401,.20]],
+  fedStdBaseHOH:    24925, fedStdSrHOH: 2100
 };
 
 // Returns {tableYear, table} — the best-matching table for a given projection year
@@ -8208,6 +8241,7 @@ function renderTaxTables() {
   sv('tt-minfl', pct100(S.medicareCostInfl ?? S.irmaaInfl ?? 0));
   renderTTPreviewSel();
   renderTTPreview();
+  taxUpdateRenderPicker();
 }
 
 // ── Year selector helpers ─────────────────────────────────────────────────────
@@ -8252,11 +8286,48 @@ function ttAddYear() {
   // Copy from nearest prior year as starting point
   const prior = years.filter(y=>y<=newYr).pop() || years[0];
   S.taxTables[newYr] = JSON.parse(JSON.stringify(S.taxTables[prior] || DEFAULT_TAX_TABLE_2026));
+  S.taxTables[newYr]._sourceStatus = { federal:'projected', california:'projected', irmaa:'projected', medicare:'projected' };
   ttEditYear = newYr;
   saveState(S); showSaved();
   proj = runProjection(S);
   ttBuildYearSel();
   ttLoadYear();
+}
+
+function ttLoadOfficialFederal2027() {
+  if (!S.taxTables) S.taxTables = {};
+  const existing = !!S.taxTables[2027];
+  if (existing && !confirm('Replace the federal fields in the existing 2027 table with the official IRS values? California, IRMAA, and Medicare fields will not change.')) return;
+
+  if (!existing) {
+    const years = ttGetYears();
+    const priorYear = years.filter(y => y < 2027).pop() || years[years.length - 1] || 2026;
+    const prior = JSON.parse(JSON.stringify(S.taxTables[priorYear] || DEFAULT_TAX_TABLE_2026));
+    const yearGap = Math.max(0, 2027 - priorYear);
+    const bracketFactor = Math.pow(1 + (parseFloat(S.bracketInfl) || 0), yearGap);
+    const irmaaFactor = Math.pow(1 + (parseFloat(S.irmaaInfl) || 0), yearGap);
+    const medicareFactor = Math.pow(1 + (parseFloat(S.medicareCostInfl) || 0), yearGap);
+    const scaleStarts = (rows, factor) => (rows || []).map(([start, rate], i) => [i === 0 ? 0 : Math.round(start * factor), rate]);
+    ['caOrdBkts','caOrdBktsSingle','caOrdBktsHOH'].forEach(k => { if (prior[k]) prior[k] = scaleStarts(prior[k], bracketFactor); });
+    ['caStd','caStdSingle','caStdHOH'].forEach(k => { if (prior[k] != null) prior[k] = Math.round(prior[k] * bracketFactor); });
+    ['irmaaThresh','irmaaThreshSingle','irmaaThreshHOH'].forEach(k => { if (prior[k]) prior[k] = prior[k].map((v,i) => i === 0 ? 0 : Math.round(v * irmaaFactor)); });
+    if (prior.irmaaSurch) prior.irmaaSurch = prior.irmaaSurch.map((v,i) => i === 0 ? 0 : +(v * medicareFactor).toFixed(2));
+    if (prior.partBBase != null) prior.partBBase = +(prior.partBBase * medicareFactor).toFixed(2);
+    prior._sourceStatus = { federal:'projected', california:'projected', irmaa:'projected', medicare:'projected' };
+    S.taxTables[2027] = prior;
+  }
+
+  Object.entries(OFFICIAL_FEDERAL_2027).forEach(([key, value]) => {
+    S.taxTables[2027][key] = JSON.parse(JSON.stringify(value));
+  });
+  if (!S.taxTables[2027]._sourceStatus) S.taxTables[2027]._sourceStatus = { federal:'entered', california:'entered', irmaa:'entered', medicare:'entered' };
+  S.taxTables[2027]._sourceStatus.federal = 'official';
+  ttEditYear = 2027;
+  saveState(S); showSaved();
+  proj = runProjection(S);
+  ttBuildYearSel();
+  ttLoadYear();
+  alert('Official 2027 federal values loaded. California, IRMAA, and Medicare remain separate assumptions; review those fields when their 2027 values are available.');
 }
 
 function ttDeleteYear() {
@@ -8288,6 +8359,216 @@ function ttGetCurrentTable() {
   if (!S.taxTables) S.taxTables = {};
   if (!S.taxTables[ttEditYear]) S.taxTables[ttEditYear] = JSON.parse(JSON.stringify(DEFAULT_TAX_TABLE_2026));
   return S.taxTables[ttEditYear];
+}
+
+const TT_SOURCE_SECTIONS = [
+  ['federal','Federal'], ['california','California'], ['irmaa','IRMAA thresholds'], ['medicare','Medicare costs']
+];
+
+function ttEnsureSourceStatus(T) {
+  if (!T._sourceStatus) {
+    const isOfficial2027Federal = ttEditYear === 2027 && Object.keys(OFFICIAL_FEDERAL_2027).every(key => JSON.stringify(T[key]) === JSON.stringify(OFFICIAL_FEDERAL_2027[key]));
+    T._sourceStatus = isOfficial2027Federal
+      ? { federal:'official', california:'projected', irmaa:'projected', medicare:'projected' }
+      : { federal:'entered', california:'entered', irmaa:'entered', medicare:'entered' };
+  }
+  TT_SOURCE_SECTIONS.forEach(([key]) => {
+    if (!['official','entered','projected'].includes(T._sourceStatus[key])) T._sourceStatus[key] = 'entered';
+  });
+  return T._sourceStatus;
+}
+
+function ttRenderSourceStatus() {
+  const el = document.getElementById('tt-source-status');
+  if (!el) return;
+  const status = ttEnsureSourceStatus(ttGetCurrentTable());
+  const colors = { official:'#2a6b35', entered:'#8a5a00', projected:'#6b6570' };
+  el.innerHTML = TT_SOURCE_SECTIONS.map(([key,label]) => `
+    <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #ded6c2;border-left:4px solid ${colors[status[key]]};border-radius:5px;padding:6px 8px;background:#fffdf7">
+      <span style="font-size:11px;font-weight:700;color:var(--ink)">${label}</span>
+      <select onchange="ttSetSourceStatus('${key}',this.value)" style="font-family:inherit;font-size:11px;padding:3px 5px;border:1px solid #c9b778;border-radius:4px;background:var(--cream);color:${colors[status[key]]}">
+        <option value="projected" ${status[key]==='projected'?'selected':''}>Projected</option>
+        <option value="entered" ${status[key]==='entered'?'selected':''}>Entered</option>
+        <option value="official" ${status[key]==='official'?'selected':''}>Official</option>
+      </select>
+    </label>`).join('');
+}
+
+function ttSetSourceStatus(section, value) {
+  const T = ttGetCurrentTable();
+  const status = ttEnsureSourceStatus(T);
+  if (!TT_SOURCE_SECTIONS.some(([key]) => key === section) || !['official','entered','projected'].includes(value)) return;
+  status[section] = value;
+  saveState(S); showSaved();
+  ttRenderSourceStatus();
+}
+
+function ttMarkSourceEntered(section) {
+  const status = ttEnsureSourceStatus(ttGetCurrentTable());
+  if (status[section] !== 'entered') status[section] = 'entered';
+  ttRenderSourceStatus();
+}
+
+const TAX_UPDATE_URLS = [
+  './tax-updates.json',
+  'https://raw.githubusercontent.com/ronholl/ronsfinancemodel/main/tax-updates.json'
+];
+const TAX_UPDATE_CACHE_KEY = 'rfm_tax_update_manifest_v1';
+const TAX_UPDATE_CHECK_KEY = 'rfm_tax_update_checked_at_v1';
+let taxUpdateManifest = null;
+
+function taxUpdateSafeText(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function taxUpdateAllowedKeys(section) {
+  return {
+    federal:['fedOrdBkts','fedLtcgBkts','fedStdBase','fedStdSr','fedCharityNonItemizerCap','fedSrBonus','fedSrBonusStart','fedSrBonusMax','fedOrdBktsSingle','fedLtcgBktsSingle','fedStdBaseSingle','fedStdSrSingle','fedCharityNonItemizerCapSingle','fedSrBonusSingle','fedSrBonusStartSingle','fedSrBonusMaxSingle','fedOrdBktsHOH','fedLtcgBktsHOH','fedStdBaseHOH','fedStdSrHOH','fedCharityNonItemizerCapHOH','fedSrBonusHOH','fedSrBonusStartHOH','fedSrBonusMaxHOH'],
+    california:['caOrdBkts','caStd','caOrdBktsSingle','caStdSingle','caOrdBktsHOH','caStdHOH'],
+    irmaa:['irmaaThresh','irmaaThreshSingle','irmaaThreshHOH'],
+    medicare:['irmaaSurch','partBBase']
+  }[section] || [];
+}
+
+function taxUpdateCreateProjectedYear(year) {
+  if (!S.taxTables) S.taxTables = {};
+  if (S.taxTables[year]) return S.taxTables[year];
+  const years = Object.keys(S.taxTables).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+  const priorYear = years.filter(y => y < year).pop() || years[years.length - 1] || 2026;
+  const prior = JSON.parse(JSON.stringify(S.taxTables[priorYear] || DEFAULT_TAX_TABLE_2026));
+  const gap = Math.max(0, year - priorYear);
+  const bf = Math.pow(1 + (parseFloat(S.bracketInfl) || 0), gap);
+  const ii = Math.pow(1 + (parseFloat(S.irmaaInfl) || 0), gap);
+  const mi = Math.pow(1 + (parseFloat(S.medicareCostInfl) || 0), gap);
+  const scaleRows = (rows, factor) => (rows || []).map(([start,rate],i) => [i===0 ? 0 : Math.round(start*factor),rate]);
+  ['fedOrdBkts','fedOrdBktsSingle','fedOrdBktsHOH','fedLtcgBkts','fedLtcgBktsSingle','fedLtcgBktsHOH','caOrdBkts','caOrdBktsSingle','caOrdBktsHOH'].forEach(k => { if (prior[k]) prior[k] = scaleRows(prior[k],bf); });
+  ['fedStdBase','fedStdBaseSingle','fedStdBaseHOH','fedStdSr','fedStdSrSingle','fedStdSrHOH','caStd','caStdSingle','caStdHOH'].forEach(k => { if (prior[k] != null) prior[k] = Math.round(prior[k]*bf); });
+  ['irmaaThresh','irmaaThreshSingle','irmaaThreshHOH'].forEach(k => { if (prior[k]) prior[k] = prior[k].map((v,i)=>i===0?0:Math.round(v*ii)); });
+  if (prior.irmaaSurch) prior.irmaaSurch = prior.irmaaSurch.map((v,i)=>i===0?0:+(v*mi).toFixed(2));
+  if (prior.partBBase != null) prior.partBBase = +(prior.partBBase*mi).toFixed(2);
+  prior._sourceStatus = { federal:'projected', california:'projected', irmaa:'projected', medicare:'projected' };
+  S.taxTables[year] = prior;
+  return prior;
+}
+
+function taxUpdateIsCurrent(update) {
+  const table = S.taxTables && S.taxTables[update.year];
+  const keys = taxUpdateAllowedKeys(update.section);
+  if (!table || !keys.length || !update.values) return false;
+  const valuesMatch = Object.keys(update.values).every(key => keys.includes(key) && JSON.stringify(table[key]) === JSON.stringify(update.values[key]));
+  return valuesMatch && table._sourceStatus && table._sourceStatus[update.section] === 'official';
+}
+
+function taxUpdateList() {
+  return taxUpdateManifest && Array.isArray(taxUpdateManifest.updates) ? taxUpdateManifest.updates : [];
+}
+
+function taxUpdateRenderPicker() {
+  const sel = document.getElementById('tt-update-select');
+  if (!sel) return;
+  const updates = taxUpdateList();
+  if (!taxUpdateManifest) {
+    sel.innerHTML = '<option value="">Updates have not been checked</option>';
+    return;
+  }
+  if (!updates.length) {
+    sel.innerHTML = '<option value="">No published updates</option>';
+    taxUpdateRenderSelection();
+    return;
+  }
+  const previous = sel.value;
+  const pending = updates.filter(u => !taxUpdateIsCurrent(u));
+  const ordered = [...pending,...updates.filter(u => taxUpdateIsCurrent(u))];
+  sel.innerHTML = ordered.map(u => `<option value="${taxUpdateSafeText(u.id)}">${taxUpdateIsCurrent(u)?'✓ Current':'Update available'} · ${taxUpdateSafeText(u.year)} ${taxUpdateSafeText(u.title || u.section)}</option>`).join('');
+  if (ordered.some(u=>u.id===previous)) sel.value = previous;
+  taxUpdateRenderSelection();
+}
+
+function taxUpdateRenderSelection() {
+  const sel = document.getElementById('tt-update-select');
+  const detail = document.getElementById('tt-update-detail');
+  const apply = document.getElementById('tt-update-apply');
+  if (!sel || !detail || !apply) return;
+  const update = taxUpdateList().find(u => u.id === sel.value);
+  if (!update) {
+    apply.style.display = 'none';
+    detail.textContent = taxUpdateManifest ? 'The GitHub update file is current. No action is required.' : 'Click Check Now to look for official tax-data updates.';
+    return;
+  }
+  const current = taxUpdateIsCurrent(update);
+  const source = update.source || {};
+  const table = (S.taxTables && S.taxTables[update.year]) || {};
+  const fieldLabels = {
+    fedOrdBkts:'MFJ ordinary brackets',fedLtcgBkts:'MFJ capital-gains brackets',fedStdBase:'MFJ standard deduction',fedStdSr:'MFJ age/blind addition',
+    fedOrdBktsSingle:'Single ordinary brackets',fedLtcgBktsSingle:'Single capital-gains brackets',fedStdBaseSingle:'Single standard deduction',fedStdSrSingle:'Single age/blind addition',
+    fedOrdBktsHOH:'HOH ordinary brackets',fedLtcgBktsHOH:'HOH capital-gains brackets',fedStdBaseHOH:'HOH standard deduction',fedStdSrHOH:'HOH age/blind addition',
+    caOrdBkts:'CA MFJ brackets',caStd:'CA MFJ standard deduction',caOrdBktsSingle:'CA Single brackets',caStdSingle:'CA Single standard deduction',caOrdBktsHOH:'CA HOH brackets',caStdHOH:'CA HOH standard deduction',
+    irmaaThresh:'IRMAA MFJ thresholds',irmaaThreshSingle:'IRMAA Single thresholds',irmaaThreshHOH:'IRMAA HOH thresholds',irmaaSurch:'Part B + D IRMAA surcharges',partBBase:'Standard Part B premium'
+  };
+  const formatValue = value => Array.isArray(value)
+    ? value.map(item => Array.isArray(item) ? '$'+Number(item[0]).toLocaleString() : '$'+Number(item).toLocaleString()).join(', ')
+    : (typeof value === 'number' ? '$'+Number(value).toLocaleString(undefined,{maximumFractionDigits:2}) : String(value == null ? '—' : value));
+  const changedRows = Object.entries(update.values || {}).filter(([key,value]) => JSON.stringify(table[key]) !== JSON.stringify(value)).map(([key,value]) =>
+    `<div style="display:grid;grid-template-columns:minmax(150px,1fr) minmax(180px,2fr) minmax(180px,2fr);gap:8px;padding:4px 0;border-top:1px solid #e8dfc8"><strong>${taxUpdateSafeText(fieldLabels[key]||key)}</strong><span>Current: ${taxUpdateSafeText(formatValue(table[key]))}</span><span>Official: ${taxUpdateSafeText(formatValue(value))}</span></div>`
+  ).join('');
+  detail.innerHTML = `<strong>${current?'Already installed':'Available to review'}:</strong> ${taxUpdateSafeText(update.summary || '')}` +
+    (source.url ? ` <a href="${taxUpdateSafeText(source.url)}" target="_blank" rel="noopener" style="color:var(--gold)">Official ${taxUpdateSafeText(source.agency || 'source')} ↗</a>` : '') +
+    (source.published ? ` · Published ${taxUpdateSafeText(source.published)}` : '') +
+    (!current && changedRows ? `<details style="margin-top:7px"><summary style="cursor:pointer;font-weight:700;color:var(--ink)">Review old versus official values</summary><div style="margin-top:5px;overflow-x:auto;min-width:680px">${changedRows}</div></details>` : '');
+  apply.style.display = current ? 'none' : 'inline-block';
+}
+
+async function taxUpdateCheck(force) {
+  const now = Date.now();
+  const last = parseInt(localStorage.getItem(TAX_UPDATE_CHECK_KEY) || '0',10);
+  const cached = localStorage.getItem(TAX_UPDATE_CACHE_KEY);
+  if (!force && cached && now-last < 7*24*60*60*1000) {
+    try { taxUpdateManifest = JSON.parse(cached); taxUpdateRenderPicker(); return; } catch(e) {}
+  }
+  let error = null;
+  for (const baseUrl of TAX_UPDATE_URLS) {
+    try {
+      const joiner = baseUrl.includes('?') ? '&' : '?';
+      const response = await fetch(baseUrl + joiner + 'v=' + now, {cache:'no-store'});
+      if (!response.ok) throw new Error('HTTP '+response.status);
+      const manifest = await response.json();
+      if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.updates)) throw new Error('Unsupported update-file format');
+      taxUpdateManifest = manifest;
+      localStorage.setItem(TAX_UPDATE_CACHE_KEY,JSON.stringify(manifest));
+      localStorage.setItem(TAX_UPDATE_CHECK_KEY,String(now));
+      taxUpdateRenderPicker();
+      return;
+    } catch(e) { error = e; }
+  }
+  if (cached) {
+    try { taxUpdateManifest = JSON.parse(cached); taxUpdateRenderPicker(); return; } catch(e) {}
+  }
+  const detail = document.getElementById('tt-update-detail');
+  if (detail) detail.textContent = 'Could not reach the GitHub tax-update file. Existing tables are unchanged. ' + (error ? String(error.message||error) : '');
+}
+
+function taxUpdateApplySelected() {
+  const sel = document.getElementById('tt-update-select');
+  const update = sel && taxUpdateList().find(u => u.id === sel.value);
+  if (!update || taxUpdateIsCurrent(update)) return;
+  const keys = taxUpdateAllowedKeys(update.section);
+  const supplied = Object.keys(update.values || {});
+  if (!keys.length || !supplied.length || supplied.some(key => !keys.includes(key))) {
+    alert('This update contains an unsupported field and was not applied.'); return;
+  }
+  const source = update.source || {};
+  if (!confirm(`Apply ${update.year} ${update.title || update.section}?\n\nSource: ${source.agency || 'Official agency'}${source.published ? ' · '+source.published : ''}\n\nOnly this section and year will change.`)) return;
+  const table = taxUpdateCreateProjectedYear(parseInt(update.year,10));
+  supplied.forEach(key => { table[key] = JSON.parse(JSON.stringify(update.values[key])); });
+  const status = ttEnsureSourceStatus(table);
+  status[update.section] = 'official';
+  if (!Array.isArray(table._appliedTaxUpdateIds)) table._appliedTaxUpdateIds = [];
+  if (!table._appliedTaxUpdateIds.includes(update.id)) table._appliedTaxUpdateIds.push(update.id);
+  ttEditYear = parseInt(update.year,10);
+  saveState(S); showSaved();
+  proj = runProjection(S);
+  ttBuildYearSel(); ttLoadYear(); renderTTPreviewSel(); renderTTPreview(); taxUpdateRenderPicker();
+  alert(`${update.year} ${update.title || update.section} was applied. Earlier years were not changed.`);
 }
 
 function ttLoadYear() {
@@ -8338,6 +8619,7 @@ function ttLoadYear() {
   const banner = document.getElementById('tt-filing-banner');
   const filingNames = {MFJ:'Married Filing Jointly (MFJ)', SINGLE:'Single', HOH:'Head of Household'};
   if (banner) banner.textContent = 'Viewing: ' + (filingNames[ttFilingTab] || ttFilingTab);
+  ttRenderSourceStatus();
 }
 
 function pct100(v) { return +(v*100).toFixed(2); }
@@ -8433,6 +8715,7 @@ function updateBracket(key, idx, valIdx, val) {
   const D = DEFAULT_TAX_TABLE_2026;
   if(!T[key]) T[key] = (D[key]||[]).map(b=>[...b]);
   T[key][idx][0] = parseFloat(val)||0;
+  ttMarkSourceEntered(key.startsWith('ca') ? 'california' : 'federal');
   TT();
 }
 
@@ -8446,6 +8729,7 @@ function updateIRMAA(idx, type, val) {
   else if(type==='threshSingle') T.irmaaThreshSingle[idx] = parseFloat(val)||0;
   else if(type==='threshHOH') T.irmaaThreshHOH[idx] = parseFloat(val)||0;
   else T.irmaaSurch[idx] = parseFloat(val)||0;
+  ttMarkSourceEntered(type === 'surch' ? 'medicare' : 'irmaa');
   TT();
 }
 
@@ -8461,6 +8745,10 @@ function TT() {
   // Scalar fields for current editing year, filing-specific
   const T = ttGetCurrentTable();
   const D = DEFAULT_TAX_TABLE_2026;
+  const activeId = (document.activeElement && document.activeElement.id) || '';
+  if (activeId === 'tt-partb-base') ttMarkSourceEntered('medicare');
+  else if (activeId.startsWith('tt-fed-')) ttMarkSourceEntered('federal');
+  else if (activeId === 'tt-ca-std') ttMarkSourceEntered('california');
   const gvNum = (id, fb) => gv(id)==='' ? fb : (parseFloat(gv(id)) || 0);
   T.partBBase = gvNum('tt-partb-base', D.partBBase);
   if (ttFilingTab === 'SINGLE') {
@@ -13731,6 +14019,7 @@ function initApp() {
     showWelcomeModal();
     // Show update message to existing users (once per update version)
     setTimeout(showUpdateMessage, 400);
+    setTimeout(() => taxUpdateCheck(false), 800);
     appScrollTopAfterLoad();
   } catch(e) {
     console.error('Init error:', e);
