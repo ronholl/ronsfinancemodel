@@ -7314,8 +7314,8 @@ function editSOY(yr){
   soyEditYear=yr;
   const s=S.soy[yr]||{};
   const a1=yr-S.by1-1, a2=yr-S.by2-1;
-  const ss1Info = socialSecurityEntryInfo(1,yr);
-  const ss2Info = hasP2() ? socialSecurityEntryInfo(2,yr) : null;
+  const ss1Info = socialSecurityEntryInfo(1,yr,'startOfYear');
+  const ss2Info = hasP2() ? socialSecurityEntryInfo(2,yr,'startOfYear') : null;
 
   // Get projected prior-EOY as pre-fill default
   function getDefault(key) {
@@ -12932,7 +12932,8 @@ function socialSecurityClaimYear(person){
   const claimAge = parseInt(person === 2 ? S.ssAge2 : S.ssAge1) || 0;
   return birthYear && claimAge ? birthYear + claimAge + 1 : 0;
 }
-function socialSecurityEntryInfo(person, yr){
+function socialSecurityEntryInfo(person, yr, context){
+  context = context || 'interview';
   const name = person === 2 ? p2() : p1();
   const soyKey = person === 2 ? 'ss2' : 'ss1';
   const planned = parseF(person === 2 ? S.ssmo2 : S.ssmo1) || 0;
@@ -12945,9 +12946,20 @@ function socialSecurityEntryInfo(person, yr){
     ? 'Historical claiming baseline. It is overridden beginning in '+yr+' by the '+f$(actual)+' Start-of-Year actual shown beside it.'
     : 'Use the gross monthly estimate payable when claiming begins, before tax withholding and Medicare premiums. The model treats this as the claiming-year amount and begins COLA increases after benefits start. This drives the projection until a Start-of-Year actual is entered.';
   const actualLabel = name+' '+yr+' Gross Monthly Social Security Benefit — Start-of-Year Actual ($)';
-  const actualNote = receiving
-    ? 'Authoritative current gross monthly benefit for '+yr+'. This is the same Start-of-Year value shown in Year Detail; editing either location updates the same entry. Enter the amount before tax withholding and Medicare premiums.'
-    : 'Not receiving Social Security in '+yr+'? Leave this blank. Enter or update the planned claiming age and estimated benefit under Setup Guide → Interview → Income → Social Security. This is the same field shown in '+yr+' Start-of-Year Actuals.';
+  let actualNote;
+  if (context === 'annual') {
+    actualNote = receiving
+      ? 'This '+yr+' Annual Check-In amount is the authoritative Start-of-Year actual. It is the same entry shown in Setup Guide → Interview → Income → Social Security and in the expert Start of Year screen. Enter the gross monthly benefit before tax withholding and Medicare premiums.'
+      : 'Not receiving Social Security in '+yr+'? Leave this Annual Check-In field blank or at 0. Enter or update the planned claiming age and estimated benefit under Setup Guide → Interview → Income → Social Security.';
+  } else if (context === 'startOfYear') {
+    actualNote = receiving
+      ? 'This '+yr+' Start-of-Year actual is authoritative. The same entry is also shown under Setup Guide → Annual Check-In → select '+yr+' → Income & Spending. Enter the gross monthly benefit before tax withholding and Medicare premiums.'
+      : 'Not receiving Social Security in '+yr+'? Leave this Start-of-Year field blank or at 0. Enter or update the planned claiming age and estimated benefit under Setup Guide → Interview → Income → Social Security.';
+  } else {
+    actualNote = receiving
+      ? 'This '+yr+' Start-of-Year actual is authoritative. You can update the same entry here or later under Setup Guide → Annual Check-In → select '+yr+' → Income & Spending. Enter the gross monthly benefit before tax withholding and Medicare premiums.'
+      : 'Not receiving Social Security in '+yr+'? Leave this actual blank or at 0 and use the planned claiming age and estimated benefit fields on this screen.';
+  }
   return {plannedLabel,plannedNote,actualLabel,actualNote,actual,planned,claimYear,receiving};
 }
 
@@ -12969,9 +12981,9 @@ function renderSetupIncomeStep(){
     has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}) : '',
     has2 ? setupInput(p2()+' Last Non-Wage Income Year','ptEnd2','int',S.ptEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}) : ''
   ].join('');
-  const ss1Info = socialSecurityEntryInfo(1,yr);
-  const ss2Info = has2 ? socialSecurityEntryInfo(2,yr) : null;
-  const ssIntro = '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Estimate first; Start-of-Year actual after benefits begin</div><div class="setup-check-body">Not receiving benefits yet? Enter the claiming age and estimated gross monthly benefit. Already receiving benefits? Enter the current gross amount in the '+yr+' Start-of-Year actual. The same actual appears here and in Year Detail, and it overrides the original estimate from '+yr+' forward.</div></div>';
+  const ss1Info = socialSecurityEntryInfo(1,yr,'interview');
+  const ss2Info = has2 ? socialSecurityEntryInfo(2,yr,'interview') : null;
+  const ssIntro = '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Estimate first; Start-of-Year actual after benefits begin</div><div class="setup-check-body">Not receiving benefits yet? Use the claiming age and estimated gross monthly benefit fields below. Already receiving benefits? Enter the current gross amount in the Start-of-Year Actual field below. The same actual can be updated later through Annual Check-In, and it overrides the original estimate from '+yr+' forward.</div></div>';
   const ssFields = [
     setupInput(p1()+' SS Start Age','ssAge1','number',S.ssAge1,{min:0,max:90,note:'Age when Social Security is expected to start. Leave 0 if not modeling Social Security.'}),
     setupInput(ss1Info.plannedLabel,'ssmo1','number',S.ssmo1,{min:0,note:ss1Info.plannedNote}),
@@ -13227,8 +13239,8 @@ function renderSetupAnnualView(){
   const opts = [];
   for (let y = S.startYear; y <= S.endYear; y++) opts.push('<option value="'+y+'" '+(y===yr?'selected':'')+'>'+y+'</option>');
   const has2 = hasP2();
-  const ss1Info = socialSecurityEntryInfo(1,yr);
-  const ss2Info = has2 ? socialSecurityEntryInfo(2,yr) : null;
+  const ss1Info = socialSecurityEntryInfo(1,yr,'annual');
+  const ss2Info = has2 ? socialSecurityEntryInfo(2,yr,'annual') : null;
   const income = [
     setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}),
     setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
