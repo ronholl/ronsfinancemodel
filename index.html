@@ -930,11 +930,16 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           <option value="p1Survives">Primary Person survives Spouse/Partner</option>
           <option value="p2Survives">Spouse/Partner survives Primary Person</option>
         </select>
-        <div class="note">Models one spouse dying while the survivor keeps retirement balances and, when selected below, the higher Social Security benefit.</div>
+        <div class="note">Models one spouse dying, the selected share of the deceased spouse's regular Traditional IRA remaining with the survivor, and—when selected below—the higher Social Security benefit.</div>
       </div>
       <div class="field-row">
         <div class="field"><label>Death Year</label><input type="number" id="i-widow-year" oninput="IC()" placeholder="e.g. 2045"></div>
         <div class="field"><label>Survivor Spending Adjustment (%)</label><input type="number" id="i-widow-spendpct" step="1" oninput="IC()" placeholder="0"><div class="note">Applied starting the year after death. Use negative for lower spending, positive for higher spending. Explicit Spending overrides still take priority.</div></div>
+      </div>
+      <div class="field">
+        <label>Deceased Spouse Traditional IRA to Survivor (%)</label>
+        <input type="number" id="i-widow-ira-spouse-pct" min="0" max="100" step="1" oninput="IC()">
+        <div class="note">Default 100%. The remainder transfers directly to non-spouse beneficiaries and leaves household assets after the death year. The model does not project those beneficiaries' withdrawals, taxes, or accounts.</div>
       </div>
       <div class="field" style="margin-bottom:6px">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'Lora',serif;letter-spacing:0">
@@ -2381,7 +2386,7 @@ function defaultState() {
     ssStressPct:0, ssStressStartYear:'', ssStressPerson:'both',
     irmaaFillMode:'',
     fundingOrder1:'SEC', fundingOrder2:'IRA', fundingOrder3:'ROTH',
-    widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true, widowSSA44Relief:false,
+    widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowIraSpousePct:100, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true, widowSSA44Relief:false,
     wageGrowth:0.030,
     // RMD
     rmdStart1:0,
@@ -2587,15 +2592,26 @@ function runProjection(S) {
       }
     }
 
-    // Widow(er) override: at the start of the first year after death, treat spouse
-    // IRA/Roth balances as rolled into the survivor's matching account bucket.
+    // Survivor override: the selected share of the deceased spouse's regular
+    // Traditional IRA stays in the household. The remainder passes directly to
+    // non-spouse beneficiaries and leaves this plan. Roth and existing inherited
+    // IRA lots retain the prior 100%-to-spouse treatment.
+    let survivorIraRetainedBySpouse = 0;
+    let survivorIraTransferredToHeirs = 0;
+    const survivorIraSpousePct = Math.max(0, Math.min(100, parseF(S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct))) / 100;
     if (afterDeathYear) {
       if (p1Survivor) {
-        ira1 += ira2; ira2 = 0;
+        const deceasedIra = Math.max(0, ira2);
+        survivorIraRetainedBySpouse = deceasedIra * survivorIraSpousePct;
+        survivorIraTransferredToHeirs = deceasedIra - survivorIraRetainedBySpouse;
+        ira1 += survivorIraRetainedBySpouse; ira2 = 0;
         roth1 += roth2; roth2 = 0;
         pre2020Lots.forEach(lot => { if (pre2020LotBeneficiary(lot) === '2') lot.beneficiary = '1'; });
       } else if (p2Survivor) {
-        ira2 += ira1; ira1 = 0;
+        const deceasedIra = Math.max(0, ira1);
+        survivorIraRetainedBySpouse = deceasedIra * survivorIraSpousePct;
+        survivorIraTransferredToHeirs = deceasedIra - survivorIraRetainedBySpouse;
+        ira2 += survivorIraRetainedBySpouse; ira1 = 0;
         roth2 += roth1; roth1 = 0;
         pre2020Lots.forEach(lot => { if (pre2020LotBeneficiary(lot) === '1') lot.beneficiary = '2'; });
       }
@@ -3643,6 +3659,7 @@ function runProjection(S) {
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
       startCashBal, startSec, startSecTaxableBal, startSecTreasuryBal, startSecCAMuniBal, startSecOtherMuniBal, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startPre2020Inh1, startPre2020Inh2, startPost2020Inh,
+      survivorIraSpousePct:survivorIraSpousePct*100, survivorIraRetainedBySpouse, survivorIraTransferredToHeirs,
       endCash: cash, sec, secTaxableBal: endSecTaxableBal, secTreasuryBal: endSecTreasuryBal, secCAMuniBal: endSecCAMuniBal, secOtherMuniBal: endSecOtherMuniBal, ira1, ira2, roth1, roth2, hsa, pre2020Inh1, pre2020Inh2, post2020Inh: endPost2020Inh, netWorth,
       // Growth amounts (for transparency)
       gRate, secGrowth, ira1Growth, ira2Growth, roth1Growth, roth2Growth, secBalanceMix:Object.assign({}, secBalanceMix), secIncomeMix:Object.assign({}, secBalanceMix),
@@ -5451,6 +5468,8 @@ function applyMigrations(merged) {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
+  if (merged.widowIraSpousePct == null || isNaN(merged.widowIraSpousePct)) merged.widowIraSpousePct = 100;
+  merged.widowIraSpousePct = Math.max(0, Math.min(100, Number(merged.widowIraSpousePct)));
   if (merged.widowSSA44Relief == null) merged.widowSSA44Relief = false;
   if (merged.irmaaMaxBracket == null) merged.irmaaMaxBracket = '';
   if (merged.irmaaBracketHeadroom == null || isNaN(merged.irmaaBracketHeadroom)) merged.irmaaBracketHeadroom = 0;
@@ -5883,6 +5902,7 @@ function loadUI(){
   sv('i-widow-mode',S.widowMode||'off');
   sv('i-widow-year',S.widowDeathYear||'');
   sv('i-widow-spendpct',S.widowSpendPct||0);
+  sv('i-widow-ira-spouse-pct',S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct);
   const we=document.getElementById('i-widow-endss'); if(we) we.checked = S.widowEndSS !== false;
   const wss=document.getElementById('i-widow-survivorss'); if(wss) wss.checked = S.widowSurvivorSS !== false;
   const ws=document.getElementById('i-widow-single'); if(ws) ws.checked = S.widowSwitchSingle !== false;
@@ -6049,6 +6069,7 @@ function readUI(){
   S.widowMode=gv('i-widow-mode')||'off';
   S.widowDeathYear=gf('i-widow-year');
   S.widowSpendPct=gf('i-widow-spendpct');
+  S.widowIraSpousePct=Math.max(0,Math.min(100,gf('i-widow-ira-spouse-pct')));
   S.widowEndSS=document.getElementById('i-widow-endss')?.checked ?? true;
   S.widowSurvivorSS=document.getElementById('i-widow-survivorss')?.checked ?? true;
   S.widowSwitchSingle=document.getElementById('i-widow-single')?.checked ?? true;
@@ -8123,6 +8144,7 @@ function apCard(yr){
   const survivorActive = isWidowAfterDeathYear(r);
   const why = [];
   if (survivorActive) why.push('Survivor mode active');
+  if ((r.survivorIraTransferredToHeirs||0) > 0) why.push('Traditional IRA transferred outside household');
   if (r.taxOvrActive) why.push('Tax funding override active');
   if (r.irmaaSurvivorRelief) why.push('SSA-44 IRMAA relief assumed');
   if (cashGap > 0) why.push('Cash floor rebuild');
@@ -8164,6 +8186,7 @@ function apCard(yr){
     </div>
 
     ${hdr('STARTING BALANCES')}
+    ${flag('Deceased spouse Traditional IRA transferred directly outside household', r.survivorIraTransferredToHeirs||0)}
     ${row('Cash', r.startCashBal||0)}
     ${row('Securities', r.startSec||0)}
     ${row(p1()+' IRA', r.startIRA1||0)}
@@ -9147,7 +9170,7 @@ function buildReportPayload(){
     ssAge1: S.ssAge1, ssmo1: S.ssmo1,
     ssAge2: S.ssAge2, ssmo2: S.ssmo2,
     ssStressPct: S.ssStressPct || 0, ssStressStartYear: S.ssStressStartYear || '', ssStressPerson: S.ssStressPerson || 'both',
-    widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0,
+    widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0, widowIraSpousePct:S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct,
     widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false, widowSSA44Relief: S.widowSSA44Relief === true,
     rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
     pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
@@ -9536,7 +9559,7 @@ function generateReport(){
   const rateRows=(pairs)=>pairs.map(([l,v])=>`<tr><td>${l}</td><td class="r">${v}</td></tr>`).join('');
   const leftRates=rateRows([
     ['Filing',filingMap[A.filing]||A.filing],['State',A.state||'Federal'],
-    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}% · SSA-44 IRMAA relief ${A.widowSSA44Relief?'on':'off'}`:'Off'],
+    ["Survivor's Mode",A.widowMode&&A.widowMode!=='off'?`${A.widowMode==='p1Survives'?A.name1:A.name2} survives · death ${setupDeathYearText(A.widowDeathYear,A.widowMode,A)} · spending ${Number(A.widowSpendPct||0).toFixed(1)}% · deceased spouse Traditional IRA to survivor ${Number(A.widowIraSpousePct == null ? 100 : A.widowIraSpousePct).toFixed(1)}% · SSA-44 IRMAA relief ${A.widowSSA44Relief?'on':'off'}`:'Off'],
     ['Portfolio Growth',fp(A.growthRate)],['Brokerage Dividend / Interest Rate',fp(A.divRate)],['Dividend Reinvest',fp(A.divReinvestPct ?? ((A.reinvestDivs||'no')==='yes'?1:0))],
     ['Cash Interest Rate',fp(A.intRate||0)],
     ['Spending Inflation',fp(A.spendInfl)],['SS COLA (Cost of Living)',fp(A.ssCola)],['Wage Growth',fp(A.wageGrowth)],
@@ -10004,6 +10027,7 @@ function generateReport(){
       ${A.widowSwitchSingle?'filing switches to Single;':'filing status does not switch automatically;'}
       ${A.widowEndSS?'the lower Social Security benefit ends;':'both Social Security streams remain as entered;'}
       ${A.widowSurvivorSS?'the survivor receives the higher Social Security benefit;':'survivor benefit replacement is off;'}
+      ${Number(A.widowIraSpousePct == null ? 100 : A.widowIraSpousePct).toFixed(1)}% of the deceased spouse's regular Traditional IRA remains with the survivor; ${(100-Number(A.widowIraSpousePct == null ? 100 : A.widowIraSpousePct)).toFixed(1)}% transfers directly to non-spouse beneficiaries and leaves the household plan. Beneficiary withdrawals and taxes are not modeled.
       Medicare/IRMAA counts follow the surviving spouse.
       ${A.widowSSA44Relief?'SSA-44 IRMAA relief is assumed for survivor years whose two-year Medicare lookback still points to the pre-death or death-year joint period; those years use projected survivor MAGI and filing status instead.':'SSA-44 IRMAA relief is not assumed; survivor IRMAA uses the strict two-year lookback even if that points to pre-death joint income.'}
     </div>` : '';
@@ -10687,6 +10711,7 @@ function rothLabApplySurvivorLens(st, lens, deathYear){
   if (st.widowSwitchSingle === undefined || st.widowSwitchSingle === null || st.widowSwitchSingle === '') st.widowSwitchSingle = true;
   if (st.widowSurvivorSS === undefined || st.widowSurvivorSS === null || st.widowSurvivorSS === '') st.widowSurvivorSS = true;
   if (st.widowSpendPct === undefined || st.widowSpendPct === null || st.widowSpendPct === '') st.widowSpendPct = 0;
+  if (st.widowIraSpousePct === undefined || st.widowIraSpousePct === null || st.widowIraSpousePct === '') st.widowIraSpousePct = 100;
   return st;
 }
 function rothLabSurvivorLensSummary(lens, deathYear){
@@ -11916,7 +11941,7 @@ function rothLabSurvivorAssumptionLabel(state){
   const survivor = A.widowMode === 'p1Survives' ? (A.name1 || 'Primary Person') : A.widowMode === 'p2Survives' ? (A.name2 || 'Spouse/Partner') : 'Survivor';
   const filing = A.widowSwitchSingle ? 'switches to Single after death year' : 'keeps current filing after death year';
   const relief = A.widowSSA44Relief ? '; assumes SSA-44 IRMAA relief for stale joint-income lookbacks' : '';
-  return survivor + ' survives; death year ' + setupDeathYearText(A.widowDeathYear, A.widowMode, A) + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%' + relief + '.';
+  return survivor + ' survives; death year ' + setupDeathYearText(A.widowDeathYear, A.widowMode, A) + '; ' + filing + '; spending adjustment ' + (Number(A.widowSpendPct || 0).toFixed(1)) + '%; deceased spouse Traditional IRA to survivor ' + Number(A.widowIraSpousePct == null ? 100 : A.widowIraSpousePct).toFixed(1) + '%' + relief + '.';
 }
 function rothLabReportSource(scenarios, cfg){
   const selected = rothLabSelectedScenarios(scenarios);
@@ -13032,13 +13057,14 @@ function renderSetupSurvivorStep(){
   const activeFields = active ? [
     setupStateSelect('Death Year','widowDeathYear','int',deathYearValue,deathYearOptions,{rerender:true,note:'The death year itself stays under the normal household filing setup. Survivor changes begin the following year.'}),
     setupInput('Survivor Spending Adjustment (%)','widowSpendPct','number',S.widowSpendPct || 0,{step:'1',placeholder:'0',note:'Applied starting the year after death. Use negative for lower spending or positive for higher spending. Explicit spending overrides still win.'}),
+    setupInput('Deceased Spouse Traditional IRA to Survivor (%)','widowIraSpousePct','number',S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct,{min:'0',max:'100',step:'1',placeholder:'100',note:'Default 100%. The remainder transfers directly to non-spouse beneficiaries and leaves household assets after the death year. This household plan does not model those beneficiaries\' later withdrawals, taxes, or accounts.'}),
     setupBoolSelect('End Deceased Spouse Social Security','widowEndSS',S.widowEndSS !== false,'Yes - end the lower/deceased benefit','No - keep both streams','Normally yes. This prevents the model from continuing both Social Security checks after one spouse dies.'),
     setupBoolSelect('Survivor Receives Higher Social Security','widowSurvivorSS',S.widowSurvivorSS !== false,'Yes - use the higher benefit','No - no survivor benefit replacement','Normally yes. The surviving spouse often keeps the larger of the two benefits, not both.'),
     setupBoolSelect('Switch Survivor to Single Filing','widowSwitchSingle',S.widowSwitchSingle !== false,'Yes - switch after death year','No - keep current filing','Normally yes. This changes tax brackets, standard deduction, Medicare/IRMAA count, and senior deduction logic after the death year.'),
     setupBoolSelect('Assume SSA-44 IRMAA Relief','widowSSA44Relief',S.widowSSA44Relief === true,'Yes - use survivor MAGI for stale lookback years','No - strict two-year lookback','Optional planning assumption. If approved, SSA can use newer survivor MAGI after a spouse death instead of stale joint-income lookback years. This is not automatic; the survivor would request it with SSA-44.')
   ].join('') : '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Both living through plan end</div><div class="setup-check-body">No death event is modeled. The projection keeps both people, both Social Security streams as entered, married filing assumptions, Medicare count, and account/RMD logic through the end year.</div></div>';
   const impact = active
-    ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(deathYearLabel)+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps the retirement balances. Depending on the choices below, the model can switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
+    ? '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">What changes after '+setupEsc(deathYearLabel)+'</div><div class="setup-check-body">'+setupEsc(survivorName || 'The survivor')+' keeps '+setupEsc(String(S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct))+'% of the deceased spouse\'s regular Traditional IRA; the remainder leaves the household for direct non-spouse beneficiaries. Depending on the choices below, the model can also switch filing to Single, stop the deceased spouse Social Security, use the higher survivor benefit, reduce or increase spending, and calculate Medicare/IRMAA for one person.</div></div>'
     : '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Why this exists</div><div class="setup-check-body">A survivor year can materially change taxes and cash flow: one standard deduction instead of two, one Medicare premium count, possible survivor Social Security, different RMD age, and often different spending. The default is off because most users first need a base plan.</div></div>';
   return [
     '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">Plain English</div><div class="setup-check-body">This step answers: should we model both spouses living through the whole plan, or should we test what happens if one person dies first?</div></div>',
