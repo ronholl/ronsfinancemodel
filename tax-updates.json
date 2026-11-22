@@ -342,16 +342,14 @@
     }
   ],
   "acaMonitor": {
-    "checkedAt": "2026-11-22T22:53:51+00:00",
-    "status": "needs-review",
-    "errors": [
-      "HHS 2025: HTTP Error 403: Forbidden",
-      "HHS 2026: HTTP Error 403: Forbidden",
-      "HHS 2027: HTTP Error 403: Forbidden"
+    "checkedAt": "2026-11-22T22:59:28+00:00",
+    "status": "ok",
+    "errors": [],
+    "pending": [
+      "HHS 2027: no annual guidelines notice published in Federal Register"
     ],
-    "pending": [],
     "latestContributionYear": 2027,
     "latestGuidelineYear": 2026,
-    "method": "Weekly official HHS API and IRS bulletin checks; unsupported rule changes require review."
+    "method": "Weekly official HHS API/Federal Register and IRS bulletin checks; unsupported rule changes require review."
   }
 }
