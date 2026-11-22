@@ -16,6 +16,8 @@ Health & ACA and Tax Tables show the monitor's last official-source check. A che
 
 The collector uses the [HHS poverty-guidelines API](https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/poverty-guidelines-api) and [IRS Internal Revenue Bulletins](https://www.irs.gov/internal-revenue-bulletins). It sends no household or financial inputs.
 
+If the HHS API blocks the scheduled runner or is unavailable, the collector discovers the exact HHS annual notice through the official Federal Register API and reads its official GovInfo text edition. It verifies the agency, document number, year, all three regions, all eight household sizes, and the stated additional-person amounts. Missing future notices remain pending; changed or ambiguous notices require review.
+
 For HHS, every response must match the requested guideline year, region and household size. The collector checks sizes 1–8 for all three regions and verifies the supported per-person arithmetic. The API can return the current year's data for an unpublished future year; that response is treated as **not yet published**, never as new-year data. The published guideline year is kept separate from its following ACA coverage year.
 
 For IRS contribution percentages, the collector follows bulletin identifiers listed by the official index, reads the corresponding HTML editions, and extracts only the specifically titled coverage-year table. The six supported poverty-percentage bands and literal percentage cells must match the app's supported structure. A changed band structure, eligibility bound, conflicting table, or unexpected format requires review. The current parser does not implement new legislation or infer changed income/eligibility rules.
@@ -55,7 +57,7 @@ The first two commands are offline. The third contacts official public sources a
 
 ## Verification
 
-The existing 140 tests pass. Twenty-seven new application tests cover validation, automatic/manual modes, protected data, partial publication, source years, later-year projection, old-year preservation, actual subsidy recalculation, import/export, stale monitor status, and unchanged retired-user outputs. Twenty-one collector tests cover real response formats, unpublished-year defaults, all-region/size checks, source restrictions, IRS parsing, schema changes, conflicts and manifest preservation.
+The existing 140 tests pass. Twenty-seven new application tests cover validation, automatic/manual modes, protected data, partial publication, source years, later-year projection, old-year preservation, actual subsidy recalculation, import/export, stale monitor status, and unchanged retired-user outputs. Twenty-nine collector tests cover real response formats, unpublished-year defaults, all-region/size checks, source restrictions, IRS parsing, schema changes, conflicts and manifest preservation.
 
 A live source run verified the 2025/2026 HHS tables for 2026/2027 coverage and the published 2026/2027 IRS contribution schedules. HHS 2027 guidelines are currently pending publication; no 2028 figures have been invented or marked Official.
 

@@ -63,4 +63,37 @@ class CollectorTests(unittest.TestCase):
         for url in ['http://aspe.hhs.gov/x','https://user:secret@aspe.hhs.gov/x','https://aspe.hhs.gov.evil.example/x']:
             u=a.collect_fpl(2026,fpl_get);u['source']['url']=url
             with self.subTest(url=url),self.assertRaises(a.ReviewRequired):a.validate_update(u)
+
+NOTICE=(ROOT/'tests/monitor-fixtures/hhs-2026-notice.html').read_text()
+DOC={'title':'Annual Update of the HHS Poverty Guidelines','type':'Notice','document_number':'2026-00755','publication_date':'2026-01-15','pdf_url':'https://www.govinfo.gov/content/pkg/FR-2026-01-15/pdf/2026-00755.pdf','agencies':[{'slug':'health-and-human-services-department'}]}
+def register_get(url,doc=DOC):
+    if '/api/v1/documents.json?' in url:return json.dumps({'results':[doc],'count':1,'total_pages':1})
+    if url=='https://www.govinfo.gov/content/pkg/FR-2026-01-15/html/2026-00755.htm':return NOTICE
+    raise AssertionError('Unexpected source URL '+url)
+class RegisterFallbackTests(unittest.TestCase):
+    def test_official_notice_all_regions_and_coverage_year(self):
+        u=a.collect_fpl_register(2026,register_get);self.assertEqual(u['values'],a.collect_fpl(2026,fpl_get)['values']);self.assertEqual(u['source']['published'],'2026-01-15');a.validate_update(u)
+    def test_blocked_api_uses_official_fallback(self):
+        def get(url):
+            if url.startswith(a.API):raise a.URLError('403 Forbidden')
+            return register_get(url)
+        self.assertEqual(a.collect_fpl_resilient(2026,get)['year'],2027)
+    def test_malformed_api_is_not_silenced_by_fallback(self):
+        with self.assertRaises(a.ReviewRequired):a.collect_fpl_resilient(2026,lambda url:json.dumps({'status':500}))
+    def test_unpublished_future_notice_stays_pending(self):
+        with self.assertRaises(a.NotPublished):a.collect_fpl_register(2027,lambda url:json.dumps({'description':'Documents matching query','count':0}))
+    def test_wrong_notice_identity_year_or_missing_rows_rejected(self):
+        for raw in [NOTICE.replace('2026-00755','2026-99999'),NOTICE.replace('2026 Poverty Guidelines','2025 Poverty Guidelines'),NOTICE.replace('1...........................................................     $19,950',''),NOTICE.replace('AGENCY: Department of Health and Human Services.','AGENCY: Other.')]:
+            with self.subTest(raw=raw[:100]),self.assertRaises(a.ReviewRequired):a.parse_govinfo_fpl(raw,2026,'2026-00755',DOC['pdf_url'])
+    def test_notice_nonuniform_and_extra_person_mismatch_rejected(self):
+        for raw in [NOTICE.replace('55,720','55,721'),NOTICE.replace('add $6,530','add $6,531')]:
+            with self.assertRaises(a.ReviewRequired):a.parse_govinfo_fpl(raw,2026,'2026-00755',DOC['pdf_url'])
+    def test_incomplete_or_ambiguous_discovery_rejected(self):
+        for data in [{'results':[DOC],'count':101,'total_pages':2},{'results':[DOC,DOC],'count':2,'total_pages':1}]:
+            with self.assertRaises(a.ReviewRequired):a.collect_fpl_register(2026,lambda url:json.dumps(data))
+    def test_discovery_year_and_publication_host_verified(self):
+        for key,value in [('document_number','2025-00755'),('publication_date','2025-01-15'),('pdf_url','https://evil.example/doc.pdf')]:
+            doc=dict(DOC);doc[key]=value
+            with self.subTest(key=key),self.assertRaises(a.ReviewRequired):a.collect_fpl_register(2026,lambda url:register_get(url,doc))
 if __name__=='__main__':unittest.main()
+

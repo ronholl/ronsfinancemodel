@@ -6,7 +6,8 @@ import argparse, concurrent.futures, copy, datetime as dt, hashlib, html, json, 
 from html.parser import HTMLParser
 from decimal import Decimal
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlencode
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 API='https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/api'
@@ -14,6 +15,7 @@ IRS_INDEX='https://www.irs.gov/internal-revenue-bulletins'
 REGIONS=('US','AK','HI')
 BANDS=((100,133),(133,150),(150,200),(200,250),(250,300),(300,400))
 ACA_SECTIONS=('acaPoverty','acaContribution')
+SOURCE_HOSTS=('aspe.hhs.gov','www.irs.gov','www.federalregister.gov','www.govinfo.gov')
 class NotPublished(ValueError): pass
 class ReviewRequired(ValueError): pass
 
@@ -21,10 +23,10 @@ def canonical(value): return json.dumps(value,sort_keys=True,separators=(',',':'
 def digest(value): return hashlib.sha256(value.encode()).hexdigest()
 def fetch(url):
     parsed=urlparse(url)
-    if parsed.scheme!='https' or parsed.netloc not in ('aspe.hhs.gov','www.irs.gov'): raise ReviewRequired('Unapproved data source')
+    if parsed.scheme!='https' or parsed.netloc not in SOURCE_HOSTS: raise ReviewRequired('Unapproved data source')
     request=Request(url,headers={'User-Agent':'RonFinanceACAUpdates/1.0 (+https://github.com/ronholl/ronsfinancemodel)','Accept':'application/json,text/html'})
     with urlopen(request,timeout=25) as response:
-        if urlparse(response.url).netloc not in ('aspe.hhs.gov','www.irs.gov'):raise ReviewRequired('Unapproved source redirect')
+        if urlparse(response.url).netloc not in SOURCE_HOSTS:raise ReviewRequired('Unapproved source redirect')
         limit=25_000_000 if parsed.netloc=='www.irs.gov' else 1_000_000
         body=response.read(limit+1)
         if len(body)>limit:raise ReviewRequired('Source response too large')
@@ -65,6 +67,48 @@ def collect_fpl(year,get=fetch):
         if increment<=0 or any(amounts[(region,n)]!=base+(n-1)*increment for n in range(1,9)):raise ReviewRequired('HHS regional table no longer has the supported uniform increment')
         guidelines[region]=[base,increment]
     return {'id':f'hhs-aca-poverty-{year+1}-'+digest(canonical(guidelines))[:12],'year':year+1,'section':'acaPoverty','title':'ACA poverty guidelines','summary':f'Official HHS {year} poverty guidelines for {year+1} Marketplace coverage; all three regions and household sizes 1–8 verified.','source':{'agency':'HHS','url':f'{API}/{year}/us/1','reference':f'{year} HHS poverty guidelines'},'evidence':{'method':'HHS official API; year/region/size and arithmetic verified','sha256':digest(canonical(receipts))},'values':{'acaPovertyGuidelineYear':year,'acaPovertyGuidelines':guidelines}}
+
+def parse_govinfo_fpl(raw,year,document_number,url):
+    text=html.unescape(re.sub(r'<[^>]+>',' ',raw))
+    if f'[FR Doc No: {document_number}]' not in text or 'AGENCY: Department of Health and Human Services.' not in text or 'Annual Update of the HHS Poverty Guidelines' not in text:
+        raise ReviewRequired('Federal Register document identity or HHS agency mismatch')
+    headings=list(re.finditer(r'(20\d{2})\s+Poverty Guidelines for (?:the )?(48 Contiguous States and the District of\s+Columbia|Alaska|Hawaii)',text,re.I))
+    if len(headings)!=3 or any(int(m[1])!=year for m in headings):raise ReviewRequired('HHS notice year or regional headings changed')
+    guidelines={}
+    for i,m in enumerate(headings):
+        region='US' if m[2].startswith('48') else {'alaska':'AK','hawaii':'HI'}[m[2].lower()]
+        if region in guidelines:raise ReviewRequired('Duplicate HHS regional table')
+        block=text[m.end():headings[i+1].start() if i<2 else len(text)]
+        rows=re.findall(r'^\s*([1-8])\.{3,}\s*\$?([\d,]+)\s*$',block,re.M)
+        if [int(r[0]) for r in rows]!=list(range(1,9)):raise ReviewRequired('HHS notice must contain all eight household sizes')
+        amounts=[int(r[1].replace(',','')) for r in rows];base=amounts[0];increment=amounts[1]-base
+        extra=re.search(r'more than 8 persons, add \$([\d,]+) for\s+each additional person',block)
+        if not extra or int(extra[1].replace(',',''))!=increment or increment<=0 or any(v!=base+n*increment for n,v in enumerate(amounts)):raise ReviewRequired('HHS notice per-person increment or arithmetic changed')
+        guidelines[region]=[base,increment]
+    u={'id':f'hhs-aca-poverty-{year+1}-'+digest(canonical(guidelines))[:12],'year':year+1,'section':'acaPoverty','title':'ACA poverty guidelines','summary':f'Official HHS {year} poverty guidelines for {year+1} Marketplace coverage; all three regions and household sizes 1–8 verified.','source':{'agency':'HHS','url':url,'reference':f'{year} HHS poverty guidelines, Federal Register {document_number}'},'evidence':{'method':'Official HHS Federal Register notice on GovInfo; document identity, year, regions, sizes and arithmetic verified','sha256':digest(raw)},'values':{'acaPovertyGuidelineYear':year,'acaPovertyGuidelines':guidelines}}
+    validate_update(u)
+    return u
+
+def collect_fpl_register(year,get=fetch):
+    params={'conditions[term]':'"Annual Update of the HHS Poverty Guidelines"','conditions[agencies][]':'health-and-human-services-department','conditions[type][]':'NOTICE','conditions[publication_date][gte]':f'{year}-01-01','conditions[publication_date][lte]':f'{year}-12-31','per_page':100,'order':'newest'}
+    data=json.loads(get('https://www.federalregister.gov/api/v1/documents.json?'+urlencode(params)))
+    # Official API omits results/total_pages entirely for a successful zero-match query.
+    if isinstance(data,dict) and data.get('count')==0 and isinstance(data.get('description'),str) and 'results' not in data:data['results']=[]
+    if not isinstance(data,dict) or not isinstance(data.get('results'),list) or not isinstance(data.get('count'),int) or data.get('total_pages',0)>1 or data['count']!=len(data['results']):raise ReviewRequired('Incomplete Federal Register discovery response')
+    docs=[d for d in data['results'] if d.get('title')=='Annual Update of the HHS Poverty Guidelines' and d.get('type')=='Notice' and any(a.get('slug')=='health-and-human-services-department' for a in d.get('agencies',[]))]
+    if not docs:raise NotPublished(f'HHS {year}: no annual guidelines notice published in Federal Register')
+    if len(docs)!=1:raise ReviewRequired('Multiple HHS annual notices require review')
+    d=docs[0];number=d.get('document_number','');date=d.get('publication_date','')
+    if not re.fullmatch(fr'{year}-\d{{5}}',number) or not re.fullmatch(fr'{year}-\d{{2}}-\d{{2}}',date):raise ReviewRequired('Federal Register document number or publication year mismatch')
+    expected=f'https://www.govinfo.gov/content/pkg/FR-{date}/pdf/{number}.pdf'
+    if d.get('pdf_url')!=expected:raise ReviewRequired('Unrecognized official Federal Register publication URL')
+    url=expected.replace('/pdf/','/html/').replace('.pdf','.htm')
+    u=parse_govinfo_fpl(get(url),year,number,url);u['source']['published']=date
+    return u
+
+def collect_fpl_resilient(year,get=fetch):
+    try:return collect_fpl(year,get)
+    except (URLError,TimeoutError,OSError):return collect_fpl_register(year,get)
 
 class GovHTML(HTMLParser):
     def __init__(self):super().__init__(convert_charrefs=True);self.text=[];self.links=[];self.tables=[];self.table=None;self.cell=None;self.row=None;self.nested=0;self.heading=None;self.procedure=None
@@ -174,14 +218,14 @@ def merge_updates(manifest,updates,checked_at,errors=None,pending=None):
         old=[x for x in result['updates'] if (x.get('year'),x.get('section'))==key]
         if len(old)==1 and old[0].get('values')==u['values']:continue
         result['updates']=[x for x in result['updates'] if (x.get('year'),x.get('section'))!=key]+[u]
-    result['acaMonitor']={'checkedAt':checked_at,'status':'needs-review' if errors else 'ok','errors':errors or [],'pending':pending or [],'latestContributionYear':max([x['year'] for x in result['updates'] if x.get('section')=='acaContribution'],default=None),'latestGuidelineYear':max([x['values']['acaPovertyGuidelineYear'] for x in result['updates'] if x.get('section')=='acaPoverty'],default=None),'method':'Weekly official HHS API and IRS bulletin checks; unsupported rule changes require review.'}
+    result['acaMonitor']={'checkedAt':checked_at,'status':'needs-review' if errors else 'ok','errors':errors or [],'pending':pending or [],'latestContributionYear':max([x['year'] for x in result['updates'] if x.get('section')=='acaContribution'],default=None),'latestGuidelineYear':max([x['values']['acaPovertyGuidelineYear'] for x in result['updates'] if x.get('section')=='acaPoverty'],default=None),'method':'Weekly official HHS API/Federal Register and IRS bulletin checks; unsupported rule changes require review.'}
     if result['updates']!=manifest['updates']:result['publishedAt']=checked_at[:10]
     return result
 
 def run(manifest,get=fetch,today=None):
     today=today or dt.datetime.now(dt.timezone.utc).date();updates=[];errors=[];pending=[]
     for year in range(max(2025,today.year-1),today.year+2):
-        try:updates.append(collect_fpl(year,get))
+        try:updates.append(collect_fpl_resilient(year,get))
         except NotPublished as e:pending.append(str(e))
         except Exception as e:errors.append(f'HHS {year}: {e}')
     try:
