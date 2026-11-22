@@ -676,6 +676,49 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 .setup-score-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--gold);margin-top:4px}
 .setup-progress{height:9px;background:#eadfc5;border-radius:99px;overflow:hidden;margin-top:10px}
 .setup-progress span{display:block;height:100%;background:linear-gradient(90deg,#1a5c1a,#b8860b);width:0}
+/* Optional pre-Medicare health insurance and ACA */
+.health-view{min-width:0}
+.health-covered{margin:12px 0;padding:10px;background:var(--cream);border:1px solid var(--cream3);border-radius:4px;font-size:13px}
+.health-covered .family-enable{margin:8px 0}
+.health-breakdown,.health-magi,.health-summary{font-size:12px;line-height:1.6;border:1px solid var(--cream3);border-radius:5px;padding:10px 12px;margin:12px 0;background:#fffdf7;color:var(--ink2)}
+.health-breakdown details{margin-top:8px}.health-breakdown summary{cursor:pointer;color:var(--warn);font-weight:700}
+.health-breakdown p,.health-summary p{margin:7px 0}
+.health-year-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0 10px;font-weight:700}
+.health-year-head select{font:12px 'JetBrains Mono',monospace;padding:6px;border:1px solid var(--border);background:var(--panel);border-radius:4px}
+.health-months{min-width:850px}.health-summary table{min-width:800px}
+
+/* Optional family timeline */
+.family-option{border:1px solid var(--cream3);border-radius:5px;background:#fffdf5;padding:10px 12px}
+.family-option>summary,.family-adults>summary,.family-member>summary{cursor:pointer;font-weight:700;color:var(--ink2);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.family-enable{display:flex;align-items:center;gap:9px;font-size:13px;margin:12px 0 8px;cursor:pointer}
+.family-enable input{width:18px;height:18px;accent-color:var(--green)}
+.family-view-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.family-section-heading{font:700 20px 'Playfair Display',Georgia,serif;color:var(--ink)}
+.family-adults{margin:14px 0 20px;padding:11px 12px;border:1px solid var(--cream3);border-radius:5px}
+.family-adults .setup-field-grid{margin-top:10px}
+.family-member{border:1px solid var(--border);border-radius:5px;margin:10px 0;background:#fffdf7}
+.family-member>summary{padding:12px 14px}
+.family-member-body{padding:0 14px 14px}
+.family-period-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px;margin:15px 0}
+.family-period-section{padding:10px;border:1px solid var(--cream3);border-radius:4px;background:var(--panel)}
+.family-period-section h3{font:700 12px 'JetBrains Mono',monospace;color:var(--ink2);margin-bottom:8px}
+.family-period-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--cream3)}
+.family-period-row .setup-field{flex:1;min-width:120px}
+.family-remove{color:var(--red)}
+.family-member textarea{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:4px;background:var(--cream);font:13px 'Lora',Georgia,serif;color:var(--ink)}
+.family-issues{margin:14px 0;padding:11px 13px;border-left:4px solid var(--warn);background:var(--warn-bg);font-size:12px;line-height:1.5;color:var(--ink2)}
+.family-issues ul{padding-left:18px;margin-top:5px}
+.family-table-note{margin:18px 0 10px}
+.family-table-wrap{overflow:auto;max-height:65vh;border:1px solid var(--cream3);border-radius:5px}
+.family-table{border-collapse:collapse;width:100%;min-width:1050px;background:#fffdf7;font-size:11px;line-height:1.5}
+.family-table caption{text-align:left;font:700 17px 'Playfair Display',Georgia,serif;padding:12px;color:var(--ink)}
+.family-table th,.family-table td{padding:9px 10px;border-bottom:1px solid var(--cream3);text-align:left;vertical-align:top;overflow-wrap:anywhere;max-width:220px}
+.family-table thead th{position:sticky;top:0;background:var(--ink);color:var(--gold3);font:700 9px/1.5 'JetBrains Mono',monospace;z-index:1}
+.family-table tbody th{font-family:'JetBrains Mono',monospace;color:var(--ink2)}
+.family-table tbody tr:nth-child(even){background:var(--cream)}
+.family-unset{color:#76684b;font-style:italic}.family-invalid{color:var(--red)}
+.family-partial{display:inline-block;padding:0 4px;border:1px solid var(--border);border-radius:3px;color:var(--warn);font-size:9px}
+
 .setup-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--cream3);padding-bottom:10px}
 .setup-tab{border:1px solid var(--border);background:var(--panel);color:var(--ink2);border-radius:4px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .setup-tab.active{background:var(--ink);color:var(--gold3);border-color:var(--gold)}
@@ -1436,9 +1479,11 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
           <button class="btn btn-light" onclick="taxUpdateCheck(true)" style="padding:7px 11px">Check Now</button>
           <button class="btn btn-dark" id="tt-update-apply" onclick="taxUpdateApplySelected()" style="padding:7px 11px;display:none">Review &amp; Apply</button>
         </div>
-        <div id="tt-update-detail" class="note" style="margin-top:7px">The app checks the public update file in ronholl/ronsfinancemodel at most weekly. No plan data is sent.</div>
+        <div id="tt-update-detail" class="note" style="margin-top:7px">The app checks the public update file in ronholl/ronsfinancemodel at most daily. ACA figures can update automatically; other sections keep Review & Apply. No plan data is sent.</div>
       </div>
     </div>
+
+    <div class="panel" id="tt-aca-data" style="grid-column:1/-1"></div>
 
     <!-- Filing status tabs -->
     <div class="panel" style="grid-column:1/-1">
@@ -2382,11 +2427,479 @@ function findLayeredOverrides(table) {
 }
 
 // ── Default state ────────────────────────────────────────────────────────────
+// Optional family timeline. These planning records never enter runProjection.
+const FAMILY_TIMELINE_SCHEMA = 1;
+const FAMILY_PERIOD_TYPES = {
+  household:{label:'Household residence',unit:'date'},
+  taxDependent:{label:'Planned tax dependency',unit:'year'},
+  support:{label:'Financial support',unit:'date'},
+  student:{label:'Student status',unit:'date'}
+};
+function familyTimelineDefaults(){
+  return {schemaVersion:FAMILY_TIMELINE_SCHEMA,enabled:false,nextId:1,birthDate1:'',birthDate2:'',dependents:[]};
+}
+function familyText(value){ return value == null ? '' : String(value).trim(); }
+function normalizeFamilyTimeline(value){
+  const raw=value && typeof value==='object' && !Array.isArray(value) ? value : {};
+  const result=Object.assign(familyTimelineDefaults(),raw,{enabled:raw.enabled===true});
+  if (raw.schemaVersion != null && raw.schemaVersion !== FAMILY_TIMELINE_SCHEMA) return result;
+  result.birthDate1=familyText(raw.birthDate1); result.birthDate2=familyText(raw.birthDate2);
+  let next=Number.isSafeInteger(raw.nextId) && raw.nextId>0 && raw.nextId<1000000000 ? raw.nextId : 1;
+  const used=new Set();
+  const reserve=id=>{
+    const text=familyText(id), match=/^family-(\d+)$/.exec(text);
+    if (match && Number.isSafeInteger(Number(match[1])) && Number(match[1])<1000000000) next=Math.max(next,Number(match[1])+1);
+  };
+  const people=Array.isArray(raw.dependents) ? raw.dependents.filter(p=>p && typeof p==='object' && !Array.isArray(p)) : [];
+  people.forEach(p=>{ reserve(p.id); Object.keys(FAMILY_PERIOD_TYPES).forEach(k=>(Array.isArray(p.periods?.[k])?p.periods[k]:[]).forEach(x=>reserve(x?.id))); });
+  const identifier=old=>{
+    let id=familyText(old);
+    if (!id || used.has(id)) { do { id='family-'+next++; } while (used.has(id)); }
+    used.add(id); return id;
+  };
+  result.dependents=people.map(p=>{
+    const periods=Object.assign({},p.periods && typeof p.periods==='object' ? p.periods : {});
+    Object.keys(FAMILY_PERIOD_TYPES).forEach(k=>{
+      periods[k]=(Array.isArray(periods[k])?periods[k]:[]).filter(x=>x && typeof x==='object' && !Array.isArray(x)).map(x=>Object.assign({},x,{id:identifier(x.id),start:familyText(x.start),end:familyText(x.end)}));
+    });
+    return Object.assign({},p,{id:identifier(p.id),name:familyText(p.name),relationship:familyText(p.relationship)||'child',birthDate:familyText(p.birthDate),notes:familyText(p.notes),periods});
+  });
+  result.nextId=next;
+  return result;
+}
+function familyTimelineEnabled(state){ return state?.familyTimeline?.enabled===true; }
+function familyDate(value){
+  const text=familyText(value), match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!match) return null;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+  if (year<1900 || month<1 || month>12 || day<1) return null;
+  const leap=year%4===0 && (year%100!==0 || year%400===0);
+  const days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+  if (day>days[month-1]) return null;
+  return {text,year,month,day,ordinal:Date.UTC(year,month-1,day)/86400000};
+}
+function familyYear(value){
+  const text=familyText(value);
+  return /^\d{4}$/.test(text) && Number(text)>=1900 ? Number(text) : null;
+}
+function familyAgeAtDate(birthDate,asOf){
+  const birth=familyDate(birthDate),date=familyDate(asOf);
+  if (!birth || !date || date.ordinal<birth.ordinal) return null;
+  return date.year-birth.year-((date.month<birth.month || (date.month===birth.month && date.day<birth.day))?1:0);
+}
+function familyPeriodBounds(period,kind){
+  if (!period || !FAMILY_PERIOD_TYPES[kind]) return null;
+  if (FAMILY_PERIOD_TYPES[kind].unit==='year') {
+    const start=familyYear(period.start),end=period.end===''?null:familyYear(period.end);
+    if (!start || (period.end!=='' && !end) || (end && end<start)) return null;
+    return {start:familyDate(start+'-01-01').ordinal,end:end?familyDate(end+'-12-31').ordinal:Infinity};
+  }
+  const start=familyDate(period.start),end=period.end===''?null:familyDate(period.end);
+  if (!start || (period.end!=='' && !end) || (end && end.ordinal<start.ordinal)) return null;
+  return {start:start.ordinal,end:end?end.ordinal:Infinity};
+}
+function validateFamilyTimeline(state){
+  const plan=normalizeFamilyTimeline(state?.familyTimeline);
+  if (!plan.enabled) return [];
+  if (plan.schemaVersion!==FAMILY_TIMELINE_SCHEMA) return [{severity:'error',field:'schema',message:'This family timeline uses an unsupported version. Its data is retained; turn the option off to continue the existing workflow.'}];
+  const issues=[];
+  const add=(severity,field,message,memberId)=>issues.push({severity,field,message,memberId:memberId||''});
+  [1,2].forEach(person=>{
+    if (person===2 && !(state.householdMode!=='single' && familyText(state.name2))) return;
+    const value=plan['birthDate'+person],date=familyDate(value),year=familyYear(state['by'+person]);
+    const name=familyText(state['name'+person]) || ('Person '+person);
+    if (value && !date) add('error','birthDate'+person,name+': enter a valid birth date.');
+    if (date && year && date.year!==year) add('warning','birthDate'+person,name+': the timeline birth date differs from the existing Birth Year. Retirement calculations continue using the existing Birth Year.');
+  });
+  plan.dependents.forEach((person,index)=>{
+    const name=person.name || ('Dependent '+(index+1)),birth=familyDate(person.birthDate);
+    if (!person.name) add('warning','name',name+': add a name so the timeline is easy to read.',person.id);
+    if (!person.birthDate) add('warning','birthDate',name+': birth date is not set; age is unknown.',person.id);
+    else if (!birth) add('error','birthDate',name+': enter a valid birth date.',person.id);
+    Object.entries(FAMILY_PERIOD_TYPES).forEach(([kind,info])=>{
+      const ranges=[];
+      person.periods[kind].forEach((period,pi)=>{
+        const bounds=familyPeriodBounds(period,kind),label=name+' — '+info.label+' period '+(pi+1);
+        if (!bounds) { add('error',kind,label+': enter a valid start and an end on or after the start, or leave the end blank for ongoing.',person.id); return; }
+        const beforeBirth=birth && bounds.start<(info.unit==='year'?familyDate(birth.year+'-01-01').ordinal:birth.ordinal);
+        if (beforeBirth) add('error',kind,label+': the period starts before the birth date.',person.id);
+        if (ranges.some(other=>bounds.start<=other.end && other.start<=bounds.end)) add('warning',kind,name+' — '+info.label+': overlapping periods count this person only once.',person.id);
+        ranges.push(bounds);
+      });
+    });
+  });
+  return issues;
+}
+function familyPeriodStatus(periods,kind,year){
+  if (!periods.length) return 'unspecified';
+  const first=familyDate(year+'-01-01').ordinal,last=familyDate(year+'-12-31').ordinal;
+  const bounds=periods.map(p=>familyPeriodBounds(p,kind));
+  if (bounds.some(b=>!b)) return 'invalid';
+  const parts=bounds.filter(b=>b.start<=last && b.end>=first).map(b=>({start:Math.max(first,b.start),end:Math.min(last,b.end)})).sort((a,b)=>a.start-b.start);
+  if (!parts.length) return 'none';
+  const merged=[];
+  parts.forEach(part=>{ const prev=merged[merged.length-1]; if (prev && part.start<=prev.end+1) prev.end=Math.max(prev.end,part.end); else merged.push(Object.assign({},part)); });
+  return merged.length===1 && merged[0].start===first && merged[0].end===last ? 'full' : 'partial';
+}
+function buildFamilyTimeline(state){
+  const plan=normalizeFamilyTimeline(state?.familyTimeline);
+  if (!plan.enabled) return {enabled:false,years:[],issues:[]};
+  const issues=validateFamilyTimeline(state);
+  if (plan.schemaVersion!==FAMILY_TIMELINE_SCHEMA) return {enabled:true,years:[],issues};
+  const start=familyYear(state.startYear),end=familyYear(state.endYear);
+  if (!start || !end || end<start || end-start>=100) return {enabled:true,years:[],issues:issues.concat([{severity:'error',field:'planYears',message:'Set a valid plan range of no more than 100 years to build the family timeline.'}])};
+  const years=[];
+  const hasSecond=state.householdMode!=='single' && !!familyText(state.name2);
+  const deadPerson=hasSecond && state.widowMode==='p1Survives'?2:hasSecond && state.widowMode==='p2Survives'?1:0;
+  for (let year=start;year<=end;year++) {
+    const asOf=year+'-12-31',events=[];
+    const adults=[1,...(hasSecond?[2]:[])].map(person=>{
+      const deceased=deadPerson===person && Number(state.widowDeathYear)>0 && year>Number(state.widowDeathYear);
+      const exact=familyDate(plan['birthDate'+person]),by=familyYear(state['by'+person]);
+      const age=deceased?null:exact?familyAgeAtDate(exact.text,asOf):by && year>=by?year-by:null;
+      const name=familyText(state['name'+person]) || ('Person '+person);
+      if (deadPerson===person && year===Number(state.widowDeathYear)) events.push(name+': modeled death year');
+      if (!deceased && year===Number(state['wagesEnd'+person])) events.push(name+': last W-2 wage year');
+      if (!deceased && year===Number(state['ptEnd'+person])) events.push(name+': last non-wage income year');
+      return {person,name,age,approximate:!exact && age!==null,deceased};
+    });
+    const dependents=plan.dependents.map((person,index)=>{
+      const birth=familyDate(person.birthDate),notBorn=!!birth && birth.ordinal>familyDate(asOf).ordinal;
+      const row={id:person.id,name:person.name||('Dependent '+(index+1)),age:familyAgeAtDate(person.birthDate,asOf),notBorn};
+      Object.keys(FAMILY_PERIOD_TYPES).forEach(kind=>{
+        const invalid=issues.some(i=>i.severity==='error' && i.memberId===person.id && (i.field===kind || i.field==='birthDate'));
+        row[kind]=invalid?'invalid':notBorn?'none':familyPeriodStatus(person.periods[kind],kind,year);
+        person.periods[kind].forEach(period=>{
+          if (!familyPeriodBounds(period,kind)) return;
+          const sy=FAMILY_PERIOD_TYPES[kind].unit==='year'?familyYear(period.start):familyDate(period.start)?.year;
+          const ey=period.end===''?null:FAMILY_PERIOD_TYPES[kind].unit==='year'?familyYear(period.end):familyDate(period.end)?.year;
+          if (sy===year) events.push(row.name+': '+FAMILY_PERIOD_TYPES[kind].label.toLowerCase()+' starts '+period.start);
+          if (ey===year) events.push(row.name+': '+FAMILY_PERIOD_TYPES[kind].label.toLowerCase()+' ends '+period.end);
+        });
+      });
+      return row;
+    });
+    const active=key=>dependents.filter(d=>d[key]==='full'||d[key]==='partial');
+    years.push({year,adults,dependents,plannedTaxDependentCount:active('taxDependent').length,supportedCount:active('support').length,taxDependencyUnspecifiedCount:dependents.filter(d=>!d.notBorn && ['unspecified','invalid'].includes(d.taxDependent)).length,events});
+  }
+  return {enabled:true,years,issues};
+}
+function reduceFamilyTimeline(value,action,planStartYear){
+  const plan=normalizeFamilyTimeline(value);
+  if (action.type==='enabled') { plan.enabled=action.value===true; return plan; }
+  if (plan.schemaVersion!==FAMILY_TIMELINE_SCHEMA) return plan;
+  const member=plan.dependents[action.member],kind=Object.hasOwn(FAMILY_PERIOD_TYPES,action.kind||'')?action.kind:null;
+  const identifier=()=> 'family-'+plan.nextId++;
+  if (action.type==='adultBirth' && [1,2].includes(action.person)) plan['birthDate'+action.person]=familyText(action.value);
+  if (action.type==='addDependent') plan.dependents.push({id:identifier(),name:'',relationship:'child',birthDate:'',notes:'',periods:{household:[],taxDependent:[],support:[],student:[]}});
+  if (action.type==='removeDependent' && member) plan.dependents.splice(action.member,1);
+  if (action.type==='memberField' && member && ['name','relationship','birthDate','notes'].includes(action.key)) member[action.key]=familyText(action.value);
+  if (action.type==='addPeriod' && member && kind) {
+    const year=familyYear(planStartYear)||new Date().getFullYear(),birth=familyDate(member.birthDate);
+    const firstYear=Math.max(year,birth?.year||year);
+    member.periods[kind].push({id:identifier(),start:FAMILY_PERIOD_TYPES[kind].unit==='year'?String(firstYear):birth && birth.year>=year?birth.text:year+'-01-01',end:''});
+  }
+  const period=member && kind ? member.periods[kind][action.period] : null;
+  if (action.type==='periodField' && period && ['start','end'].includes(action.key)) period[action.key]=familyText(action.value);
+  if (action.type==='removePeriod' && period) member.periods[kind].splice(action.period,1);
+  return plan;
+}
+
+// Optional pre-Medicare coverage. ACA household MAGI is distinct from Medicare MAGI.
+// Sources and verified rule years: PHASE2_CHANGES.md. Estimates are not Form 8962 reconciliation.
+const HEALTH_SCHEMA=1;
+const HEALTH_KINDS={marketplace:'Marketplace',cobra:'COBRA',employer:'Employer / retiree plan',private:'Other private plan',public:'Medicaid / CHIP / other'};
+const ACA_RULES={
+  2026:{rates:[[100,133,.021,.021],[133,150,.0314,.0419],[150,200,.0419,.066],[200,250,.066,.0844],[250,300,.0844,.0996],[300,400,.0996,.0996]],fpl:{US:[15650,5500],AK:[19550,6880],HI:[17990,6320]}},
+  2027:{rates:[[100,133,.0215,.0215],[133,150,.0323,.043],[150,200,.043,.0678],[200,250,.0678,.0866],[250,300,.0866,.1022],[300,400,.1022,.1022]],fpl:{US:[15960,5680],AK:[19950,7100],HI:[18360,6530]}}
+};
+// Public ACA parameter updates stay separate from household inputs and Medicare tables.
+const ACA_UPDATE_SECTIONS=['acaContribution','acaPoverty'];
+function acaDataDefaults(){return {schemaVersion:1,autoApply:true,years:{},lastCheck:'',monitor:null};}
+function normalizeAcaData(raw){
+  raw=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const result=Object.assign(acaDataDefaults(),raw,{autoApply:raw.autoApply!==false});
+  if(result.schemaVersion!==1)return result;
+  result.years=raw.years&&typeof raw.years==='object'&&!Array.isArray(raw.years)?JSON.parse(JSON.stringify(raw.years)):{};
+  return result;
+}
+function acaIsSection(section){return ACA_UPDATE_SECTIONS.includes(section);}
+function acaSourceURL(url,section){
+  try{const u=new URL(url);const hosts=section==='acaContribution'?['www.irs.gov','irs.gov']:['aspe.hhs.gov','www.hhs.gov','www.federalregister.gov','public-inspection.federalregister.gov','www.govinfo.gov'];
+    return u.protocol==='https:'&&!u.username&&!u.password&&hosts.includes(u.hostname)?u.href:null;}catch(e){return null;}
+}
+function acaValidateUpdate(update){
+  const errors=[],v=update?.values,y=update?.year;
+  if(!acaIsSection(update?.section))return ['Unsupported ACA section.'];
+  if(!Number.isInteger(y)||y<2026||y>2100)errors.push('Invalid coverage year.');
+  if(typeof update.id!=='string'||!update.id.trim()||update.id.length>200)errors.push('Missing update identifier.');
+  if(!acaSourceURL(update.source?.url,update.section))errors.push('ACA source must be an approved official HTTPS URL.');
+  if(!v||typeof v!=='object'||Array.isArray(v))return errors.concat(['Missing values.']);
+  const allowed=update.section==='acaContribution'?['acaContributionRates','acaMinimumFpl','acaMaximumFpl']:['acaPovertyGuidelineYear','acaPovertyGuidelines'];
+  if(Object.keys(v).length!==allowed.length||Object.keys(v).some(k=>!allowed.includes(k)))errors.push('Unexpected or missing ACA fields.');
+  const finite=x=>typeof x==='number'&&Number.isFinite(x);
+  if(update.section==='acaContribution'){
+    const expected=[[100,133],[133,150],[150,200],[200,250],[250,300],[300,400]],rows=v.acaContributionRates;
+    if(v.acaMinimumFpl!==100||v.acaMaximumFpl!==400)errors.push('Changed subsidy eligibility bounds require an app rule review.');
+    if(!Array.isArray(rows)||rows.length!==6||rows.some((r,i)=>!Array.isArray(r)||r.length!==4||r.some(x=>!finite(x))||r[0]!==expected[i][0]||r[1]!==expected[i][1]||r[2]<0||r[3]<r[2]||r[3]>.25))errors.push('Invalid or unsupported ACA contribution schedule.');
+  }else{
+    const f=v.acaPovertyGuidelines;
+    if(v.acaPovertyGuidelineYear!==y-1)errors.push('Guideline year must precede the coverage year by one.');
+    if(!f||typeof f!=='object'||Object.keys(f).length!==3||['US','AK','HI'].some(k=>!Array.isArray(f[k])||f[k].length!==2||f[k].some(x=>!finite(x)||!Number.isInteger(x)||x<=0||x>200000)))errors.push('Invalid regional poverty guidelines.');
+  }
+  return errors;
+}
+function acaBuiltinUpdate(year,section){
+  const rule=ACA_RULES[year];if(!rule)return null;
+  return {id:'builtin-'+section+'-'+year,year,section,title:section==='acaContribution'?'ACA contribution percentages':'ACA poverty guidelines',source:section==='acaContribution'?{agency:'IRS',url:year===2026?'https://www.irs.gov/irb/2025-32_IRB':'https://www.irs.gov/irb/2026-31_irb'}:{agency:'HHS',url:'https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/api/'+(year-1)+'/us/1'},values:section==='acaContribution'?{acaContributionRates:rule.rates,acaMinimumFpl:100,acaMaximumFpl:400}:{acaPovertyGuidelineYear:year-1,acaPovertyGuidelines:rule.fpl}};
+}
+function acaEffectiveSection(state,coverageYear,section){
+  const data=normalizeAcaData(state?.acaData),years=new Set(Object.keys(ACA_RULES).map(Number));
+  if(data.schemaVersion===1)Object.keys(data.years).forEach(y=>{if(/^\d{4}$/.test(y))years.add(Number(y));});
+  for(const y of [...years].filter(y=>y<=coverageYear).sort((a,b)=>b-a)){
+    const saved=data.schemaVersion===1?data.years[y]?.[section]:null;
+    if(saved&&acaValidateUpdate(saved).length===0)return Object.assign({},saved,{projected:y!==coverageYear,status:y!==coverageYear?'projected':saved.status==='entered'?'entered':'official'});
+    const builtin=acaBuiltinUpdate(y,section);if(builtin)return Object.assign(builtin,{projected:y!==coverageYear,status:y!==coverageYear?'projected':'official'});
+  }
+  return null;
+}
+function acaPolicyForYear(state,year){return {contribution:acaEffectiveSection(state,year,'acaContribution'),poverty:acaEffectiveSection(state,year,'acaPoverty')};}
+function acaUpdateCurrent(update,state=S){
+  if(acaValidateUpdate(update).length)return false;
+  const current=acaEffectiveSection(state,update.year,update.section);
+  return !!current&&current.year===update.year&&current.status==='official'&&JSON.stringify(current.values)===JSON.stringify(update.values);
+}
+function acaApplyUpdates(state,updates,automatic=false){
+  const data=normalizeAcaData(state.acaData),result={applied:[],skipped:[],errors:[]};
+  if(data.schemaVersion!==1){result.errors.push('ACA saved data needs a newer app.');return result;}
+  if(automatic&&!data.autoApply)return result;
+  const groups=new Map(),conflicts=new Set();
+  for(const u of updates||[]){if(!acaIsSection(u?.section))continue;const k=u.year+':'+u.section,v=JSON.stringify(u.values);if(groups.has(k)&&groups.get(k)!==v)conflicts.add(k);else groups.set(k,v);}
+  for(const u of updates||[]){
+    if(!acaIsSection(u?.section))continue;
+    if(conflicts.has(u.year+':'+u.section)){result.errors.push('Conflicting ACA updates for '+u.year+' '+u.section+'; figures were retained.');continue;}
+    const errors=acaValidateUpdate(u);if(errors.length){result.errors.push((u.id||'ACA update')+': '+errors.join(' '));continue;}
+    const saved=data.years[u.year]?.[u.section];
+    if(automatic&&(saved?.status==='entered'||saved?.pinned)){result.skipped.push(u.id);continue;}
+    if(acaUpdateCurrent(u,{acaData:data}))continue;
+    data.years[u.year]=Object.assign({},data.years[u.year],{[u.section]:Object.assign(JSON.parse(JSON.stringify(u)),{status:'official',appliedAt:new Date().toISOString()})});result.applied.push(u.id);
+  }
+  state.acaData=data;return result;
+}
+let acaInitialLoadPending=false,acaDeferredManifest=null;
+function acaLoadInitialPlan(){
+  acaInitialLoadPending=ghIsConfigured();
+  return initGitHubLoad().finally(()=>{acaInitialLoadPending=false;if(acaDeferredManifest){const queued=acaDeferredManifest;acaDeferredManifest=null;acaAcceptManifest(queued);}});
+}
+function acaAcceptManifest(manifest){
+  if(acaInitialLoadPending){acaDeferredManifest=manifest;return;}
+  const data=normalizeAcaData(S.acaData);if(data.schemaVersion!==1)return;
+  data.lastCheck=new Date().toISOString();
+  data.monitor=manifest.acaMonitor&&typeof manifest.acaMonitor==='object'?JSON.parse(JSON.stringify(manifest.acaMonitor)):null;
+  S.acaData=data;
+  const result=acaApplyUpdates(S,manifest.updates,true);
+  if(result.errors.length)S.acaData.updateErrors=result.errors;else delete S.acaData.updateErrors;
+  // A routine source check must not dirty or upload an unchanged retirement plan.
+  if(result.applied.length){saveState(S);proj=runProjection(S);renderAll();showSaved();}
+  else {try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}catch(e){}}
+  if(setupView==='health')renderSetupGuide();
+  acaRenderPanel();
+}
+let acaEditingYear=null;
+function acaToggleAuto(checked){
+  const data=normalizeAcaData(S.acaData);if(data.schemaVersion!==1)return;
+  data.autoApply=checked===true;S.acaData=data;
+  if(data.autoApply&&taxUpdateManifest)acaAcceptManifest(taxUpdateManifest);else{saveState(S);showSaved();acaRenderPanel();}
+}
+function acaMonitorMessage(state){
+  const data=normalizeAcaData(state.acaData),monitor=data.monitor,checked=monitor?.checkedAt;
+  const time=Date.parse(checked||''),stale=!Number.isFinite(time)||Date.now()-time>35*86400000;
+  const failures=Array.isArray(monitor?.errors)?monitor.errors:[];
+  const text=Number.isFinite(time)?'Official-source monitor last ran '+new Date(time).toISOString().slice(0,10)+'.':'No official-source monitor check has been received yet.';
+  return {warning:stale||failures.length>0,text:text+(stale?' Monitoring is overdue; published data remains saved and unverified future years stay projected.':'')+(failures.length?' One or more sources need review; existing figures are retained.':'')};
+}
+function acaDataNoticeHtml(state=S){
+  const data=normalizeAcaData(state.acaData),m=acaMonitorMessage(state);
+  return '<div class="setup-section-copy" style="margin:8px 0;color:'+(m.warning?'var(--warn)':'var(--ink2)')+'">ACA official-data updates: '+(data.autoApply?'automatic':'manual Review & Apply')+'. '+setupEsc(m.text)+' '+(data.updateErrors?.length?'Some ACA update records failed validation. ':'')+'Tax Tables shows source years and links. Premium quotes remain your own inputs.</div>';
+}
+function acaSectionLabel(u){return !u?'Unavailable':u.status==='projected'?'Projected from '+u.year:u.status==='entered'?'Entered':'Official · '+u.year;}
+function acaRenderPanel(){
+  const root=document.getElementById('tt-aca-data');if(!root)return;
+  const data=normalizeAcaData(S.acaData);if(data.schemaVersion!==1){root.innerHTML='<p>ACA data needs a newer app. Existing Medicare and tax tables are unchanged.</p>';return;}
+  if(!acaEditingYear)acaEditingYear=ttEditYear||Math.max(2026,S.startYear);
+  const year=Number(acaEditingYear),policy=acaPolicyForYear(S,year),rates=policy.contribution,fpl=policy.poverty;
+  const all=new Set([2026,2027,year,...Object.keys(data.years).map(Number)]);for(let y=Math.max(2026,S.startYear);y<=Math.min(2100,Math.max(S.endYear,new Date().getFullYear()+2));y++)all.add(y);
+  const options=[...all].sort((a,b)=>a-b).map(y=>'<option '+(y===year?'selected':'')+'>'+y+'</option>').join('');
+  const source=u=>u?'<a href="'+setupEsc(u.source.url)+'" target="_blank" rel="noopener">'+setupEsc(u.source.agency||'Official source')+' ↗</a>':'';
+  root.innerHTML='<details '+(healthEnabled(S)?'open':'')+'><summary style="cursor:pointer;font-weight:700;color:var(--ink)">ACA contribution percentages & poverty guidelines</summary><div style="margin-top:10px">'+
+    '<label class="family-enable" for="aca-auto-update"><input type="checkbox" id="aca-auto-update" '+(data.autoApply?'checked':'')+' onchange="acaToggleAuto(this.checked)"> Automatically apply validated official ACA figures</label>'+acaDataNoticeHtml(S)+
+    '<p class="note">Only ACA data updates automatically. Federal, California, IRMAA, and Medicare updates keep their existing Review & Apply workflow. Turn this off to review ACA updates manually. An IRS eligibility/formula change needs an app update; the collector handles the supported annual tables.</p>'+
+    (data.monitor?.errors?.length?'<details><summary>Official-source check needs review</summary><ul>'+data.monitor.errors.map(x=>'<li>'+setupEsc(x)+'</li>').join('')+'</ul></details>':'')+
+    '<div class="field"><label for="aca-coverage-year">ACA coverage year</label><select id="aca-coverage-year" onchange="acaEditingYear=Number(this.value);acaRenderPanel()">'+options+'</select></div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:10px 0"><div><strong>Contribution percentages:</strong> '+setupEsc(acaSectionLabel(rates))+' · '+source(rates)+'</div><div><strong>Poverty guidelines:</strong> '+setupEsc(acaSectionLabel(fpl))+' · guideline year '+(fpl?.values.acaPovertyGuidelineYear??'—')+' · '+source(fpl)+'</div></div>'+
+    '<div style="overflow:auto"><table class="data"><thead><tr><th>Household income / poverty guideline</th><th>Initial contribution</th><th>Final contribution</th></tr></thead><tbody>'+(rates?rates.values.acaContributionRates.map(r=>'<tr><td>'+r[0]+'% to '+r[1]+'%</td><td>'+(r[2]*100).toFixed(2)+'%</td><td>'+(r[3]*100).toFixed(2)+'%</td></tr>').join(''):'')+'</tbody></table></div>'+
+    '<p class="note">Poverty figures below are the published base table, before any future-year growth assumption. A projected section is not an official value for '+year+'.</p><div style="overflow:auto"><table class="data"><thead><tr><th>Region</th><th>One person</th><th>Each additional person</th></tr></thead><tbody>'+(fpl?Object.entries(fpl.values.acaPovertyGuidelines).map(([region,v])=>'<tr><td>'+({US:'48 states & DC',AK:'Alaska',HI:'Hawaii'}[region])+'</td><td>'+f$(v[0])+'</td><td>'+f$(v[1])+'</td></tr>').join(''):'')+'</tbody></table></div></div></details>';
+}
+function acaRenderUpdateSelection(update,detail,apply){
+  const errors=acaValidateUpdate(update),current=acaUpdateCurrent(update),old=acaEffectiveSection(S,update.year,update.section),source=acaSourceURL(update.source?.url,update.section);
+  detail.innerHTML='<strong>'+(errors.length?'Update needs review':current?'Already installed':'Available to review')+':</strong> '+taxUpdateSafeText(update.summary||update.title||'ACA data')+
+    (source?' <a href="'+taxUpdateSafeText(source)+'" target="_blank" rel="noopener">Official '+taxUpdateSafeText(update.source.agency||'source')+' ↗</a>':'')+
+    '<div class="note">Coverage year '+taxUpdateSafeText(update.year)+(update.section==='acaPoverty'?' · guideline year '+taxUpdateSafeText(update.values?.acaPovertyGuidelineYear):'')+'. ACA data is separate from Medicare MAGI and IRMAA.</div>'+
+    (errors.length?'<p>'+errors.map(taxUpdateSafeText).join(' ')+'</p>':'')+
+    (!current&&!errors.length?'<details><summary>Review old versus official values</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">Current: '+taxUpdateSafeText(JSON.stringify(old?.values||{},null,2))+'\nOfficial: '+taxUpdateSafeText(JSON.stringify(update.values,null,2))+'</pre></details>':'');
+  apply.style.display=current||errors.length?'none':'inline-block';
+}
+function acaApplySelectedUpdate(update){
+  const errors=acaValidateUpdate(update);if(errors.length){alert(errors.join(' '));return;}
+  if(!confirm('Apply '+update.year+' '+update.title+'? Only this ACA section will change. Medicare/IRMAA and income-tax tables are unchanged.'))return;
+  const result=acaApplyUpdates(S,[update],false);if(result.errors.length){alert(result.errors.join(' '));return;}
+  saveState(S);showSaved();proj=runProjection(S);acaEditingYear=update.year;renderAll();acaRenderPanel();taxUpdateRenderPicker();
+  if(setupView==='health')renderSetupGuide();
+}
+
+function healthDefaults(){return {schemaVersion:HEALTH_SCHEMA,enabled:false,nextId:1,region:'US',householdSource:'timeline',householdSize:'',householdConfirmed:false,foreignIncome:0,dependentMagi:0,fplGrowth:2.5,periods:[],years:{}};}
+function healthNumber(value){return value!=='' && value!=null && typeof value!=='boolean' && Number.isFinite(Number(value)) ? Number(value):null;}
+function healthMonth(value){const m=/^(\d{4})-(\d{2})$/.exec(String(value||''));return m && +m[1]>=1900 && +m[2]>=1 && +m[2]<=12 ? +m[1]*12+(+m[2]-1):null;}
+function normalizeHealth(raw){
+  raw=raw && typeof raw==='object' && !Array.isArray(raw)?raw:{};
+  const p=Object.assign(healthDefaults(),raw,{enabled:raw.enabled===true,householdConfirmed:raw.householdConfirmed===true});
+  if(p.schemaVersion!==HEALTH_SCHEMA)return p;
+  p.years=raw.years && typeof raw.years==='object' && !Array.isArray(raw.years)?JSON.parse(JSON.stringify(raw.years)):{};
+  let next=Number.isSafeInteger(raw.nextId)&&raw.nextId>0&&raw.nextId<1e9?raw.nextId:1;const used=new Set();
+  const list=Array.isArray(raw.periods)?raw.periods.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)):[];
+  list.forEach(x=>{const n=/^health-(\d+)$/.exec(x.id||'');if(n&&+n[1]<1e9)next=Math.max(next,+n[1]+1);});
+  p.periods=list.map(x=>{let id=familyText(x.id);if(!id||used.has(id)){do{id='health-'+next++;}while(used.has(id));}used.add(id);
+    return Object.assign({label:'',kind:'marketplace',start:'',end:'',premium:'',benchmark:'',outOfPocket:0,inflation:0,members:[],creditEligible:false},x,{id,members:Array.isArray(x.members)?[...new Set(x.members.map(String))]:[],creditEligible:x.creditEligible===true});});
+  p.nextId=next;return p;
+}
+function healthEnabled(s){return s?.familyHealth?.enabled===true;}
+function healthMembers(s){
+  const p=normalizeFamilyTimeline(s.familyTimeline),out=[{id:'p1',name:s.name1||'Primary person',birthDate:p.birthDate1,by:s.by1,adult:1}];
+  if(s.householdMode!=='single'&&familyText(s.name2))out.push({id:'p2',name:s.name2,birthDate:p.birthDate2,by:s.by2,adult:2});
+  if(p.schemaVersion===FAMILY_TIMELINE_SCHEMA)p.dependents.forEach((d,i)=>out.push({id:d.id,name:d.name||'Dependent '+(i+1),birthDate:d.birthDate,by:null,adult:0}));
+  return out;
+}
+function healthMedicareMonth(member){
+  const b=familyDate(member.birthDate);
+  if(b)return (b.year+65)*12+b.month-1-(b.day===1?1:0);
+  const by=member.adult?familyYear(member.by):null;return by?(by+66)*12:null; // match existing annual age convention when DOB is unknown
+}
+function healthYearConfig(s,yr,filing){
+  const p=normalizeHealth(s.familyHealth),v=p.years?.[yr]||{},issues=[];
+  const pick=k=>v[k]!==''&&v[k]!=null?v[k]:p[k];
+  let size=healthNumber(pick('householdSize'));
+  if(size==null&&p.householdSource==='timeline'){
+    const adults=filing==='MFJ'?2:1,fp=normalizeFamilyTimeline(s.familyTimeline);
+    if(fp.schemaVersion!==FAMILY_TIMELINE_SCHEMA)issues.push('Family timeline version is unsupported; enter a tax household size for this year.');
+    else if(fp.dependents.length && !fp.enabled)issues.push('Family timeline is off; enable it or enter a tax household size for this year.');
+    else {
+      let count=0,missing=false;
+      fp.dependents.forEach(d=>{const b=familyDate(d.birthDate);if(b&&b.year>yr)return;
+        const status=familyPeriodStatus(d.periods.taxDependent,'taxDependent',yr);
+        if(['unspecified','invalid'].includes(status))missing=true;else if(['full','partial'].includes(status))count++;});
+      if(validateFamilyTimeline(s).some(i=>i.severity==='error'&&(i.field==='taxDependent'||i.field==='birthDate')))missing=true;
+      if(missing)issues.push('Planned tax dependency is missing or invalid; enter a tax household size for this year.');else size=adults+count;
+    }
+  }
+  if(!Number.isInteger(size)||size<1||size>100){size=null;issues.push('Enter a whole-number tax household size from 1 to 100, or complete the family timeline.');}
+  const foreign=healthNumber(pick('foreignIncome')),dependent=healthNumber(pick('dependentMagi'));
+  if(foreign==null||foreign<0||dependent==null||dependent<0)issues.push('Excluded foreign income and required-filer dependent MAGI must be zero or positive.');
+  const override=v.magiOverride===''||v.magiOverride==null?null:healthNumber(v.magiOverride);
+  if(v.magiOverride!==''&&v.magiOverride!=null&&(override==null||override<0))issues.push('ACA household MAGI override must be zero or positive.');
+  const growth=healthNumber(p.fplGrowth);
+  if(growth==null||growth<0||growth>20)issues.push('Projected poverty-guideline growth must be from 0% to 20%.');
+  const policy=acaPolicyForYear(s,yr),ruleYear=policy.contribution?.year??null,rates=policy.contribution?.values.acaContributionRates;
+  const poverty=policy.poverty,region=poverty && Object.hasOwn(poverty.values.acaPovertyGuidelines,p.region)?p.region:null;
+  if(!region)issues.push('Select a supported poverty-guideline region.');
+  if(!rates)issues.push('ACA assistance is not estimated for coverage before 2026.');
+  const base=poverty?.values.acaPovertyGuidelines[region];
+  const fpl=base&&size?(base[0]+base[1]*(size-1))*Math.pow(1+(growth||0)/100,Math.max(0,yr-poverty.year)):null;
+  if(!p.householdConfirmed)issues.push('Confirm the tax household and dependent income assumptions before assistance is estimated.');
+  return {yr,size,foreign:foreign||0,dependent:dependent||0,override,fpl,ruleYear,rates,povertyCoverageYear:poverty?.year??null,guidelineYear:poverty?.values.acaPovertyGuidelineYear??null,contributionStatus:policy.contribution?.status,povertyStatus:poverty?.status,projected:policy.contribution?.projected||poverty?.projected||false,region,issues,valid:!issues.length};
+}
+function calcAcaMagi(agi,exempt,grossSS,taxableSS,config){
+  return config?.override!=null?config.override:Math.max(0,(Number(agi)||0)+Math.max(0,Number(exempt)||0)+Math.max(0,(Number(grossSS)||0)-(Number(taxableSS)||0))+(config?.foreign||0)+(config?.dependent||0));
+}
+function acaContributionRate(income,fpl,ruleYear,suppliedRates){
+  if(!Number.isFinite(income)||income<0||!fpl||income<fpl||income>4*fpl||(!suppliedRates&&!ACA_RULES[ruleYear]))return null;
+  const pct=income/fpl*100,band=(suppliedRates||ACA_RULES[ruleYear].rates).find(b=>pct>=b[0]&&(pct<b[1]||b[1]===400));
+  return band?band[2]+(band[3]-band[2])*(pct-band[0])/(band[1]-band[0]):null;
+}
+function healthCoverageForYear(s,yr,filing){
+  if(!healthEnabled(s))return null;
+  const p=normalizeHealth(s.familyHealth),months=Array.from({length:12},(_,i)=>({month:i+1,premium:0,outOfPocket:0,eligiblePremium:0,benchmark:0,labels:[]}));
+  const cfg=healthYearConfig(s,yr,filing),issues=[...cfg.issues],inputErrors=[],members=new Map(healthMembers(s).map(m=>[m.id,m]));
+  if(p.schemaVersion!==HEALTH_SCHEMA)return {cfg,months,gross:0,outOfPocket:0,issues:['Unsupported health schema; entries are retained but costs and assistance are not calculated.'],blocked:true,inputErrors:['Unsupported health schema']};
+  let anyValid=false;const coverage=new Map();
+  p.periods.forEach((period,idx)=>{
+    const label=familyText(period.label)||'Coverage '+(idx+1),start=healthMonth(period.start),end=healthMonth(period.end);
+    if(start==null||end==null||end<start){inputErrors.push(label+': coverage months are invalid; costs are omitted.');issues.push(label+': enter valid first and last coverage months; end is inclusive.');return;}
+    if(end<yr*12||start>yr*12+11)return;
+    const premium=healthNumber(period.premium),oop=healthNumber(period.outOfPocket),infl=healthNumber(period.inflation),benchmark=healthNumber(period.benchmark);
+    if(premium==null||premium<0||oop==null||oop<0||infl==null||infl<0||infl>30){inputErrors.push(label+': premium or medical-budget inputs are invalid; costs are omitted.');issues.push(label+': enter nonnegative monthly costs and annual growth from 0% to 30%.');return;}
+    anyValid=true;const factor=Math.pow(1+infl/100,yr-Math.floor(start/12));
+    const known=period.members.length>0&&period.members.every(id=>members.has(id));
+    const manualSize=(p.years?.[yr]?.householdSize!==''&&p.years?.[yr]?.householdSize!=null)|| (p.householdSize!==''&&p.householdSize!=null);
+    const fp=normalizeFamilyTimeline(s.familyTimeline);
+    const outsideTaxFamily=!manualSize&&p.householdSource==='timeline'&&period.members.some(id=>{
+      if(id==='p1')return false;if(id==='p2')return filing!=='MFJ';
+      const d=fp.dependents?.find(x=>x.id===id);return !d||!['full','partial'].includes(familyPeriodStatus(d.periods.taxDependent,'taxDependent',yr));
+    });
+    if(outsideTaxFamily)issues.push(label+': a covered person is outside the derived tax family. Correct tax dependency/filing or enter a reviewed household-size override; no assistance is assumed.');
+    if(!Object.hasOwn(HEALTH_KINDS,period.kind))issues.push(label+': unknown coverage type; only gross costs are budgeted.');
+    if(!known)issues.push(label+': select the people covered; assistance is withheld until the covered group is known.');
+    const benchmarkValid=benchmark!=null&&benchmark>=0;
+    if(period.kind==='marketplace'&&!benchmarkValid)issues.push(label+': enter a monthly benchmark quote (zero is allowed) before estimating assistance.');
+    let eligible=period.kind==='marketplace'&&period.creditEligible&&known&&benchmarkValid&&!outsideTaxFamily;
+    if(period.kind==='marketplace'&&!period.creditEligible)issues.push(label+': assistance is off until Marketplace eligibility is confirmed.');
+    for(let i=0;i<12;i++){
+      const m=yr*12+i;if(m<start||m>end)continue;const row=months[i];let blocked=false;
+      period.members.forEach(id=>{
+        const member=members.get(id);if(!member)return;
+        const key=id+':'+i;if(coverage.has(key)){row.duplicate=true;issues.push(label+': '+member.name+' has overlapping coverage in '+yr+'-'+String(i+1).padStart(2,'0')+'. Review duplicate premiums; assistance is withheld for this month.');}coverage.set(key,true);
+        const medicare=healthMedicareMonth(member),birth=familyDate(member.birthDate);
+        const dead=member.adult&&s.widowMode===(member.adult===1?'p2Survives':'p1Survives')&&Number(s.widowDeathYear)>0&&yr>Number(s.widowDeathYear);
+        if((medicare!=null&&m>=medicare)||(birth&&m<birth.year*12+birth.month-1)||dead)blocked=true;
+      });
+      if(blocked&&eligible)issues.push(label+': covered group includes a person at Medicare timing, before birth, or after modeled death. Split/requote the remaining group; no assistance is assumed for this month.');
+      row.premium+=premium*factor;row.outOfPocket+=oop*factor;row.labels.push(label);
+      if(eligible&&!blocked){row.eligiblePremium+=premium*factor;row.benchmark+=benchmark*factor;row.eligibleMembers=[...new Set([...(row.eligibleMembers||[]),...period.members])];}
+    }
+  });
+  if(!p.periods.length)issues.push('No coverage periods entered. No health costs have been added.');
+  // A gap may be intentional (for example employer coverage paid through payroll); make it visible without inventing costs.
+  months.forEach(m=>{if(cfg.size && (m.eligibleMembers?.length||0)>cfg.size){m.duplicate=true;issues.push('Eligible covered people exceed the tax household size; assistance is withheld for affected months.');}});
+  const gross=months.reduce((n,m)=>n+m.premium,0),outOfPocket=months.reduce((n,m)=>n+m.outOfPocket,0);
+  return {cfg,months,gross,outOfPocket,issues:[...new Set(issues)],hasCoverage:anyValid,inputErrors};
+}
+function estimateHealthCost(coverage,agi,exempt,grossSS,taxableSS){
+  if(!coverage)return null;const cfg=coverage.cfg,magi=calcAcaMagi(agi,exempt,grossSS,taxableSS,cfg);
+  const rate=cfg.valid?acaContributionRate(magi,cfg.fpl,cfg.ruleYear,cfg.rates):null;
+  const contribution=rate==null?null:magi*rate/12;
+  const months=coverage.months.map(m=>Object.assign({},m,{credit:contribution==null||m.duplicate?0:Math.min(m.eligiblePremium,Math.max(0,m.benchmark-contribution))}));
+  const credit=months.reduce((n,m)=>n+m.credit,0),netPremium=coverage.gross-credit;
+  const issues=[...coverage.issues];
+  if(cfg.override!=null)issues.push('ACA MAGI override is fixed for this year; assistance does not respond to modeled income changes. Conversion targets continue to use calculated ACA MAGI.');
+  if(cfg.valid&&cfg.fpl&&magi<cfg.fpl)issues.push('Income is below 100% of the poverty guideline. No federal credit is assumed; review Medicaid/CHIP and any special eligibility rules.');
+  if(cfg.valid&&cfg.fpl&&magi>4*cfg.fpl)issues.push('Income exceeds 400% of the poverty guideline. Federal premium tax credit is zero under the selected rules.');
+  if(cfg.valid&&cfg.fpl&&magi>=3.9*cfg.fpl&&magi<=4*cfg.fpl)issues.push('Income is near the 400% assistance cutoff; additional income can remove the entire credit.');
+  if(cfg.projected)issues.push('Projection assumption: contribution percentages use '+cfg.ruleYear+' data; poverty guidelines use coverage-year '+cfg.povertyCoverageYear+' data, grown at your entered rate when needed. Unpublished future rules may differ.');
+  return {magi,agi,exemptInterest:exempt,nonTaxableSS:Math.max(0,grossSS-taxableSS),foreignIncome:cfg.foreign,dependentMagi:cfg.dependent,override:cfg.override,householdSize:cfg.size,fpl:cfg.fpl,fplPercent:cfg.fpl?magi/cfg.fpl*100:null,rate,ruleYear:cfg.ruleYear,povertyCoverageYear:cfg.povertyCoverageYear,guidelineYear:cfg.guidelineYear,contributionStatus:cfg.contributionStatus,povertyStatus:cfg.povertyStatus,projected:cfg.projected,grossPremium:coverage.gross,credit,netPremium,outOfPocket:coverage.outOfPocket,netCost:netPremium+coverage.outOfPocket,months,issues,inputErrors:coverage.inputErrors||[]};
+}
+
+function healthConservativeEstimate(h){
+  if(!h)return h;const potential=h.credit;
+  return Object.assign({},h,{potentialCredit:potential,assistanceSuppressed:true,credit:0,netPremium:h.grossPremium,netCost:h.grossPremium+h.outOfPocket,months:h.months.map(m=>Object.assign({},m,{credit:0})),issues:[...h.issues,'Assistance and tax funding did not settle together near a funding or subsidy boundary. Full premiums are budgeted with zero assistance as a conservative fallback; review this strategy.']});
+}
+
 function defaultState() {
   return {
     // Personal
     name1:'', name2:'', householdMode:'',
     by1:'', by2:'',
+    familyTimeline:familyTimelineDefaults(),
+    familyHealth:healthDefaults(),
+    acaData:acaDataDefaults(),
     filing:'MFJ', state:'CA',
     startYear:new Date().getFullYear(), endYear:new Date().getFullYear()+25,
     // SS
@@ -2723,7 +3236,11 @@ function runProjection(S) {
     const survivorSpendAdj = afterDeathYear && ovSpend == null && ovSpendPct == null
       ? (parseF(S.widowSpendPct) || 0) / 100
       : 0;
-    const spending = baseSpending * (1 + survivorSpendAdj);
+    const householdSpending = baseSpending * (1 + survivorSpendAdj);
+    let spending = householdSpending;
+    const healthCoverage = healthCoverageForYear(S,yr,taxFiling);
+    let healthCostEst = healthCoverage ? healthCoverage.gross + healthCoverage.outOfPocket : 0;
+    let healthFinal = null;
     // ── Iterative tax solver: repeat funding until net tax converges ──────
     // Start from zero; each year's tax and funding are solved independently.
     let taxEst = 0;
@@ -3064,7 +3581,7 @@ function runProjection(S) {
     // Each pass: waterfall draws based on taxEst → compute actual tax → repeat
     // Large conversion years can need more passes because the tax funding draw
     // changes taxable income, so converge to near-dollar precision.
-    const TAX_SOLVER_MAX_PASSES = 20;
+    const TAX_SOLVER_MAX_PASSES = healthCoverage ? 80 : 20;
     const TAX_SOLVER_EPS = 0.50;
     // A manual Funded Tax amount controls the ordinary cash-tax funding entry,
     // but it must not silently disable the selected Roth conversion tax method.
@@ -3090,6 +3607,8 @@ function runProjection(S) {
     let w2AGI_f=0, w2AGI1_f=0, w2AGI2_f=0;
     let taxSolverConverged=false, taxSolverIterations=0, taxSolverResidual=Infinity;
     for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
+    if (healthCoverage && taxPass>=50) healthCostEst = healthCoverage.gross + healthCoverage.outOfPocket;
+    spending = householdSpending + healthCostEst;
     const normalTaxEstimate = rothTaxFundingCfg.method === 'NORMAL' ? taxEst : baseTaxFundingEst;
     const totalRequired = spending + hsaDep + normalTaxEstimate + cashGapNeeded;
 
@@ -3337,7 +3856,7 @@ function runProjection(S) {
       for (let pass = 0; pass < 6; pass++) {
         const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
         const curAGI = agiExSS + tSS + rothConv;
-        const curMAGI = curAGI + taxExemptInterest;
+        const curMAGI = healthCoverage ? calcAcaMagi(curAGI,taxExemptInterest,grossSS,tSS,Object.assign({},healthCoverage.cfg,{override:null})) : curAGI + taxExemptInterest;
         const diff = target - curMAGI;
         if (Math.abs(diff) < 10) break;
         if (curMAGI < target) {
@@ -3502,6 +4021,8 @@ function runProjection(S) {
     taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
     // Report convergence, including dedicated conversion-tax routing when a
     // manual ordinary-tax funding amount is in force.
+    healthFinal = estimateHealthCost(healthCoverage,agi,taxExemptInterest,grossSS,tSSfinal_inner);
+    if (healthFinal && taxPass>=50) healthFinal = healthConservativeEstimate(healthFinal);
     taxSolverIterations = taxPass + 1;
     const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
     taxSolverResidual = taxOvrAmt != null
@@ -3509,12 +4030,14 @@ function runProjection(S) {
       : rothTaxFundingCfg.method === 'NORMAL'
         ? Math.abs(newNetTax - taxEst)
         : Math.max(Math.abs(baselineTaxFundingNeed - baseTaxFundingEst), convDelta);
+    if (healthFinal) taxSolverResidual = Math.max(taxSolverResidual,Math.abs(healthFinal.netCost-healthCostEst));
     if (taxSolverResidual < TAX_SOLVER_EPS) { taxSolverConverged = true; break; }
+    if (healthFinal) healthCostEst = (healthCostEst + healthFinal.netCost)/2;
     // The manual override continues to set the ordinary funding requirement.
     if (taxOvrAmt != null) baseTaxFundingEst = taxOvrAmt;
-    else if (rothTaxFundingCfg.method === 'NORMAL') taxEst = newNetTax;
-    else baseTaxFundingEst = baselineTaxFundingNeed;
-    convTaxFundingEst = conversionTaxRoutingNeed;
+    else if (rothTaxFundingCfg.method === 'NORMAL') taxEst = healthCoverage ? (taxEst + newNetTax)/2 : newNetTax;
+    else baseTaxFundingEst = healthCoverage ? (baseTaxFundingEst + baselineTaxFundingNeed)/2 : baselineTaxFundingNeed;
+    convTaxFundingEst = healthCoverage ? (convTaxFundingEst + conversionTaxRoutingNeed)/2 : conversionTaxRoutingNeed;
     } // end taxPass loop
     // Unpack finals from converged pass
     const tSSfinal=tSSfinal_f, rothConv=rothConv_f, magi=magi_f;
@@ -3648,6 +4171,7 @@ function runProjection(S) {
 
     rows.push({
       yr, age1, age2,
+      ...(healthFinal ? {householdSpending,healthSpending:spending-householdSpending,acaMagi:healthFinal.magi,health:healthFinal} : {}),
       cashDraw,
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
@@ -5447,6 +5971,9 @@ async function initGitHubLoad() {
 }
 
 function applyMigrations(merged) {
+  merged.familyTimeline=normalizeFamilyTimeline(merged.familyTimeline);
+  merged.familyHealth=normalizeHealth(merged.familyHealth);
+  merged.acaData=normalizeAcaData(merged.acaData);
   const curYr = new Date().getFullYear();
   if (!merged.startYear || isNaN(merged.startYear)) merged.startYear = curYr;
   if (!merged.endYear   || isNaN(merged.endYear))   merged.endYear   = curYr + 25;
@@ -6733,6 +7260,7 @@ function rowHasCloseoutIncomeTax(r){
 function projectionAccountingWarningsHtml(rows){
   const messages=[];
   (rows||[]).forEach(r=>{
+    if (r.health?.inputErrors?.length) messages.push(r.yr+': Health cost inputs are incomplete; some quoted costs were omitted. Review Health & ACA before relying on this year.');
     if (r.taxSolverConverged === false) messages.push(r.yr+': Tax and funding estimates did not settle. Review this year before relying on its results.');
     if ((r.hsaDepositShortfall||0) > .50) messages.push(r.yr+': HSA deposit is short by '+f$(r.hsaDepositShortfall)+'. Only the funded amount is added to the HSA.');
     if ((r.rmdUnfunded1||0)+(r.rmdUnfunded2||0) > .50) messages.push(r.yr+': Available IRA assets do not cover the calculated RMD. Review required distributions.');
@@ -6740,7 +7268,7 @@ function projectionAccountingWarningsHtml(rows){
   return messages.length ? '<div class="callout red">'+messages.map(message=>'<div>'+message+'</div>').join('')+'</div>' : '';
 }
 function renderCF(){
-  document.getElementById('cf-accounting-warnings').innerHTML = projectionAccountingWarningsHtml(proj);
+  document.getElementById('cf-accounting-warnings').innerHTML = projectionAccountingWarningsHtml(proj) + healthSummaryHtml(proj);
   const n1=p1(), n2=p2(), hp=hasP2();
   const W   = (n) => {
     if(n==null||isNaN(n)) return '—';
@@ -7188,6 +7716,7 @@ function renderYD(){
       <div class="sh">Spending &amp; Cash</div>
       ${projectionAccountingWarningsHtml([r])}
       ${dr('Spending',f$(r.spending))}
+      ${healthBreakdownHtml(r)}
       ${r.hsaDep>0?dr('HSA Deposit Required',f$(r.hsaDep)):''}
       ${dr('Income Tax'+(r.taxOvrActive?' (✦ override active)':''),f$(r.incomeTax))}
       ${r.irmaaTx>0?dr('IRMAA Medicare Surcharge',f$(r.irmaaTx)):''}
@@ -7338,7 +7867,7 @@ function renderSOY(){
       ptWages2: pt2 ? (r.ptWages2||0) * wCola : null,
       ss1: r.grossSS1 > 0 ? Math.round(r.grossSS1/12) : null,
       ss2: r.grossSS2 > 0 ? Math.round(r.grossSS2/12) : null,
-      spending: r.spending, hsaDep: r.hsaDep, hsaWith: r.hsaWith,
+      spending: r.householdSpending ?? r.spending, hsaDep: r.hsaDep, hsaWith: r.hsaWith,
       secTaxableBal: r.secTaxableBal || null,
       secTreasuryBal: r.secTreasuryBal || null,
       secCAMuniBal: r.secCAMuniBal || null,
@@ -7441,7 +7970,7 @@ function editSOY(yr){
       ptWages2:    pt2 ? Math.round((r.ptWages2||0)   * wCola) : 0,
       ss1: r.grossSS1 > 0 ? Math.round(r.grossSS1/12) : 0,
       ss2: r.grossSS2 > 0 ? Math.round(r.grossSS2/12) : 0,
-      spending: r.spending, hsaDep: r.hsaDep, hsaWith: r.hsaWith,
+      spending: r.householdSpending ?? r.spending, hsaDep: r.hsaDep, hsaWith: r.hsaWith,
     };
     const v = map[key];
     return v != null ? Math.round(v) : 0;
@@ -7692,7 +8221,7 @@ function refreshSOYRow(yr){
         ptWages:r.ptWages1,atWages2:r.atWages2,ptWages2:r.ptWages2,
         ss1:r.grossSS1>0?Math.round(r.grossSS1/12):null,
         ss2:r.grossSS2>0?Math.round(r.grossSS2/12):null,
-        spending:r.spending,hsaDep:r.hsaDep,hsaWith:r.hsaWith} : {};
+        spending:r.householdSpending ?? r.spending,hsaDep:r.hsaDep,hsaWith:r.hsaWith} : {};
       colKeys.forEach((f,i)=>{
         const cell = cells[i+2];
         if(!cell) return;
@@ -8183,7 +8712,7 @@ function apCard(yr){
   const needsSecDraw = (r.stkSales||0) > 0;
   const hasIRMAA = (r.irmaaTx||0) > 0;
   const hasFundingShortfall = (r.unfunded||0) > .50;
-  const needsReview = r.taxSolverConverged === false || (r.rmdUnfunded1||0)+(r.rmdUnfunded2||0) > .50;
+  const needsReview = r.health?.assistanceSuppressed || (r.health?.inputErrors?.length||0)>0 || r.taxSolverConverged === false || (r.rmdUnfunded1||0)+(r.rmdUnfunded2||0) > .50;
   const redStatus = hasFundingShortfall || needsReview || needsSecDraw;
   const statusColor = redStatus ? '#8b0000' : needsDraw ? '#7a5200' : '#1a4a1a';
   const statusBg    = redStatus ? '#fff0f0' : needsDraw ? '#fffbf0' : '#f0fff4';
@@ -8271,6 +8800,7 @@ function apCard(yr){
     ${hdr('SPENDING REQUIREMENT')}
     ${projectionAccountingWarningsHtml([r])}
     ${row('Annual Spending', r.spending, true)}
+    ${healthBreakdownHtml(r)}
     ${row('HSA Deposit Required', r.hsaDep||0)}
     ${row(taxLabel, fundedTax)}
     ${cashGap>0 ? row('Cash Gap (floor rebuild)', cashGap) : ''}
@@ -8344,6 +8874,7 @@ function renderTaxTables() {
   renderTTPreviewSel();
   renderTTPreview();
   taxUpdateRenderPicker();
+  acaRenderPanel();
 }
 
 // ── Year selector helpers ─────────────────────────────────────────────────────
@@ -8543,8 +9074,8 @@ function ttMarkSourceEntered(section) {
 }
 
 const TAX_UPDATE_URLS = [
-  './tax-updates.json',
-  'https://raw.githubusercontent.com/ronholl/ronsfinancemodel/main/tax-updates.json'
+  'https://raw.githubusercontent.com/ronholl/ronsfinancemodel/main/tax-updates.json',
+  './tax-updates.json'
 ];
 const TAX_UPDATE_CACHE_KEY = 'rfm_tax_update_manifest_v1';
 const TAX_UPDATE_CHECK_KEY = 'rfm_tax_update_checked_at_v1';
@@ -8559,7 +9090,9 @@ function taxUpdateAllowedKeys(section) {
     federal:['fedOrdBkts','fedLtcgBkts','fedStdBase','fedStdSr','fedCharityNonItemizerCap','fedSrBonus','fedSrBonusStart','fedSrBonusMax','fedOrdBktsSingle','fedLtcgBktsSingle','fedStdBaseSingle','fedStdSrSingle','fedCharityNonItemizerCapSingle','fedSrBonusSingle','fedSrBonusStartSingle','fedSrBonusMaxSingle','fedOrdBktsHOH','fedLtcgBktsHOH','fedStdBaseHOH','fedStdSrHOH','fedCharityNonItemizerCapHOH','fedSrBonusHOH','fedSrBonusStartHOH','fedSrBonusMaxHOH'],
     california:['caOrdBkts','caStd','caOrdBktsSingle','caStdSingle','caOrdBktsHOH','caStdHOH'],
     irmaa:['irmaaThresh','irmaaThreshSingle','irmaaThreshHOH'],
-    medicare:['irmaaSurch','partBBase']
+    medicare:['irmaaSurch','partBBase'],
+    acaContribution:['acaContributionRates','acaMinimumFpl','acaMaximumFpl'],
+    acaPoverty:['acaPovertyGuidelineYear','acaPovertyGuidelines']
   }[section] || [];
 }
 
@@ -8585,6 +9118,7 @@ function taxUpdateCreateProjectedYear(year) {
 }
 
 function taxUpdateIsCurrent(update) {
+  if(acaIsSection(update?.section))return acaUpdateCurrent(update);
   const table = S.taxTables && S.taxTables[update.year];
   const keys = taxUpdateAllowedKeys(update.section);
   if (!table || !keys.length || !update.values) return false;
@@ -8628,6 +9162,7 @@ function taxUpdateRenderSelection() {
     detail.textContent = taxUpdateManifest ? 'The GitHub update file is current. No action is required.' : 'Click Check Now to look for official tax-data updates.';
     return;
   }
+  if(acaIsSection(update.section)){acaRenderUpdateSelection(update,detail,apply);return;}
   const current = taxUpdateIsCurrent(update);
   const source = update.source || {};
   const table = (S.taxTables && S.taxTables[update.year]) || {};
@@ -8655,8 +9190,8 @@ async function taxUpdateCheck(force) {
   const now = Date.now();
   const last = parseInt(localStorage.getItem(TAX_UPDATE_CHECK_KEY) || '0',10);
   const cached = localStorage.getItem(TAX_UPDATE_CACHE_KEY);
-  if (!force && cached && now-last < 7*24*60*60*1000) {
-    try { taxUpdateManifest = JSON.parse(cached); taxUpdateRenderPicker(); return; } catch(e) {}
+  if (!force && cached && now-last < 24*60*60*1000) {
+    try { taxUpdateManifest = JSON.parse(cached); acaAcceptManifest(taxUpdateManifest); taxUpdateRenderPicker(); return; } catch(e) {}
   }
   let error = null;
   for (const baseUrl of TAX_UPDATE_URLS) {
@@ -8667,6 +9202,7 @@ async function taxUpdateCheck(force) {
       const manifest = await response.json();
       if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.updates)) throw new Error('Unsupported update-file format');
       taxUpdateManifest = manifest;
+      acaAcceptManifest(manifest);
       localStorage.setItem(TAX_UPDATE_CACHE_KEY,JSON.stringify(manifest));
       localStorage.setItem(TAX_UPDATE_CHECK_KEY,String(now));
       taxUpdateRenderPicker();
@@ -8674,7 +9210,7 @@ async function taxUpdateCheck(force) {
     } catch(e) { error = e; }
   }
   if (cached) {
-    try { taxUpdateManifest = JSON.parse(cached); taxUpdateRenderPicker(); return; } catch(e) {}
+    try { taxUpdateManifest = JSON.parse(cached); acaAcceptManifest(taxUpdateManifest); taxUpdateRenderPicker(); return; } catch(e) {}
   }
   const detail = document.getElementById('tt-update-detail');
   if (detail) detail.textContent = 'Could not reach the GitHub tax-update file. Existing tables are unchanged. ' + (error ? String(error.message||error) : '');
@@ -8684,6 +9220,7 @@ function taxUpdateApplySelected() {
   const sel = document.getElementById('tt-update-select');
   const update = sel && taxUpdateList().find(u => u.id === sel.value);
   if (!update || taxUpdateIsCurrent(update)) return;
+  if(acaIsSection(update.section)){acaApplySelectedUpdate(update);return;}
   const keys = taxUpdateAllowedKeys(update.section);
   const supplied = Object.keys(update.values || {});
   if (!keys.length || !supplied.length || supplied.some(key => !keys.includes(key))) {
@@ -9263,8 +9800,10 @@ function buildReportPayload(){
     irmaaMaxBracket: S.irmaaMaxBracket || '', irmaaBracketHeadroom: S.irmaaBracketHeadroom || 0,
     generatedAt: new Date().toISOString(),
   };
+  if (healthEnabled(S)) assumptions.familyHealth = normalizeHealth(S.familyHealth);
   const rows = (proj||[]).map(r=>({
     yr:r.yr, age1:r.age1, age2:r.age2,
+    ...(r.health ? {householdSpending:r.householdSpending,healthSpending:r.healthSpending,acaMagi:r.acaMagi,health:JSON.parse(JSON.stringify(r.health))}:{}),
     grossWages1:r.grossWages1||0, grossWages2:r.grossWages2||0,
     atWages:r.atWages||0, atWages1:r.atWages1||0, atWages2:r.atWages2||0,
     ptWages1:r.ptWages1||0, ptWages2:r.ptWages2||0,
@@ -10289,6 +10828,7 @@ function generateReport(){
   <div class="cashflow-section">
   <h2>Year-by-Year Cash Flow</h2>
   ${projectionAccountingWarningsHtml(rows)}
+  ${healthSummaryHtml(rows)}
   <table class="cf-table cf-screen-only" style="--cf-font:${cfPrintFont}pt;--cf-head-font:${cfPrintHeadFont}pt"><thead>
     <tr class="cf-group">${cfGroupHeader}</tr>
     <tr class="cf-sub">${cfSubHeader}</tr>
@@ -12691,6 +13231,7 @@ function setupPlanStartField(){
 
 function setupSOYInput(label, yr, key, kind, opts){
   opts = opts || {};
+  if(key==='spending' && healthEnabled(S)) opts=Object.assign({},opts,{note:(opts.note||'')+' Exclude pre-Medicare costs entered in Health & ACA; those are added separately.'});
   const value = setupSOYValue(yr, key);
   const step = opts.step ? " step='"+setupEsc(opts.step)+"'" : '';
   const min = opts.min != null ? " min='"+setupEsc(opts.min)+"'" : '';
@@ -12931,6 +13472,8 @@ function setupReadinessList(limit){
 }
 
 function renderSetupGuide(){
+  if (setupView==='family' && !familyTimelineEnabled(S)) setupView='interview';
+  if (setupView==='health' && !healthEnabled(S)) setupView='interview';
   const root = document.getElementById('setup-guide-root');
   if (!root) return;
   const r = setupReadiness();
@@ -12942,12 +13485,14 @@ function renderSetupGuide(){
       '</div>' +
       '<div class="setup-tabs">' +
         setupTopTab('interview','Interview') +
+        (healthEnabled(S) ? setupTopTab('health','Health & ACA') : '') +
+        (familyTimelineEnabled(S) ? setupTopTab('family','Family Timeline') : '') +
         setupTopTab('readiness','Readiness') +
         setupTopTab('annual','Annual Check-In') +
         setupTopTab('closeout','Year-End Closeout') +
         setupTopTab('strategy','Strategy Builder') +
       '</div>' +
-      (setupView === 'readiness' ? renderSetupReadinessView() : setupView === 'annual' ? renderSetupAnnualView() : setupView === 'closeout' ? renderSetupCloseoutView() : setupView === 'strategy' ? renderSetupStrategyView() : renderSetupInterviewView()) +
+      (setupView === 'health' ? renderSetupHealthView() : setupView === 'family' ? renderSetupFamilyView() : setupView === 'readiness' ? renderSetupReadinessView() : setupView === 'annual' ? renderSetupAnnualView() : setupView === 'closeout' ? renderSetupCloseoutView() : setupView === 'strategy' ? renderSetupStrategyView() : renderSetupInterviewView()) +
     '</div>';
 }
 function setupTopTab(id, label){
@@ -12970,6 +13515,175 @@ function renderSetupInterviewView(){
     '</div></div>' +
     '<div class="setup-side"><div class="setup-section-title" style="font-size:18px">Needs Attention</div>'+setupReadinessList(5)+'</div></div>';
 }
+// Family editing stays in its own namespace and does not rerun financial inputs.
+let familyExpandedMembers=new Set();
+function familyRememberExpanded(index,open){
+  const member=S.familyTimeline?.dependents?.[index];
+  if (member) { if (open) familyExpandedMembers.add(member.id); else familyExpandedMembers.delete(member.id); }
+}
+function familyCommit(action){
+  S.familyTimeline=reduceFamilyTimeline(S.familyTimeline,action,S.startYear);
+  if (action.type==='addDependent') familyExpandedMembers.add(S.familyTimeline.dependents[S.familyTimeline.dependents.length-1].id);
+  if (!S.familyTimeline.enabled && setupView==='family') { setupView='interview'; setupStep=0; }
+  saveState(S); showSaved(); if(healthEnabled(S)){proj=runProjection(S);renderAll();} renderSetupGuide();
+  if (action.type==='addDependent') document.getElementById('family-member-'+(S.familyTimeline.dependents.length-1)+'-name')?.focus();
+}
+function familyAction(action){ return setupEsc('familyCommit('+JSON.stringify(action)+')'); }
+function familyControl(label,value,action,type,id,note){
+  const date=type==='date',number=type==='number',area=type==='textarea';
+  const handler=setupEsc('familyCommit(Object.assign('+JSON.stringify(action)+',{value:this.value}))');
+  const limits=date?' min="1900-01-01" max="9999-12-31"':number?' min="1900" max="9999" step="1"':'';
+  const control=area?'<textarea id="'+id+'" rows="2" onchange="'+handler+'">'+setupEsc(value)+'</textarea>'
+    :'<input id="'+id+'" type="'+type+'" value="'+setupEsc(value)+'"'+limits+' onchange="'+handler+'">';
+  return '<div class="setup-field"><label for="'+id+'">'+setupEsc(label)+'</label>'+control+(note?'<div class="setup-field-note">'+setupEsc(note)+'</div>':'')+'</div>';
+}
+function renderFamilyOption(){
+  const enabled=familyTimelineEnabled(S),count=Array.isArray(S.familyTimeline?.dependents)?S.familyTimeline.dependents.length:0;
+  return '<details class="family-option" style="grid-column:1/-1" '+(enabled?'open':'')+'><summary>Optional family and dependent timeline — '+(enabled?'On':'Off')+'</summary>'+
+    '<label class="family-enable" for="family-enabled"><input id="family-enabled" type="checkbox" '+(enabled?'checked':'')+' onchange="familyCommit({type:\'enabled\',value:this.checked})"> Enable family and dependent timeline</label>'+
+    '<div class="setup-section-copy">Record dependent ages and planned residence, tax dependency, support, and student periods. This option is off by default and does not change retirement calculations. Turning it off keeps your entries.</div>'+
+    (count?'<div class="setup-field-note">'+count+' '+(count===1?'dependent record':'dependent records')+' retained with this plan.</div>':'')+
+    (enabled?'<div class="setup-mini-actions"><button type="button" class="btn btn-light" onclick="setupSetView(\'family\')">Open Family Timeline</button></div>':'')+'</details>';
+}
+function renderFamilyPeriodEditor(member,index,kind){
+  const info=FAMILY_PERIOD_TYPES[kind],periods=member.periods[kind];
+  const body=periods.map((period,pi)=>{
+    const base={type:'periodField',member:index,kind,period:pi},id='family-'+index+'-'+kind+'-'+pi;
+    return '<div class="family-period-row">'+
+      familyControl(info.unit==='year'?'First tax year':'Start date',period.start,Object.assign({},base,{key:'start'}),info.unit==='year'?'number':'date',id+'-start','')+
+      familyControl(info.unit==='year'?'Last tax year':'End date',period.end,Object.assign({},base,{key:'end'}),info.unit==='year'?'number':'date',id+'-end','Blank end = ongoing; end is inclusive.')+
+      '<button type="button" class="btn btn-light btn-sm family-remove" aria-label="Remove '+setupEsc(info.label)+' period '+(pi+1)+' for dependent '+(index+1)+'" onclick="'+familyAction({type:'removePeriod',member:index,kind,period:pi})+'">Remove period</button></div>';
+  }).join('');
+  return '<section class="family-period-section"><h3>'+setupEsc(info.label)+'</h3>'+
+    (!periods.length?'<div class="setup-field-note">No periods entered. This is not assumed to match the other timelines.</div>':'')+body+
+    '<div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="'+familyAction({type:'addPeriod',member:index,kind})+'">Add '+setupEsc(info.label.toLowerCase())+' period</button></div></section>';
+}
+function renderFamilyMember(member,index){
+  const base={type:'memberField',member:index},id='family-member-'+index;
+  const relationships=[['child','Child'],['stepchild','Stepchild'],['grandchild','Grandchild'],['parent','Parent'],['other','Other dependent']];
+  const relationship='<div class="setup-field"><label for="'+id+'-relationship">Relationship</label><select id="'+id+'-relationship" onchange="'+setupEsc('familyCommit({type:"memberField",member:'+index+',key:"relationship",value:this.value})')+'">'+
+    relationships.map(([value,label])=>'<option value="'+value+'" '+(member.relationship===value?'selected':'')+'>'+label+'</option>').join('')+'</select></div>';
+  return '<details class="family-member" '+(familyExpandedMembers.has(member.id)?'open':'')+' ontoggle="familyRememberExpanded('+index+',this.open)"><summary>'+setupEsc(member.name||('Dependent '+(index+1)))+(member.birthDate?' · born '+setupEsc(member.birthDate):' · birth date not set')+'</summary>'+
+    '<div class="family-member-body"><div class="setup-field-grid">'+
+      familyControl('Dependent name',member.name,Object.assign({},base,{key:'name'}),'text',id+'-name','')+
+      familyControl('Birth date',member.birthDate,Object.assign({},base,{key:'birthDate'}),'date',id+'-birth','Ages below are measured on December 31.')+relationship+'</div>'+
+      '<div class="family-period-grid">'+Object.keys(FAMILY_PERIOD_TYPES).map(kind=>renderFamilyPeriodEditor(member,index,kind)).join('')+'</div>'+
+      familyControl('Notes',member.notes,Object.assign({},base,{key:'notes'}),'textarea',id+'-notes','Optional context for these planned dates.')+
+      '<div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm family-remove" onclick="'+familyAction({type:'removeDependent',member:index})+'">Remove dependent</button></div></div></details>';
+}
+function familyYearNames(row,kind){
+  const active=row.dependents.filter(d=>['full','partial'].includes(d[kind]));
+  const unknown=row.dependents.filter(d=>!d.notBorn && d[kind]==='unspecified');
+  const invalid=row.dependents.filter(d=>d[kind]==='invalid');
+  const lines=active.map(d=>setupEsc(d.name)+(d[kind]==='partial'?' <span class="family-partial">part year</span>':''));
+  if (unknown.length) lines.push('<span class="family-unset">Not set: '+unknown.map(d=>setupEsc(d.name)).join(', ')+'</span>');
+  if (invalid.length) lines.push('<span class="family-invalid">Needs review: '+invalid.map(d=>setupEsc(d.name)).join(', ')+'</span>');
+  return lines.length?lines.join('<br>'):'—';
+}
+function renderFamilyTimelineTable(timeline){
+  if (!timeline.years.length) return '';
+  const rows=timeline.years.map(row=>'<tr><th scope="row">'+row.year+'</th><td>'+row.adults.map(a=>setupEsc(a.name)+': '+(a.deceased?'deceased':a.age===null?'age not set':(a.approximate?'~':'')+a.age)).join('<br>')+'</td><td>'+
+    (row.dependents.length?row.dependents.map(d=>setupEsc(d.name)+': '+(d.notBorn?'not born':d.age===null?'age not set':d.age)).join('<br>'):'No dependent records')+'</td><td><strong>'+row.plannedTaxDependentCount+' planned</strong><br>'+familyYearNames(row,'taxDependent')+'</td><td>'+familyYearNames(row,'support')+'</td><td>'+familyYearNames(row,'household')+'</td><td>'+familyYearNames(row,'student')+'</td><td>'+row.events.map(e=>setupEsc(e)).join('<br>')+'</td></tr>').join('');
+  return '<div class="family-table-wrap" role="region" aria-label="Annual family and dependent timeline" tabindex="0"><table class="family-table"><caption>Year-by-year family timeline</caption><thead><tr><th scope="col">Year</th><th scope="col">Adult ages at year end</th><th scope="col">Dependent ages at year end</th><th scope="col">Planned tax dependents</th><th scope="col">Financial support</th><th scope="col">Household residence</th><th scope="col">Student status</th><th scope="col">Milestones</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function renderSetupFamilyView(){
+  if (!familyTimelineEnabled(S)) return '<div class="setup-main">'+setupInfoCard('Family timeline is off','Enable the optional timeline in Interview → Household. Your existing retirement setup remains available.','done')+'</div>';
+  const plan=normalizeFamilyTimeline(S.familyTimeline),timeline=buildFamilyTimeline(S);
+  if (plan.schemaVersion!==FAMILY_TIMELINE_SCHEMA) return '<div class="setup-main">'+setupInfoCard('Family timeline needs a newer version',timeline.issues[0].message,'warn')+'<button class="btn btn-light" onclick="familyCommit({type:\'enabled\',value:false})">Turn family timeline off</button></div>';
+  const showSecond=setupHasSecondPersonForState(S);
+  const warnings=timeline.issues.length?'<div class="family-issues" role="status"><strong>Review timeline entries</strong><ul>'+timeline.issues.map(i=>'<li>'+setupEsc(i.message)+'</li>').join('')+'</ul></div>':'';
+  return '<div class="setup-main"><div class="family-view-head"><div><div class="setup-section-title">Family & Dependent Timeline</div><div class="setup-section-copy">Plan who depends on the household, and when those commitments change.</div></div><button type="button" class="btn btn-light btn-sm" onclick="familyCommit({type:\'enabled\',value:false})">Turn timeline off</button></div>'+
+    setupInfoCard('Timeline planning only','These dates and planned tax-dependent years are saved in your JSON backup. They do not verify tax eligibility or change taxes, spending, benefits, account access, or the existing printed report.','done')+
+    '<details class="family-adults"><summary>Adult birth dates — optional timeline detail</summary><div class="setup-section-copy">Exact dates refine this timeline only. Existing Birth Year inputs and retirement calculations stay unchanged. Adult ages marked ~ use the existing birth year.</div><div class="setup-field-grid">'+
+      familyControl(p1()+' birth date',plan.birthDate1,{type:'adultBirth',person:1},'date','family-adult-1','')+
+      (showSecond?familyControl(p2()+' birth date',plan.birthDate2,{type:'adultBirth',person:2},'date','family-adult-2',''):'')+'</div></details>'+
+    '<div class="family-view-head"><h2 class="family-section-heading">Dependents</h2><button type="button" class="btn btn-dark" onclick="familyCommit({type:\'addDependent\'})">Add dependent</button></div>'+
+    (plan.dependents.length?plan.dependents.map(renderFamilyMember).join(''):'<p class="setup-section-copy">No dependent records yet. Add a child, parent, or another person you expect to support.</p>')+warnings+
+    '<div class="setup-section-copy family-table-note">Each timeline is independent. Enter the periods you plan to use; leave an end blank for ongoing. Multiple periods allow gaps. “Not set” means no assumption has been entered. “Part year” means the dates cover only some of that year. Ages are at December 31; the retirement model keeps its existing age convention. Planned tax-dependent counts are not ACA household-size calculations.</div>'+
+    renderFamilyTimelineTable(timeline)+'</div>';
+}
+
+let healthUiYear=null;
+const healthExpanded=new Set();
+function healthRemember(id,open){if(open)healthExpanded.add(id);else healthExpanded.delete(id);}
+function healthCommit(a){
+  let p=normalizeHealth(S.familyHealth);
+  if(a.type==='enabled')p.enabled=a.value===true;
+  else if(p.schemaVersion===HEALTH_SCHEMA){
+    if(a.type==='setting'&&['region','householdSource','householdSize','householdConfirmed','foreignIncome','dependentMagi','fplGrowth'].includes(a.key))p[a.key]=a.value;
+    if(a.type==='year'&&['householdSize','foreignIncome','dependentMagi','magiOverride'].includes(a.key)){
+      p.years[a.year]=Object.assign({},p.years[a.year],{[a.key]:a.value});
+    }
+    if(a.type==='add'){
+      const id='health-'+p.nextId++,yr=healthUiYear||S.startYear;
+      p.periods.push({id,label:'',kind:'marketplace',start:yr+'-01',end:yr+'-12',premium:'',benchmark:'',outOfPocket:0,inflation:0,members:[],creditEligible:false});healthExpanded.add(id);
+    }
+    const period=p.periods.find(x=>x.id===a.id);
+    if(a.type==='period'&&period&&['label','kind','start','end','premium','benchmark','outOfPocket','inflation','creditEligible'].includes(a.key))period[a.key]=a.value;
+    if(a.type==='member'&&period)period.members=a.value?[...new Set([...period.members,a.member])]:period.members.filter(x=>x!==a.member);
+    if(a.type==='remove')p.periods=p.periods.filter(x=>x.id!==a.id);
+  }
+  S.familyHealth=normalizeHealth(p);
+  if(!p.enabled&&setupView==='health'){setupView='interview';setupStep=0;}
+  saveState(S);showSaved();proj=runProjection(S);renderAll();renderSetupGuide();
+  if(a.type==='add')document.getElementById('health-period-'+(p.periods.length-1)+'-label')?.focus();
+}
+function healthAction(a,property){return setupEsc('healthCommit(Object.assign('+JSON.stringify(a)+(property?',{value:this.'+property+'}':',{}')+'))');}
+function healthControl(label,value,a,type,id,note){
+  return '<div class="setup-field"><label for="'+id+'">'+setupEsc(label)+'</label><input id="'+id+'" type="'+type+'" '+(type==='number'?'step="any"':'')+' value="'+setupEsc(value??'')+'" onchange="'+healthAction(a,'value')+'">'+(note?'<div class="setup-field-note">'+setupEsc(note)+'</div>':'')+'</div>';
+}
+function healthSelect(label,value,a,options,id){return '<div class="setup-field"><label for="'+id+'">'+setupEsc(label)+'</label><select id="'+id+'" onchange="'+healthAction(a,'value')+'">'+options.map(([v,t])=>'<option value="'+setupEsc(v)+'" '+(String(value)===String(v)?'selected':'')+'>'+setupEsc(t)+'</option>').join('')+'</select></div>';}
+function healthCheck(label,checked,a,id){return '<label class="family-enable" for="'+id+'"><input type="checkbox" id="'+id+'" '+(checked?'checked':'')+' onchange="'+healthAction(a,'checked')+'">'+setupEsc(label)+'</label>';}
+function renderHealthOption(){return '<details class="family-option" style="grid-column:1/-1" '+(healthEnabled(S)?'open':'')+'><summary>Optional pre-Medicare health insurance & ACA — '+(healthEnabled(S)?'On':'Off')+'</summary>'+healthCheck('Enable pre-Medicare health insurance and ACA',healthEnabled(S),{type:'enabled'},'health-enabled')+'<div class="setup-section-copy">Add coverage quotes and estimated assistance to cash flow. Off by default. Turning it off retains your entries and restores the existing retirement calculations.</div>'+(healthEnabled(S)?'<button class="btn btn-light" onclick="setupSetView(\'health\')">Open Health & ACA</button>':'')+'</details>';}
+function renderHealthPeriod(p,index){
+  const id='health-period-'+index,a={type:'period',id:p.id};
+  const field=(label,key,type,note)=>healthControl(label,p[key],Object.assign({},a,{key}),type,id+'-'+key,note);
+  return '<details class="family-member health-period" '+(healthExpanded.has(p.id)?'open':'')+' ontoggle="'+setupEsc('healthRemember('+JSON.stringify(p.id)+',this.open)')+'"><summary>'+setupEsc(p.label||'Coverage '+(index+1))+' · '+setupEsc(p.start)+' through '+setupEsc(p.end)+'</summary><div class="family-member-body"><div class="setup-field-grid">'+field('Coverage label','label','text','For example: family Marketplace, spouse after Medicare, or employer plan.')+
+    healthSelect('Coverage type',p.kind,Object.assign({},a,{key:'kind'}),Object.entries(HEALTH_KINDS),id+'-kind')+
+    field('First coverage month','start','month','Both first and last month are included.')+field('Last coverage month','end','month','End or split this group when a person changes coverage, enters Medicare, or leaves the tax family.')+
+    field('Monthly premium before assistance ($)','premium','number','Total quote for this covered group; enter only the household-paid portion. Exclude amounts already withheld from wages or included in ordinary Spending.')+
+    field('Monthly eligible benchmark SLCSP ($)','benchmark','number','Marketplace quote for these eligible people only; exclude tobacco surcharges and nonqualified benefits from both premium inputs.')+
+    field('Monthly out-of-pocket budget ($)','outOfPocket','number','Additional expected medical costs, not the plan deductible or out-of-pocket maximum. Exclude costs already in Spending.')+
+    field('Annual quote growth (%)','inflation','number','Applies each calendar year after the first coverage year; zero keeps the quote fixed.')+'</div><div class="health-covered"><strong>People covered by this quote</strong>'+healthMembers(S).map(m=>healthCheck(m.name,p.members.includes(m.id),{type:'member',id:p.id,member:m.id},id+'-member-'+encodeURIComponent(m.id))).join('')+'</div>'+
+    (p.kind==='marketplace'?healthCheck('I confirmed these people are in this tax family and eligible for Marketplace assistance in these months, with no disqualifying employer/government coverage or HRA.',p.creditEligible,Object.assign({},a,{key:'creditEligible'}),id+'-eligible'):'<p class="setup-field-note">No premium tax credit is calculated for this coverage type.</p>')+
+    '<button class="btn btn-light btn-sm family-remove" onclick="'+healthAction({type:'remove',id:p.id})+'">Remove coverage period</button></div></details>';
+}
+function healthBreakdownHtml(r){
+  if(!r.health)return '';const h=r.health;
+  return '<div class="health-breakdown"><strong>Pre-Medicare health — included in Spending</strong><div>Household spending before this option: '+f$(r.householdSpending)+'</div><div>Gross premiums '+f$(h.grossPremium)+' − estimated federal assistance '+f$(h.credit)+' + medical budget '+f$(h.outOfPocket)+' = '+f$(r.healthSpending)+' added.</div><div>Current-year ACA household MAGI: '+f$(h.magi)+' · tax household '+(h.householdSize??'not set')+'. Medicare MAGI and IRMAA remain separate.</div>'+
+    (h.inputErrors.length?'<div class="callout red">Health costs are incomplete. Some costs were omitted; review the entries below.</div>':'')+
+    (h.issues.length?'<details><summary>Review health assumptions ('+h.issues.length+')</summary>'+h.issues.map(x=>'<p>'+setupEsc(x)+'</p>').join('')+'</details>':'')+'</div>';
+}
+function healthSummaryHtml(rows){
+  const active=(rows||[]).filter(r=>r.health);if(!active.length)return '';
+  return '<div class="health-summary"><strong>Optional pre-Medicare health insurance & ACA</strong><p>Health costs below are already included in Annual Spending. Estimated federal assistance offsets premiums during the coverage year; it is not deducted again from income tax. This is a planning estimate, not an APTC repayment or tax-return reconciliation. Medicare Part B and IRMAA keep their existing treatment.</p><div style="overflow:auto"><table class="data"><thead><tr><th>Year</th><th>Tax family</th><th>ACA MAGI</th><th>Gross premiums</th><th>Est. assistance</th><th>Medical budget</th><th>Health in Spending</th><th>Review</th></tr></thead><tbody>'+active.map(r=>'<tr><td>'+r.yr+'</td><td>'+(r.health.householdSize??'—')+'</td><td>'+f$(r.health.magi)+'</td><td>'+f$(r.health.grossPremium)+'</td><td>'+f$(r.health.credit)+'</td><td>'+f$(r.health.outOfPocket)+'</td><td>'+f$(r.healthSpending)+'</td><td>'+setupEsc(r.health.projected?'Projected rules. ':'')+r.health.issues.length+' item(s)'+(r.taxSolverConverged?'':' · funding did not settle')+'</td></tr>').join('')+'</tbody></table></div><p>Check covered people, dates, quoted premiums, and eligibility in Setup Guide → Health & ACA. Unpublished future sections project the latest published data; no state assistance, cost-sharing reductions, or Medicaid/CHIP benefit amount is calculated.</p></div>';
+}
+function renderSetupHealthView(){
+  const p=normalizeHealth(S.familyHealth);if(!p.enabled)return '';
+  if(p.schemaVersion!==HEALTH_SCHEMA)return '<div class="setup-main">'+setupInfoCard('Health data needs a newer app','Data is retained. No health costs or assistance are calculated.','warn')+'<button class="btn btn-light" onclick="healthCommit({type:\'enabled\',value:false})">Turn health option off</button></div>';
+  if(!healthUiYear||healthUiYear<S.startYear||healthUiYear>S.endYear)healthUiYear=S.startYear;
+  const yr=healthUiYear,row=proj.find(r=>r.yr===yr),v=p.years[yr]||{},field=(label,key,type,note)=>healthControl(label,p[key],{type:'setting',key},type,'health-setting-'+key,note);
+  const yearOptions=Array.from({length:Math.min(100,S.endYear-S.startYear+1)},(_,i)=>S.startYear+i).map(y=>'<option '+(y===yr?'selected':'')+'>'+y+'</option>').join('');
+  const yearFields=[['Tax household size for this year','householdSize','Blank uses the setting above. Include Medicare-covered tax-family members; coverage count is different.'],['Excluded foreign income for this year ($)','foreignIncome','Blank uses the annual setting above.'],['Required-filer dependent MAGI for this year ($)','dependentMagi','Blank uses the annual setting above.'],['ACA household MAGI override for this year ($)','magiOverride','Blank calculates from projected AGI and ACA addbacks. Zero is an explicit override. Does not change modeled taxes or Medicare MAGI.']].map(([label,key,note])=>healthControl(label,v[key]??'',{type:'year',year:yr,key},'number','health-year-'+key,note)).join('');
+  return '<div class="setup-main health-view"><div class="family-view-head"><div><div class="setup-section-title">Pre-Medicare Health Insurance & ACA</div><div class="setup-section-copy">Budget family coverage before Medicare and see how current-year income affects federal assistance.</div></div><button class="btn btn-light" onclick="healthCommit({type:\'enabled\',value:false})">Turn health option off</button></div>'+
+    setupInfoCard('Enter additional costs only','Net premiums and the medical budget are added to Annual Spending and funded through your normal account order. Remove the same amounts from existing Spending first; do not re-enter payroll-deducted premiums. Estimated assistance is assumed to reduce premiums during the coverage year.','done')+
+    '<details class="family-adults" open><summary>Tax household & income assumptions</summary><div class="setup-section-copy">ACA uses annual tax-family income, even for partial-year coverage. Medicare-covered spouses and tax dependents still count in the tax family. An unmarried partner is not automatically a spouse in the tax household.</div><div class="setup-field-grid">'+
+    healthSelect('Poverty-guideline region',p.region,{type:'setting',key:'region'},[['US','48 states & DC'],['AK','Alaska'],['HI','Hawaii']],'health-setting-region')+
+    healthSelect('Tax household size source',p.householdSource,{type:'setting',key:'householdSource'},[['timeline','Filing status + planned tax dependents'],['manual','Enter manually']],'health-setting-source')+
+    field('Tax household size — all years','householdSize','number','Blank uses the family timeline if selected. A number overrides the timeline; use yearly entries when family size changes.')+
+    field('Annual excluded foreign income ($)','foreignIncome','number','Foreign earned income / housing exclusions added back for ACA; these entries do not add cash or alter existing taxes.')+
+    field('Annual required-filer dependent MAGI ($)','dependentMagi','number','Combined ACA MAGI of tax dependents required to file, excluding income already in household AGI. Do not include voluntary refund-only returns. These entries do not add spendable cash.')+
+    field('Projected poverty-guideline growth (%)','fplGrowth','number','Planning assumption only. Published coverage years use prior-year HHS guidelines. Unpublished future years project the latest available poverty table; Tax Tables manages official updates.')+'</div>'+
+    healthCheck('I reviewed the tax household, filing status, and required-filer dependent income assumptions.',p.householdConfirmed,{type:'setting',key:'householdConfirmed'},'health-household-confirmed')+'</details>'+
+    '<div class="family-view-head"><h2 class="family-section-heading">Coverage periods</h2><button class="btn btn-dark" onclick="healthCommit({type:\'add\'})">Add coverage period</button></div><p class="setup-section-copy">Enter actual quoted totals for each covered group and inclusive months. Split/requote when someone enters Medicare or changes coverage. Multiple policies share one household contribution per month. Premiums are retained as budget costs until you end a period; they do not stop automatically at age 65.</p>'+p.periods.map(renderHealthPeriod).join('')+
+    '<div class="health-year-head"><label for="health-review-year">Review year</label><select id="health-review-year" onchange="healthUiYear=Number(this.value);renderSetupGuide()">'+yearOptions+'</select></div><details class="family-adults"><summary>Year-specific household & income entries</summary><div class="setup-field-grid">'+yearFields+'</div></details>'+
+    acaDataNoticeHtml(S)+(row?healthBreakdownHtml(row):'')+
+    (row?.health?'<div class="health-magi"><h3>ACA MAGI calculation — '+yr+'</h3><p>Projected AGI '+f$(row.health.agi)+' + tax-exempt interest '+f$(row.health.exemptInterest)+' + nontaxable Social Security '+f$(row.health.nonTaxableSS)+' + excluded foreign income '+f$(row.health.foreignIncome)+' + required-filer dependent MAGI '+f$(row.health.dependentMagi)+' = '+f$(row.health.magi)+(row.health.override!=null?' (year override replaces formula)':'')+'.</p><p>Poverty guideline '+(row.health.fpl?f$(row.health.fpl):'not set')+' · income '+(row.health.fplPercent!=null?row.health.fplPercent.toFixed(1)+'%':'—')+' of guideline · expected contribution '+(row.health.rate!=null?(row.health.rate*100).toFixed(2)+'%':'not applicable')+' · '+(row.health.contributionStatus==='projected'?'projected from ':row.health.contributionStatus==='entered'?'entered ':'published ')+row.health.ruleYear+' contribution rules; '+row.health.povertyStatus+' poverty data uses guideline year '+row.health.guidelineYear+'.</p></div>':'')+
+    (row?.health?'<div class="family-table-wrap"><table class="family-table health-months"><caption>Coverage and estimated assistance — '+yr+'</caption><thead><tr><th>Month</th><th>Quoted group(s)</th><th>Gross premiums</th><th>Eligible benchmark</th><th>Est. assistance</th><th>Medical budget</th><th>Net cost</th></tr></thead><tbody>'+row.health.months.map(m=>'<tr><th>'+yr+'-'+String(m.month).padStart(2,'0')+'</th><td>'+setupEsc(m.labels.join(', ')||'No coverage entered')+'</td><td>'+f$(m.premium)+'</td><td>'+f$(m.benchmark)+'</td><td>'+f$(m.credit)+'</td><td>'+f$(m.outOfPocket)+'</td><td>'+f$(m.premium-m.credit+m.outOfPocket)+'</td></tr>').join('')+'</tbody></table></div>':'')+
+    '<details class="family-adults"><summary>Rules, sources & limits</summary><div class="setup-section-copy">Medicare eligibility checks use exact Family Timeline birth dates when entered; otherwise they use the existing annual age convention. They do not change Part B or IRMAA timing or automatically stop quoted premiums. Continue entering Medicare premiums in the ordinary household budget as before.<br><br>ACA household MAGI adds nontaxable Social Security and excluded foreign income to AGI plus tax-exempt interest. Medicare MAGI keeps its existing calculation and generally uses a two-year lookback. Returned brokerage cost basis, qualified Roth distributions, and qualified HSA reimbursements do not themselves add ACA income; dividends, interest, realized gains, IRA distributions, and Roth conversions do. Existing early-withdrawal and HSA qualification assumptions still apply; this phase does not validate account access. Ordinary Marketplace premiums generally cannot be reimbursed tax-free from an HSA.<br><br>This estimate assumes entered eligible premiums are paid and federal assistance is received in the coverage year. It does not reconcile actual APTC, model state assistance, cost-sharing reductions, Medicaid/CHIP eligibility, HRA offsets, shared-policy allocations, tax-family changes within the year, or the self-employed health-insurance deduction/PTC interaction. No credit is assumed below 100% or above 400% of the guideline. Estimates use continuous rate interpolation, not tax-form rounding; early retirement funding starts from gross premiums and does not search for a subsidy-maximizing strategy. Risk Lab changes ordinary household spending and recomputes assistance; coverage quotes retain their own growth assumptions. Confirm Medicaid/CHIP and employer-coverage eligibility separately. Explicit yearly size/income entries support tax-family changes; monthly quotes support coverage changes.<br><br><a href="https://www.healthcare.gov/income-and-household-information/income/" target="_blank" rel="noopener">HealthCare.gov income</a> · <a href="https://www.irs.gov/instructions/i8962" target="_blank" rel="noopener">IRS Form 8962</a> · <a href="https://www.irs.gov/irb/2025-32_IRB" target="_blank" rel="noopener">2026 contribution rules</a> · <a href="https://www.irs.gov/irb/2026-31_irb" target="_blank" rel="noopener">2027 contribution rules</a> · <a href="https://aspe.hhs.gov/poverty-guidelines/" target="_blank" rel="noopener">HHS poverty guidelines</a></div></details>'+
+    healthSummaryHtml(proj)+'</div>';
+}
+
 function renderSetupHouseholdStep(){
   const yr = setupYear();
   const has2 = hasP2();
@@ -12988,7 +13702,8 @@ function renderSetupHouseholdStep(){
     setupSelect('State Tax Setting','state',S.state,[['CA','California'],['','Federal Only']],{note:'California turns on California tax estimates. Federal Only skips state income tax.'}),
     setupPlanStartField(),
     setupPlanLengthField(),
-    setupAgePreview()
+    setupAgePreview(),
+    renderFamilyOption() + renderHealthOption()
   ].join('');
 }
 function renderSetupAssumptionsStep(){
@@ -14130,7 +14845,7 @@ function riskScenarioState(c,path,isLab,roadRows){
   let simCpi=1,roadCpi=1;
   st.ovSpending=Array.from({length:years},(_,i)=>{
     if(i>0){simCpi*=1+(selectedPath.infl[i-1]||0);roadCpi*=1+(S.spendInfl||0);}
-    const roadmap=(roadRows[i]&&roadRows[i].spending)||0;
+    const roadmap=roadRows[i] ? (roadRows[i].householdSpending ?? roadRows[i].spending) : 0;
     const amount=roadmap*(roadCpi?simCpi/roadCpi:1)*(isLab?(1+c.spendAdj/100):1);
     return {amount,oneYear:'Y',startYear:S.startYear+i,endYear:S.startYear+i,notes:'Risk Lab inflation path'};
   });
@@ -14139,6 +14854,7 @@ function riskScenarioState(c,path,isLab,roadRows){
 function riskCpiPath(infl,years){const out=[1];for(let i=1;i<years;i++)out[i]=out[i-1]*(1+(infl[i-1]||0));return out;}
 function riskPathMetrics(rows,cpi,path){
   const pv=rows.map((r,i)=>(r.netWorth||0)/(cpi[i]||1));
+  if(rows.some(r=>r.health && (r.health.inputErrors.length || r.taxSolverConverged===false)))throw new Error('A simulated health funding calculation did not settle or has incomplete inputs; review Health & ACA.');
   const first=rows.findIndex(r=>(r.unfunded||0)>.5),last=rows[rows.length-1]||{};
   let peak=pv[0]||0,maxDraw=0;pv.forEach(v=>{peak=Math.max(peak,v);if(peak>0)maxDraw=Math.max(maxDraw,(peak-v)/peak);});
   const returnGrowth=rows.reduce((value,r)=>value*Math.max(.05,1+(Number.isFinite(r.gRate)?r.gRate:0)),1),marketCagr=rows.length?Math.pow(returnGrowth,1/rows.length)-1:null;
@@ -14256,6 +14972,7 @@ async function riskRun(){
   await new Promise(res=>setTimeout(res,20));
   try{
     const roadRows=riskBaseSpendRows(S.endYear);
+    if(roadRows.some(r=>r.health && (r.health.inputErrors.length || r.taxSolverConverged===false)))throw new Error('Review incomplete or unsettled health calculations in Health & ACA before running Risk Lab.');
     let paths=c.method==='historical'?riskHistoricalPaths(pathYears):c.method==='bootstrap'?riskBootstrapPaths(c,c.simulations,pathYears):riskMontePaths(c,c.simulations,pathYears);
     if(!paths.length)throw new Error('The selected horizon is longer than the available '+RISK_LAB_HISTORY[0][0]+'–'+RISK_LAB_HISTORY[RISK_LAB_HISTORY.length-1][0]+' historical record. Shorten the ending year or choose another method.');
     const baseItems=[],labItems=[],total=paths.length;
@@ -14271,7 +14988,7 @@ async function riskRun(){
     if(token!==riskLabRunToken)return;
     riskLabSettings.hasRun=true;riskLabSettings.planSignature=riskPlanSignature();riskSaveSettings();
     const target=document.getElementById('risk-results');if(target)target.innerHTML=riskResultsHtml(riskLabResults);if(status)status.textContent='Complete.';if(cancel)cancel.style.display='none';if(btn)btn.disabled=false;setTimeout(()=>riskRenderChart(riskLabResults),0);
-  }catch(e){if(status)status.textContent='Unable to run: '+String(e.message||e);if(btn)btn.disabled=false;if(bar)bar.style.width='0';console.error('Risk Lab:',e);}
+  }catch(e){if(healthEnabled(S)&&target)target.innerHTML='<div class="panel risk-empty"><strong>Risk results need review.</strong><p>'+riskEsc(e.message||e)+'</p></div>';if(status)status.textContent='Unable to run: '+String(e.message||e);if(btn)btn.disabled=false;if(bar)bar.style.width='0';console.error('Risk Lab:',e);}
 }
 
 function initApp() {
@@ -14287,7 +15004,7 @@ function initApp() {
     proj = runProjection(S);
     if (proj.length) renderDash();
     // After UI is up, async load from GitHub if configured
-    initGitHubLoad();
+    acaLoadInitialPlan();
     // Phase 2: check if local storage was wiped since last session
     localCheckForWipe();
     // Show welcome when plan is unconfigured (checks data state, not a flag)
@@ -14339,7 +15056,7 @@ window.onload = () => {
       } else if (attempts > 20) {
         clearInterval(wait);
         // Init without charts
-        try { S=loadState(); loadUI(); applyAdvancedMode(); updateHeader(); updateLabels(); proj=runProjection(S); initGitHubLoad(); appScrollTopAfterLoad(); } catch(e){}
+        try { S=loadState(); loadUI(); applyAdvancedMode(); updateHeader(); updateLabels(); proj=runProjection(S); acaLoadInitialPlan(); appScrollTopAfterLoad(); } catch(e){}
         document.getElementById('hdr-sub').textContent = 'Charts unavailable (CDN blocked) — data still works';
       }
     }, 100);
