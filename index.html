@@ -506,6 +506,16 @@ button.roth-scenario-jump{appearance:none;-webkit-appearance:none}
 .kpi-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
 .kpi-val.g{color:var(--green)}.kpi-val.r{color:var(--red)}.kpi-val.b{color:var(--blue)}
 .kpi-sub{font-size:9px;color:#888;margin-top:2px}
+.kpi-with-help{overflow:visible}
+.kpi-help-label{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.kpi-help{display:inline-block;flex:none;letter-spacing:normal;text-transform:none}
+.kpi-help summary{display:grid;place-items:center;list-style:none;width:18px;height:18px;border:1px solid var(--gold);border-radius:50%;background:var(--cream);color:var(--ink2);font:700 11px 'JetBrains Mono',monospace;cursor:help}
+.kpi-help summary::-webkit-details-marker{display:none}
+.kpi-help summary:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.kpi-help[open] summary{background:var(--gold);color:var(--ink)}
+.kpi-help-tooltip{position:fixed;z-index:300;width:min(350px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:13px 15px;background:var(--panel);border:1px solid var(--gold);border-radius:6px;box-shadow:0 5px 20px rgba(0,0,0,.22);font:12px/1.5 'Lora',Georgia,serif;color:var(--ink);text-align:left;text-transform:none;letter-spacing:normal;font-weight:400}
+.kpi-help-tooltip p+p{margin-top:8px}
+@media print{.kpi-help{display:none}}
 
 /* ── BUTTONS ── */
 .btn{
@@ -1293,7 +1303,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 
       <div class="ov-section-inner">
         <div class="ov-section-label">HSA Deposits <span id="ovpill-hsadep"></span></div>
-        <div class="ov-intent">Schedule annual HSA contributions by year range. Only applies while enrolled in an HSA-eligible high-deductible health plan.</div>
+        <div class="ov-intent">Schedule cash-funded HSA contributions by year range. Deposits are funded separately from household spending. Enter only eligible contributions; this model does not determine HSA eligibility or calculate the contribution tax deduction.</div>
         <div id="conf-hsadep" class="ov-conflicts" style="display:none"></div>
         <div style="overflow-x:auto"><table class="ov-tbl" id="ov-hsadep">
           <thead><tr><th>Annual Deposit ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
@@ -1331,6 +1341,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ CASH FLOW ═══════════ -->
 <div id="pane-cashflow" class="pane">
   <div class="sh">Complete Year-by-Year Cash Flow</div>
+  <div id="cf-accounting-warnings"></div>
   <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied; <strong>‡</strong> = year or value updated through Year-End Closeout. A ‡ Total Tax may not equal the still-projected federal/state component columns.</div>
   <div id="cf-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh;position:relative;isolation:isolate;background:#fffdf5">
     <table id="cf-tbl" style="border-collapse:collapse;font-size:11px;white-space:nowrap;min-width:max-content">
@@ -2713,9 +2724,9 @@ function runProjection(S) {
       ? (parseF(S.widowSpendPct) || 0) / 100
       : 0;
     const spending = baseSpending * (1 + survivorSpendAdj);
-    // ── Iterative tax solver: run waterfall up to 4 passes until tax converges ─
-    // Pass 0 seed: use prior year actual tax if available, else 0
-    let taxEst = rows.length > 0 ? (rows[rows.length-1].netTaxNeeded || 0) : 0;
+    // ── Iterative tax solver: repeat funding until net tax converges ──────
+    // Start from zero; each year's tax and funding are solved independently.
+    let taxEst = 0;
     // If user entered a dollar tax override for this year, use it directly (no iteration)
     const taxOvrAmt = ovTaxOvr != null ? parseF(ovTaxOvr) : null;
     if (taxOvrAmt != null) taxEst = taxOvrAmt;
@@ -2776,8 +2787,18 @@ function runProjection(S) {
     const rmdAge2 = afterDeathYear && p1Survivor ? survivorAge : age2;
     const rmdStart1 = afterDeathYear && p2Survivor ? rmdStartYearForBirthYear(by2Eff) : S.rmdStart1;
     const rmdStart2 = afterDeathYear && p1Survivor ? rmdStartYearForBirthYear(by1Eff) : S.rmdStart2;
-    const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
-    const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
+    const rmdRequired1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
+    const rmdRequired2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
+    // Regular accounts grow before distributions in this annual model. Every
+    // funding route must use that same balance, including years with losses.
+    const iraAvailable1 = Math.max(0, ira1 + ira1Growth);
+    const iraAvailable2 = Math.max(0, ira2 + ira2Growth);
+    const rothAvailable1 = Math.max(0, roth1 + roth1Growth);
+    const rothAvailable2 = Math.max(0, roth2 + roth2Growth);
+    const secAvailable = Math.max(0, sec + secGrowth);
+    const rmd1 = Math.min(rmdRequired1, iraAvailable1);
+    const rmd2 = Math.min(rmdRequired2, iraAvailable2);
+    const rmdUnfunded1 = rmdRequired1 - rmd1, rmdUnfunded2 = rmdRequired2 - rmd2;
     pre2020Lots.forEach(lot => {
       lot._pre2020Required = 0;
       lot._pre2020Calc = {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
@@ -2846,8 +2867,10 @@ function runProjection(S) {
 
 
     // ── HSA ───────────────────────────────────────────────────────────────
-    const hsaDep  = soy.hsaDep  != null && soy.hsaDep  !== '' ? parseF(soy.hsaDep)  :
-                    (parseF(resolveOverrideNonBlank(S.ovHSADeposit, yr, 'amount')) || 0);
+    // Existing HSA Deposit inputs are cash-funded household transfers, separate
+    // from spending and payroll deductions. Tax eligibility is not inferred here.
+    const hsaDep = Math.max(0, soy.hsaDep != null && soy.hsaDep !== '' ? (parseF(soy.hsaDep) || 0) :
+                    (parseF(resolveOverrideNonBlank(S.ovHSADeposit, yr, 'amount')) || 0));
     // HSA withdrawal: inflates with spendInfl each year; SOY entry resets the base
     let hsaWith = 0;
     if (hsa > 0) { // only withdraw if HSA has funds
@@ -2858,39 +2881,32 @@ function runProjection(S) {
         const priorWith = rows[rows.length-1].hsaWith || 0;
         hsaWith = priorWith > 0 ? priorWith * (1 + S.spendInfl) : 0;
       }
-      // Cap at grown balance + deposit (matches Excel: MIN(inflatedWith, hsa*(1+g)+dep))
-      // This ensures HSA fully drains in the final year rather than leaving a growth residual
-      hsaWith = Math.min(hsaWith, hsa * (1 + gRate) + hsaDep);
+      // Cap at available grown assets plus this year's planned deposit.
+      // Settlement below reduces unfunded deposits without overdrawing the HSA.
+      hsaWith = Math.max(0, Math.min(hsaWith, Math.max(0, hsa * (1 + gRate) - restrictedInvestmentAmount('hsa',yr,S)) + hsaDep));
     }
 
     // ── Wages & 401K ──────────────────────────────────────────────────────
-    // Wages carry forward with SS COLA each year; SOY entry resets the base
+    // Wages carry forward with wage growth each year; SOY entry resets the base.
     // working = within wage years, OR a one-off SOY wages entry overrides wagesEnd for that year
-    const working1 = yr <= (S.wagesEnd1||9999) ||
-      (S.soy[yr] && (S.soy[yr].grossWages != null && S.soy[yr].grossWages !== ''));
-    const working2 = hp2 && (yr <= (S.wagesEnd2||9999) ||
-      (S.soy[yr] && (S.soy[yr].grossWages2 != null && S.soy[yr].grossWages2 !== '')));
+    const earningPerson1 = !(afterDeathYear && p2Survivor);
+    const earningPerson2 = hp2 && !(afterDeathYear && p1Survivor);
+    const working1 = earningPerson1 && (yr <= (S.wagesEnd1||9999) ||
+      (soy.grossWages != null && soy.grossWages !== ''));
+    const working2 = earningPerson2 && (yr <= (S.wagesEnd2||9999) ||
+      (soy.grossWages2 != null && soy.grossWages2 !== ''));
     // Wage growth: per-year override (stored as %) → global wageGrowth (stored as decimal) → fallback
     const wGrowthRate = parseF(resolveOverrideNonBlank(S.ovWageGrowth, yr, 'rate'));
     const wCola = 1 + (wGrowthRate != null ? wGrowthRate/100 : (S.wageGrowth ?? S.ssCola ?? 0.03));
     // Primary Person wages
     // grossWages = W-2 salary; withholdPct = optional total paycheck tax withholding override %
-    // take-home (atWages) = grossWages * (1 - withholdPct/100)
+    // Take-home is settled below after payroll deductions and withholding.
     // ptWages = pre-tax / non-wage taxable income (counts in AGI, no withholding)
     let atWages1 = 0, ptWages1 = 0, grossWages1 = 0;
     if (working1) {
-      // Derive take-home from gross wages if entered
+      // Read gross wages; take-home is calculated once in the payroll block.
       if (soy.grossWages != null && soy.grossWages !== '') {
         grossWages1 = parseF(soy.grossWages) || 0;
-        const hasExplicitWp1 = soy.withholdPct != null && soy.withholdPct !== '';
-        const wp1 = hasExplicitWp1 ? parseF(soy.withholdPct)/100 : 0;
-        // Take-home = gross - taxes withheld - 401k deduction
-        // withholdPct covers all taxes (fed + FICA + state + SDI) as % of gross
-        const k401trad1_pct = soy.k401Trad1!=null&&soy.k401Trad1!=='' ? parseF(soy.k401Trad1) : S.k401Trad1;
-        const k401roth1_pct = soy.k401Roth1!=null&&soy.k401Roth1!=='' ? parseF(soy.k401Roth1) : S.k401Roth1;
-        const k401total1_pct = (k401trad1_pct||0) + (k401roth1_pct||0);
-        // If no explicit withholdPct, set atWages1=0 so the dynamic recompute block below will fix it
-        atWages1 = hasExplicitWp1 ? grossWages1 * (1 - wp1 - k401total1_pct) : 0;
       } else if (soy.atWages != null && soy.atWages !== '' && soy.ptWages == null) {
         // Legacy: only use old atWages if ptWages not set (avoid double-counting)
         atWages1 = parseF(soy.atWages) || 0;
@@ -2898,12 +2914,10 @@ function runProjection(S) {
       } else if (rows.length > 0) {
         const priorGross = rows[rows.length-1].grossWages1 || 0;
         grossWages1 = priorGross > 0 ? priorGross * wCola : 0;
-        // atWages for COLA years is recomputed after withholding block below — placeholder
-        atWages1 = 0; // will be set after withheld1 is known
       }
     }
     // ptWages (self-employ/1099) is independent of wagesEnd but gated by ptEnd1
-    if (yr <= (S.ptEnd1||9999) || (soy.ptWages != null && soy.ptWages !== '')) {
+    if (earningPerson1 && (yr <= (S.ptEnd1||9999) || (soy.ptWages != null && soy.ptWages !== ''))) {
       if (soy.ptWages != null && soy.ptWages !== '') {
         ptWages1 = parseF(soy.ptWages) || 0;
       } else if (rows.length > 0) {
@@ -2916,12 +2930,6 @@ function runProjection(S) {
     if (working2) {
       if (soy.grossWages2 != null && soy.grossWages2 !== '') {
         grossWages2 = parseF(soy.grossWages2) || 0;
-        const hasExplicitWp2 = soy.withholdPct2 != null && soy.withholdPct2 !== '';
-        const wp2 = hasExplicitWp2 ? parseF(soy.withholdPct2)/100 : 0;
-        const k401trad2_pct = soy.k401Trad2!=null&&soy.k401Trad2!=='' ? parseF(soy.k401Trad2) : S.k401Trad2;
-        const k401roth2_pct = soy.k401Roth2!=null&&soy.k401Roth2!=='' ? parseF(soy.k401Roth2) : S.k401Roth2;
-        const k401total2_pct = (k401trad2_pct||0) + (k401roth2_pct||0);
-        atWages2 = hasExplicitWp2 ? grossWages2 * (1 - wp2 - k401total2_pct) : 0;
       } else if (soy.atWages2 != null && soy.atWages2 !== '' && soy.ptWages2 == null) {
         // Legacy: only use old atWages2 if ptWages2 not set
         atWages2 = parseF(soy.atWages2) || 0;
@@ -2929,11 +2937,10 @@ function runProjection(S) {
       } else if (rows.length > 0) {
         const priorGross2 = rows[rows.length-1].grossWages2 || 0;
         grossWages2 = priorGross2 > 0 ? priorGross2 * wCola : 0;
-        atWages2 = 0; // will be set after withheld2 is known
       }
     }
     // ptWages2 also independent of working2/wagesEnd2, gated by ptEnd2
-    if (hp2 && (yr <= (S.ptEnd2||9999) || (soy.ptWages2 != null && soy.ptWages2 !== ''))) {
+    if (earningPerson2 && (yr <= (S.ptEnd2||9999) || (soy.ptWages2 != null && soy.ptWages2 !== ''))) {
       if (soy.ptWages2 != null && soy.ptWages2 !== '') {
         ptWages2 = parseF(soy.ptWages2) || 0;
       } else if (rows.length > 0) {
@@ -2962,53 +2969,52 @@ function runProjection(S) {
       }
       return null;
     })();
-    // Helper: income-tax withholding from W-2 wages only.
-    // W-4 withholding is based on wages — dividends and self-employ income are not
-    // known to the employer, so any tax on those correctly appears as funded tax.
-    const incomeTaxWithheld = (gross, preTaxDed) => {
-      if (gross <= 0) return 0;
-      const preTax = preTaxDed || 0;
-      const fedAGI = Math.max(0, gross - preTax);
-      const fedRes = calcFedTax(fedAGI, 0, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
-      const _ovStRow = resolveOverride(S.ovStateTax||[], yr, 'state');
-      const _stRowExists = (S.ovStateTax||[]).some(r => { const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s&&yr<=e; });
-      const _effState = _stRowExists ? (_ovStRow && _ovStRow!=='NONE' ? _ovStRow : '') : (S.state||'');
-      const stTax  = calcStateTax(fedAGI, taxFiling, _effState, null, tables);
-      return fedRes.ordTax + fedRes.ltcgTax + stTax;
+    // Annual Section 125 deductions carry forward until changed (zero stops).
+    // The same deductions reduce taxable wages and spendable pay exactly once.
+    const payrollDeduction = (key, gross) => {
+      for (let y = yr; y >= S.startYear; y--) {
+        const value = (S.soy[y] || {})[key];
+        if (value != null && value !== '') return Math.min(Math.max(0, gross), Math.max(0, parseF(value) || 0));
+      }
+      return 0;
     };
-    const ficaSdi = (gross) => {
+    const preTaxPayroll1 = payrollDeduction('preTaxDed1', grossWages1);
+    const preTaxPayroll2 = payrollDeduction('preTaxDed2', grossWages2);
+    const payrollTrad1 = grossWages1 * (working1 ? (parseF(soy.k401Trad1) ?? S.k401Trad1 ?? 0) : 0);
+    const payrollTrad2 = grossWages2 * (working2 ? (parseF(soy.k401Trad2) ?? S.k401Trad2 ?? 0) : 0);
+    const payrollRoth1 = grossWages1 * (working1 ? (parseF(soy.k401Roth1) ?? S.k401Roth1 ?? 0) : 0);
+    const payrollRoth2 = grossWages2 * (working2 ? (parseF(soy.k401Roth2) ?? S.k401Roth2 ?? 0) : 0);
+    const incomeTaxWithheld = (gross, preTaxDed, traditionalContrib) => {
       if (gross <= 0) return 0;
-      return Math.min(gross, SS_BASE) * 0.062 +
-             gross * 0.0145 +
-             Math.max(0, gross - (taxFiling==='MFJ'?250000:200000)) * 0.009 +
+      const fedAGI = Math.max(0, gross - preTaxDed - traditionalContrib);
+      const fedRes = calcFedTax(fedAGI, 0, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
+      const stateRow = resolveOverride(S.ovStateTax||[], yr, 'state');
+      const hasStateRow = (S.ovStateTax||[]).some(r => yr >= (parseInt(r.startYear)||0) && yr <= (parseInt(r.endYear)||9999));
+      const effectiveState = hasStateRow ? (stateRow && stateRow !== 'NONE' ? stateRow : '') : S.state;
+      return fedRes.ordTax + fedRes.ltcgTax + calcStateTax(fedAGI, taxFiling, effectiveState, null, tables);
+    };
+    const ficaSdi = (gross, preTaxDed) => {
+      if (gross <= 0) return 0;
+      const ficaBase = Math.max(0, gross - preTaxDed);
+      return Math.min(ficaBase, SS_BASE) * 0.062 + ficaBase * 0.0145 +
+             Math.max(0, ficaBase - (taxFiling==='MFJ'?250000:200000)) * 0.009 +
              (S.state==='CA' ? gross * 0.011 : 0);
     };
-    // Withheld = income-tax portion only (FICA/SDI already gone from take-home, not income tax prepayment)
-    const withheld1 = grossWages1 > 0
-      ? (explicitWp1 !== null
-          ? Math.max(0, grossWages1 * explicitWp1 - ficaSdi(grossWages1))  // explicit: strip FICA/SDI
-          : incomeTaxWithheld(grossWages1, parseF((S.soy[yr]||{}).preTaxDed1)||0))  // dynamic
-      : 0;
-    const withheld2 = grossWages2 > 0
-      ? (explicitWp2 !== null
-          ? Math.max(0, grossWages2 * explicitWp2 - ficaSdi(grossWages2))
-          : incomeTaxWithheld(grossWages2, parseF((S.soy[yr]||{}).preTaxDed2)||0))
-      : 0;
+    const payrollTax1 = ficaSdi(grossWages1, preTaxPayroll1);
+    const payrollTax2 = ficaSdi(grossWages2, preTaxPayroll2);
+    const withheld1 = grossWages1 > 0 ? (explicitWp1 !== null
+      ? Math.max(0, grossWages1 * explicitWp1 - payrollTax1)
+      : incomeTaxWithheld(grossWages1, preTaxPayroll1, payrollTrad1)) : 0;
+    const withheld2 = grossWages2 > 0 ? (explicitWp2 !== null
+      ? Math.max(0, grossWages2 * explicitWp2 - payrollTax2)
+      : incomeTaxWithheld(grossWages2, preTaxPayroll2, payrollTrad2)) : 0;
     const totalWithheld = withheld1 + withheld2;
-    // Recompute atWages for COLA-forward years now that we know the dynamic withheld amounts
-    // For SOY-entered years atWages was already set from gross*(1-wp-401k); only fix COLA years
-    if (grossWages1 > 0 && atWages1 === 0) {
-      const k401trad1_pct2 = soy.k401Trad1!=null&&soy.k401Trad1!=='' ? parseF(soy.k401Trad1) : (S.k401Trad1||0);
-      const k401roth1_pct2 = soy.k401Roth1!=null&&soy.k401Roth1!=='' ? parseF(soy.k401Roth1) : (S.k401Roth1||0);
-      const k401total1 = ((k401trad1_pct2||0) + (k401roth1_pct2||0)) * grossWages1;
-      atWages1 = Math.max(0, grossWages1 - withheld1 - ficaSdi(grossWages1) - k401total1);
-    }
-    if (grossWages2 > 0 && atWages2 === 0) {
-      const k401trad2_pct2 = soy.k401Trad2!=null&&soy.k401Trad2!=='' ? parseF(soy.k401Trad2) : (S.k401Trad2||0);
-      const k401roth2_pct2 = soy.k401Roth2!=null&&soy.k401Roth2!=='' ? parseF(soy.k401Roth2) : (S.k401Roth2||0);
-      const k401total2 = ((k401trad2_pct2||0) + (k401roth2_pct2||0)) * grossWages2;
-      atWages2 = Math.max(0, grossWages2 - withheld2 - ficaSdi(grossWages2) - k401total2);
-    }
+    // An explicit percentage is total paycheck tax withholding, including FICA.
+    // Use one final paycheck calculation for entered and carried-forward years.
+    if (grossWages1 > 0) atWages1 = Math.max(0, grossWages1 - preTaxPayroll1 - payrollTrad1 - payrollRoth1 -
+      (explicitWp1 !== null ? Math.max(payrollTax1, grossWages1 * explicitWp1) : withheld1 + payrollTax1));
+    if (grossWages2 > 0) atWages2 = Math.max(0, grossWages2 - preTaxPayroll2 - payrollTrad2 - payrollRoth2 -
+      (explicitWp2 !== null ? Math.max(payrollTax2, grossWages2 * explicitWp2) : withheld2 + payrollTax2));
     // Now atWages1/atWages2 have their final values (dynamic or explicit)
     const atWages = atWages1 + atWages2;
     const ptWages = ptWages1 + ptWages2;
@@ -3032,10 +3038,10 @@ function runProjection(S) {
     const k401Emp2Amt = w2Base2 * k401e2;
     const netAtWages = atWages; // take-home already net — no further deduction
 
-    // W-2 wages in AGI = gross wages minus pre-tax 401k contributions.
+    // W-2 wages in AGI exclude Traditional 401k and Section 125 deductions.
     // Calculated before the waterfall because target-protected funding estimates AGI while choosing account draws.
-    const w2AGI1Funding = grossWages1 > 0 ? grossWages1 - k401Contrib1Trad : 0;
-    const w2AGI2Funding = grossWages2 > 0 ? grossWages2 - k401Contrib2Trad : 0;
+    const w2AGI1Funding = Math.max(0, grossWages1 - k401Contrib1Trad - preTaxPayroll1);
+    const w2AGI2Funding = Math.max(0, grossWages2 - k401Contrib2Trad - preTaxPayroll2);
     const w2AGIFunding  = w2AGI1Funding + w2AGI2Funding;
 
     // ── Mandatory funding (step 1 of waterfall) ───────────────────────────
@@ -3076,12 +3082,16 @@ function runProjection(S) {
     let rothDraw1_f=0, rothDraw2_f=0;
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
-    let baseTax_f=0, rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
+    let rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
     let rothConvTaxCash_f=0, rothConvTaxSec_f=0, rothConvTaxIra1_f=0, rothConvTaxIra2_f=0, rothConvTaxWithheld_f=0, rothConvTaxShortfall_f=0;
     let fundingOrder_f=['SEC','IRA','ROTH'];
+    let unfunded_f=0, fundingChoice_f='SEC', irmaaMagi_f=0;
+    let qualDivs_f=0, qualDivsForTax_f=0, taxableRMDs_f=0, taxableStkGain_f=0;
+    let w2AGI_f=0, w2AGI1_f=0, w2AGI2_f=0;
+    let taxSolverConverged=false, taxSolverIterations=0, taxSolverResidual=Infinity;
     for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
     const normalTaxEstimate = rothTaxFundingCfg.method === 'NORMAL' ? taxEst : baseTaxFundingEst;
-    const totalRequired = spending + normalTaxEstimate + cashGapNeeded;
+    const totalRequired = spending + hsaDep + normalTaxEstimate + cashGapNeeded;
 
     // ── Excess / shortfall_inner ────────────────────────────────────────────────
     // Excess mandatory funding goes to Securities
@@ -3156,8 +3166,8 @@ function runProjection(S) {
     }
     const drawRothFunding = () => {
       const buckets = [
-        {i:1, avail:Math.max(0, roth1 - restrictedRoth1 - rothDraw1_inner)},
-        ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - restrictedRoth2 - rothDraw2_inner)}] : [])
+        {i:1, avail:Math.max(0, rothAvailable1 - restrictedRoth1 - rothDraw1_inner)},
+        ...(hp2 ? [{i:2, avail:Math.max(0, rothAvailable2 - restrictedRoth2 - rothDraw2_inner)}] : [])
       ].sort((a,b)=>b.avail-a.avail);
       for (const b of buckets) {
         if (remainingShortfall <= 0 || b.avail <= 0) continue;
@@ -3177,15 +3187,15 @@ function runProjection(S) {
         }
       }
       if (bucket === 'SEC') {
-        const d = Math.min(remainingShortfall, Math.max(0,sec-restrictedSec-secDraw_inner));
+        const d = Math.min(remainingShortfall, Math.max(0,secAvailable-restrictedSec-secDraw_inner));
         secDraw_inner += Math.max(0, d);
         remainingShortfall -= Math.max(0, d);
       } else if (bucket === 'IRA') {
         drawPre2020ForFunding('before');
         if (remainingShortfall > 0) {
           const buckets = [
-            {i:1, avail:Math.max(0, ira1 - rmd1 - restrictedIra1 - ira1Draw_inner)},
-            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - rmd2 - restrictedIra2 - ira2Draw_inner)}] : [])
+            {i:1, avail:Math.max(0, iraAvailable1 - rmd1 - restrictedIra1 - ira1Draw_inner)},
+            ...(hp2 ? [{i:2, avail:Math.max(0, iraAvailable2 - rmd2 - restrictedIra2 - ira2Draw_inner)}] : [])
           ].sort((a,b)=>b.avail-a.avail);
           for (const b of buckets) {
             if (remainingShortfall <= 0 || b.avail <= 0) continue;
@@ -3228,8 +3238,8 @@ function runProjection(S) {
     let rothModeWith1=0, rothModeWith2=0;
     // Roth conversions can only use IRA dollars not already used for RMDs or cash-flow funding.
     // This prevents an extreme conversion year from drawing the same IRA dollars for taxes and also moving them to Roth.
-    const rothConvAvail1 = Math.max(0, ira1 - rmd1 - ira1Addl - restrictedIra1);
-    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - rmd2 - ira2Addl - restrictedIra2) : 0;
+    const rothConvAvail1 = Math.max(0, iraAvailable1 - rmd1 - ira1Addl - restrictedIra1);
+    const rothConvAvail2 = hp2 ? Math.max(0, iraAvailable2 - rmd2 - ira2Addl - restrictedIra2) : 0;
     const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
     const assignRothConversionDraws = () => {
       const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
@@ -3378,14 +3388,14 @@ function runProjection(S) {
         rothConvTaxCash_inner = Math.min(dedicatedNeed, availCash);
         cashDraw_inner += rothConvTaxCash_inner;
         dedicatedNeed -= rothConvTaxCash_inner;
-        const availSec = Math.max(0, sec - restrictedSec - secDraw_inner);
+        const availSec = Math.max(0, secAvailable - restrictedSec - secDraw_inner);
         rothConvTaxSec_inner = Math.min(dedicatedNeed, availSec);
         secDraw_inner += rothConvTaxSec_inner;
         dedicatedNeed -= rothConvTaxSec_inner;
       } else if (rothTaxFundingCfg.method === 'IRA') {
         const buckets = [
-          {i:1, avail:Math.max(0, ira1-rmd1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
-          ...(hp2 ? [{i:2, avail:Math.max(0, ira2-rmd2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
+          {i:1, avail:Math.max(0, iraAvailable1-rmd1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
+          ...(hp2 ? [{i:2, avail:Math.max(0, iraAvailable2-rmd2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
         ].sort((a,b)=>b.avail-a.avail);
         for (const b of buckets) {
           if (dedicatedNeed <= 0 || b.avail <= 0) continue;
@@ -3467,15 +3477,18 @@ function runProjection(S) {
     const medicareBase = partBPerPerson * medicareCount;
     const newTax = fedRes.ordTax + fedRes.ltcgTax + stTax; // income tax only (IRMAA separate)
     const conversionTax = rothConv > 0 ? Math.max(0, newTax - baselineTax) : 0;
-    const baselineTaxFundingNeed = Math.max(0, baselineTax - totalWithheld);
     const conversionTaxFundingNeed = rothConv > 0 ? Math.max(0, newTax - Math.max(baselineTax, totalWithheld)) : 0;
     // Withholding means withholding the tax caused by the conversion itself.
     // Existing wage withholding must not make this selected withholding vanish.
     const conversionTaxRoutingNeed = rothTaxFundingCfg.method === 'WITHHOLD' ? conversionTax : conversionTaxFundingNeed;
-    const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld - rothConvTaxWithheld_inner);  // IRMAA excluded — Medicare premium, not income tax funding
+    // Negative net tax is a modeled refund of excess withholding. Keep it in
+    // cash flow instead of silently discarding an overpayment.
+    const newNetTax = newTax - totalWithheld - rothConvTaxWithheld_inner;
+    const baselineTaxFundingNeed = newNetTax -
+      (rothTaxFundingCfg.method === 'WITHHOLD' ? 0 : conversionTaxRoutingNeed);
     // Save finals from this pass
     netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
-    baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
+    rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
     rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
     rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
@@ -3487,25 +3500,21 @@ function runProjection(S) {
     irmaaLookbackYear_f=irmaaLookbackYear; irmaaSurvivorRelief_f=survivorIRMAARelief;
     qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
     taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
-    // A tax override fixes ordinary funded tax. Dedicated conversion-tax methods
-    // still need additional passes so withholding/outside/IRA routing can converge.
-    if (taxOvrAmt != null) {
-      if (rothTaxFundingCfg.method === 'NORMAL') break;
-      const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
-      if (convDelta < TAX_SOLVER_EPS) break;
-      convTaxFundingEst = conversionTaxRoutingNeed;
-      continue;
-    }
-    if (rothTaxFundingCfg.method === 'NORMAL') {
-      if (Math.abs(newNetTax - taxEst) < TAX_SOLVER_EPS) break;
-      taxEst = newNetTax;
-    } else {
-      const baseDelta = Math.abs(baselineTaxFundingNeed - baseTaxFundingEst);
-      const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
-      if (baseDelta < TAX_SOLVER_EPS && convDelta < TAX_SOLVER_EPS) break;
-      baseTaxFundingEst = baselineTaxFundingNeed;
-      convTaxFundingEst = conversionTaxRoutingNeed;
-    }
+    // Report convergence, including dedicated conversion-tax routing when a
+    // manual ordinary-tax funding amount is in force.
+    taxSolverIterations = taxPass + 1;
+    const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
+    taxSolverResidual = taxOvrAmt != null
+      ? (rothTaxFundingCfg.method === 'NORMAL' ? 0 : convDelta)
+      : rothTaxFundingCfg.method === 'NORMAL'
+        ? Math.abs(newNetTax - taxEst)
+        : Math.max(Math.abs(baselineTaxFundingNeed - baseTaxFundingEst), convDelta);
+    if (taxSolverResidual < TAX_SOLVER_EPS) { taxSolverConverged = true; break; }
+    // The manual override continues to set the ordinary funding requirement.
+    if (taxOvrAmt != null) baseTaxFundingEst = taxOvrAmt;
+    else if (rothTaxFundingCfg.method === 'NORMAL') taxEst = newNetTax;
+    else baseTaxFundingEst = baselineTaxFundingNeed;
+    convTaxFundingEst = conversionTaxRoutingNeed;
     } // end taxPass loop
     // Unpack finals from converged pass
     const tSSfinal=tSSfinal_f, rothConv=rothConv_f, magi=magi_f;
@@ -3554,12 +3563,19 @@ function runProjection(S) {
     const rothConvNet = Math.max(0, rothConv - rothConvTaxWithheld);
     const rothConvNet1 = rothConv > 0 ? rothConvDraw1 * rothConvNet / rothConv : 0;
     const rothConvNet2 = rothConv > 0 ? rothConvDraw2 * rothConvNet / rothConv : 0;
-    const baseTaxFunding = Math.max(0, baseTax_f - totalWithheld);
-    // Tax override controls funding. Otherwise conversion withholding is a tax payment,
-    // while outside/IRA methods remain cash-flow requirements funded by their dedicated draws.
-    const fundingTax = taxOvrActive ? taxOvrAmt
-      : rothTaxFundingCfg.method === 'NORMAL' ? netTaxNeeded
-      : baseTaxFunding + (rothTaxFundingCfg.method === 'WITHHOLD' ? 0 : rothConvTaxFundingNeed);
+    // Dedicated tax withdrawals must leave the household as tax payments, even
+    // when the ordinary funding amount is overridden. Conversion withholding
+    // already leaves the IRA and must not also be charged against cash.
+    const dedicatedCashTax = ['OUTSIDE','IRA'].includes(rothTaxFundingCfg.method) ? rothConvTaxFundingNeed : 0;
+    const fundingTax = taxOvrActive ? taxOvrAmt + dedicatedCashTax : netTaxNeeded;
+    const taxRefund = Math.max(0, -fundingTax);
+    // Reduce only the part of a deposit that could not actually be funded.
+    // A same-year reimbursement may require a matching deposit; preserve that
+    // offset so the HSA cannot pay more than its opening assets plus deposits.
+    const minDepositForWithdrawal = Math.max(0, hsaWith - Math.max(0, hsa * (1 + gRate) - restrictedHsa));
+    const hsaDepositShortfall = Math.min(Math.max(0, hsaDep - minDepositForWithdrawal),
+      Math.max(0, unfunded + rothConvTaxFundingShortfall - cashGapNeeded));
+    const hsaDepositFunded = hsaDep - hsaDepositShortfall;
     const effRate  = agi > 0 ? cashTax / agi : 0;
     const taxableInc = Math.max(0, agi - fedRes.effDed);
     const margRate = getMarginalRate(taxableInc, taxFiling, tables);
@@ -3605,27 +3621,25 @@ function runProjection(S) {
     sec = Math.max(0, sec + secGrowth - secDraw + excessFunds);
 
     // HSA: growth on start balance, then deposit/withdrawal (matches Excel)
-    hsa = Math.max(0, hsa * (1 + gRate) + hsaDep - hsaWith);
+    hsa = Math.max(0, hsa * (1 + gRate) + hsaDepositFunded - hsaWith);
 
     const rawCash = startCashBal + netAtWages + ptWages + grossSS + divs + hsaWith
                   + rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl + post2020InhDraw + ira1Addl + ira2Addl
                   + secDraw + rothDraw1 + rothDraw2 + rothModeWith1 + rothModeWith2
-                  - (spending + fundingTax);
-    // CashSweep: only sweep cash that's genuinely sitting above the floor.
-    // excessFunds (mandatory income surplus) was already routed to securities at line 1976 —
-    // exclude it from rawCash before checking, so we don't double-count it as cashSweep.
+                  - (spending + hsaDepositFunded + fundingTax);
+    // Mandatory surplus was already deposited into securities. Remove it from
+    // cash in both floor modes, then sweep only remaining cash above a floor.
     const rawCashNetOfExcess = rawCash - excessFunds;
     cashSweep = (cashFloor > 0 && rawCashNetOfExcess > cashFloor)
       ? rawCashNetOfExcess - cashFloor : 0;
     cash = cashFloor > 0
-      ? Math.max(0, Math.min(cashFloor, rawCash))
-      : Math.max(0, rawCash);
+      ? Math.max(0, Math.min(cashFloor, rawCashNetOfExcess))
+      : Math.max(0, rawCashNetOfExcess);
     if (cashSweep > 0) sec = Math.max(0, sec + cashSweep);
     const endSecTaxableBal = sec * secBalanceMix.taxable;
     const endSecTreasuryBal = sec * secBalanceMix.treasury;
     const endSecCAMuniBal = sec * secBalanceMix.caMuni;
     const endSecOtherMuniBal = sec * secBalanceMix.otherMuni;
-    const allCashOut = spending + fundingTax;
 
     const endPost2020Inh = post2020Lots.reduce((sum, lot)=>sum+(lot.active?(lot.bal||0):0),0);
     const netWorth = cash + sec + ira1 + ira2 + roth1 + roth2 + hsa + pre2020Inh1 + pre2020Inh2 + endPost2020Inh;
@@ -3638,7 +3652,7 @@ function runProjection(S) {
       // Funding sources
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
       ssStressPct: ssStressPctApplied, ssStressPerson: ssStressPersonApplied,
-      rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
+      rmd1, rmd2, rmdRequired1, rmdRequired2, rmdUnfunded1, rmdUnfunded2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
       post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails, pre2020LotDetails,
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
       pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
@@ -3646,7 +3660,7 @@ function runProjection(S) {
       divs, totalSecDivs, taxableSecDivs, treasuryInterest, caMuniInterest, otherMuniInterest, fedTaxableDivInt, taxExemptInterest, caTaxableMuniInterest, hasManualSecBuckets, hasManualSecIncome:hasManualSecBuckets, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
       mandatoryFunding, step1Total, totalFunding,
       // Spending / cash
-      spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + fundingTax + cashGapNeeded,
+      spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + hsaDep + fundingTax + cashGapNeeded,
       excessFunds, cashSweep, shortfall, unfunded:unfunded+rothConvTaxFundingShortfall, fundingChoice, fundingOrder,
       restrictedSec, restrictedIra1, restrictedIra2, restrictedRoth1, restrictedRoth2, restrictedHsa,
       restrictedTotal:restrictedSec+restrictedIra1+restrictedIra2+restrictedRoth1+restrictedRoth2+restrictedHsa,
@@ -3659,7 +3673,7 @@ function runProjection(S) {
       rothConvTaxIraDraw1, rothConvTaxIraDraw2, rothConvTaxIraWithdrawal, rothConvTaxWithheld, rothConvTaxFundingShortfall,
       rothModeWith1, rothModeWith2,
       // HSA / 401K
-      hsaDep,
+      hsaDep, hsaDepositFunded, hsaDepositShortfall, preTaxPayroll1, preTaxPayroll2, payrollTax1, payrollTax2, totalWithheld,
       k401Contrib1Trad, k401Contrib1Roth, k401Emp1Amt,
       k401Contrib2Trad, k401Contrib2Roth, k401Emp2Amt,
       // Taxable income
@@ -3668,7 +3682,7 @@ function runProjection(S) {
       // Taxes
       fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
       totalTax: cashTax, incomeTax:effectiveCloseoutIncomeTax, projectedIncomeTax:incomeTax, cashTax, fundingTax, taxOvrActive,
-      effRate, margRate, blended, irmaaTier,
+      effRate, margRate, blended, irmaaTier, taxRefund, netTaxNeeded, taxSolverConverged, taxSolverIterations, taxSolverResidual,
       // EOY Balances
       startCashBal, startSec, startSecTaxableBal, startSecTreasuryBal, startSecCAMuniBal, startSecOtherMuniBal, startIRA1, startIRA2, startRoth1, startRoth2, startHSA: startHSABal, startPre2020Inh1, startPre2020Inh2, startPost2020Inh,
       survivorIraSpousePct:survivorIraSpousePct*100, survivorIraRetainedBySpouse, survivorIraTransferredToHeirs,
@@ -4872,7 +4886,7 @@ function parseF(v) {
 function calcSuggestedWithholdPct(grossWages, k401TradPct, k401RothPct, filing, state, age1, age2, hasP2flag, yr, preTaxDed) {
   if (!grossWages || grossWages <= 0) return null;
   const k401Trad  = grossWages * (k401TradPct || 0);
-  const preTax    = preTaxDed || 0;  // health ins, FSA, dental/vision, etc.
+  const preTax    = Math.min(grossWages, Math.max(0, preTaxDed || 0));
   // Fed AGI: gross - trad 401k - other pre-tax deductions (Section 125 / cafeteria plan)
   const fedAGI    = grossWages - k401Trad - preTax;
   const tables    = getScaledTables(S, yr || S.startYear);
@@ -4895,7 +4909,7 @@ function calcSuggestedWithholdPct(grossWages, k401TradPct, k401RothPct, filing, 
   // CA SDI: 1.1% on all wages (no wage cap since 2024)
   let stTax = 0, sdi = 0;
   if (state === 'CA') {
-    const caWages = Math.max(0, grossWages - preTax);
+    const caWages = Math.max(0, grossWages - preTax - k401Trad);
     stTax = calcStateTax(caWages, filing, 'CA', null, tables);
     sdi   = grossWages * 0.011;  // SDI applies to full gross
   }
@@ -6454,6 +6468,21 @@ function todayDollarValueForYear(value, year){
   const discountRate = Math.max(0, rawRate || rawRate === 0 ? rawRate : 0);
   return (value || 0) * rothLabDiscountFactor(year || baseYear, baseYear, discountRate);
 }
+function positionDashboardHelp(help){
+  if (!help.open) return;
+  document.querySelectorAll('.kpi-help[open]').forEach(other=>{ if (other !== help) other.open=false; });
+  const trigger=help.querySelector('summary'), tip=help.querySelector('.kpi-help-tooltip');
+  const anchor=trigger.getBoundingClientRect(), box=tip.getBoundingClientRect();
+  tip.style.left=Math.max(12,Math.min(anchor.right-box.width,window.innerWidth-box.width-12))+'px';
+  const below=anchor.bottom+6;
+  tip.style.top=Math.max(12,below+box.height<=window.innerHeight-12 ? below : anchor.top-box.height-6)+'px';
+}
+document.addEventListener('click',event=>{
+  document.querySelectorAll('.kpi-help[open]').forEach(help=>{ if (!help.contains(event.target)) help.open=false; });
+});
+document.addEventListener('keydown',event=>{
+  if (event.key==='Escape') document.querySelectorAll('.kpi-help[open]').forEach(help=>{ help.open=false; });
+});
 function renderDash(){
   if(!proj.length){
     const el=document.getElementById('kpi-row');
@@ -6479,8 +6508,8 @@ function renderDash(){
     <div class="kpi"><div class="kpi-lbl">Total Taxes</div><div class="kpi-val r">${f$(totTax,true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Gross Roth Conversions</div><div class="kpi-val">${f$(totConv,true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Net Deposited to Roth</div><div class="kpi-val g">${f$(totNetConv,true)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Conversion Tax Withheld</div><div class="kpi-val r">${f$(totConvTaxWithheld,true)}</div><div class="kpi-sub">Retained from gross conversions</div></div>
-    <div class="kpi"><div class="kpi-lbl">Weighted Eff Tax Rate</div><div class="kpi-val">${fp(avgEff)}</div></div>
+    <div class="kpi kpi-with-help"><div class="kpi-lbl kpi-help-label"><span>Conversion Tax Withheld</span><details class="kpi-help" ontoggle="positionDashboardHelp(this)"><summary title="Tax withheld from gross Roth conversions over the whole plan. Follow Normal Funding Order pays conversion taxes through your normal cash and account draws; the full conversion reaches Roth. Withhold Tax From Conversion holds back tax and reduces what reaches Roth. $0 withheld does not mean no conversion tax. Click for an example." aria-label="Explain Conversion Tax Withheld" aria-describedby="kpi-conversion-tax-help">?</summary><div class="kpi-help-tooltip" id="kpi-conversion-tax-help" role="tooltip"><p>Income tax caused by a Roth conversion is included in the plan's income taxes. This card totals only tax withheld from gross conversions over the entire plan.</p><p><strong>Follow Normal Funding Order:</strong> conversion taxes use your normal cash and account-draw rules. The full conversion reaches Roth; nothing is withheld from it.</p><p><strong>Withhold Tax From Conversion:</strong> tax is held back from the gross conversion, reducing Net Deposited to Roth.</p><p>Example: $50,000 gross minus $10,000 withheld leaves $40,000 for Roth.</p><p><strong>$0 here does not mean the conversion is tax-free.</strong> Year-specific funding overrides can change which method applies.</p></div></details></div><div class="kpi-val r">${f$(totConvTaxWithheld,true)}</div><div class="kpi-sub">Retained from gross conversions</div></div>
+    <div class="kpi kpi-with-help"><div class="kpi-lbl kpi-help-label"><span>Weighted Eff Tax Rate</span><details class="kpi-help" ontoggle="positionDashboardHelp(this)"><summary title="Total federal and state income tax plus IRMAA, divided by total AGI across your plan. Includes conversion income tax; excludes standard Part B premiums and payroll taxes. This is a plan-wide average, not your marginal tax bracket. Click for details." aria-label="Explain Weighted Effective Tax Rate" aria-describedby="kpi-weighted-tax-help">?</summary><div class="kpi-help-tooltip" id="kpi-weighted-tax-help" role="tooltip"><p>A plan-wide average: total federal income tax, state income tax, and Medicare IRMAA surcharges divided by total adjusted gross income (AGI).</p><p>Years with more AGI carry more weight. This is not a simple average of the annual percentages.</p><p>Includes income tax from Roth conversions. Excludes standard Medicare Part B premiums and payroll taxes.</p><p>This is not your marginal tax bracket or a rate applied to every withdrawal.</p></div></details></div><div class="kpi-val">${fp(avgEff)}</div></div>
     ${restrictedTotal>0?`<div class="kpi"><div class="kpi-lbl">Restricted Until Maturity</div><div class="kpi-val">${f$(restrictedTotal,true)}</div><div class="kpi-sub">${restrictedLots.length} ${restrictedLots.length===1?'lot':'lots'} · Next available ${setupEsc(bucketFundingDateText(nextRestrictedDate)||'—')}</div><button type="button" class="btn btn-light btn-sm" style="margin-top:8px" onclick="openRestrictedInvestmentsEditor()">Manage</button></div>`:''}
   `;
   renderIRMAAWatchlist();
@@ -6557,6 +6586,7 @@ function renderSummaryTable(){
     { label:'SPENDING', bg:'#2a1a2a', tc:'#c080c0', cols:[
       {f:'spending',      h:'Annual\nSpending'},
       {f:'actualTax',     h:'Funded Tax',   warn:true, ovr:'taxOvrActive'},
+      {f:'hsaDep',        h:'HSA Deposit\nRequired'},
       {f:'cashGapNeeded', h:'Cash\nGap',    warn:true},
       {f:'totalRequired', h:'Total\nRequired', bold:true},
     ]},
@@ -6700,7 +6730,17 @@ function rowHasCloseoutIncomeTax(r){
   const c=(r&&r.closeoutActuals)||{};
   return ['incomeTax','federalIncomeTax','stateIncomeTax'].some(k=>c[k]!==null&&c[k]!==undefined&&c[k]!=='');
 }
+function projectionAccountingWarningsHtml(rows){
+  const messages=[];
+  (rows||[]).forEach(r=>{
+    if (r.taxSolverConverged === false) messages.push(r.yr+': Tax and funding estimates did not settle. Review this year before relying on its results.');
+    if ((r.hsaDepositShortfall||0) > .50) messages.push(r.yr+': HSA deposit is short by '+f$(r.hsaDepositShortfall)+'. Only the funded amount is added to the HSA.');
+    if ((r.rmdUnfunded1||0)+(r.rmdUnfunded2||0) > .50) messages.push(r.yr+': Available IRA assets do not cover the calculated RMD. Review required distributions.');
+  });
+  return messages.length ? '<div class="callout red">'+messages.map(message=>'<div>'+message+'</div>').join('')+'</div>' : '';
+}
 function renderCF(){
+  document.getElementById('cf-accounting-warnings').innerHTML = projectionAccountingWarningsHtml(proj);
   const n1=p1(), n2=p2(), hp=hasP2();
   const W   = (n) => {
     if(n==null||isNaN(n)) return '—';
@@ -6748,6 +6788,8 @@ function renderCF(){
     { label:'SPENDING', bg:'#2a1a2a', tc:'#c080c0', cols:[
       {f:'spending',      h:'Annual\nSpending'},
       {f:'actualTax',     h:'Funded\nTax',        warn:true, ovr:'taxOvrActive'},
+      {f:'hsaDep',        h:'HSA Deposit\nRequired'},
+      {f:'hsaDepositFunded', h:'HSA Deposit\nFunded'},
       {f:'cashGapNeeded', h:'Cash\nGap',         warn:true},
       {f:'totalRequired', h:'Total\nRequired',   bold:true},
     ]},
@@ -6765,7 +6807,6 @@ function renderCF(){
     ]},
     { label:'TAXABLE INCOME', bg:'#2a1f0a', tc:'#d4b060', cols:[
       {f:'totalWages',    h:'Wages &\nSelf-Employ'},
-      {f:'hsaDep',        h:'HSA\nDeposit'},
       {f:'taxableIRADraws', h:'IRA/RMD/\nInh IRA'},
       {f:'taxableDivs',   h:'Fed Taxable\nDiv & Int'},
       {f:'taxableSecDivs', h:'Taxable Brkg\nDiv/Int'},
@@ -7145,7 +7186,9 @@ function renderYD(){
     ${bucketTargets ? '<div class="yd-panel"><div class="sh">Bucket Lab</div>'+bucketTargets+'</div>' : ''}
     <div class="yd-panel">
       <div class="sh">Spending &amp; Cash</div>
+      ${projectionAccountingWarningsHtml([r])}
       ${dr('Spending',f$(r.spending))}
+      ${r.hsaDep>0?dr('HSA Deposit Required',f$(r.hsaDep)):''}
       ${dr('Income Tax'+(r.taxOvrActive?' (✦ override active)':''),f$(r.incomeTax))}
       ${r.irmaaTx>0?dr('IRMAA Medicare Surcharge',f$(r.irmaaTx)):''}
       ${r.medicareBase>0?dr('Medicare Part B Premium',f$(r.medicareBase)):''}
@@ -7153,9 +7196,9 @@ function renderYD(){
       ${r.taxOvrActive?dr('Tax Funding Override',f$(r.fundingTax),'','color:#8cf'):''}
       ${dr('Cash Floor',f$(parseF(resolveOverrideNonBlank(S.ovCashFloor,yr,'floor'))??S.cashFloor))}
       ${dr('Cash Gap (floor rebuild)',f$(r.cashGapNeeded))}
-      ${dr('Total Required (spend+tax+cash gap)',f$(r.totalRequired),'tot')}
+      ${dr('Total Required (spend+tax+HSA+cash gap)',f$(r.totalRequired),'tot')}
       ${r.excessFunds>0?dr('Excess → Securities',f$(r.excessFunds)):''}
-      ${dr('Funded from Accounts',f$(r.shortfall))}
+      ${dr('Account Funding Needed',f$(r.shortfall))}
       ${dr('Funding Order',formatFundingOrder(r.fundingOrder||[r.fundingChoice||'SEC','IRA','ROTH']))}
       ${(r.restrictedTotal||0)>0?'<div class="sh" style="display:flex;align-items:center;justify-content:space-between"><span>Restricted Liquidity</span><button type="button" class="btn btn-light btn-sm" onclick="openRestrictedInvestmentsEditor()">Manage</button></div>':''}
       ${(r.restrictedSec||0)>0?dr('Securities Restricted Until Maturity',f$(r.restrictedSec)):''}
@@ -7167,6 +7210,8 @@ function renderYD(){
       <div class="sh">Tax Funding Loop</div>
       ${dr('Spending',f$(r.spending))}
       ${dr('Funded Tax',f$(fundingTax))}
+      ${r.taxRefund>0?dr('Tax Refund Included Above',f$(r.taxRefund)):''}
+      ${r.hsaDep>0?dr('HSA Deposit Required',f$(r.hsaDep)):''}
       ${(r.rothConvTaxWithheld||0)>0?dr('Conversion Tax Withheld',f$(r.rothConvTaxWithheld),'','color:#7a5200'):''}
       ${dr('Cash Gap',f$(r.cashGapNeeded||0))}
       ${dr('Total Required',f$(r.totalRequired),'tot')}
@@ -7205,7 +7250,9 @@ function renderYD(){
       ${r.rothModeWith1>0?dr('Roth Mode Withdraw '+p1(),f$(r.rothModeWith1)):''}
       ${r.rothModeWith2>0?dr('Roth Mode Withdraw '+p2(),f$(r.rothModeWith2)):''}
       <div class="sh">HSA</div>
-      ${dr('HSA Deposit',f$(r.hsaDep))}
+      ${dr('HSA Deposit Required',f$(r.hsaDep))}
+      ${dr('HSA Deposit Funded',f$(r.hsaDepositFunded))}
+      ${r.hsaDepositShortfall>0?dr('HSA Deposit Shortfall',f$(r.hsaDepositShortfall)):''}
     </div>
     <div class="yd-panel">
       <div class="sh">Taxes</div>
@@ -7488,11 +7535,11 @@ function editSOY(yr){
     ${yr === S.startYear ? `<div style="font-size:11px;color:#8a7040;font-style:italic;margin-bottom:8px">Year 1 — enter wages, spending, and Social Security only if it is already being received. Future Social Security estimates belong in Setup → Income. Subsequent actuals reset the projection from that year forward.</div>` : ''}
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
       ${fld('grossWages',p1()+' W-2 Gross Annual Wages ($)', 'Gross means annual pay before anything is taken out: taxes, withholding, 401k, health insurance, FSA, or other paycheck deductions.')}
-      ${fld('preTaxDed1',p1()+' Pre-Tax Deductions/yr ($)','Health/dental/vision premiums + FSA + other Section 125 · reduces taxable income · optional, improves suggestion accuracy')}
+      ${fld('preTaxDed1',p1()+' Pre-Tax Deductions/yr ($)','Annual Section 125 deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from spending to avoid counting them twice.')}
       ${buildWithholdField('withholdPct',p1()+' Optional W-2 Withholding Override %','grossWages','k401Trad1','k401Roth1',yr-S.by1-1,'preTaxDed1')}
       ${fld('ptWages',p1()+' Self-Employ / 1099 ($)', 'Consulting/self-employ income · pre-fills from prior year with COLA · enter to override or add new income')}
       ${hasP2()?fld('grossWages2',p2()+' W-2 Gross Annual Wages ($)', 'Gross means annual pay before anything is taken out: taxes, withholding, 401k, health insurance, FSA, or other paycheck deductions.'):''}
-      ${hasP2()?fld('preTaxDed2',p2()+' Pre-Tax Deductions/yr ($)','Health/dental/vision premiums + FSA + other Section 125 · reduces taxable income · optional, improves suggestion accuracy'):''}
+      ${hasP2()?fld('preTaxDed2',p2()+' Pre-Tax Deductions/yr ($)','Annual Section 125 deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from spending to avoid counting them twice.'):''}
       ${hasP2()?buildWithholdField('withholdPct2',p2()+' Optional W-2 Withholding Override %','grossWages2','k401Trad2','k401Roth2',yr-S.by2-1,'preTaxDed2'):''}
       ${hasP2()?fld('ptWages2',p2()+' Self-Employ / 1099 ($)', 'Consulting/self-employ income · pre-fills from prior year with COLA · enter to override or add new income'):''}
       ${fld('ss1',ss1Info.actualLabel,ss1Info.actualNote)}
@@ -8132,12 +8179,16 @@ function renderAP(){
 function apCard(yr){
   const r = proj.find(r=>r.yr===yr);
   if(!r) return '';
-  const needsDraw = (r.ira1Addl||0)+(r.ira2Addl||0)+(r.stkSales||0)+(r.rothDraw1||0)+(r.rothDraw2||0) > 0;
+  const needsDraw = (r.cashDraw||0)+(r.ira1Addl||0)+(r.ira2Addl||0)+(r.stkSales||0)+(r.rothDraw1||0)+(r.rothDraw2||0) > 0;
   const needsSecDraw = (r.stkSales||0) > 0;
   const hasIRMAA = (r.irmaaTx||0) > 0;
-  const statusColor = needsSecDraw ? '#8b0000' : needsDraw ? '#7a5200' : '#1a4a1a';
-  const statusBg    = needsSecDraw ? '#fff0f0' : needsDraw ? '#fffbf0' : '#f0fff4';
-  const statusLabel = needsSecDraw ? '⚠ Securities Draw' : needsDraw ? '○ IRA Draws Needed' : '✓ Step 1 Funded';
+  const hasFundingShortfall = (r.unfunded||0) > .50;
+  const needsReview = r.taxSolverConverged === false || (r.rmdUnfunded1||0)+(r.rmdUnfunded2||0) > .50;
+  const redStatus = hasFundingShortfall || needsReview || needsSecDraw;
+  const statusColor = redStatus ? '#8b0000' : needsDraw ? '#7a5200' : '#1a4a1a';
+  const statusBg    = redStatus ? '#fff0f0' : needsDraw ? '#fffbf0' : '#f0fff4';
+  const statusLabel = hasFundingShortfall ? '⚠ Funding Shortfall' : needsReview ? '⚠ Review Calculation'
+    : needsSecDraw ? '⚠ Securities Draw' : needsDraw ? '○ Account Draws Needed' : '✓ Step 1 Funded';
 
   const row = (label, val, bold=false, color='') => {
     if(val===0 && !bold) return '';
@@ -8177,12 +8228,13 @@ function apCard(yr){
   }
   if ((r.excessFunds||0) > 0) why.push('Mandatory income exceeds cash need');
   if ((r.cashSweep||0) > 0) why.push('Cash above floor swept to securities');
-  if ((r.unfunded||0) > 0) why.push('Funding shortfall');
+  if (hasFundingShortfall) why.push('Funding shortfall');
   const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
                     (r.pre2020InhDraw||0)===0 && (r.pre2020InhAddl||0)===0 && (r.post2020InhDraw||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
-                    (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0;
+                    (r.rothDraw1||0)===0 && (r.rothDraw2||0)===0 && rothConv===0 &&
+                    (r.cashDraw||0)===0 && (r.hsaDepositFunded||0)===0 && !hasFundingShortfall && !needsReview;
   const rawBucketPrepYear = yr < (S.endYear || yr) ? yr + 1 : yr;
   const bucketSeedYear = bucketPlanSeedYear(S, proj, rawBucketPrepYear);
   const showBucketPrep = rawBucketPrepYear >= bucketSeedYear || yr === bucketSeedYear - 1;
@@ -8217,7 +8269,9 @@ function apCard(yr){
     ${((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0))>0 ? row('Inherited IRA', (r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)) : ''}
     ${(r.restrictedTotal||0)>0 ? row('Restricted — unavailable (included above)', r.restrictedTotal, false, '#7a5200') : ''}
     ${hdr('SPENDING REQUIREMENT')}
+    ${projectionAccountingWarningsHtml([r])}
     ${row('Annual Spending', r.spending, true)}
+    ${row('HSA Deposit Required', r.hsaDep||0)}
     ${row(taxLabel, fundedTax)}
     ${cashGap>0 ? row('Cash Gap (floor rebuild)', cashGap) : ''}
     ${row('Total Required', r.totalRequired, true)}
@@ -8237,6 +8291,8 @@ function apCard(yr){
     ${hdr('ACTIONS REQUIRED')}
     ${noActions ? '<div style="font-size:11px;color:#aaa;padding:3px 0">No draws or conversions needed</div>' : ''}
     ${flag('HSA Withdrawal', r.hsaWith||0, '#5a6a00')}
+    ${flag('HSA Deposit Funded', r.hsaDepositFunded||0, '#5a6a00')}
+    ${flag('Cash Draw', r.cashDraw||0, '#7a5200')}
     ${(r.rmd1||0)>0 ? flag(p1()+' RMD — Withdraw from IRA', r.rmd1, '#8b4000') : ''}
     ${(r.rmd2||0)>0 ? flag(p2()+' RMD — Withdraw from IRA', r.rmd2, '#8b4000') : ''}
     ${flag(p1()+' Inherited IRA Draw', (r.pre2020InhDraw1||0)+(r.pre2020InhAddl1||0), '#9a5a1f')}
@@ -8270,8 +8326,8 @@ function apCard(yr){
     ${hasIRMAA ? `<div style="font-size:10px;background:#fff4e0;border-left:3px solid #b87000;padding:4px 8px;margin-top:4px;border-radius:0 4px 4px 0;color:#7a4800">⚠ IRMAA ${r.irmaaTier || ""} — ${r.irmaaSurvivorRelief?'SSA-44 MAGI':'IRMAA MAGI'}: ${f$(r.irmaaMagi||0)}</div>` : ''}
 
     ${hdr('END-OF-YEAR')}
-    ${fundingDelta > 0 ? row('Funding Surplus', fundingDelta, false, '#1a4a1a') : ''}
-    ${fundingDelta < 0 ? row('Funding Shortfall', Math.abs(fundingDelta), false, '#8b0000') : ''}
+    ${fundingDelta > .50 ? row('Funding Surplus', fundingDelta, false, '#1a4a1a') : ''}
+    ${hasFundingShortfall ? row('Funding Shortfall', r.unfunded, false, '#8b0000') : ''}
     ${row('Net Worth', r.netWorth, true)}
     ${row('Net Worth Today $ (PV)', todayDollarNetWorthForRow(r), false, '#6a5830')}
     ${why.length ? `${hdr('WHY THIS YEAR LOOKS DIFFERENT')}${why.map(w=>`<div style="font-size:10.5px;color:#6a5830;background:#fff8e8;border-left:3px solid var(--gold);padding:3px 7px;margin:3px 0;border-radius:0 4px 4px 0">${w}</div>`).join('')}` : ''}
@@ -9233,6 +9289,10 @@ function buildReportPayload(){
     divIncome:r.divs||r.divIncome||0,
     ira1Addl:r.ira1Addl||0, ira2Addl:r.ira2Addl||0,
     hsaWith:r.hsaWith||0,
+    hsaDep:r.hsaDep||0, hsaDepositFunded:r.hsaDepositFunded||0, hsaDepositShortfall:r.hsaDepositShortfall||0,
+    taxRefund:r.taxRefund||0, taxSolverConverged:r.taxSolverConverged!==false,
+    taxSolverIterations:r.taxSolverIterations||0, taxSolverResidual:r.taxSolverResidual||0,
+    rmdUnfunded1:r.rmdUnfunded1||0, rmdUnfunded2:r.rmdUnfunded2||0,
     rothDraw1:r.rothDraw1||0, rothDraw2:r.rothDraw2||0,
     stkSales:r.stkSales||0,
     spending:r.spending||0, totalFunding:r.totalFunding||0,
@@ -9811,7 +9871,9 @@ function generateReport(){
     const totalFunded = full.totalFunding || (wages+pt+ss+divs+rmds+ira1a+ira2a+preInhA+stkS+cashD+hsaW+inhD+rDraw1+rDraw2);
     funds.push(['Total Funding',totalFunded]);
     funds.push(['Annual Spending',spending]);
-    if(taxFunding>0 || full.taxOvrActive) funds.push([taxFundingLabel,taxFunding]);
+    if(Math.abs(taxFunding)>0 || full.taxOvrActive) funds.push([taxFundingLabel,taxFunding]);
+    if(full.hsaDep>0) funds.push(['HSA Deposit Required',full.hsaDep]);
+    if(full.hsaDepositShortfall>0) funds.push(['HSA Deposit Funded',full.hsaDepositFunded]);
     if(cashGap>0) funds.push(['Cash Gap (floor rebuild)',cashGap]);
     if(unfunded>0) funds.push(['⚠ Funding Gap',unfunded]);
     else if((full.excessFunds||0)>50) funds.push(['Surplus → Securities',full.excessFunds]);
@@ -9864,6 +9926,7 @@ function generateReport(){
     if(stkS)   acts.push(`Securities Draw: ${fd(stkS)}`);
     if(cashD)  acts.push(`Cash Draw: ${fd(cashD)}`);
     if(hsaW)   acts.push(`HSA Withdrawal: ${fd(hsaW)}`);
+    if(full.hsaDepositFunded>0) acts.push(`HSA Deposit Funded: ${fd(full.hsaDepositFunded)}`);
     if(rDraw1) acts.push(`${A.name1} Roth Withdrawal: ${fd(rDraw1)}`);
     if(rDraw2) acts.push(`${A.name2||'Spouse/Partner'} Roth Withdrawal: ${fd(rDraw2)}`);
     if((full.excessFunds||0)>50) acts.push(`Invest Surplus → Securities: ${fd(full.excessFunds)}`);
@@ -9909,8 +9972,8 @@ function generateReport(){
     const roth_wd = rDraw1+rDraw2;
     const hsa_inh = hsaW+allInhD;  // HSA + Inherited IRA only (Roth now separate)
     const ira_tot=regularRmds+ira1a+ira2a;
-    const tot=wages+ss+ira_tot+divs+rc+stkS+cashD+hsaW+allInhD+rDraw1+rDraw2;
-    const totalFunded=r.totalFunding || tot;
+    const tot=wages+ss+ira_tot+divs+stkS+cashD+hsaW+allInhD+rDraw1+rDraw2;
+    const totalFunded=r.totalFunding ?? tot;
     const ira_soy=(r.startIRA1||0)+(r.startIRA2||0);
     const roth_soy=(r.startRoth1||0)+(r.startRoth2||0);
     const hsa_inh_soy=(r.startHSA||0)+(r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0);
@@ -9943,6 +10006,7 @@ function generateReport(){
     {group:'Funding Sources',label:'Total\nFunded',cell:(r,v)=>td(fd(v.totalFunded,true),'r bold')},
     {group:'Funding Required',label:'Spending',cell:(r,v)=>td(fd(r.spending,true),'r')},
     {group:'Funding Required',label:'Funded\nTaxes',show:cfAny((r,v)=>v.taxFunding),cell:(r,v)=>td(dz(v.taxFunding),'r')},
+    {group:'Funding Required',label:'HSA Deposit\nRequired',show:cfAny((r,v)=>r.hsaDep),cell:(r,v)=>td(dz(r.hsaDep),'r')},
     {group:'Funding Required',label:'Cash\nGap',show:cfAny((r,v)=>v.cashGap),cell:(r,v)=>td(dzGap(v.cashGap),'r')},
     {group:'Funding Required',label:'Total\nRequired',cell:(r,v)=>td(fd(v.fundingRequired,true),'r bold')},
     {group:'Tax & Medicare',label:'Income\nTax',cell:(r,v)=>td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r')},
@@ -9991,7 +10055,7 @@ function generateReport(){
     const v=cfVals(r);
     return `<tr>
       ${td(r.yr)}${td(age(r))}
-      ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
+      ${td(fd(r.spending,true),'r')}${td(dz(v.taxFunding),'r')}${td(dz(r.hsaDep),'r')}${td(dzGap(v.cashGap),'r')}${td(fd(v.fundingRequired,true),'r bold')}
     </tr>`;
   }).join('');
   const cfTaxBalanceRows=rows.map(r=>{
@@ -10224,6 +10288,7 @@ function generateReport(){
 
   <div class="cashflow-section">
   <h2>Year-by-Year Cash Flow</h2>
+  ${projectionAccountingWarningsHtml(rows)}
   <table class="cf-table cf-screen-only" style="--cf-font:${cfPrintFont}pt;--cf-head-font:${cfPrintHeadFont}pt"><thead>
     <tr class="cf-group">${cfGroupHeader}</tr>
     <tr class="cf-sub">${cfSubHeader}</tr>
@@ -10235,14 +10300,14 @@ function generateReport(){
     </tr></thead><tbody>${cfSourceRows}</tbody></table>
     <h3>Funding Required</h3>
     <table class="cf-print-table"><thead><tr>
-      ${[th('Year'),th('Ages'),thr('Spending'),thr('Funded\nTaxes'),thr('Cash\nGap'),thr('Total\nRequired')].join('')}
+      ${[th('Year'),th('Ages'),thr('Spending'),thr('Funded\nTaxes'),thr('HSA Deposit\nRequired'),thr('Cash\nGap'),thr('Total\nRequired')].join('')}
     </tr></thead><tbody>${cfRequiredRows}</tbody></table>
     <h3>Tax, Medicare &amp; Start-of-Year Balances</h3>
     <table class="cf-print-table"><thead><tr>
       ${[th('Year'),th('Ages'),thr('Income\nTax'),thr('IRMAA'),thr('Medicare\nPart B'),thr('Eff\nRate'),thr('Marg\nRate'),thr('Cash'),thr('Sec'),thr('IRA'),thr('Roth'),thr('HSA'),thr('Inh IRA'),thr('Net\nWorth'),thr('NW Today\n$(PV)')].join('')}
     </tr></thead><tbody>${cfTaxBalanceRows}</tbody></table>
   </div>
-  <p class="note cf-screen-only">‡ = value or year updated through Year-End Closeout. Total Funded should generally match Total Required. Funded Taxes may differ from Income Tax when tax funding is overridden. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. NW Today $ (PV) discounts start-of-year net worth back to the plan start year using spending inflation. Net Worth in red = shortfall year.</p>
+  <p class="note cf-screen-only">‡ = value or year updated through Year-End Closeout. Funding includes income and account draws; surplus income is saved to securities. Total Required includes spending, net funded taxes, HSA deposits, and cash-floor rebuilding. Negative Funded Taxes represent an estimated refund in that tax year. Manual tax funding controls ordinary funding; dedicated conversion taxes are additional. Cash Gap is the amount needed to rebuild the cash floor. Start-of-Year Balances include Cash, Securities, IRA, Roth, HSA + Inherited IRA, and Net Worth. NW Today $ (PV) discounts start-of-year net worth back to the plan start year using spending inflation. Net Worth in red = shortfall year.</p>
   <p class="note cf-print-only">Print view uses a single landscape cash-flow table so funding sources, funding needs, tax/Medicare, and start-of-year balances can be audited together. NW Today $ (PV) shows start-of-year net worth in plan-start-year purchasing power.</p>
   </div>
 
@@ -13048,13 +13113,13 @@ function renderSetupIncomeStep(){
   const workIntro = '<div class="setup-check warn" style="grid-column:1/-1"><div class="setup-check-title">Work income is optional</div><div class="setup-check-body">Use W-2 wages for paychecks. Use Non-Wage Taxable Income for self-employment, consulting, 1099, pension, gambling, or other taxable income outside a paycheck. If neither applies, skip to Social Security.</div></div>';
   const workFields = [
     setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}),
-    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Annual Section 125 payroll deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from household spending.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}),
     setupInput(p1()+' Last W-2 Wage Year','wagesEnd1','int',S.wagesEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}),
     setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}),
     setupInput(p1()+' Last Non-Wage Income Year','ptEnd1','int',S.ptEnd1,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when this non-wage taxable income stops during the plan.'}),
     has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}) : '',
-    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Annual Section 125 payroll deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from household spending.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank so the model estimates paycheck taxes from W-2 wages, 401k, filing status, state, age, and pre-tax deductions. Enter a total W-2 paycheck tax withholding percent only if actual payroll withholding is different.'}) : '',
     has2 ? setupInput(p2()+' Last W-2 Wage Year','wagesEnd2','int',S.wagesEnd2,{min:1900,placeholder:'9999',note:'9999 = ongoing. Change this only when W-2 wages stop during the plan.'}) : '',
     has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck, such as self-employment, consulting, 1099, pension, gambling, or other taxable income. The model includes this in the tax calculation; there is no paycheck withholding field here.'}) : '',
@@ -13323,17 +13388,17 @@ function renderSetupAnnualView(){
   const ss2Info = has2 ? socialSecurityEntryInfo(2,yr,'annual') : null;
   const income = [
     setupSOYInput(p1()+' W-2 Gross Wages ($)',yr,'grossWages','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}),
-    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}),
+    setupSOYInput(p1()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed1','number',{min:0,note:'Annual Section 125 payroll deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from household spending.'}),
     setupSOYInput(p1()+' Optional W-2 Withholding Override %',yr,'withholdPct','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}),
     setupSOYInput(p1()+' Non-Wage Taxable Income ($)',yr,'ptWages','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}),
     has2 ? setupSOYInput(p2()+' W-2 Gross Wages ($)',yr,'grossWages2','number',{min:0,note:'Gross means annual W-2 pay before anything is taken out: tax withholding, payroll taxes, 401k, health insurance, FSA, or other paycheck deductions.'}) : '',
-    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Optional annual amount: health premiums, FSA, cafeteria-plan deductions, or other pre-tax payroll items.'}) : '',
+    has2 ? setupSOYInput(p2()+' Pre-Tax Payroll Deductions ($)',yr,'preTaxDed2','number',{min:0,note:'Annual Section 125 payroll deductions reduce taxable wages and take-home pay. Carries forward until changed; enter 0 to stop. Exclude these costs from household spending.'}) : '',
     has2 ? setupSOYInput(p2()+' Optional W-2 Withholding Override %',yr,'withholdPct2','number',{step:'0.1',min:0,max:100,note:'Optional. Leave blank for Auto. Enter only if actual W-2 paycheck withholding is different from the model estimate.'}) : '',
     has2 ? setupSOYInput(p2()+' Non-Wage Taxable Income ($)',yr,'ptWages2','number',{min:0,note:'Annual taxable income outside a W-2 paycheck: self-employment, consulting, 1099, pension, gambling, or other taxable income.'}) : '',
     setupSOYInput(ss1Info.actualLabel,yr,'ss1','number',{min:0,note:ss1Info.actualNote}),
     has2 ? setupSOYInput(ss2Info.actualLabel,yr,'ss2','number',{min:0,note:ss2Info.actualNote}) : '',
     setupSOYInput('Annual Spending ($)',yr,'spending','number',{min:0,note:'Normal household spending for this check-in year before income taxes. Include Medicare premiums and regular healthcare costs here if they are part of the household budget.'}),
-    setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0}),
+    setupSOYInput('HSA Deposit ($)',yr,'hsaDep','number',{min:0,note:'Cash-funded deposit, separate from household spending and payroll deductions. Only the funded amount increases the HSA. Contribution eligibility and tax deductions are not calculated.'}),
     setupSOYInput('HSA Withdrawal ($)',yr,'hsaWith','number',{min:0})
   ].join('');
   const taxableAccountBalances = [
@@ -13508,7 +13573,7 @@ function setupStrategyDescription(){
     },
     'hsa-deposit': {
       title:'HSA deposit',
-      body:'Use this to schedule health savings account contributions for years when you are eligible. HSA deposits can reduce taxable income and add to a separate health-expense account.'
+      body:'Use this to schedule cash-funded health savings account deposits for years when you are eligible. The deposit is a separate funding requirement, so do not also include it in spending or payroll deductions. This model does not determine eligibility or calculate the contribution tax deduction.'
     },
     'growth': {
       title:'Portfolio growth rate',
