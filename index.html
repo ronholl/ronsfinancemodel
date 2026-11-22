@@ -3534,7 +3534,11 @@ function runProjection(S) {
     const closeoutHas = key => yearCloseout[key] !== null && yearCloseout[key] !== undefined && yearCloseout[key] !== '';
     const effectiveCloseoutAgi = closeoutHas('agi') ? Math.max(0, parseF(yearCloseout.agi)) : agi;
     const effectiveCloseoutMagi = closeoutHas('magi') ? Math.max(0, parseF(yearCloseout.magi)) : magi;
-    const effectiveCloseoutIncomeTax = closeoutHas('incomeTax') ? Math.max(0, parseF(yearCloseout.incomeTax)) : incomeTax;
+    const hasSplitCloseoutTax = closeoutHas('federalIncomeTax') || closeoutHas('stateIncomeTax');
+    const effectiveCloseoutFederalTax = closeoutHas('federalIncomeTax') ? Math.max(0, parseF(yearCloseout.federalIncomeTax)) : (fedRes.ordTax + fedRes.ltcgTax);
+    const effectiveCloseoutStateTax = closeoutHas('stateIncomeTax') ? Math.max(0, parseF(yearCloseout.stateIncomeTax)) : stTax;
+    const effectiveCloseoutIncomeTax = hasSplitCloseoutTax ? effectiveCloseoutFederalTax + effectiveCloseoutStateTax
+      : closeoutHas('incomeTax') ? Math.max(0, parseF(yearCloseout.incomeTax)) : incomeTax;
     const cashTax   = incomeTax + irmaaTx; // total cash outflow for taxes
     // Net tax funding = taxes owed minus already withheld from wages (pre-paid via take-home deduction)
     const netTaxNeeded = netTaxNeeded_f; // from converged pass
@@ -6692,6 +6696,10 @@ function renderSummaryTable(){
 }
 
 // ── Cash Flow ─────────────────────────────────────────────────────────────
+function rowHasCloseoutIncomeTax(r){
+  const c=(r&&r.closeoutActuals)||{};
+  return ['incomeTax','federalIncomeTax','stateIncomeTax'].some(k=>c[k]!==null&&c[k]!==undefined&&c[k]!=='');
+}
 function renderCF(){
   const n1=p1(), n2=p2(), hp=hasP2();
   const W   = (n) => {
@@ -6928,7 +6936,7 @@ function renderCF(){
         let val = typeof raw === 'string' ? raw : (col.pct ? PCT(raw) : W(raw));
         const closeoutActuals = r.closeoutActuals || {};
         if (col.f==='agi' && closeoutActuals.agi !== null && closeoutActuals.agi !== undefined && closeoutActuals.agi !== '') val = '‡ '+val;
-        if (col.f==='incomeTax' && closeoutActuals.incomeTax !== null && closeoutActuals.incomeTax !== undefined && closeoutActuals.incomeTax !== '') val = '‡ '+val;
+        if (col.f==='incomeTax' && rowHasCloseoutIncomeTax(r)) val = '‡ '+val;
         if(col.f==='irmaaTx' && r.irmaaSurvivorRelief) val = String(val) + ssa44YearMarker(r);
         if(col.ovr && r[col.ovr]) val = '✦ ' + val;
         let color='', fw='';
@@ -9937,7 +9945,7 @@ function generateReport(){
     {group:'Funding Required',label:'Funded\nTaxes',show:cfAny((r,v)=>v.taxFunding),cell:(r,v)=>td(dz(v.taxFunding),'r')},
     {group:'Funding Required',label:'Cash\nGap',show:cfAny((r,v)=>v.cashGap),cell:(r,v)=>td(dzGap(v.cashGap),'r')},
     {group:'Funding Required',label:'Total\nRequired',cell:(r,v)=>td(fd(v.fundingRequired,true),'r bold')},
-    {group:'Tax & Medicare',label:'Income\nTax',cell:(r,v)=>td(((r.closeoutActuals||{}).incomeTax!==null&&(r.closeoutActuals||{}).incomeTax!==undefined&&(r.closeoutActuals||{}).incomeTax!==''?'‡ ':'')+fd(r.incomeTax,true),'r')},
+    {group:'Tax & Medicare',label:'Income\nTax',cell:(r,v)=>td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r')},
     {group:'Tax & Medicare',label:'IRMAA\nSurcharge',show:cfAny((r,v)=>r.irmaaTx),cell:(r,v)=>td(dz(r.irmaaTx),'r')},
     {group:'Tax & Medicare',label:'Medicare\nPart B',show:cfAny((r,v)=>r.medicareBase),cell:(r,v)=>td(dz(r.medicareBase),'r')},
     {group:'Tax & Medicare',label:'Eff\nRate',cell:(r,v)=>td(fp(r.effRate),'r')},
@@ -9990,7 +9998,7 @@ function generateReport(){
     const v=cfVals(r);
     return `<tr>
       ${td((r.closeoutStatus&&r.closeoutStatus!=='projected'?'‡ ':'')+r.yr)}${td(age(r))}
-      ${td(((r.closeoutActuals||{}).incomeTax!==null&&(r.closeoutActuals||{}).incomeTax!==undefined&&(r.closeoutActuals||{}).incomeTax!==''?'‡ ':'')+fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
+      ${td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r')}${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(fd(v.cash_soy,true),'r')}${td(fd(v.sec_soy,true),'r')}${td(fd(v.ira_soy,true),'r')}${td(fd(v.roth_soy,true),'r')}${td(fd(r.startHSA||0,true),'r')}${td(fd((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0),true),'r')}${td(fd(v.nw_soy,true),v.sf?'r bold red':'r bold')}${td(fd(v.nw_soy_today,true),v.sf?'r bold red':'r bold')}
     </tr>`;
   }).join('');
@@ -10080,7 +10088,7 @@ function generateReport(){
       ${td(flag+fd(ded,true),'r')}${td(r.seniorBonus>0?fd(r.seniorBonus,true):'—','r')}${td(r.charityDed>0?fd(r.charityDed,true):'—','r')}${td(fd(r.taxableInc,true),'r')}
       ${td(r.taxFiling||A.filing)}
       ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.stTax),'r')}
-      ${td(((r.closeoutActuals||{}).incomeTax!==null&&(r.closeoutActuals||{}).incomeTax!==undefined&&(r.closeoutActuals||{}).incomeTax!==''?'‡ ':'')+fd(r.incomeTax,true),'r bold')}
+      ${td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r bold')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
       ${td(r.irmaaTier||'—')}
@@ -12723,7 +12731,8 @@ function setupCopyProjectedCloseout(yr){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    incomeTax:row.projectedIncomeTax != null ? row.projectedIncomeTax : (row.incomeTax||0)
+    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0),
+    stateIncomeTax:row.stTax||0
   };
   setupAfterChange(true);
 }
@@ -13376,7 +13385,8 @@ function renderSetupCloseoutView(){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    incomeTax:row.projectedIncomeTax != null ? row.projectedIncomeTax : (row.incomeTax||0)
+    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0),
+    stateIncomeTax:row.stTax||0
   };
   const field = (label,key,note) => {
     const actual = has(key) ? closeout[key] : '';
@@ -13400,10 +13410,15 @@ function renderSetupCloseoutView(){
   const totals = [
     field('Final Adjusted Gross Income — AGI ($)','agi','Overrides the displayed historical AGI for this year.'),
     field('Final Medicare MAGI ($)','magi','Authoritative for the model\'s IRMAA calculation two years later.'),
-    field('Actual Federal + State Income Tax — for Comparison Only ($)','incomeTax','Optional. Replaces the displayed historical income-tax total for plan-versus-actual comparison. It does not affect IRMAA, balances, cash flow funding, or future calculations.')
+    field('Actual Federal Income Tax — for Comparison Only ($)','federalIncomeTax','Optional. Enter the actual federal income tax without adding state tax. Used only for plan-versus-actual comparison.'),
+    field('Actual State Income Tax — for Comparison Only ($)','stateIncomeTax','Optional. Enter the actual state income tax separately. Used only for plan-versus-actual comparison.')
   ].join('');
+  const projectedTaxTotal = projected.federalIncomeTax + projected.stateIncomeTax;
+  const effectiveTaxTotal = (has('federalIncomeTax') ? Math.max(0,parseF(closeout.federalIncomeTax)) : projected.federalIncomeTax) + (has('stateIncomeTax') ? Math.max(0,parseF(closeout.stateIncomeTax)) : projected.stateIncomeTax);
+  const legacyTaxNote = has('incomeTax') && !has('federalIncomeTax') && !has('stateIncomeTax') ? ' A previously entered combined actual of <strong>'+f$(parseF(closeout.incomeTax))+'</strong> remains in use until either new field is entered.' : '';
+  const taxTotalHtml = '<div class="setup-check done" style="margin:10px 0 16px"><div class="setup-check-title">Combined Income Tax for Comparison</div><div class="setup-check-body">Projected federal + state: <strong>'+f$(projectedTaxTotal)+'</strong> · Used here: <strong>'+f$(has('incomeTax')&&!has('federalIncomeTax')&&!has('stateIncomeTax')?parseF(closeout.incomeTax):effectiveTaxTotal)+'</strong>. The app adds the two actual fields automatically.'+legacyTaxNote+'</div></div>';
   const irmaaYear = yr + 2;
-  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Year-End Closeout</div><div class="setup-section-copy">Optional. Start with the plan\'s projected figures and replace only amounts you know. Blank actuals keep the projection; entering 0 records zero.</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><div class="setup-field" style="min-width:180px"><label>Closeout Year</label><select onchange="setupCloseoutYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div><div class="setup-field" style="min-width:190px"><label>Closeout Status</label><select onchange="setupSetCloseout('+yr+',\'status\',this.value,true)"><option value="projected" '+(status==='projected'?'selected':'')+'>Projected</option><option value="preliminary" '+(status==='preliminary'?'selected':'')+'>Preliminary Actuals</option><option value="final" '+(status==='final'?'selected':'')+'>Final Actuals</option></select></div></div></div><div class="setup-check done" style="margin:12px 0"><div class="setup-check-title">Why this matters</div><div class="setup-check-body">'+yr+' Medicare MAGI will be used for modeled '+irmaaYear+' IRMAA. Activity actuals document what happened; Final Medicare MAGI is the authoritative IRMAA lookback value. This closeout does not replace the next Annual Check-In for starting balances.</div></div><div class="setup-mini-actions" style="margin-bottom:12px"><button class="btn btn-light" onclick="setupCopyProjectedCloseout('+yr+')">Copy All Projected Values to Actuals</button></div><div class="sh">Activity Comparison</div><div class="setup-field-grid">'+activity+'</div>'+iraTotalHtml+'<div class="sh">Tax-Return Totals and Comparison</div><div class="setup-field-grid">'+totals+'</div><div class="setup-check warn" style="margin-top:12px"><div class="setup-check-title">Scope</div><div class="setup-check-body">These entries preserve completed-year tax history without changing the saved strategy. Detailed activity entries are reference values. Final AGI, Medicare MAGI, and income tax replace those displayed historical totals; only Medicare MAGI flows into the later IRMAA calculation. Use Annual Check-In to enter the following year\'s actual starting balances.</div></div><div class="setup-mini-actions"><button class="btn btn-light" onclick="setupClearCloseout('+yr+')">Clear Actuals and Return to Projection</button><button class="btn btn-dark" onclick="ST(\'cashflow\')">Review Cash Flow</button></div></div>';
+  return '<div class="setup-main"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><div class="setup-section-title">Year-End Closeout</div><div class="setup-section-copy">Optional. Start with the plan\'s projected figures and replace only amounts you know. Blank actuals keep the projection; entering 0 records zero.</div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><div class="setup-field" style="min-width:180px"><label>Closeout Year</label><select onchange="setupCloseoutYear=parseInt(this.value);renderSetupGuide()">'+opts.join('')+'</select></div><div class="setup-field" style="min-width:190px"><label>Closeout Status</label><select onchange="setupSetCloseout('+yr+',\'status\',this.value,true)"><option value="projected" '+(status==='projected'?'selected':'')+'>Projected</option><option value="preliminary" '+(status==='preliminary'?'selected':'')+'>Preliminary Actuals</option><option value="final" '+(status==='final'?'selected':'')+'>Final Actuals</option></select></div></div></div><div class="setup-check done" style="margin:12px 0"><div class="setup-check-title">Why this matters</div><div class="setup-check-body">'+yr+' Medicare MAGI will be used for modeled '+irmaaYear+' IRMAA. Activity actuals document what happened; Final Medicare MAGI is the authoritative IRMAA lookback value. This closeout does not replace the next Annual Check-In for starting balances.</div></div><div class="setup-mini-actions" style="margin-bottom:12px"><button class="btn btn-light" onclick="setupCopyProjectedCloseout('+yr+')">Copy All Projected Values to Actuals</button></div><div class="sh">Activity Comparison</div><div class="setup-field-grid">'+activity+'</div>'+iraTotalHtml+'<div class="sh">Tax-Return Totals and Comparison</div><div class="setup-field-grid">'+totals+'</div>'+taxTotalHtml+'<div class="setup-check warn" style="margin-top:12px"><div class="setup-check-title">Scope</div><div class="setup-check-body">These entries preserve completed-year tax history without changing the saved strategy. Detailed activity entries are reference values. Final AGI, Medicare MAGI, and the combined actual income tax replace those displayed historical totals; only Medicare MAGI flows into the later IRMAA calculation. Use Annual Check-In to enter the following year\'s actual starting balances.</div></div><div class="setup-mini-actions"><button class="btn btn-light" onclick="setupClearCloseout('+yr+')">Clear Actuals and Return to Projection</button><button class="btn btn-dark" onclick="ST(\'cashflow\')">Review Cash Flow</button></div></div>';
 }
 function setupStrategyOptions(){
   return [
