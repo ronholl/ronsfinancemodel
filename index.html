@@ -1122,6 +1122,17 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
         <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('deductions')">+ Add Row</button>
       </div>
 
+      <div class="ov-section-inner">
+        <div class="ov-section-label">Qualified Charitable Distributions <span id="ovpill-qcd"></span></div>
+        <div class="ov-intent">Enter annual eligible gifts from each person's own traditional IRA. Confirm that the donor will be at least 70½ when the IRA trustee pays the charity directly.</div>
+        <div id="conf-qcd" class="ov-conflicts" style="display:none"></div>
+        <div style="overflow-x:auto"><table class="ov-tbl">
+          <thead><tr><th>Primary Person ($)</th><th>Spouse / Partner ($)</th><th>Start Year</th><th>End Year</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="ovb-qcd"></tbody>
+        </table></div>
+        <button class="btn btn-add btn-sm" style="margin-top:8px" onclick="addOvRow('qcd')">+ Add Row</button>
+      </div>
+
     </div>
   </div>
 
@@ -1331,7 +1342,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ CASH FLOW ═══════════ -->
 <div id="pane-cashflow" class="pane">
   <div class="sh">Complete Year-by-Year Cash Flow</div>
-  <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied; <strong>‡</strong> = year or value updated through Year-End Closeout. A ‡ Total Tax may not equal the still-projected federal/state component columns.</div>
+  <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied; <strong>‡</strong> = year or value updated through Year-End Closeout. A ‡ Total Tax may not equal the still-projected federal/state component columns. An IRA gift (QCD) goes directly to charity. Regular RMD columns show the cash still payable after the gift.</div>
   <div id="cf-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh;position:relative;isolation:isolate;background:#fffdf5">
     <table id="cf-tbl" style="border-collapse:collapse;font-size:11px;white-space:nowrap;min-width:max-content">
       <thead id="cf-thead"></thead>
@@ -1343,7 +1354,23 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ TAX SUMMARY ═══════════ -->
 <div id="pane-taxes" class="pane">
   <div class="kpis" id="tax-kpis"></div>
-  <div class="note" style="margin:-6px 0 14px;padding:9px 11px;border-left:4px solid var(--gold);background:#fff8e8"><strong>Net Investment Income Tax (NIIT):</strong> The app estimates the 3.8% federal tax on the smaller of net investment income or AGI above $250,000 MFJ, $200,000 Single/HOH, or $125,000 MFS. Taxable dividends, interest, and realized gains are treated as investment income. Taxable Social Security, IRA draws, and Roth conversions can raise AGI but are not themselves investment income. Form 8960 adjustments and allocable investment deductions are not modeled.</div>
+  <details class="panel" style="margin-bottom:12px">
+    <summary style="cursor:pointer;font-weight:700">Tax Coverage &amp; Limitations</summary>
+    <p style="margin-top:8px"><strong>Included.</strong> Federal income tax, taxable Social Security, ordinary and preferential investment-income rates, standard or entered itemized deductions, NIIT, California income tax with personal and senior exemption credits, and eligible IRA gifts entered as QCDs. Medicare premiums and IRMAA are shown separately.</p>
+    <p><strong>Key assumptions.</strong> Traditional IRA withdrawals and conversions are generally treated as fully taxable apart from modeled QCDs. Brokerage dividends use the selected ordinary or qualified treatment and modeled sale gains use long-term rates. NIIT estimates use taxable dividends, interest and modeled gains. IRA basis (Form 8606), short-term gain splits, loss carryovers, and specialized Form 8960 items are outside those estimates.</p>
+    <p><strong>Check separately if applicable.</strong> Alternative minimum tax (AMT), self-employment tax, annual household Additional Medicare Tax, the California surtax over $1 million of taxable income, retirement-account penalties, and other state returns. The W-2 withholding helper includes a simplified Additional Medicare Tax estimate. The payment checks use the standard federal and California rules.</p>
+    <p class="note"><strong>NIIT.</strong> The app uses 3.8% of the smaller of modeled net investment income or federal AGI above the filing threshold ($250,000 joint, $200,000 single/head of household, $125,000 separate). The taxable part of Social Security, IRA draws and conversions can raise AGI. <a href="https://www.irs.gov/instructions/i8960" target="_blank" rel="noopener">IRS Form 8960</a></p>
+    <p class="note"><strong>California.</strong> Personal and senior credits are for modeled California resident years from 2025 onward. The 2026 credit amount comes from FTB. The 2026 phaseout thresholds use FTB's published inflation adjustment, and later years use your bracket inflation assumption. Blind and dependent credits are outside the estimate. <a href="https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html" target="_blank" rel="noopener">FTB 2026 figures</a></p>
+    <div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="setupView='strategy';setupStrategyType='qcd';setupEditingStrategy=null;ST('setup')">Plan an IRA Charitable Gift (QCD)</button></div>
+  </details>
+  <details class="panel" style="margin-bottom:14px">
+    <summary style="cursor:pointer;font-weight:700">Federal Tax Payment Check (Safe Harbor)</summary>
+    <div id="tax-payment-check"></div>
+  </details>
+  <details id="ca-tax-payment-panel" class="panel" style="margin-bottom:14px" hidden>
+    <summary style="cursor:pointer;font-weight:700">California Tax Payment Check (Safe Harbor)</summary>
+    <div id="ca-tax-payment-check"></div>
+  </details>
   <div class="chart-grid" style="margin-bottom:18px">
     <div class="chart-box"><div class="sh">Tax Breakdown by Year</div><canvas id="ch-taxbk"></canvas></div>
     <div class="chart-box"><div class="sh">Effective &amp; Marginal Rates</div><canvas id="ch-rates"></canvas></div>
@@ -1353,7 +1380,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <table class="data" id="tax-tbl">
       <thead><tr>
         <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
-        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>NIIT</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
+        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>NIIT</th><th>CA Credit Used</th><th>CA State (net)</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
         <th style="color:#888">IRMAA MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
@@ -1776,9 +1803,9 @@ function getInflationAssumptionsForYear(A, yr) {
 function getScaledTables(S, yr) {
   const { tableYear, table: T } = getTaxTableForYear(S, yr);
   const yrs = yr - tableYear;
-  const compoundFactor = key => {
+  const compoundFactor = (key, baseYear = tableYear) => {
     let factor = 1;
-    for (let y = tableYear + 1; y <= yr; y++) {
+    for (let y = baseYear + 1; y <= yr; y++) {
       const rates = getInflationAssumptionsForYear(S, y);
       factor *= 1 + (rates[key] || 0);
     }
@@ -1844,6 +1871,7 @@ function getScaledTables(S, yr) {
     hohOrd, hohLtcg, fedStdBaseHOH, fedStdSrHOH, fedCharityNonItemizerCapHOH, fedSrBonusHOH, fedSrBonusStartHOH, fedSrBonusMaxHOH,
     irmaaT, irmaaTSingle, irmaaTHOH, irmaaS, partBBase,
     caOrd, caStd, caOrdSingle, caStdSingle, caOrdHOH, caStdHOH,
+    caCreditFactor: compoundFactor('bracketInfl', 2026),
   };
 }
 
@@ -2108,8 +2136,27 @@ function calcNIIT(agi, netInvestmentIncome, filing) {
   const taxableBase = Math.min(nii, excessMagi);
   return { tax: taxableBase * NIIT_RULE.rate, threshold, magi, netInvestmentIncome: nii, excessMagi, taxableBase };
 }
-function calcStateTax(agi, filing, state, fedTaxableInc, tables, caItemizedDed) {
-  if (!state || agi<=0) return 0;
+// Form 540 lines 7, 9 and 32. The 2026 phaseout thresholds are estimated
+// from the 2025 thresholds using the 3.4% indexing FTB announced for 2026.
+const CA_EXEMPTION_CREDIT = {
+  2025: {perExemption:153, threshold:{SINGLE:252203, HOH:378310, MFJ:504411}},
+  2026: {perExemption:158, threshold:{SINGLE:260778, HOH:391173, MFJ:521561}}
+};
+function calcCaliforniaExemptionCredit(federalAgi, filing, seniorCount, tables) {
+  const year = tables?.projectionYear ?? 2026;
+  if (year < 2025) return 0;
+  const rule = CA_EXEMPTION_CREDIT[year === 2025 ? 2025 : 2026];
+  const jointPersonalCredit = filing === 'MFJ' || filing === 'QSS';
+  const threshold = jointPersonalCredit ? rule.threshold.MFJ
+    : filing === 'HOH' ? rule.threshold.HOH : rule.threshold.SINGLE;
+  const factor = tables?.caCreditFactor ?? 1;
+  const excess = Math.max(0, Math.round(federalAgi) - Math.round(threshold * factor));
+  const reduction = 6 * Math.ceil(excess / (filing === 'MFS' ? 1250 : 2500));
+  const exemptions = (jointPersonalCredit ? 2 : 1) + seniorCount;
+  return exemptions * Math.max(0, Math.round(rule.perExemption * factor) - reduction);
+}
+function calcStateTax(agi, filing, state, tables, caItemizedDed, exemptions) {
+  if (!state || agi <= 0) return {tax:0, exemptionCredit:0};
   if (state==='CA') {
     let caStdVal, caBkts;
     if (tables) {
@@ -2126,9 +2173,22 @@ function calcStateTax(agi, filing, state, fedTaxableInc, tables, caItemizedDed) 
     // Federal std ded is ~$22K higher (MFJ) so never use fedTaxableInc as CA base.
     const caEffDed = (caItemizedDed != null && caItemizedDed > caStdVal) ? caItemizedDed : caStdVal;
     const base = Math.max(0, agi - caEffDed);
-    return bracketTax(base, caBkts);
+    const beforeCredit = bracketTax(base, caBkts);
+    const eligibleCredit = exemptions
+      ? calcCaliforniaExemptionCredit(exemptions.federalAgi, filing, exemptions.seniorCount, tables) : 0;
+    const exemptionCredit = Math.min(beforeCredit, eligibleCredit);
+    return {tax:beforeCredit - exemptionCredit, exemptionCredit};
   }
-  return 0;
+  return {tax:0, exemptionCredit:0};
+}
+// Hold the latest published QCD limit in later projection years.
+const QCD_LIMITS = {2024:105000, 2025:108000, 2026:111000, 2027:114000};
+function modelQcd(requested, ageAtYearEnd, iraBalance, restricted, required, year) {
+  const limit = QCD_LIMITS[Math.min(year, 2027)] ?? 100000;
+  const amount = ageAtYearEnd >= 70
+    ? Math.min(requested, limit, Math.max(0, iraBalance - restricted)) : 0;
+  const towardRmd = Math.min(required, amount);
+  return {amount, towardRmd, cashRmd:required - towardRmd};
 }
 function getIRMAAtier(magi, filing, tables) {
   if (tables) {
@@ -2424,7 +2484,7 @@ function defaultState() {
     growthRate:0.05, divRate:0.02, divReinvestPct:1.00, intRate:0.02,
     riskStockPct:60,
     reinvestDivs:'yes',
-    spendInfl:0.03, baseSpend:0, ovDeductions:[],
+    spendInfl:0.03, baseSpend:0, ovDeductions:[], ovQcd:[], taxPaymentChecks:{}, caTaxPaymentChecks:{},
     cashFloor:0,
     bucketShortYears:0, bucketIntermediateYears:0, bucketPlanYear:0, bucketSeedYear:0, bucketReportYears:3,
     bucketPolicies:{}, bucketFundingHoldings:[], bucketFundingSchemaVersion:1, bucketFundingView:'year', bucketAccountExpanded:{}, bucketFundingGroupExpanded:{},
@@ -2550,6 +2610,11 @@ function runProjection(S) {
     const age1 = calcAgeForPlanYear(S.by1, yr), age2 = calcAgeForPlanYear(S.by2, yr); // age during the year (before birthday)
     const soy  = S.soy[yr] || {};
     const tables = getScaledTables(S, yr); // inflation-scaled tax tables for this year
+    const stateOverrides = S.ovStateTax || [];
+    const hasStateOverride = stateOverrides.some(row =>
+      yr >= (parseInt(row.startYear) || 0) && yr <= (parseInt(row.endYear) || 9999));
+    const stateForYear = hasStateOverride ? resolveOverride(stateOverrides, yr, 'state') : S.state;
+    const effectiveState = stateForYear === 'CA' ? 'CA' : '';
     const widowMode = S.widowMode || 'off';
     const widowYear = parseInt(S.widowDeathYear) || 0;
     const widowActive = hp2 && widowMode !== 'off' && widowYear > 0;
@@ -2561,6 +2626,7 @@ function runProjection(S) {
     const taxHasP2 = afterDeathYear ? false : hp2;
     const taxAge1 = afterDeathYear ? survivorAge : age1;
     const taxAge2 = afterDeathYear ? 0 : age2;
+    const caSeniorCount = Number(taxAge1 >= 64) + Number(taxFiling === 'MFJ' && taxHasP2 && taxAge2 >= 64);
     const effSsEnd1 = (widowActive && S.widowEndSS && p2Survivor) ? Math.min(S.ssEnd1 || 9999, widowYear) : S.ssEnd1;
     const effSsEnd2 = (widowActive && S.widowEndSS && p1Survivor) ? Math.min(S.ssEnd2 || 9999, widowYear) : S.ssEnd2;
 
@@ -2796,8 +2862,17 @@ function runProjection(S) {
     const rmdAge2 = afterDeathYear && p1Survivor ? survivorAge : age2;
     const rmdStart1 = afterDeathYear && p2Survivor ? rmdStartYearForBirthYear(by2Eff) : S.rmdStart1;
     const rmdStart2 = afterDeathYear && p1Survivor ? rmdStartYearForBirthYear(by1Eff) : S.rmdStart2;
-    const rmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
-    const rmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
+    const requiredRmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
+    const requiredRmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
+    const restrictedIra1 = restrictedInvestmentAmount('ira1', yr, S);
+    const restrictedIra2 = restrictedInvestmentAmount('ira2', yr, S);
+    const requestedQcd = person => Math.max(0, parseF(resolveOverrideNonBlank(S.ovQcd, yr, 'amount' + person)) || 0);
+    const qcdRequested1 = afterDeathYear && p2Survivor ? 0 : requestedQcd(1);
+    const qcdRequested2 = !hp2 || (afterDeathYear && p1Survivor) ? 0 : requestedQcd(2);
+    const qcd1 = modelQcd(qcdRequested1, yr - by1Eff, ira1, restrictedIra1, requiredRmd1, yr);
+    const qcd2 = modelQcd(qcdRequested2, yr - by2Eff, ira2, restrictedIra2, requiredRmd2, yr);
+    const rmd1 = qcd1.cashRmd, rmd2 = qcd2.cashRmd;
+    const committedIra1 = rmd1 + qcd1.amount, committedIra2 = rmd2 + qcd2.amount;
     pre2020Lots.forEach(lot => {
       lot._pre2020Required = 0;
       lot._pre2020Calc = {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
@@ -2990,10 +3065,7 @@ function runProjection(S) {
       const preTax = preTaxDed || 0;
       const fedAGI = Math.max(0, gross - preTax);
       const fedRes = calcFedTax(fedAGI, 0, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
-      const _ovStRow = resolveOverride(S.ovStateTax||[], yr, 'state');
-      const _stRowExists = (S.ovStateTax||[]).some(r => { const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s&&yr<=e; });
-      const _effState = _stRowExists ? (_ovStRow && _ovStRow!=='NONE' ? _ovStRow : '') : (S.state||'');
-      const stTax  = calcStateTax(fedAGI, taxFiling, _effState, null, tables);
+      const stTax  = calcStateTax(fedAGI, taxFiling, effectiveState, tables).tax;
       return fedRes.ordTax + fedRes.ltcgTax + stTax;
     };
     const ficaSdi = (gross) => {
@@ -3066,13 +3138,11 @@ function runProjection(S) {
     const step1Total = mandatoryFunding + hsaWith;
     const cashGapNeeded = Math.max(0, cashFloor - startCashBal);
     const restrictedSec = restrictedInvestmentAmount('sec',yr,S);
-    const restrictedIra1 = restrictedInvestmentAmount('ira1',yr,S);
-    const restrictedIra2 = restrictedInvestmentAmount('ira2',yr,S);
     const restrictedRoth1 = restrictedInvestmentAmount('roth1',yr,S);
     const restrictedRoth2 = restrictedInvestmentAmount('roth2',yr,S);
     const restrictedHsa = restrictedInvestmentAmount('hsa',yr,S);
-    const restrictedRmdWarning1 = rmd1>Math.max(0,ira1-restrictedIra1)+.49;
-    const restrictedRmdWarning2 = rmd2>Math.max(0,ira2-restrictedIra2)+.49;
+    const restrictedRmdWarning1 = requiredRmd1>Math.max(0,ira1-restrictedIra1)+.49;
+    const restrictedRmdWarning2 = requiredRmd2>Math.max(0,ira2-restrictedIra2)+.49;
 
     // ── Iterative tax solver loop ─────────────────────────────────────────
     // Each pass: waterfall draws based on taxEst → compute actual tax → repeat
@@ -3097,6 +3167,7 @@ function runProjection(S) {
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
     let baseTax_f=0, rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
+    let caExemptionCredit = 0, caAgi = 0;
     let rothConvTaxCash_f=0, rothConvTaxSec_f=0, rothConvTaxIra1_f=0, rothConvTaxIra2_f=0, rothConvTaxWithheld_f=0, rothConvTaxShortfall_f=0;
     let fundingOrder_f=['SEC','IRA','ROTH'];
     for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
@@ -3204,8 +3275,8 @@ function runProjection(S) {
         drawPre2020ForFunding('before');
         if (remainingShortfall > 0) {
           const buckets = [
-            {i:1, avail:Math.max(0, ira1 - rmd1 - restrictedIra1 - ira1Draw_inner)},
-            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - rmd2 - restrictedIra2 - ira2Draw_inner)}] : [])
+            {i:1, avail:Math.max(0, ira1 - committedIra1 - restrictedIra1 - ira1Draw_inner)},
+            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - committedIra2 - restrictedIra2 - ira2Draw_inner)}] : [])
           ].sort((a,b)=>b.avail-a.avail);
           for (const b of buckets) {
             if (remainingShortfall <= 0 || b.avail <= 0) continue;
@@ -3248,8 +3319,8 @@ function runProjection(S) {
     let rothModeWith1=0, rothModeWith2=0;
     // Roth conversions can only use IRA dollars not already used for RMDs or cash-flow funding.
     // This prevents an extreme conversion year from drawing the same IRA dollars for taxes and also moving them to Roth.
-    const rothConvAvail1 = Math.max(0, ira1 - rmd1 - ira1Addl - restrictedIra1);
-    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - rmd2 - ira2Addl - restrictedIra2) : 0;
+    const rothConvAvail1 = Math.max(0, ira1 - committedIra1 - ira1Addl - restrictedIra1);
+    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - committedIra2 - ira2Addl - restrictedIra2) : 0;
     const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
     const assignRothConversionDraws = () => {
       const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
@@ -3404,8 +3475,8 @@ function runProjection(S) {
         dedicatedNeed -= rothConvTaxSec_inner;
       } else if (rothTaxFundingCfg.method === 'IRA') {
         const buckets = [
-          {i:1, avail:Math.max(0, ira1-rmd1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
-          ...(hp2 ? [{i:2, avail:Math.max(0, ira2-rmd2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
+          {i:1, avail:Math.max(0, ira1-committedIra1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
+          ...(hp2 ? [{i:2, avail:Math.max(0, ira2-committedIra2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
         ].sort((a,b)=>b.avail-a.avail);
         for (const b of buckets) {
           if (dedicatedNeed <= 0 || b.avail <= 0) continue;
@@ -3448,16 +3519,8 @@ function runProjection(S) {
     const niitRes = calcNIIT(agi, netInvestmentIncome, taxFiling);
     // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
     const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
-    // Resolve state override for this year (move to tax-free state, etc.)
-    const ovStateRow = resolveOverride(S.ovStateTax||[], yr, 'state');
-    // If a row exists for this year, use it (null/undefined/empty = NONE = no state tax)
-    const ovStateTaxRowExists = (S.ovStateTax||[]).some(r => {
-      const s=parseInt(r.startYear)||0, e=parseInt(r.endYear)||9999; return yr>=s && yr<=e;
-    });
-    const effectiveState = ovStateTaxRowExists
-      ? (ovStateRow && ovStateRow !== 'NONE' ? ovStateRow : '')
-      : S.state;
-    const stTax   = calcStateTax(caAGI, taxFiling, effectiveState, null, tables, caItemized);
+    const caTax = calcStateTax(caAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:agi, seniorCount:caSeniorCount});
+    const stTax = caTax.tax;
     // Counterfactual tax for the same funded year before the Roth conversion and before
     // any dedicated conversion-tax draw. This isolates the conversion-related increment.
     const baselineTSS = calcTaxableSS(grossSS, baselineAgiExSS + grossSS, taxFiling, taxExemptInterest);
@@ -3468,7 +3531,7 @@ function runProjection(S) {
     const baselineNetInvestmentIncome = Math.max(0, fedTaxableDivInt + baselineTaxableStkGain);
     const baselineNIIT = calcNIIT(baselineAGI, baselineNetInvestmentIncome, taxFiling).tax;
     const baselineCaAGI = baselineAGI - baselineTSS - treasuryInterest + caTaxableMuniInterest;
-    const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, null, tables, caItemized);
+    const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:baselineAGI, seniorCount:caSeniorCount}).tax;
     const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineNIIT + baselineStTax;
     // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
     // an approved SSA-44 life-changing-event request after spouse death: only years
@@ -3499,6 +3562,8 @@ function runProjection(S) {
     const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld - rothConvTaxWithheld_inner);  // IRMAA excluded — Medicare premium, not income tax funding
     // Save finals from this pass
     netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; niit_f=niitRes.tax; netInvestmentIncome_f=niitRes.netInvestmentIncome; niitThreshold_f=niitRes.threshold; niitExcessMagi_f=niitRes.excessMagi; niitTaxableBase_f=niitRes.taxableBase; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
+    caExemptionCredit = caTax.exemptionCredit;
+    caAgi = caAGI;
     baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
     rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
@@ -3597,11 +3662,11 @@ function runProjection(S) {
     // Inherited IRA growth is applied after inherited IRA RMDs/draws so only the remaining balance grows.
 
     // IRA 1: prior * (1+g) - rmd1 - ira1Addl - rothConvDraw1 + 401K trad + employer
-    ira1 = Math.max(0, ira1 + ira1Growth - rmd1 - ira1Addl - rothConvDraw1
+    ira1 = Math.max(0, ira1 + ira1Growth - committedIra1 - ira1Addl - rothConvDraw1
                        + k401Contrib1Trad + k401Emp1Amt);
 
     // IRA 2: prior * (1+g) - rmd2 - ira2Addl - rothConvDraw2 + 401K trad + employer
-    ira2 = Math.max(0, ira2 + ira2Growth - rmd2 - ira2Addl - rothConvDraw2
+    ira2 = Math.max(0, ira2 + ira2Growth - committedIra2 - ira2Addl - rothConvDraw2
                        + k401Contrib2Trad + k401Emp2Amt);
 
     // Roth 1: prior * (1+g) + conv1 + roth401K - rothDraw1 - rothModeWith1
@@ -3663,6 +3728,8 @@ function runProjection(S) {
       atWages: netAtWages, grossWages1, grossWages2, atWages1, atWages2, ptWages, ptWages1, ptWages2, grossSS1, grossSS2, grossSS,
       ssStressPct: ssStressPctApplied, ssStressPerson: ssStressPersonApplied,
       rmd1, rmd2, pre2020InhDraw1, pre2020InhDraw2, pre2020InhDraw, pre2020InhAddl1, pre2020InhAddl2, pre2020InhAddl,
+      qcd1:qcd1.amount, qcd2:qcd2.amount, qcdTotal:qcd1.amount + qcd2.amount,
+      qcdRmd1:qcd1.towardRmd, qcdRmd2:qcd2.towardRmd, qcdRequested1, qcdRequested2,
       post2020InhRMD, post2020InhExtra, post2020InhFinal, post2020InhDiscretionary, post2020InhDraw, post2020LotDetails, pre2020LotDetails,
       pre2020InhStartYear1: pre2020Calc1.firstYear, pre2020InhStartYear2: pre2020Calc2.firstYear,
       pre2020InhOwnerReachedRMD1: pre2020Calc1.ownerReachedRMD, pre2020InhOwnerReachedRMD2: pre2020Calc2.ownerReachedRMD,
@@ -3690,7 +3757,7 @@ function runProjection(S) {
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
       agi:effectiveCloseoutAgi, magi:effectiveCloseoutMagi, projectedAgi:agi, projectedMagi:magi, closeoutStatus:yearCloseout.status||'projected', closeoutActuals:Object.assign({},yearCloseout), stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
-      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, niit, netInvestmentIncome, niitThreshold, niitExcessMagi, niitTaxableBase, stTax, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
+      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, niit, netInvestmentIncome, niitThreshold, niitExcessMagi, niitTaxableBase, stTax, caExemptionCredit, caSeniorCount, caAgi, taxState:effectiveState, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
       totalTax: cashTax, incomeTax:effectiveCloseoutIncomeTax, projectedIncomeTax:incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
@@ -4358,7 +4425,7 @@ function buildPortfolioBucketPlan(rows, state, selectedYear){
   addIfUsed({
     key:'ira1', policyType:'ira', name:name1 + ' Traditional IRA', type:'Traditional IRA',
     startBalance:current.startIRA1 || 0,
-    demand:r=>(r.rmd1||0)+(r.ira1Addl||0),
+    demand:r=>(r.rmd1||0)+(r.qcd1||0)+(r.ira1Addl||0),
     conversion:r=>r.rothConvDraw1||0,
     purpose:'support planned IRA withdrawals from this account'
   });
@@ -4366,7 +4433,7 @@ function buildPortfolioBucketPlan(rows, state, selectedYear){
     addIfUsed({
       key:'ira2', policyType:'ira', name:name2 + ' Traditional IRA', type:'Traditional IRA',
       startBalance:current.startIRA2 || 0,
-      demand:r=>(r.rmd2||0)+(r.ira2Addl||0),
+      demand:r=>(r.rmd2||0)+(r.qcd2||0)+(r.ira2Addl||0),
       conversion:r=>r.rothConvDraw2||0,
       purpose:'support planned IRA withdrawals from this account'
     });
@@ -4920,7 +4987,7 @@ function calcSuggestedWithholdPct(grossWages, k401TradPct, k401RothPct, filing, 
   let stTax = 0, sdi = 0;
   if (state === 'CA') {
     const caWages = Math.max(0, grossWages - preTax);
-    stTax = calcStateTax(caWages, filing, 'CA', null, tables);
+    stTax = calcStateTax(caWages, filing, 'CA', tables).tax;
     sdi   = grossWages * 0.011;  // SDI applies to full gross
   }
 
@@ -5497,11 +5564,15 @@ function applyMigrations(merged) {
     if (!isNaN(s) && !isNaN(e) && s > e) row.endYear = s;
   };
   if (!Array.isArray(merged.ovSSStress)) merged.ovSSStress = [];
+  if (!Array.isArray(merged.ovQcd)) merged.ovQcd = [];
+  for (const key of ['taxPaymentChecks','caTaxPaymentChecks']) {
+    if (!merged[key] || typeof merged[key] !== 'object' || Array.isArray(merged[key])) merged[key] = {};
+  }
   if (!merged.yearEndCloseouts || typeof merged.yearEndCloseouts !== 'object' || Array.isArray(merged.yearEndCloseouts)) merged.yearEndCloseouts = {};
   if (merged.ssStressPct == null || isNaN(merged.ssStressPct)) merged.ssStressPct = 0;
   if (merged.ssStressStartYear == null) merged.ssStressStartYear = '';
   if (merged.ssStressPerson == null) merged.ssStressPerson = 'both';
-  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovRothTaxFunding','ovInflation','ovStateTax','ovDeductions','ovWageGrowth','ovSSStress'].forEach(k => {
+  ['ovFundingOrder','ovIRMAA','ovSpending','ovGrowth','ovIncomeRates','ovDivRate','ovIntRate','ovStkGainPct','ovCashFloor','ovHSADeposit','ovIncomeLevel','ovTaxFill','ovRothSource','ovRothTaxFunding','ovInflation','ovStateTax','ovDeductions','ovQcd','ovWageGrowth','ovSSStress'].forEach(k => {
     (merged[k] || []).forEach(normalizeRowYears);
   });
   if (merged.widowSpendPct == null || isNaN(merged.widowSpendPct)) merged.widowSpendPct = 0;
@@ -6787,6 +6858,9 @@ function renderCF(){
       {f:'rothConvNet', h:'Net to\nRoth'},
       {f:'rothConvTaxWithheld', h:'Conv Tax\nWithheld'},
     ]},
+    { label:'CHARITABLE GIFTS', bg:'#2d3424', tc:'#afc58f', cols:[
+      {f:'qcdTotal', h:'IRA Gift\n(QCD)'},
+    ]},
     { label:'TAXABLE INCOME', bg:'#2a1f0a', tc:'#d4b060', cols:[
       {f:'totalWages',    h:'Wages &\nSelf-Employ'},
       {f:'hsaDep',        h:'HSA\nDeposit'},
@@ -6843,7 +6917,7 @@ function renderCF(){
     'cashDraw','ira1Addl','ira2Addl','stkSales','rothDraw1','rothDraw2','hsaWith',
     'cashGapNeeded',
     'totalWages','rothConvDraw1','rothConvDraw2','rothConvNet','rothConvTaxWithheld','hsaDep','taxableIRADraws','taxableDivs','taxableSecDivs','treasuryInterest','caMuniInterest','otherMuniInterest','taxExemptInterest','caTaxableMuniInterest','taxableStkGain','taxableSS',
-    'ltcg','niit','blended','irmaaTx','medicareBase',
+    'ltcg','niit','blended','irmaaTx','medicareBase','qcdTotal',
     'excessFunds','cashSweep','unfunded',
     'pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD',
     'pre2020InhAddl1','pre2020InhAddl2','post2020InhDiscretionary',
@@ -6981,7 +7055,179 @@ function renderCF(){
 
 
 // ── Tax Summary ───────────────────────────────────────────────────────────
+const taxPaymentFields = ['priorAgi','priorTax','currentTax','withholding','payment1','payment2','payment3','payment4'];
+const taxPaymentYears = {federal:null, california:null};
+function taxPaymentNumber(value) {
+  if (value === '' || value == null) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
+}
+function calculateTaxPaymentCheck(projectedTax, filing, values, jurisdiction, projectedAgi = 0) {
+  const california = jurisdiction === 'california';
+  const separate = filing === 'MFS';
+  const currentTax = Math.max(0, taxPaymentNumber(values.currentTax) ?? projectedTax);
+  const priorTax = taxPaymentNumber(values.priorTax);
+  const priorAgi = taxPaymentNumber(values.priorAgi);
+  const currentAgi = taxPaymentNumber(values.currentAgi) ?? projectedAgi;
+  const withholding = Math.max(0, taxPaymentNumber(values.withholding) ?? 0);
+  const currentTarget = 0.9 * currentTax;
+  const priorPercent = priorAgi == null ? null : priorAgi > (separate ? 75000 : 150000) ? 110 : 100;
+  const currentYearOnly = california && currentAgi >= (separate ? 500000 : 1000000);
+  let priorTarget = null;
+  if (!currentYearOnly && priorTax != null) {
+    if (priorTax === 0) priorTarget = 0;
+    else if (priorPercent != null) priorTarget = Math.max(0, priorTax) * priorPercent / 100;
+  }
+  const minimumBalance = california ? (separate ? 250 : 500) : 1000;
+  const smallBalance = currentTax - withholding < minimumBalance;
+  const annualTarget = smallBalance ? 0 : Math.min(currentTarget, priorTarget ?? Infinity);
+  const estimatedTarget = Math.max(0, annualTarget - withholding);
+  const installmentShares = california ? [0.30,0.70,0.70,1] : [0.25,0.50,0.75,1];
+  let totalPaid = 0;
+  const periods = installmentShares.map((share, index) => {
+    totalPaid += Math.max(0, taxPaymentNumber(values['payment'+(index+1)]) ?? 0);
+    const target = estimatedTarget * share;
+    return {target, paid:totalPaid, gap:Math.max(0, target - totalPaid)};
+  });
+  return {currentTax, currentAgi, currentTarget, currentYearOnly, priorTarget, priorPercent, smallBalance,
+    minimumBalance, withholding, annualTarget, estimatedTarget, totalPaid, periods};
+}
+function setTaxPaymentInput(jurisdiction, year, key, value) {
+  if (jurisdiction !== 'federal' && jurisdiction !== 'california') return;
+  const california = jurisdiction === 'california';
+  const row = proj.find(r => r.yr === year && (!california || r.taxState === 'CA'));
+  const isAgiField = key === 'priorAgi' || key === 'currentAgi';
+  if (!row || !(taxPaymentFields.includes(key) || (california && key === 'currentAgi'))) return;
+  const amount = taxPaymentNumber(value);
+  const storeKey = california ? 'caTaxPaymentChecks' : 'taxPaymentChecks';
+  const checks = S[storeKey] ||= {};
+  if (amount == null) {
+    if (checks[year]) {
+      delete checks[year][key];
+      if (!Object.keys(checks[year]).length) delete checks[year];
+    }
+  } else {
+    checks[year] ||= {};
+    checks[year][key] = isAgiField ? amount : Math.max(0, amount);
+  }
+  saveState(S);
+  renderTaxPaymentResults(jurisdiction, row);
+}
+function selectTaxPaymentYear(jurisdiction, year) {
+  taxPaymentYears[jurisdiction] = Number(year);
+  renderTaxPaymentCheck(jurisdiction);
+}
+function renderTaxPaymentCheck(jurisdiction) {
+  const california = jurisdiction === 'california';
+  const prefix = california ? 'ca-tax-payment' : 'tax-payment';
+  const el = document.getElementById(prefix+'-check');
+  if (!el) return;
+  const years = california ? proj.filter(r => r.taxState === 'CA') : proj;
+  if (california) {
+    const panel = document.getElementById('ca-tax-payment-panel');
+    if (panel) panel.hidden = !years.length;
+    if (!years.length) { el.innerHTML = ''; return; }
+  }
+  const currentYear = new Date().getFullYear();
+  const row = years.find(r => r.yr === taxPaymentYears[jurisdiction]) || years.find(r => r.yr === currentYear) || years[0];
+  if (!row) { el.textContent = 'Set a plan year to use this check.'; return; }
+  const year = taxPaymentYears[jurisdiction] = row.yr;
+  const values = (california ? S.caTaxPaymentChecks : S.taxPaymentChecks)?.[year] || {};
+  const jurisdictionName = california ? 'California' : 'Federal';
+  const referenceYear = year === 2026;
+  const federalInstructions = referenceYear
+    ? 'https://www.irs.gov/pub/irs-prior/f1040es--2026.pdf#page=8' : 'https://www.irs.gov/forms-pubs/about-form-1040-es';
+  const caInstructions = 'https://www.ftb.ca.gov/forms/2026/2026-540-es-instructions.html';
+  const priorAgiHelp = california
+    ? (referenceYear ? 'Use <strong>2025 California Form 540, line 17</strong>.' : 'Use California AGI from your prior-year California return.')
+    : (referenceYear ? 'Use <strong>2025 Form 1040 or 1040-SR, line 11b</strong>.' : 'Use adjusted gross income from your prior-year Form 1040 or 1040-SR.');
+  const priorTaxHelp = california
+    ? (referenceYear
+      ? 'Add <strong>2025 California Form 540 lines 48, 61, and 62</strong>, before payments. <a href="'+caInstructions+'" target="_blank" rel="noopener">FTB worksheet, line 19b</a>.'
+      : 'Use the prior-year tax amount in your year’s Form 540-ES instructions, before payments.')
+    : (referenceYear ? 'Start with <strong>2025 Form 1040 or 1040-SR, line 24 (Total tax)</strong>. ' : 'Start with Total tax from your prior-year Form 1040 or 1040-SR. ')
+      + 'Apply any IRS adjustments, such as applicable refundable credits. Use the tax before withholding and estimated payments. The app applies the 100% or 110% factor. <a href="'+federalInstructions+'" target="_blank" rel="noopener">IRS Form 1040-ES instructions</a>.';
+  const overrideHelp = california
+    ? '<strong>Leave blank to use the app’s California tax estimate</strong> after modeled exemption credits. To use your own estimate, enter the full-year tax after credits and before payments (line 18 of the 2026 Form 540-ES worksheet). Include any applicable California AMT or surtax in your estimate.'
+    : '<strong>Leave blank to use the app’s federal tax estimate</strong>, including NIIT. You can enter your own full-year federal tax after credits and before payments.';
+  const labels = california
+    ? ['April deadline · 30%','June deadline · 40%','September · 0% scheduled','January deadline · 30%']
+    : ['April deadline','June deadline','September deadline','January deadline'];
+  const input = (key, label, help = '', placeholder = '') => {
+    const id = prefix+'-'+key;
+    const isAgiField = key === 'priorAgi' || key === 'currentAgi';
+    const note = help ? '<div class="note" id="'+id+'-help">'+help+'</div>' : '';
+    return '<div class="setup-field"><label for="'+id+'">'+label+'</label>'+
+      '<input id="'+id+'" type="number" step="0.01" '+(isAgiField ? '' : 'min="0" ')+
+      (help ? 'aria-describedby="'+id+'-help" ' : '')+'value="'+setupEsc(values[key] ?? '')+
+      '" placeholder="'+setupEsc(placeholder)+'" onchange="setTaxPaymentInput(\''+jurisdiction+'\','+year+',\''+key+'\',this.value)">'+note+'</div>';
+  };
+  el.innerHTML = `
+    <p style="margin-top:8px">Compare your ${jurisdictionName.toLowerCase()} withholding and estimated payments with the safe-harbor targets. Entries are saved by year and used only here.</p>
+    <div class="setup-field" style="max-width:180px;margin:10px 0"><label for="${prefix}-year">Tax year</label>
+      <select id="${prefix}-year" onchange="selectTaxPaymentYear('${jurisdiction}',this.value)">
+        ${years.map(r => '<option value="'+r.yr+'"'+(r.yr === year ? ' selected' : '')+'>'+r.yr+'</option>').join('')}
+      </select></div>
+    <div class="setup-field-grid">
+      ${input('priorAgi', (year-1)+' '+jurisdictionName+' AGI ($)', priorAgiHelp)}
+      ${input('priorTax', (year-1)+' '+jurisdictionName+' Tax for Safe Harbor ($)', priorTaxHelp)}
+      ${input('currentTax', year+' '+jurisdictionName+' Tax Override ($)', overrideHelp, 'Use app estimate')}
+      ${input('withholding', year+' Expected '+jurisdictionName+' Withholding ($)', 'Include withholding from all sources, including any IRA withholding, once.')}
+    </div>
+    ${california ? '<details style="margin-top:10px"><summary style="cursor:pointer">Optional California AGI override</summary><div class="setup-field-grid">'+
+      input('currentAgi', year+' California AGI Override ($)', 'Uses the app’s California AGI when blank. At $1 million or more ($500,000 filing separately), the current-year tax method applies.', 'Use app estimate')+'</div></details>' : ''}
+    <p class="note">Use a prior return covering all 12 months. If you had zero prior-year tax or your filing situation changed, check the applicable instructions.</p>
+    <div class="sh" style="margin-top:12px">${jurisdictionName} Estimated Payments Already Made</div>
+    <p class="note">Enter each payment once, in the first period whose deadline is on or after the payment date. Include any prior-year overpayment applied to this year in the first period. The January deadline is in the following year.</p>
+    <div class="setup-field-grid">
+      ${labels.map((label, i) => input('payment'+(i+1), 'Period '+(i+1)+' · '+label+' ($)')).join('')}
+    </div>
+    <div id="${prefix}-results" aria-live="polite" style="margin-top:12px"></div>
+    <p class="note">${california
+      ? 'The standard California schedule allocates the payment target and withholding 30% / 40% / 0% / 30%. For uneven income, timing exceptions, or a penalty calculation, consult FTB Form 5805. <a href="'+caInstructions+'" target="_blank" rel="noopener">2026 FTB Form 540-ES instructions</a>'
+      : 'The standard federal schedule allocates the payment target and withholding evenly. For uneven income, timing exceptions, or a penalty calculation, consult Form 2210. <a href="https://www.irs.gov/publications/p505" target="_blank" rel="noopener">IRS Publication 505</a>'}</p>`;
+  renderTaxPaymentResults(jurisdiction, row);
+}
+function renderTaxPaymentResults(jurisdiction, row) {
+  const california = jurisdiction === 'california';
+  const el = document.getElementById(california ? 'ca-tax-payment-results' : 'tax-payment-results');
+  if (!el) return;
+  const values = (california ? S.caTaxPaymentChecks : S.taxPaymentChecks)?.[row.yr] || {};
+  const projectedTax = california ? row.stTax || 0 : (row.fedOrd||0) + (row.ltcg||0) + (row.niit||0);
+  const result = calculateTaxPaymentCheck(projectedTax, row.taxFiling || S.filing, values, jurisdiction, row.caAgi);
+  const jurisdictionName = california ? 'California' : 'Federal';
+  const money = amount => amount.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2});
+  const remaining = Math.max(0, result.estimatedTarget - result.totalPaid);
+  const balance = result.currentTax - result.withholding - result.totalPaid;
+  const prior = result.currentYearOnly ? 'Current-year method required at this California AGI'
+    : result.priorTarget == null ? 'Enter eligible prior-year figures to test this option'
+    : money(result.priorTarget) + (result.priorPercent == null ? '' : ' ('+result.priorPercent+'%)');
+  const targetNote = result.smallBalance
+    ? 'Estimated tax after withholding is under '+money(result.minimumBalance)+'.'
+    : result.currentYearOnly ? 'The target uses the current-year method at this California AGI.'
+    : result.priorTarget == null ? 'Only the current-year method is shown. The prior-year method may give you a lower target.' : 'Uses the lower of the two annual targets.';
+  const belowCaliforniaWorksheetMinimum = california && result.estimatedTarget > 0 && result.estimatedTarget < result.minimumBalance;
+  const taxSource = taxPaymentNumber(values.currentTax) != null ? 'your override'
+    : california ? 'app estimate after modeled credits' : 'app estimate, including NIIT';
+  el.innerHTML = `
+    <div class="setup-check done">
+      <div class="setup-check-title">Additional Estimated Payments to Reach Annual Target</div>
+      <div class="setup-check-body"><strong>${money(remaining)}</strong> · ${targetNote}</div>
+      <div class="note">${jurisdictionName} tax used ${money(result.currentTax)} (${taxSource}).
+        ${california ? 'California AGI used '+money(result.currentAgi)+'.' : ''}
+        Current-year target (90%) ${money(result.currentTarget)}. Prior-year target ${prior}.
+        Annual target ${money(result.annualTarget)} less expected withholding ${money(result.withholding)} and estimated payments entered ${money(result.totalPaid)}.</div>
+      <div class="note">Estimated ${jurisdictionName.toLowerCase()} ${balance < 0 ? 'overpayment' : 'balance due'} after the entered amounts ${money(Math.abs(balance))}.</div>
+      ${belowCaliforniaWorksheetMinimum ? '<div class="note">Your annual target less withholding is under '+money(result.minimumBalance)+'. The FTB 540-ES worksheet indicates a payment is unnecessary at this time when this difference is below that amount.</div>' : ''}
+    </div>
+    <div class="tbl-wrap" style="margin-top:8px"><table class="data"><thead><tr>
+      <th>Through Period</th><th>Cumulative Estimates Needed</th><th>Cumulative Estimates Entered</th><th>Shortfall</th>
+    </tr></thead><tbody>${result.periods.map((p, i) => '<tr><td>'+(i+1)+'</td><td>'+money(p.target)+
+      '</td><td>'+money(p.paid)+'</td><td>'+money(p.gap)+'</td></tr>').join('')}</tbody></table></div>`;
+}
 function renderTax(){
+  renderTaxPaymentCheck('federal');
+  renderTaxPaymentCheck('california');
   const totF=proj.reduce((s,r)=>s+r.fedOrd+r.ltcg+(r.niit||0),0);
   const totN=proj.reduce((s,r)=>s+(r.niit||0),0);
   const totS=proj.reduce((s,r)=>s+r.stTax,0);
@@ -7021,7 +7267,7 @@ function renderTax(){
     <td>${r.charityDed>0?f$(r.charityDed):'—'}</td>
     <td>${f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed)))}</td>
     <td style="font-size:9px">${r.taxFiling||S.filing}</td>
-    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${r.niit>0?f$(r.niit):'—'}</td><td>${f$(r.stTax)}</td>
+    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${r.niit>0?f$(r.niit):'—'}</td><td>${r.caExemptionCredit>0?f$(r.caExemptionCredit):'—'}</td><td>${f$(r.stTax)}</td>
     <td class="hi red">${(r.taxOvrActive?'✦ ':'')+f$(r.incomeTax)}</td>
     <td>${fp(r.effRate)}</td><td>${fp(r.margRate)}</td><td>${fp(r.blended)}</td>
     <td style="color:#888;font-size:10px">${f$(r.irmaaMagi)}</td>
@@ -7143,8 +7389,8 @@ function renderYD(){
       ${(r.atWages>0||r.ptWages>0)?dr('Wages & Self-Employ',f$((r.atWages||0)+(r.ptWages||0))):''}
       ${dr(p1()+' SS',f$(r.grossSS1))}
       ${dr(p2()+' SS',f$(r.grossSS2))}
-      ${r.rmd1>0?dr(p1()+' RMD',f$(r.rmd1)):''}
-      ${r.rmd2>0?dr(p2()+' RMD',f$(r.rmd2)):''}
+      ${r.rmd1>0?dr(p1()+(r.qcdRmd1>0?' Remaining Cash RMD':' RMD'),f$(r.rmd1)):''}
+      ${r.rmd2>0?dr(p2()+(r.qcdRmd2>0?' Remaining Cash RMD':' RMD'),f$(r.rmd2)):''}
       ${r.pre2020InhDraw1>0?dr(p1()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw1)):''}
       ${r.pre2020InhDraw2>0?dr(p2()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw2)):''}
       ${r.post2020InhRMD>0?dr('Post-2020 Inh IRA Required RMD',f$(r.post2020InhRMD)):''}
@@ -7218,6 +7464,15 @@ function renderYD(){
       ${taxExemptInterest>0?dr('Tax-Exempt Interest Addback',f$(taxExemptInterest)):''}
       ${taxExemptInterest>0?dr('Medicare MAGI',f$(r.magi || ((r.agi||0)+taxExemptInterest)),'tot'):''}
       ${agiAlertLines}
+      ${[1,2].filter(person => r['qcdRequested'+person] > 0).map(person => {
+        const name = setupEsc(person === 1 ? p1() : p2());
+        const gift = r['qcd'+person] || 0, used = r['qcdRmd'+person] || 0;
+        const requested = r['qcdRequested'+person];
+        return '<div class="sh">'+name+' IRA Charitable Gift (QCD)</div>'+
+          dr('Sent directly to charity',f$(gift))+dr('Gift counted toward RMD',f$(used))+
+          dr('Remaining cash RMD',f$(r['rmd'+person]||0))+
+          (requested > gift + 0.01 ? '<p class="note">Requested '+f$(requested)+'. Check the donor’s age, annual IRS limit and available IRA balance.</p>' : '');
+      }).join('')}
       <div class="sh">Roth Activity</div>
       ${r.rothConv>0?dr('Gross Roth Conversion (taxable)',f$(r.rothConv)):''}
       ${r.rothConv>0?dr('Conversion Tax Funding',setupEsc(r.rothConvTaxFundingLabel||'Use Normal Funding Rules')):''}
@@ -7246,7 +7501,8 @@ function renderYD(){
       ${(r.niitTaxableBase||0)>0?dr('NIIT Taxable Base — Smaller Amount',f$(r.niitTaxableBase)):''}
       ${(r.niit||0)>0?dr('Net Investment Income Tax (3.8%)',f$(r.niit),'','color:#8b1a50'):''}
       ${(r.netInvestmentIncome||0)>0?'<div style="font-size:10px;line-height:1.5;color:#6a4800;background:#fff8e8;border-left:3px solid #8b1a50;padding:5px 8px;margin-top:6px">NIIT is 3.8% of the smaller of net investment income or AGI above the filing-status threshold. IRA draws, Roth conversions, and taxable Social Security can raise AGI but are not included in net investment income.</div>':''}
-      ${dr('CA State',f$(r.stTax))}
+      ${r.caExemptionCredit>0?dr('CA Personal and Senior Credits Used',f$(r.caExemptionCredit)):''}
+      ${dr('CA State Tax After Credits',f$(r.stTax))}
       ${r.treasuryInterest>0?dr('CA-exempt U.S. Treasury Interest',f$(r.treasuryInterest)):''}
       ${caTaxableMuniInterest>0?dr('CA-taxable Non-CA Muni Interest',f$(caTaxableMuniInterest)):''}
       ${r.itemizedUsed ? dr('Itemized Deduction',f$(r.effDed-(r.seniorBonus||0)-(r.charityDed||0)),'','color:#8cf') : dr('Standard Deduction',f$(r.stdDed))}
@@ -7828,6 +8084,13 @@ const OV_DEFS = {
     {k:'endYear',    lbl:'End Year',         type:'number',w:90},
     {k:'notes',      lbl:'Notes',            type:'text',  w:160},
   ]},
+  qcd:{key:'ovQcd',fields:[
+    {k:'amount1',lbl:'Primary Person ($)',type:'number',w:130},
+    {k:'amount2',lbl:'Spouse / Partner ($)',type:'number',w:150},
+    {k:'startYear',lbl:'Start Year',type:'number',w:90},
+    {k:'endYear',lbl:'End Year',type:'number',w:90},
+    {k:'notes',lbl:'Notes',type:'text',w:160},
+  ]},
   taxfill:{key:'ovTaxFill',fields:[
     {k:'active',   lbl:'T Fill',type:'select',opts:['T','off'],w:60},
     {k:'headroom', lbl:'Headroom ($)',type:'number',w:110},
@@ -7873,7 +8136,7 @@ function toggleOvGroup(id){
 function updateOvBadges(){
   // Map of group → which OV_DEFS keys belong to it
   const groups={
-    'spending-taxes': ['spending','deductions'],
+    'spending-taxes': ['spending','deductions','qcd'],
     'conversion':     ['irmaa','income','taxfill','rothsource','rothtaxfunding'],
     'portfolio':      ['growth','incomerates','stkgain','wagegrowth','ssstress','inflation','funding','cashfloor','hsadep','statetax'],
   };
@@ -7886,7 +8149,7 @@ function updateOvBadges(){
       bar.innerHTML='<span style="color:#666;font-size:10px">No overrides active — all years use global defaults.</span>';
     } else {
       const ovNames = {
-        spending:'Spending', deductions:'Deductions', irmaa:'IRMAA', income:'Income',
+        spending:'Spending', deductions:'Deductions', qcd:'IRA Charity', irmaa:'IRMAA', income:'Income',
         taxfill:'Tax Fill', rothsource:'Roth Source', growth:'Growth', incomerates:'Income Rates',
         stkgain:'Stock Gain', wagegrowth:'Wage Growth', ssstress:'SS Stress', inflation:'Inflation',
         funding:'Funding', cashfloor:'Cash Floor', hsadep:'HSA Deposit', statetax:'State Tax'
@@ -7986,7 +8249,7 @@ function renderOV(name){
               return `<option value="${val}" ${String(rowVal??'')=== String(val)?'selected':''}>${lbl}</option>`;
             }).join('')}
           </select>`
-        :`<input type="${f.type}" value="${row[f.k]??''}" style="width:${f.w||100}px"
+        :`<input type="${f.type}" value="${setupEsc(row[f.k]??'')}" style="width:${f.w||100}px"
             data-ov-name="${name}" data-ov-idx="${i}" data-ov-key="${f.k}"
             oninput="setOVDebounced('${name}',${i},'${f.k}',this.value)"
             onblur="if(!_ovTabPressed)setOV('${name}',${i},'${f.k}',this.value)"
@@ -8212,7 +8475,7 @@ function apCard(yr){
   if ((r.excessFunds||0) > 0) why.push('Mandatory income exceeds cash need');
   if ((r.cashSweep||0) > 0) why.push('Cash above floor swept to securities');
   if ((r.unfunded||0) > 0) why.push('Funding shortfall');
-  const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 &&
+  const noActions = (r.hsaWith||0)===0 && (r.rmd1||0)===0 && (r.rmd2||0)===0 && (r.qcdTotal||0)===0 &&
                     (r.pre2020InhDraw||0)===0 && (r.pre2020InhAddl||0)===0 && (r.post2020InhDraw||0)===0 &&
                     (r.ira1Addl||0)===0 && (r.ira2Addl||0)===0 &&
                     (r.stkSales||0)===0 && (r.excessFunds||0)<=50 && (r.cashSweep||0)<=50 &&
@@ -8273,6 +8536,8 @@ function apCard(yr){
     ${flag('HSA Withdrawal', r.hsaWith||0, '#5a6a00')}
     ${(r.rmd1||0)>0 ? flag(p1()+' RMD — Withdraw from IRA', r.rmd1, '#8b4000') : ''}
     ${(r.rmd2||0)>0 ? flag(p2()+' RMD — Withdraw from IRA', r.rmd2, '#8b4000') : ''}
+    ${r.qcd1>0 ? flag(p1()+' IRA Gift Direct to Charity (QCD)', r.qcd1, '#1a4a1a') : ''}
+    ${r.qcd2>0 ? flag(p2()+' IRA Gift Direct to Charity (QCD)', r.qcd2, '#1a4a1a') : ''}
     ${flag(p1()+' Inherited IRA Draw', (r.pre2020InhDraw1||0)+(r.pre2020InhAddl1||0), '#9a5a1f')}
     ${flag(p2()+' Inherited IRA Draw', (r.pre2020InhDraw2||0)+(r.pre2020InhAddl2||0), '#9a5a1f')}
     ${flag('Post-2020 Inherited IRA Draw', r.post2020InhDraw||0, '#9a5a1f')}
@@ -9251,6 +9516,7 @@ function buildReportPayload(){
     grossSS1:r.grossSS1||0, grossSS2:r.grossSS2||0,
     ssStressPct:r.ssStressPct||0, ssStressPerson:r.ssStressPerson||'',
     rmd1:r.rmd1||0, rmd2:r.rmd2||0,
+    qcd1:r.qcd1||0, qcd2:r.qcd2||0, qcdTotal:r.qcdTotal||0, qcdRmd1:r.qcdRmd1||0, qcdRmd2:r.qcdRmd2||0,
     pre2020InhDraw1:r.pre2020InhDraw1||0, pre2020InhDraw2:r.pre2020InhDraw2||0, pre2020InhDraw:r.pre2020InhDraw||0, pre2020InhAddl1:r.pre2020InhAddl1||0, pre2020InhAddl2:r.pre2020InhAddl2||0, pre2020InhAddl:r.pre2020InhAddl||0,
     post2020InhRMD:r.post2020InhRMD||0, post2020InhExtra:r.post2020InhExtra||0, post2020InhFinal:r.post2020InhFinal||0, post2020InhDiscretionary:r.post2020InhDiscretionary||0, post2020InhDraw:r.post2020InhDraw||0,
     pre2020LotDetails:r.pre2020LotDetails||[],
@@ -9278,7 +9544,7 @@ function buildReportPayload(){
     taxableInc:r.taxableInc||0,
     fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, niit:r.niit||0,
     netInvestmentIncome:r.netInvestmentIncome||0, niitThreshold:r.niitThreshold||0, niitExcessMagi:r.niitExcessMagi||0, niitTaxableBase:r.niitTaxableBase||0,
-    stTax:r.stTax||0,
+    stTax:r.stTax||0, caExemptionCredit:r.caExemptionCredit||0,
     incomeTax:r.incomeTax||0, irmaaTx:r.irmaaTx||0,
     medicareBase:r.medicareBase||0,
     effRate:r.effRate||0, margRate:r.margRate||0, blended:r.blended||0,
@@ -9319,6 +9585,7 @@ function buildReportPayload(){
   addOverride('funding',     S.ovFundingOrder, ['draw1','draw2','draw3','choice']);
   addOverride('cashFloor',   S.ovCashFloor,    ['floor']);
   addOverride('deductions',  S.ovDeductions,   ['fedItemized','caItemized','charityCash']);
+  addOverride('qcd',         S.ovQcd,          ['amount1','amount2']);
   addOverride('hsaDep',      S.ovHSADeposit,   ['amount','notes']);
   addOverride('stateTax',    S.ovStateTax,     ['state']);
   const currentCalYear = new Date().getFullYear();
@@ -9862,7 +10129,8 @@ function generateReport(){
       ['Adjusted Gross Income',full.agi||0],
       ['Federal Tax',fed_tax],
       ...((full.niit||0)>0?[['Net Investment Income Tax (included above)',full.niit]]:[]),
-      ...(ca_tax?[['CA State Tax',ca_tax]]:[]),
+      ...((full.caExemptionCredit||0)>0?[['CA Exemption Credits Used',full.caExemptionCredit]]:[]),
+      ...(ca_tax || full.caExemptionCredit?[['CA State Tax After Credits',ca_tax]]:[]),
       ['Total Income Tax',inc_tax],
       ['IRMAA Surcharge',irmaa],
       ['Medicare Part B',mcare],
@@ -9893,6 +10161,8 @@ function generateReport(){
     const acts=[];
     if(full.rmd1>0) acts.push(`${A.name1} RMD — Withdraw from IRA: ${fd(full.rmd1)}`);
     if(full.rmd2>0) acts.push(`${A.name2||'Spouse/Partner'} RMD — Withdraw from IRA: ${fd(full.rmd2)}`);
+    if(full.qcd1>0) acts.push(`${A.name1} IRA gift directly to charity (QCD): ${fd(full.qcd1)}`);
+    if(full.qcd2>0) acts.push(`${A.name2||'Spouse/Partner'} IRA gift directly to charity (QCD): ${fd(full.qcd2)}`);
     if(full.pre2020InhDraw1>0) acts.push(`${A.name1} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw1)}`);
     if(full.pre2020InhDraw2>0) acts.push(`${A.name2||'Spouse/Partner'} Pre-2020 Inherited IRA RMD: ${fd(full.pre2020InhDraw2)}`);
     if(full.post2020InhRMD>0) acts.push(`Post-2020 Inherited IRA Required RMD: ${fd(full.post2020InhRMD)}`);
@@ -9973,6 +10243,7 @@ function generateReport(){
     {group:'Funding Sources',label:'Social\nSecurity',show:cfAny((r,v)=>v.ss),cell:(r,v)=>td(dz(v.ss),'r')},
     {group:'Funding Sources',label:'IRA Draw\n(incl RMDs)',show:cfAny((r,v)=>v.ira_tot),cell:(r,v)=>td(dz(v.ira_tot),'r')},
     {group:'Account Transfers',label:'Gross Roth\nConversion',show:cfAny((r,v)=>v.rc),cell:(r,v)=>td(dz(v.rc),'r')},
+    {group:'Account Transfers',label:'IRA Gift\n(QCD)',show:cfAny(r=>r.qcdTotal,0.5),cell:r=>td(dz(r.qcdTotal),'r')},
     {group:'Account Transfers',label:'Net to\nRoth',show:cfAny((r,v)=>(r.rothConvTaxWithheld||0)>0),cell:(r,v)=>td(dz(r.rothConvNet),'r')},
     {group:'Account Transfers',label:'Conv Tax\nWithheld',show:cfAny((r,v)=>r.rothConvTaxWithheld),cell:(r,v)=>td(dz(r.rothConvTaxWithheld),'r')},
     {group:'Funding Sources',label:'Dividends\n& Interest',show:cfAny((r,v)=>v.divs),cell:(r,v)=>td(dz(v.divs),'r')},
@@ -10189,7 +10460,7 @@ function generateReport(){
       taxFill:'Tax Bracket Fill Strategy',growth:'Portfolio Growth Rate Strategy',wageGrowth:'Wage Growth Rate Strategy',
       incomeRates:'Brokerage Dividend & Cash Interest Rate Strategy',stockGainPct:'Stock Sales Taxable Gain Strategy',
       inflation:'Inflation Assumption Strategy',ssStress:'Social Security Benefit Stress Strategy',rothSource:'Roth Conversion Source Strategy',rothTaxFunding:'Roth Conversion Tax Funding Strategy',
-      funding:'Funding Order Strategy',cashFloor:'Cash Floor Strategy',deductions:'Deduction Strategy',
+      funding:'Funding Order Strategy',cashFloor:'Cash Floor Strategy',deductions:'Deduction Strategy',qcd:'Qualified Charitable Distributions',
       hsaDep:'HSA Deposit Strategy',stateTax:'State Tax Strategy'
     };
     const money0 = v => Number(v).toLocaleString('en-US',{maximumFractionDigits:0});
@@ -10230,13 +10501,15 @@ function generateReport(){
       if(row.state) parts.push(row.state==='NONE'?'Tax-Free':row.state);
       if(row.fedItemized!=null&&row.fedItemized!=='') parts.push('Fed $'+money0(row.fedItemized));
       if(row.caItemized!=null&&row.caItemized!=='') parts.push('CA $'+money0(row.caItemized));
+      if(key==='qcd' && row.amount1!=null && row.amount1!=='') parts.push(A.name1+' IRA gift $'+money0(row.amount1));
+      if(key==='qcd' && row.amount2!=null && row.amount2!=='') parts.push((A.name2||'Spouse/Partner')+' IRA gift $'+money0(row.amount2));
       if((row.charityOn==='Yes'||row.charityOn==='T')&&row.charityCash!=null&&row.charityCash!=='') parts.push('Charity $'+money0(row.charityCash));
       else if(row.charityCash!=null&&row.charityCash!=='') parts.push('Charity entered but off');
       if(row.active) parts.push(key==='taxFill' ? 'Tax bracket fill active' : 'Active');
       if(row.headroom!=null&&row.headroom!=='') parts.push('Target cushion $'+money0(row.headroom));
       if(row.bracketHeadroom!=null&&row.bracketHeadroom!=='') parts.push('Bracket cushion $'+money0(row.bracketHeadroom));
       const yr1=row.startYear||'—', yr2=row.endYear||9999;
-      return `<tr><td>${yr1}</td><td>${yr2>=9999?'ongoing':yr2}</td><td>${parts.join(' · ')||'—'}</td><td style="color:#666;font-style:italic">${row.notes||''}</td></tr>`;
+      return `<tr><td>${yr1}</td><td>${yr2>=9999?'ongoing':yr2}</td><td>${parts.join(' · ')||'—'}</td><td style="color:#666;font-style:italic">${setupEsc(row.notes||'')}</td></tr>`;
     };
     let html='<h2>Active Strategies</h2>';
     for(const [key,rows] of Object.entries(ov)){
@@ -11062,7 +11335,7 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const age1 = row.age1||0, age2 = row.age2||0;
   const grossSS = (row.grossSS1||0)+(row.grossSS2||0);
   const taxableSS = row.taxableSS||0;
-  const agiExSS = Math.max(0, (row.agi||0)-taxableSS);
+  const agiExSS = Math.max(0, (row.projectedAgi ?? row.agi ?? 0)-taxableSS);
   const newTaxableSS = calcTaxableSS(grossSS, agiExSS + amount + grossSS, filing, row.taxExemptInterest||0);
   const newAGI = agiExSS + amount + newTaxableSS;
   const ltcgIncome = (row.qualDivsForTax||0)+(row.taxableStkGain||0);
@@ -11076,7 +11349,9 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const hasStateOverride = (A.ovStateTax||[]).some(r => { const s=parseInt(r.startYear)||0,e=parseInt(r.endYear)||9999; return row.yr>=s&&row.yr<=e; });
   const effectiveState = hasStateOverride ? (ovState && ovState!=='NONE' ? ovState : '') : A.state;
   const newCaAGI = newAGI - newTaxableSS - (row.treasuryInterest||0) + (row.caTaxableMuniInterest||0);
-  const newState = calcStateTax(newCaAGI, filing, effectiveState, null, tables, null);
+  const caItemized = parseF(resolveOverrideNonBlank(A.ovDeductions, row.yr, 'caItemized'));
+  const caSeniorCount = row.caSeniorCount ?? (Number(age1 >= 64) + Number(hasSecond && age2 >= 64));
+  const newState = calcStateTax(newCaAGI, filing, effectiveState, tables, caItemized, {federalAgi:newAGI, seniorCount:caSeniorCount}).tax;
   const baselineTax = Math.max(0,row.projectedIncomeTax ?? row.incomeTax ?? 0);
   return Math.max(0, Math.min(1, (newFed.ordTax + newFed.ltcgTax + newNIIT + newState - baselineTax) / amount));
 }
@@ -12871,7 +13146,7 @@ function setupReadiness(){
     add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k Defaults', 'interview-savings');
   }
   add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open Assumptions', 'interview-assumptions');
-  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovRothSource','ovRothTaxFunding','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovSSStress','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions'].reduce((n,k)=>n+((S[k]||[]).length),0);
+  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovRothSource','ovRothTaxFunding','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovSSStress','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions','ovQcd'].reduce((n,k)=>n+((S[k]||[]).length),0);
   add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
   const done = items.filter(i => i.status === 'done').length;
   const missing = items.filter(i => i.status === 'missing').length;
@@ -13445,7 +13720,7 @@ function renderSetupCloseoutView(){
     field('W-2 Wages ($)','wages','Historical comparison only.'),
     field('Taxable Dividends and Interest ($)','dividends','Historical comparison only.'),
     field('Realized Taxable Capital Gains ($)','capitalGains','Historical comparison only.'),
-    field('Regular Traditional IRA Distributions ($)','regularIraDistributions','Enter gross RMDs plus any additional regular IRA withdrawals before withholding. Do not include Roth conversions.'),
+    field('Taxable Regular Traditional IRA Distributions ($)','regularIraDistributions','Enter taxable RMDs and additional taxable withdrawals before withholding. Leave out Roth conversions and any eligible QCD paid directly to charity.'),
     field('Pre-2020 Inherited IRA Distributions ($)','pre2020InheritedDistributions','Enter gross required distributions plus any additional withdrawals from pre-2020 inherited IRAs before withholding.'),
     field('Post-2020 Inherited IRA Distributions ($)','post2020InheritedDistributions','Enter all gross withdrawals from post-2020 inherited IRAs before withholding, including required, discretionary, or final-year distributions.'),
     field('Gross Roth Conversions ($)','rothConversions','Historical comparison only. The next Annual Check-In supplies actual account balances.')
@@ -13474,6 +13749,7 @@ function setupStrategyOptions(){
     ['spending-reset','Ongoing spending change'],
     ['retirement','Retirement / income ends'],
     ['deductions','Tax deductions'],
+    ['qcd','Qualified Charitable Distribution (QCD)'],
     ['state-move','Move / state tax change'],
     ['irmaa','Roth conversion target'],
     ['roth-source','Roth conversion source'],
@@ -13516,6 +13792,10 @@ function setupStrategyDescription(){
     'deductions': {
       title:'Tax deductions',
       body:'Use this when deductible expenses are different from normal. Federal itemized deductions and California itemized deductions are separate because CA does not always follow the federal return. Non-itemizer charity is a small federal cash-charity deduction that may apply even when you do not itemize; choose Yes only if that rule applies.'
+    },
+    'qcd': {
+      title:'Qualified Charitable Distribution (QCD)',
+      body:'Plan an eligible gift paid directly from your own traditional IRA to a qualifying charity at age 70½ or later. It comes out of the IRA and can cover that owner’s required minimum distribution (RMD). Leave the gift out of spending and deduction entries. Enter only the excludable amount if you have IRA basis or deducted IRA contributions after age 70½. The model uses birth years. In the year you turn 70, confirm you will reach 70½ before sending the gift. This input covers your own IRA.'
     },
     'state-move': {
       title:'Move / state tax change',
@@ -13651,6 +13931,13 @@ function renderStrategyForm(){
     const charityOn = String(val('charityOn','No')) === 'T' ? 'Yes' : String(val('charityOn','No') || 'No');
     fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('fed','Federal Itemized Deductions ($)',val('fedItemized',''),{min:0,note:'Total deductible expenses for the federal return, such as mortgage interest, state/local taxes, and charitable gifts when itemizing.'})+stratInput('ca','California Itemized Deductions ($)',val('caItemized',''),{min:0,note:'California can allow or limit different deductions than federal. Enter the CA amount only when it differs or matters for the plan.'})+stratCharitySelect(charityOn)+'<div id="strat-charity-wrap" style="display:'+(charityOn==='Yes'?'':'none')+'">'+stratInput('charity','Eligible Cash Charity ($)',val('charityCash',''),{min:0,note:'Cash gifts that qualify for the non-itemizer charity rule. Leave blank unless Use Non-itemizer Charity is Yes.'})+'</div>'+stratText('notes','Notes',val('notes','Tax deduction change'));
   }
+  else if (setupStrategyType === 'qcd') {
+    fields = stratInput('start','Start Year',val('startYear',yr),{min:yr,max:end})
+      + stratInput('end','End Year',val('endYear',val('startYear',yr)),{min:yr,max:end})
+      + stratInput('amount1',p1()+' Annual IRA Gift ($)',val('amount1',''),{min:0,note:'Enter the eligible gift from this IRA each year. The annual cap per person is $111,000 for 2026 and $114,000 for 2027. Later projections hold the 2027 cap. Use 0 to stop an earlier overlapping gift.'})
+      + (hasP2() ? stratInput('amount2',p2()+' Annual IRA Gift ($)',val('amount2',''),{min:0}) : '')
+      + stratText('notes','Notes',val('notes',''));
+  }
   else if (setupStrategyType === 'state-move') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',9999),{min:yr})+stratSelect('state','State',val('state','NONE'),[['NONE','No state tax'],['CA','California']])+stratText('notes','Notes',val('notes','State tax change'));
   else if (setupStrategyType === 'irmaa') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('level','IRMAA Target Cap',val('level',''),getIRMAALevelOptions({startYear:yr,level:val('level','')}))+stratSelect('fill','Fill Mode',val('fillMode',''),IRMAA_FILL_MODE_OPTIONS)+stratSelect('bracket','Max Bracket',val('maxBracket',''),getMaxBracketOptions({startYear:yr,level:val('level','')}))+stratInput('irmaaHeadroom','IRMAA Cushion ($)',val('headroom',S.irmaaHeadroom||0),{min:0,note:'Stay this far below the selected Medicare IRMAA income ceiling.'})+stratInput('bracketHeadroom','Federal Bracket Cushion ($)',val('bracketHeadroom',S.irmaaBracketHeadroom||0),{min:0,note:'Stay this far below the selected federal bracket cap, when a bracket cap applies.'})+stratText('notes','Notes',val('notes','Roth conversion target'));
   else if (setupStrategyType === 'roth-source') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('source','Conversion Source',val('source',S.rothConvSource||'HIGH'),rothConvSourceOptions())+stratInput('p1Pct',rothSplitPctLabel(),val('p1Pct',S.rothConvP1Pct ?? 50),{step:'1',min:0,max:100,note:'Used only for Percent split. Any shortfall falls back to the other IRA.'})+stratText('notes','Notes',val('notes','Roth conversion source'));
@@ -13707,6 +13994,14 @@ function applySetupStrategy(){
   else if (setupStrategyType === 'deductions') {
     const charityOn = stratVal('charityOn') || 'No';
     writeOv('ovDeductions', {fedItemized:stratVal('fed'), caItemized:stratVal('ca'), charityOn:charityOn, charityCash:charityOn==='Yes'?stratVal('charity'):'', startYear:start, endYear:end, notes:notes});
+  }
+  else if (setupStrategyType === 'qcd') {
+    const amount1 = stratVal('amount1'), amount2 = hasP2() ? stratVal('amount2') : '';
+    if (start < yr || end > S.endYear || end < start || [amount1,amount2].some(value => Number(value) < 0) || (amount1 === '' && amount2 === '')) {
+      alert('Enter a gift amount or zero, and choose a start and end year within the plan.');
+      return;
+    }
+    writeOv('ovQcd', {amount1, amount2, startYear:start, endYear:end, notes});
   }
   else if (setupStrategyType === 'state-move') writeOv('ovStateTax', {state:stratVal('state'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'irmaa') writeOv('ovIRMAA', {level:stratVal('level'), fillMode:stratVal('fill'), maxBracket:stratVal('bracket'), headroom:stratVal('irmaaHeadroom'), bracketHeadroom:stratVal('bracketHeadroom'), startYear:start, endYear:end, notes:notes});
@@ -13823,6 +14118,12 @@ function setupCollectStrategyRows(filterType){
     if (row.charityOn === 'Yes' || row.charityOn === 'T') parts.push('Use non-itemizer charity deduction');
     setupPushPart(parts, 'Eligible cash charity', setupMoneyLabel(row.charityCash));
     add('Tax Deductions', row, parts, ['deductions'], {tableKey:'ovDeductions', rowIndex:idx, editType:'deductions'});
+  });
+  (S.ovQcd || []).forEach((row, idx) => {
+    const parts = [];
+    setupPushPart(parts, p1()+' annual IRA gift', setupMoneyLabel(row.amount1));
+    if (hasP2()) setupPushPart(parts, p2()+' annual IRA gift', setupMoneyLabel(row.amount2));
+    add('Qualified Charitable Distribution', row, parts, ['qcd'], {tableKey:'ovQcd', rowIndex:idx, editType:'qcd'});
   });
   (S.ovIRMAA || []).forEach((row, idx) => {
     const parts = [];
