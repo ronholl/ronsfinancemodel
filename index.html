@@ -1343,6 +1343,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <!-- ═══════════ TAX SUMMARY ═══════════ -->
 <div id="pane-taxes" class="pane">
   <div class="kpis" id="tax-kpis"></div>
+  <div class="note" style="margin:-6px 0 14px;padding:9px 11px;border-left:4px solid var(--gold);background:#fff8e8"><strong>Net Investment Income Tax (NIIT):</strong> The app estimates the 3.8% federal tax on the smaller of net investment income or AGI above $250,000 MFJ, $200,000 Single/HOH, or $125,000 MFS. Taxable dividends, interest, and realized gains are treated as investment income. Taxable Social Security, IRA draws, and Roth conversions can raise AGI but are not themselves investment income. Form 8960 adjustments and allocable investment deductions are not modeled.</div>
   <div class="chart-grid" style="margin-bottom:18px">
     <div class="chart-box"><div class="sh">Tax Breakdown by Year</div><canvas id="ch-taxbk"></canvas></div>
     <div class="chart-box"><div class="sh">Effective &amp; Marginal Rates</div><canvas id="ch-rates"></canvas></div>
@@ -1352,7 +1353,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <table class="data" id="tax-tbl">
       <thead><tr>
         <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
-        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
+        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>NIIT</th><th>CA State</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
         <th style="color:#888">IRMAA MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
@@ -2087,6 +2088,25 @@ function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDe
   const ltcgAll = bracketTax(taxable, lbkts);
   const ltcgOrd = bracketTax(ordInc,  lbkts);
   return { ordTax, ltcgTax: Math.max(0, ltcgAll-ltcgOrd), stdDed: sd, seniorBonus, charityDed, itemizedUsed, effDed, taxableInc: taxable };
+}
+
+// Net Investment Income Tax (Form 8960 estimate).
+// The statutory thresholds are not indexed. In the modeled households NIIT MAGI
+// is federal AGI because foreign-income/CFC/PFIC adjustments are not modeled.
+// NII includes federal-taxable interest/dividends and realized taxable gains;
+// Social Security, IRA distributions, Roth conversions and tax-exempt interest
+// can raise AGI but are not themselves net investment income.
+const NIIT_RULE = Object.freeze({
+  rate: 0.038,
+  thresholds: Object.freeze({MFJ:250000, MFS:125000, SINGLE:200000, HOH:200000})
+});
+function calcNIIT(agi, netInvestmentIncome, filing) {
+  const threshold = NIIT_RULE.thresholds[filing] ?? NIIT_RULE.thresholds.SINGLE;
+  const magi = Math.max(0, parseF(agi) || 0);
+  const nii = Math.max(0, parseF(netInvestmentIncome) || 0);
+  const excessMagi = Math.max(0, magi - threshold);
+  const taxableBase = Math.min(nii, excessMagi);
+  return { tax: taxableBase * NIIT_RULE.rate, threshold, magi, netInvestmentIncome: nii, excessMagi, taxableBase };
 }
 function calcStateTax(agi, filing, state, fedTaxableInc, tables, caItemizedDed) {
   if (!state || agi<=0) return 0;
@@ -3065,7 +3085,7 @@ function runProjection(S) {
     const rothTaxFundingCfg = getRothTaxFundingForYear(S, yr);
     let baseTaxFundingEst = taxEst;
     let convTaxFundingEst = 0;
-    let totalTax=0, fedRes_f, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
+    let totalTax=0, fedRes_f, niit_f=0, netInvestmentIncome_f=0, niitThreshold_f=0, niitExcessMagi_f=0, niitTaxableBase_f=0, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
     let irmaaLookbackYear_f=yr-2, irmaaSurvivorRelief_f=false;
     let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
     const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
@@ -3424,6 +3444,8 @@ function runProjection(S) {
     // CA: if no CA entry, default to CA standard (no itemizing for CA)
     const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
     const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
+    const netInvestmentIncome = Math.max(0, fedTaxableDivInt + taxableStkGain);
+    const niitRes = calcNIIT(agi, netInvestmentIncome, taxFiling);
     // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
     const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
     // Resolve state override for this year (move to tax-free state, etc.)
@@ -3443,9 +3465,11 @@ function runProjection(S) {
     const baselineQualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
     const baselineLtcgIncome = baselineQualDivsForTax + baselineTaxableStkGain;
     const baselineFedRes = calcFedTax(baselineAGI, baselineLtcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
+    const baselineNetInvestmentIncome = Math.max(0, fedTaxableDivInt + baselineTaxableStkGain);
+    const baselineNIIT = calcNIIT(baselineAGI, baselineNetInvestmentIncome, taxFiling).tax;
     const baselineCaAGI = baselineAGI - baselineTSS - treasuryInterest + caTaxableMuniInterest;
     const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, null, tables, caItemized);
-    const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineStTax;
+    const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineNIIT + baselineStTax;
     // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
     // an approved SSA-44 life-changing-event request after spouse death: only years
     // whose lookback still points to the pre-death/death-year joint period use the
@@ -3465,7 +3489,7 @@ function runProjection(S) {
       ? (survivorAge>=65?1:0)
       : (age1>=65?1:0) + (hp2&&age2>=65?1:0);
     const medicareBase = partBPerPerson * medicareCount;
-    const newTax = fedRes.ordTax + fedRes.ltcgTax + stTax; // income tax only (IRMAA separate)
+    const newTax = fedRes.ordTax + fedRes.ltcgTax + niitRes.tax + stTax; // income tax only (IRMAA separate)
     const conversionTax = rothConv > 0 ? Math.max(0, newTax - baselineTax) : 0;
     const baselineTaxFundingNeed = Math.max(0, baselineTax - totalWithheld);
     const conversionTaxFundingNeed = rothConv > 0 ? Math.max(0, newTax - Math.max(baselineTax, totalWithheld)) : 0;
@@ -3474,7 +3498,7 @@ function runProjection(S) {
     const conversionTaxRoutingNeed = rothTaxFundingCfg.method === 'WITHHOLD' ? conversionTax : conversionTaxFundingNeed;
     const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld - rothConvTaxWithheld_inner);  // IRMAA excluded — Medicare premium, not income tax funding
     // Save finals from this pass
-    netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
+    netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; niit_f=niitRes.tax; netInvestmentIncome_f=niitRes.netInvestmentIncome; niitThreshold_f=niitRes.threshold; niitExcessMagi_f=niitRes.excessMagi; niitTaxableBase_f=niitRes.taxableBase; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
     baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
     rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
     rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
@@ -3520,7 +3544,7 @@ function runProjection(S) {
     });
     const rothDraw1=rothDraw1_f, rothDraw2=rothDraw2_f;
     const excessFunds=excessFunds_f, shortfall=shortfall_f;
-    const fedRes=fedRes_f, stTax=stTax_f, irmaaTx=irmaaTx_f, agi=agi_f;
+    const fedRes=fedRes_f, niit=niit_f, netInvestmentIncome=netInvestmentIncome_f, niitThreshold=niitThreshold_f, niitExcessMagi=niitExcessMagi_f, niitTaxableBase=niitTaxableBase_f, stTax=stTax_f, irmaaTx=irmaaTx_f, agi=agi_f;
     const medicareBase=medicareBase_f;
     const taxOvrActive = taxOvrAmt != null;
     const ira1Addl=ira1Draw_f, ira2Addl=ira2Draw_f, stkSales=secDraw_f;
@@ -3535,7 +3559,7 @@ function runProjection(S) {
     const effectiveCloseoutAgi = closeoutHas('agi') ? Math.max(0, parseF(yearCloseout.agi)) : agi;
     const effectiveCloseoutMagi = closeoutHas('magi') ? Math.max(0, parseF(yearCloseout.magi)) : magi;
     const hasSplitCloseoutTax = closeoutHas('federalIncomeTax') || closeoutHas('stateIncomeTax');
-    const effectiveCloseoutFederalTax = closeoutHas('federalIncomeTax') ? Math.max(0, parseF(yearCloseout.federalIncomeTax)) : (fedRes.ordTax + fedRes.ltcgTax);
+    const effectiveCloseoutFederalTax = closeoutHas('federalIncomeTax') ? Math.max(0, parseF(yearCloseout.federalIncomeTax)) : (fedRes.ordTax + fedRes.ltcgTax + niit);
     const effectiveCloseoutStateTax = closeoutHas('stateIncomeTax') ? Math.max(0, parseF(yearCloseout.stateIncomeTax)) : stTax;
     const effectiveCloseoutIncomeTax = hasSplitCloseoutTax ? effectiveCloseoutFederalTax + effectiveCloseoutStateTax
       : closeoutHas('incomeTax') ? Math.max(0, parseF(yearCloseout.incomeTax)) : incomeTax;
@@ -3666,7 +3690,7 @@ function runProjection(S) {
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
       agi:effectiveCloseoutAgi, magi:effectiveCloseoutMagi, projectedAgi:agi, projectedMagi:magi, closeoutStatus:yearCloseout.status||'projected', closeoutActuals:Object.assign({},yearCloseout), stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
-      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, stTax, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
+      fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, niit, netInvestmentIncome, niitThreshold, niitExcessMagi, niitTaxableBase, stTax, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
       totalTax: cashTax, incomeTax:effectiveCloseoutIncomeTax, projectedIncomeTax:incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
       // EOY Balances
@@ -6782,6 +6806,7 @@ function renderCF(){
       {f:'agi',       h:'AGI',              bold:true},
       {f:'fedOrd',    h:'Federal\nOrd Tax'},
       {f:'ltcg',      h:'LTCG\nTax'},
+      {f:'niit',      h:'NIIT\n3.8%'},
       {f:'stTax',     h:'CA\nState Tax'},
       {f:'incomeTax', h:'Total\nTax',       bold:true},
       {f:'effRate',   h:'Eff\nRate',        pct:true},
@@ -6818,7 +6843,7 @@ function renderCF(){
     'cashDraw','ira1Addl','ira2Addl','stkSales','rothDraw1','rothDraw2','hsaWith',
     'cashGapNeeded',
     'totalWages','rothConvDraw1','rothConvDraw2','rothConvNet','rothConvTaxWithheld','hsaDep','taxableIRADraws','taxableDivs','taxableSecDivs','treasuryInterest','caMuniInterest','otherMuniInterest','taxExemptInterest','caTaxableMuniInterest','taxableStkGain','taxableSS',
-    'ltcg','blended','irmaaTx','medicareBase',
+    'ltcg','niit','blended','irmaaTx','medicareBase',
     'excessFunds','cashSweep','unfunded',
     'pre2020InhDraw1','pre2020InhDraw2','post2020InhRMD',
     'pre2020InhAddl1','pre2020InhAddl2','post2020InhDiscretionary',
@@ -6957,7 +6982,8 @@ function renderCF(){
 
 // ── Tax Summary ───────────────────────────────────────────────────────────
 function renderTax(){
-  const totF=proj.reduce((s,r)=>s+r.fedOrd+r.ltcg,0);
+  const totF=proj.reduce((s,r)=>s+r.fedOrd+r.ltcg+(r.niit||0),0);
+  const totN=proj.reduce((s,r)=>s+(r.niit||0),0);
   const totS=proj.reduce((s,r)=>s+r.stTax,0);
   const totI=proj.reduce((s,r)=>s+r.irmaaTx,0);
   const totM=proj.reduce((s,r)=>s+(r.medicareBase||0),0);
@@ -6965,6 +6991,7 @@ function renderTax(){
   const peak=proj.reduce((m,r)=>r.agi>m.agi?r:m,proj[0]);
   document.getElementById('tax-kpis').innerHTML=`
     <div class="kpi"><div class="kpi-lbl">Lifetime Federal</div><div class="kpi-val r">${f$(totF,true)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Lifetime NIIT</div><div class="kpi-val r">${f$(totN,true)}</div><div class="kpi-sub">Included in federal and total tax</div></div>
     <div class="kpi"><div class="kpi-lbl">Lifetime State</div><div class="kpi-val r">${f$(totS,true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Lifetime IRMAA</div><div class="kpi-val">${f$(totI,true)}</div></div>
     <div class="kpi"><div class="kpi-lbl">Lifetime Medicare B</div><div class="kpi-val">${f$(totM,true)}</div></div>
@@ -6975,6 +7002,7 @@ function renderTax(){
   mkChart('ch-taxbk','bar',{labels:lbs,datasets:[
     {label:'Fed Ord',data:proj.map(r=>r.fedOrd),backgroundColor:'#c0392b',stack:'s'},
     {label:'LTCG',data:proj.map(r=>r.ltcg),backgroundColor:'#e67e22',stack:'s'},
+    {label:'NIIT',data:proj.map(r=>r.niit||0),backgroundColor:'#8b1a50',stack:'s'},
     {label:'CA State',data:proj.map(r=>r.stTax),backgroundColor:'#8e44ad',stack:'s'},
     {label:'IRMAA',data:proj.map(r=>r.irmaaTx),backgroundColor:'#2980b9',stack:'s'},
     {label:'Medicare B',data:proj.map(r=>r.medicareBase||0),backgroundColor:'#16a085',stack:'s'},
@@ -6993,7 +7021,7 @@ function renderTax(){
     <td>${r.charityDed>0?f$(r.charityDed):'—'}</td>
     <td>${f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed)))}</td>
     <td style="font-size:9px">${r.taxFiling||S.filing}</td>
-    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${f$(r.stTax)}</td>
+    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${r.niit>0?f$(r.niit):'—'}</td><td>${f$(r.stTax)}</td>
     <td class="hi red">${(r.taxOvrActive?'✦ ':'')+f$(r.incomeTax)}</td>
     <td>${fp(r.effRate)}</td><td>${fp(r.margRate)}</td><td>${fp(r.blended)}</td>
     <td style="color:#888;font-size:10px">${f$(r.irmaaMagi)}</td>
@@ -7212,6 +7240,12 @@ function renderYD(){
       ${dr('Filing Status Used',r.taxFiling||S.filing)}
       ${dr('Federal Ordinary',f$(r.fedOrd))}
       ${dr('LTCG / Qual Divs',f$(r.ltcg))}
+      ${(r.netInvestmentIncome||0)>0?dr('NIIT Net Investment Income',f$(r.netInvestmentIncome)):''}
+      ${(r.netInvestmentIncome||0)>0?dr('NIIT AGI Threshold',f$(r.niitThreshold)):''}
+      ${(r.niitExcessMagi||0)>0?dr('AGI Above NIIT Threshold',f$(r.niitExcessMagi)):''}
+      ${(r.niitTaxableBase||0)>0?dr('NIIT Taxable Base — Smaller Amount',f$(r.niitTaxableBase)):''}
+      ${(r.niit||0)>0?dr('Net Investment Income Tax (3.8%)',f$(r.niit),'','color:#8b1a50'):''}
+      ${(r.netInvestmentIncome||0)>0?'<div style="font-size:10px;line-height:1.5;color:#6a4800;background:#fff8e8;border-left:3px solid #8b1a50;padding:5px 8px;margin-top:6px">NIIT is 3.8% of the smaller of net investment income or AGI above the filing-status threshold. IRA draws, Roth conversions, and taxable Social Security can raise AGI but are not included in net investment income.</div>':''}
       ${dr('CA State',f$(r.stTax))}
       ${r.treasuryInterest>0?dr('CA-exempt U.S. Treasury Interest',f$(r.treasuryInterest)):''}
       ${caTaxableMuniInterest>0?dr('CA-taxable Non-CA Muni Interest',f$(caTaxableMuniInterest)):''}
@@ -8257,7 +8291,8 @@ function apCard(yr){
 
     ${hdr('TAX PICTURE')}
     ${row('Adjusted Gross Income', r.agi, true)}
-    ${row('Federal Tax', r.fedOrd||0)}
+    ${row('Federal Ordinary + LTCG Tax', (r.fedOrd||0)+(r.ltcg||0))}
+    ${(r.niit||0)>0 ? row('Net Investment Income Tax', r.niit, false, '#8b1a50') : ''}
     ${row('CA State Tax', r.stTax||0)}
     ${row('Total Income Tax', incomeTax, true)}
     ${hasIRMAA ? row('IRMAA Surcharge', r.irmaaTx, false, '#8b4000') : ''}
@@ -9241,7 +9276,9 @@ function buildReportPayload(){
     cashGapNeeded:r.cashGapNeeded||0, totalRequired:r.totalRequired||0,
     agi:r.agi||0, projectedAgi:r.projectedAgi??r.agi??0, projectedMagi:r.projectedMagi??r.magi??0, projectedIncomeTax:r.projectedIncomeTax??r.incomeTax??0, closeoutStatus:r.closeoutStatus||'projected', closeoutActuals:Object.assign({},r.closeoutActuals||{}), effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0, seniorBonus:r.seniorBonus||0, charityDed:r.charityDed||0,
     taxableInc:r.taxableInc||0,
-    fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, stTax:r.stTax||0,
+    fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, niit:r.niit||0,
+    netInvestmentIncome:r.netInvestmentIncome||0, niitThreshold:r.niitThreshold||0, niitExcessMagi:r.niitExcessMagi||0, niitTaxableBase:r.niitTaxableBase||0,
+    stTax:r.stTax||0,
     incomeTax:r.incomeTax||0, irmaaTx:r.irmaaTx||0,
     medicareBase:r.medicareBase||0,
     effRate:r.effRate||0, margRate:r.margRate||0, blended:r.blended||0,
@@ -9817,13 +9854,14 @@ function generateReport(){
     if(unfunded>0) funds.push(['⚠ Funding Gap',unfunded]);
     else if((full.excessFunds||0)>50) funds.push(['Surplus → Securities',full.excessFunds]);
     funds.push(['Funding Required',fundingRequired]);
-    const fed_tax=(full.fedOrd||0)+(full.ltcg||0);
+    const fed_tax=(full.fedOrd||0)+(full.ltcg||0)+(full.niit||0);
     const ca_tax=full.stTax||0;
     const taxes=[
       ...(targetIncome?[ [targetIncome.label,targetIncome.value] ]:[]),
       ...(rc>0?[ ['Roth Conversion Needed',rc] ]:[]),
       ['Adjusted Gross Income',full.agi||0],
       ['Federal Tax',fed_tax],
+      ...((full.niit||0)>0?[['Net Investment Income Tax (included above)',full.niit]]:[]),
       ...(ca_tax?[['CA State Tax',ca_tax]]:[]),
       ['Total Income Tax',inc_tax],
       ['IRMAA Surcharge',irmaa],
@@ -10005,7 +10043,8 @@ function generateReport(){
   }).join('');
 
   // ── Tax Summary ──
-  const totFed=rows.reduce((s,r)=>s+(r.fedOrd||0)+(r.ltcg||0),0);
+  const totFed=rows.reduce((s,r)=>s+(r.fedOrd||0)+(r.ltcg||0)+(r.niit||0),0);
+  const totNIIT=rows.reduce((s,r)=>s+(r.niit||0),0);
   const totCA=rows.reduce((s,r)=>s+(r.stTax||0),0);
   const totIRMAA=rows.reduce((s,r)=>s+(r.irmaaTx||0),0);
   const totMcare=rows.reduce((s,r)=>s+(r.medicareBase||0),0);
@@ -10030,6 +10069,7 @@ function generateReport(){
     [fd(totConv,true),'Lifetime Roth Conversions'],
     [fd(totalBurden,true),'Total Tax + Medicare Impact'],
     [fd(totTax,true),'Lifetime Income Tax'],
+    [fd(totNIIT,true),'Lifetime NIIT (included in tax)'],
     [fd(totIRMAA,true),'Lifetime IRMAA'],
     [fd(totMcare,true),'Lifetime Medicare Part B'],
     [firstShortfall?`${firstShortfall.yr} · ${fd(firstShortfall.unfunded,true)}`:'None shown','First Shortfall Year'],
@@ -10088,7 +10128,7 @@ function generateReport(){
       ${td((r.closeoutStatus&&r.closeoutStatus!=='projected'?'‡ ':'')+r.yr)}${td(age(r))}${td(((r.closeoutActuals||{}).agi!==null&&(r.closeoutActuals||{}).agi!==undefined&&(r.closeoutActuals||{}).agi!==''?'‡ ':'')+fd(r.agi,true),'r')}
       ${td(flag+fd(ded,true),'r')}${td(r.seniorBonus>0?fd(r.seniorBonus,true):'—','r')}${td(r.charityDed>0?fd(r.charityDed,true):'—','r')}${td(fd(r.taxableInc,true),'r')}
       ${td(r.taxFiling||A.filing)}
-      ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.stTax),'r')}
+      ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.niit),'r')}${td(dz(r.stTax),'r')}
       ${td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r bold')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
@@ -10251,6 +10291,8 @@ function generateReport(){
   <table style="width:auto;margin-bottom:12px"><tbody>
     <tr><td class="bold" style="padding-right:20px">Lifetime Federal</td><td class="r">${fd(totFed,true)}</td>
         <td class="bold" style="padding:0 20px 0 30px">Lifetime CA</td><td class="r">${fd(totCA,true)}</td></tr>
+    <tr><td class="bold">Lifetime NIIT</td><td class="r">${fd(totNIIT,true)}</td>
+        <td colspan="2" class="note" style="padding-left:30px">Included in Lifetime Federal and total income tax</td></tr>
     <tr><td class="bold">Lifetime IRMAA</td><td class="r">${fd(totIRMAA,true)}</td>
         <td class="bold" style="padding:0 20px 0 30px">Lifetime Medicare B</td><td class="r">${fd(totMcare,true)}</td></tr>
     <tr><td class="bold">Total Tax + Medicare Impact</td><td class="r bold">${fd(totTax+totIRMAA+totMcare,true)}</td>
@@ -10259,9 +10301,9 @@ function generateReport(){
         <td class="bold" style="padding:0 20px 0 30px">Peak Age</td><td class="r">${age(peak)}</td></tr>
   </tbody></table>
   <table><thead><tr>
-    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
+    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('NIIT'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
   </tr></thead><tbody>${txRows}</tbody></table>
-  <p class="note">✦ = itemized deduction. ‡ = year or value replaced through Year-End Closeout; other figures remain projections.</p>
+  <p class="note"><strong>NIIT estimate:</strong> 3.8% of the smaller of net investment income or AGI above the filing-status threshold. Form 8960 adjustments and allocable investment deductions are not modeled. ✦ = itemized deduction. ‡ = year or value replaced through Year-End Closeout; other figures remain projections.</p>
 
   </body></html>`;
 
@@ -11026,13 +11068,17 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const ltcgIncome = (row.qualDivsForTax||0)+(row.taxableStkGain||0);
   const fedItemized = row.itemizedUsed ? Math.max(0,(row.effDed||0)-(row.seniorBonus||0)-(row.charityDed||0)) : null;
   const newFed = calcFedTax(newAGI, ltcgIncome, filing, age1, age2, hasSecond, tables, fedItemized, row.charityDed||0);
+  const netInvestmentIncome = row.netInvestmentIncome != null
+    ? Math.max(0, row.netInvestmentIncome)
+    : Math.max(0, (row.fedTaxableDivInt||0) + (row.taxableStkGain||0));
+  const newNIIT = calcNIIT(newAGI, netInvestmentIncome, filing).tax;
   const ovState = resolveOverride(A.ovStateTax||[], row.yr, 'state');
   const hasStateOverride = (A.ovStateTax||[]).some(r => { const s=parseInt(r.startYear)||0,e=parseInt(r.endYear)||9999; return row.yr>=s&&row.yr<=e; });
   const effectiveState = hasStateOverride ? (ovState && ovState!=='NONE' ? ovState : '') : A.state;
   const newCaAGI = newAGI - newTaxableSS - (row.treasuryInterest||0) + (row.caTaxableMuniInterest||0);
   const newState = calcStateTax(newCaAGI, filing, effectiveState, null, tables, null);
-  const baselineTax = Math.max(0,row.incomeTax||0);
-  return Math.max(0, Math.min(1, (newFed.ordTax + newFed.ltcgTax + newState - baselineTax) / amount));
+  const baselineTax = Math.max(0,row.projectedIncomeTax ?? row.incomeTax ?? 0);
+  return Math.max(0, Math.min(1, (newFed.ordTax + newFed.ltcgTax + newNIIT + newState - baselineTax) / amount));
 }
 function rothLabNormalBetrFundingMix(row, amount){
   let remaining = Math.max(0, amount||0);
@@ -12732,7 +12778,7 @@ function setupCopyProjectedCloseout(yr){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0),
+    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0)+(row.niit||0),
     stateIncomeTax:row.stTax||0
   };
   setupAfterChange(true);
@@ -13386,7 +13432,7 @@ function renderSetupCloseoutView(){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0),
+    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0)+(row.niit||0),
     stateIncomeTax:row.stTax||0
   };
   const field = (label,key,note) => {
@@ -13411,7 +13457,7 @@ function renderSetupCloseoutView(){
   const totals = [
     field('Final Adjusted Gross Income — AGI ($)','agi','Overrides the displayed historical AGI for this year.'),
     field('Final Medicare MAGI ($)','magi','Authoritative for the model\'s IRMAA calculation two years later.'),
-    field('Actual Federal Income Tax — for Comparison Only ($)','federalIncomeTax','Optional. Enter the actual federal income tax without adding state tax. Used only for plan-versus-actual comparison.'),
+    field('Actual Federal Income Tax — for Comparison Only ($)','federalIncomeTax','Optional. Enter the actual total federal income tax, including any Net Investment Income Tax (NIIT), without adding state tax. Used only for plan-versus-actual comparison.'),
     field('Actual State Income Tax — for Comparison Only ($)','stateIncomeTax','Optional. Enter the actual state income tax separately. Used only for plan-versus-actual comparison.')
   ].join('');
   const projectedTaxTotal = projected.federalIncomeTax + projected.stateIncomeTax;
