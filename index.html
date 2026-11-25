@@ -839,9 +839,9 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
         <input type="text" id="i-n2" oninput="IC()" placeholder="Leave blank for single filer">
       </div>
       <div class="field-row">
-        <div class="field"><label>Primary Person Birth Year</label><input type="number" id="i-by1" oninput="IC()"><div class="note">Used for age, Social Security, Medicare, RMD, and senior deduction timing.</div></div>
+        <div class="field"><label>Primary Person Birth Year</label><input type="number" id="i-by1" oninput="IC()"><div class="note">Used for Social Security, Medicare, and senior deduction timing. IRA RMDs use the age you reach during the year.</div></div>
         <div class="field p2-field"><label>Spouse / Partner Birth Year</label><input type="number" id="i-by2" oninput="IC()">
-          <div class="note">Used for age, Social Security, Medicare, RMD, and senior deduction timing.</div>
+          <div class="note">Used for Social Security, Medicare, and senior deduction timing. IRA RMDs use the age you reach during the year.</div>
         </div>
       </div>
       <div class="field-row">
@@ -974,14 +974,14 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
       <div class="sh">IRA, RMDs &amp; Medicare</div>
       <div class="field-row">
         <div class="field">
-          <label id="l-rmd1">P1 RMD Start Year</label>
+          <label id="l-rmd1">P1 First Modeled IRA RMD Year</label>
           <div id="i-rmd1-disp" style="padding:5px 9px;border:1px solid var(--cream3);border-radius:3px;font-size:12px;background:var(--cream2);color:var(--ink2);font-family:'JetBrains Mono',monospace">—</div>
-          <div class="note">Auto: age 73 if born 1951–1959, age 75 if born 1960+ (SECURE 2.0)</div>
+          <div class="note">Calculated from birth year. The model takes the first RMD in the year it applies.</div>
         </div>
         <div class="field p2-field">
-          <label id="l-rmd2">P2 RMD Start Year</label>
+          <label id="l-rmd2">P2 First Modeled IRA RMD Year</label>
           <div id="i-rmd2-disp" style="padding:5px 9px;border:1px solid var(--cream3);border-radius:3px;font-size:12px;background:var(--cream2);color:var(--ink2);font-family:'JetBrains Mono',monospace">—</div>
-          <div class="note">Auto: age 73 if born 1951–1959, age 75 if born 1960+ (SECURE 2.0)</div>
+          <div class="note">Calculated from birth year. The model takes the first RMD in the year it applies.</div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);margin:10px 0 8px;padding-top:8px">
@@ -1356,13 +1356,15 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
   <div class="kpis" id="tax-kpis"></div>
   <details class="panel" style="margin-bottom:12px">
     <summary style="cursor:pointer;font-weight:700">Tax Coverage &amp; Limitations</summary>
-    <p style="margin-top:8px"><strong>Included.</strong> Federal income tax, taxable Social Security, ordinary and preferential investment-income rates, standard or entered itemized deductions, NIIT, California income tax with personal and senior exemption credits, and eligible IRA gifts entered as QCDs. Medicare premiums and IRMAA are shown separately.</p>
+    <p style="margin-top:8px"><strong>Included.</strong> Federal income tax, taxable Social Security, ordinary and preferential investment-income rates, standard or entered itemized deductions, NIIT, nonrefundable dependent credits, California income tax with personal and senior exemption credits, and eligible IRA gifts entered as QCDs. Medicare premiums and IRMAA are shown separately.</p>
     <p><strong>Key assumptions.</strong> Traditional IRA withdrawals and conversions are generally treated as fully taxable apart from modeled QCDs. Brokerage dividends use the selected ordinary or qualified treatment and modeled sale gains use long-term rates. NIIT estimates use taxable dividends, interest and modeled gains. IRA basis (Form 8606), short-term gain splits, loss carryovers, and specialized Form 8960 items are outside those estimates.</p>
     <p><strong>Check separately if applicable.</strong> Alternative minimum tax (AMT), self-employment tax, annual household Additional Medicare Tax, the California surtax over $1 million of taxable income, retirement-account penalties, and other state returns. The W-2 withholding helper includes a simplified Additional Medicare Tax estimate. The payment checks use the standard federal and California rules.</p>
     <p class="note"><strong>NIIT.</strong> The app uses 3.8% of the smaller of modeled net investment income or federal AGI above the filing threshold ($250,000 joint, $200,000 single/head of household, $125,000 separate). The taxable part of Social Security, IRA draws and conversions can raise AGI. <a href="https://www.irs.gov/instructions/i8960" target="_blank" rel="noopener">IRS Form 8960</a></p>
-    <p class="note"><strong>California.</strong> Personal and senior credits are for modeled California resident years from 2025 onward. The 2026 credit amount comes from FTB. The 2026 phaseout thresholds use FTB's published inflation adjustment, and later years use your bracket inflation assumption. Blind and dependent credits are outside the estimate. <a href="https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html" target="_blank" rel="noopener">FTB 2026 figures</a></p>
+    <p class="note"><strong>Dependents.</strong> The model uses the claiming years you enter and estimates nonrefundable credits from 2025 onward. The federal credit uses modeled federal AGI for the phaseout and holds the published 2027 Child Tax Credit amount for later years. The refundable Additional Child Tax Credit and dependent-care credits are outside this estimate. <a href="https://www.irs.gov/pub/irs-prior/f1040s8--2026.pdf" target="_blank" rel="noopener">IRS Schedule 8812</a></p>
+    <p class="note"><strong>California.</strong> Personal, senior, and dependent exemption credits are modeled for California resident years from 2025 onward. The 2026 credit amounts come from FTB. The 2026 phaseout thresholds use FTB's published inflation adjustment, and later years use your bracket inflation assumption. <a href="https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html" target="_blank" rel="noopener">FTB 2026 figures</a></p>
     <div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="setupView='strategy';setupStrategyType='qcd';setupEditingStrategy=null;ST('setup')">Plan an IRA Charitable Gift (QCD)</button></div>
   </details>
+  <section id="dependent-tax-panel" class="panel" hidden></section>
   <details class="panel" style="margin-bottom:14px">
     <summary style="cursor:pointer;font-weight:700">Federal Tax Payment Check (Safe Harbor)</summary>
     <div id="tax-payment-check"></div>
@@ -1672,7 +1674,21 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 // PART 1: TAX TABLES, ENGINE, STATE
 // ═══════════════════════════════════════════════════════════════════════════
 
-const RMD_TABLE = {73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4,101:6,102:5.6,103:5.2,104:4.9,105:4.6,106:4.3,107:4.1,108:3.9,109:3.7,110:3.5,111:3.4,112:3.3,113:3.1};
+// IRS Uniform Lifetime Table (Publication 590-B, Appendix B, Table III).
+const RMD_TABLE = {
+  72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,
+  82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,
+  92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4,101:6,
+  102:5.6,103:5.2,104:4.9,105:4.6,106:4.3,107:4.1,108:3.9,109:3.7,110:3.5,
+  111:3.4,112:3.3,113:3.1,114:3.0,115:2.9,116:2.8,117:2.7,118:2.5,119:2.3,120:2.0
+};
+const RMD_TABLE_2021 = {
+  72:25.6,73:24.7,74:23.8,75:22.9,76:22,77:21.2,78:20.3,79:19.5,80:18.7,81:17.9,
+  82:17.1,83:16.3,84:15.5,85:14.8,86:14.1,87:13.4,88:12.7,89:12,90:11.4,91:10.8,
+  92:10.2,93:9.6,94:9.1,95:8.6,96:8.1,97:7.6,98:7.1,99:6.7,100:6.3,101:5.9,
+  102:5.5,103:5.2,104:4.9,105:4.5,106:4.2,107:3.9,108:3.7,109:3.4,110:3.1,
+  111:2.9,112:2.6,113:2.4,114:2.1,115:1.9
+};
 const SINGLE_LIFE_EXPECTANCY_TABLE = {0:84.6,1:83.7,2:82.8,3:81.8,4:80.8,5:79.8,6:78.8,7:77.9,8:76.9,9:75.9,10:74.9,11:73.9,12:72.9,13:71.9,14:70.9,15:69.9,16:69.0,17:68.0,18:67.0,19:66.0,20:65.0,21:64.1,22:63.1,23:62.1,24:61.1,25:60.2,26:59.2,27:58.2,28:57.3,29:56.3,30:55.3,31:54.4,32:53.4,33:52.5,34:51.5,35:50.5,36:49.6,37:48.6,38:47.7,39:46.7,40:45.7,41:44.8,42:43.8,43:42.9,44:41.9,45:41.0,46:40.0,47:39.0,48:38.1,49:37.1,50:36.2,51:35.3,52:34.3,53:33.4,54:32.5,55:31.6,56:30.6,57:29.8,58:28.9,59:28.0,60:27.1,61:26.2,62:25.4,63:24.5,64:23.7,65:22.9,66:22.0,67:21.2,68:20.4,69:19.6,70:18.8,71:18.0,72:17.2,73:16.4,74:15.6,75:14.8,76:14.1,77:13.3,78:12.6,79:11.9,80:11.2,81:10.5,82:9.9,83:9.3,84:8.7,85:8.1,86:7.6,87:7.1,88:6.6,89:6.1,90:5.7,91:5.3,92:4.9,93:4.6,94:4.3,95:4.0,96:3.7,97:3.4,98:3.2,99:3.0,100:2.8,101:2.6,102:2.5,103:2.3,104:2.2,105:2.1,106:2.1,107:2.1,108:2.0,109:2.0,110:2.0,111:2.0,112:2.0,113:1.9,114:1.9,115:1.8,116:1.8,117:1.6,118:1.4,119:1.1,120:1.0};
 
 const FED_ORD = {
@@ -2089,7 +2105,34 @@ function getCharityNonItemizerCap(filing, tables) {
   return tables.fedCharityNonItemizerCap ?? 0;
 }
 
-function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDed, charityCash) {
+function dependentYear(value) {
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 1900 && year <= 9999 ? year : null;
+}
+function countTaxDependents(dependents, year) {
+  let children = 0, others = 0;
+  for (const dependent of Array.isArray(dependents) ? dependents : []) {
+    const birth = dependentYear(dependent?.birthYear);
+    const last = dependentYear(dependent?.lastYearClaimed);
+    if (birth == null || last == null || year < birth || year > last) continue;
+    if (year - birth < 17) children++;
+    else others++;
+  }
+  return {children, others};
+}
+
+// Schedule 8812 combines both credits into one nonrefundable amount.
+function calcFederalDependentCredits(agi, filing, year, dependents, regularTax) {
+  const childMaximum = (dependents?.children || 0) * (year >= 2027 ? 2300 : 2200);
+  const otherMaximum = (dependents?.others || 0) * 500;
+  const threshold = filing === 'MFJ' ? 400000 : 200000;
+  const reduction = 50 * Math.ceil(Math.max(0, agi - threshold) / 1000);
+  const combined = year >= 2025 ? Math.min(regularTax, Math.max(0, childMaximum + otherMaximum - reduction)) : 0;
+  const childTaxCredit = Math.min(childMaximum, combined);
+  return {childTaxCredit, otherDependentCredit: combined - childTaxCredit};
+}
+
+function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDed, charityCash, dependents) {
   const sd = getStdDed(filing, age1, age2, hasP2, tables);
   const seniorBonus = getSeniorBonusDed(agi, filing, age1, age2, hasP2, tables);
   // Use higher of itemized or standard deduction, then apply the enhanced senior deduction.
@@ -2115,7 +2158,14 @@ function calcFedTax(agi, qualDivs, filing, age1, age2, hasP2, tables, itemizedDe
   const ordTax  = bracketTax(ordInc, bkts);
   const ltcgAll = bracketTax(taxable, lbkts);
   const ltcgOrd = bracketTax(ordInc,  lbkts);
-  return { ordTax, ltcgTax: Math.max(0, ltcgAll-ltcgOrd), stdDed: sd, seniorBonus, charityDed, itemizedUsed, effDed, taxableInc: taxable };
+  const ltcgTax = Math.max(0, ltcgAll-ltcgOrd);
+  const credits = calcFederalDependentCredits(agi, filing, tables?.projectionYear ?? 2026, dependents, ordTax + ltcgTax);
+  const combinedCredit = credits.childTaxCredit + credits.otherDependentCredit;
+  // Allocate the combined credit to ordinary tax first for the tax breakdown.
+  return {
+    ordTax:Math.max(0, ordTax - combinedCredit), ltcgTax:Math.max(0, ltcgTax - Math.max(0, combinedCredit - ordTax)),
+    ...credits, stdDed:sd, seniorBonus, charityDed, itemizedUsed, effDed, taxableInc:taxable
+  };
 }
 
 // Net Investment Income Tax (Form 8960 estimate).
@@ -2136,15 +2186,15 @@ function calcNIIT(agi, netInvestmentIncome, filing) {
   const taxableBase = Math.min(nii, excessMagi);
   return { tax: taxableBase * NIIT_RULE.rate, threshold, magi, netInvestmentIncome: nii, excessMagi, taxableBase };
 }
-// Form 540 lines 7, 9 and 32. The 2026 phaseout thresholds are estimated
+// Form 540 lines 7–10 and 32. The 2026 phaseout thresholds are estimated
 // from the 2025 thresholds using the 3.4% indexing FTB announced for 2026.
 const CA_EXEMPTION_CREDIT = {
-  2025: {perExemption:153, threshold:{SINGLE:252203, HOH:378310, MFJ:504411}},
-  2026: {perExemption:158, threshold:{SINGLE:260778, HOH:391173, MFJ:521561}}
+  2025: {perExemption:153, perDependent:475, threshold:{SINGLE:252203, HOH:378310, MFJ:504411}},
+  2026: {perExemption:158, perDependent:491, threshold:{SINGLE:260778, HOH:391173, MFJ:521561}}
 };
-function calcCaliforniaExemptionCredit(federalAgi, filing, seniorCount, tables) {
+function calcCaliforniaExemptionCredits(federalAgi, filing, seniorCount, dependentCount, tables) {
   const year = tables?.projectionYear ?? 2026;
-  if (year < 2025) return 0;
+  if (year < 2025) return {personal:0, dependent:0};
   const rule = CA_EXEMPTION_CREDIT[year === 2025 ? 2025 : 2026];
   const jointPersonalCredit = filing === 'MFJ' || filing === 'QSS';
   const threshold = jointPersonalCredit ? rule.threshold.MFJ
@@ -2153,10 +2203,13 @@ function calcCaliforniaExemptionCredit(federalAgi, filing, seniorCount, tables) 
   const excess = Math.max(0, Math.round(federalAgi) - Math.round(threshold * factor));
   const reduction = 6 * Math.ceil(excess / (filing === 'MFS' ? 1250 : 2500));
   const exemptions = (jointPersonalCredit ? 2 : 1) + seniorCount;
-  return exemptions * Math.max(0, Math.round(rule.perExemption * factor) - reduction);
+  return {
+    personal:exemptions * Math.max(0, Math.round(rule.perExemption * factor) - reduction),
+    dependent:dependentCount * Math.max(0, Math.round(rule.perDependent * factor) - reduction)
+  };
 }
 function calcStateTax(agi, filing, state, tables, caItemizedDed, exemptions) {
-  if (!state || agi <= 0) return {tax:0, exemptionCredit:0};
+  if (!state || agi <= 0) return {tax:0, exemptionCredit:0, dependentCredit:0};
   if (state==='CA') {
     let caStdVal, caBkts;
     if (tables) {
@@ -2174,12 +2227,14 @@ function calcStateTax(agi, filing, state, tables, caItemizedDed, exemptions) {
     const caEffDed = (caItemizedDed != null && caItemizedDed > caStdVal) ? caItemizedDed : caStdVal;
     const base = Math.max(0, agi - caEffDed);
     const beforeCredit = bracketTax(base, caBkts);
-    const eligibleCredit = exemptions
-      ? calcCaliforniaExemptionCredit(exemptions.federalAgi, filing, exemptions.seniorCount, tables) : 0;
-    const exemptionCredit = Math.min(beforeCredit, eligibleCredit);
-    return {tax:beforeCredit - exemptionCredit, exemptionCredit};
+    const credits = exemptions
+      ? calcCaliforniaExemptionCredits(exemptions.federalAgi, filing, exemptions.seniorCount, exemptions.dependentCount || 0, tables)
+      : {personal:0, dependent:0};
+    const exemptionCredit = Math.min(beforeCredit, credits.personal);
+    const dependentCredit = Math.min(beforeCredit - exemptionCredit, credits.dependent);
+    return {tax:beforeCredit - exemptionCredit - dependentCredit, exemptionCredit, dependentCredit};
   }
-  return {tax:0, exemptionCredit:0};
+  return {tax:0, exemptionCredit:0, dependentCredit:0};
 }
 // Hold the latest published QCD limit in later projection years.
 const QCD_LIMITS = {2024:105000, 2025:108000, 2026:111000, 2027:114000};
@@ -2216,16 +2271,31 @@ function calcTaxableSS(grossSS, agi, filing, taxExemptInterest=0) {
   if (prov<=t2) return Math.min(0.5*grossSS, 0.5*(prov-t1));
   return Math.min(0.85*grossSS, 0.85*(prov-t2)+0.5*Math.min(prov-t1,t2-t1));
 }
-function getRMD(bal, age) {
-  if (bal <= 0 || age < 73) return 0;
-  return bal / (RMD_TABLE[Math.min(age,113)]||3.1);
-}
 function rmdAgeForBirthYear(by) {
-  return (parseInt(by)||1959) >= 1960 ? 75 : 73;
+  // For the 1959 cohort, use age 73 as specified in the proposed IRS rule.
+  return by >= 1960 ? 75 : 73;
 }
-function rmdStartYearForBirthYear(by) {
+function firstModeledIraRmdYear(by) {
+  const b = parseInt(by, 10);
+  if (!Number.isInteger(b) || b < 1900) return null;
+  // The model starts in 2020 or later. RMDs were waived for 2020.
+  if (b < 1950) return 2021;
+  if (b === 1950) return 2022;
+  return b + rmdAgeForBirthYear(b);
+}
+function getRegularIraRmd(balance, birthYear, year) {
+  const startYear = firstModeledIraRmdYear(birthYear);
+  if (balance <= 0 || startYear == null || year < startYear) return 0;
+  const ageAtBirthday = year - parseInt(birthYear, 10);
+  const divisor = year === 2021
+    ? RMD_TABLE_2021[Math.min(ageAtBirthday, 115)]
+    : RMD_TABLE[Math.min(ageAtBirthday, 120)];
+  return balance / divisor;
+}
+function inheritedIraOwnerRmdStartYear(by) {
   const b = parseInt(by);
   if (!b) return null;
+  // Preserve the inherited IRA model's original-owner timing convention.
   return b + rmdAgeForBirthYear(b) + 1;
 }
 function singleLifeFactor(age) {
@@ -2251,7 +2321,7 @@ function getPre2020InheritedRMD(bal, yr, ownerBirthYear, ownerDeathYear, benefic
   if (!deathYear) return {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
   const firstYear = deathYear + 1;
   if (yr < firstYear) return {draw:0, divisor:0, firstYear, ownerReachedRMD:false};
-  const ownerStart = rmdStartYearForBirthYear(ownerBirthYear);
+  const ownerStart = inheritedIraOwnerRmdStartYear(ownerBirthYear);
   const ownerReachedRMD = ownerStart ? deathYear >= ownerStart : false;
   const firstAge = firstYear - beneficiaryBirthYear - 1;
   const startDiv = singleLifeFactor(firstAge);
@@ -2455,6 +2525,7 @@ function defaultState() {
   return {
     // Personal
     name1:'', name2:'', householdMode:'',
+    dependents:[],
     by1:'', by2:'',
     filing:'MFJ', state:'CA',
     startYear:new Date().getFullYear(), endYear:new Date().getFullYear()+25,
@@ -2468,9 +2539,7 @@ function defaultState() {
     fundingOrder1:'SEC', fundingOrder2:'IRA', fundingOrder3:'ROTH',
     widowMode:'off', widowDeathYear:0, widowSpendPct:0, widowIraSpousePct:100, widowEndSS:true, widowSurvivorSS:true, widowSwitchSingle:true, widowSSA44Relief:false,
     wageGrowth:0.030,
-    // RMD
-    rmdStart1:0,
-    rmdStart2:0,
+    // Inherited IRAs
     inhDrainYear:9999,
     post2020InhLots:[],
     pre2020InhLots:[],
@@ -2623,6 +2692,8 @@ function runProjection(S) {
     const afterDeathYear = widowActive && yr > widowYear;
     const survivorAge = p1Survivor ? age1 : p2Survivor ? age2 : age1;
     const taxFiling = (afterDeathYear && S.widowSwitchSingle) ? 'SINGLE' : S.filing;
+    const dependents = countTaxDependents(S.dependents, yr);
+    const dependentCount = dependents.children + dependents.others;
     const taxHasP2 = afterDeathYear ? false : hp2;
     const taxAge1 = afterDeathYear ? survivorAge : age1;
     const taxAge2 = afterDeathYear ? 0 : age2;
@@ -2855,15 +2926,10 @@ function runProjection(S) {
     }
     const grossSS = grossSS1 + grossSS2;
 
-    // ── RMDs (based on START-of-year balance, matching Excel $AM3*(1+g) pattern) ──
-    // Excel: IRA_EOY = IRA_prior*(1+g) - RMD - Additional + contributions
-    // RMD uses START-of-year (prior EOY) balance divided by IRS factor
-    const rmdAge1 = afterDeathYear && p2Survivor ? survivorAge : age1;
-    const rmdAge2 = afterDeathYear && p1Survivor ? survivorAge : age2;
-    const rmdStart1 = afterDeathYear && p2Survivor ? rmdStartYearForBirthYear(by2Eff) : S.rmdStart1;
-    const rmdStart2 = afterDeathYear && p1Survivor ? rmdStartYearForBirthYear(by1Eff) : S.rmdStart2;
-    const requiredRmd1 = yr >= rmdStart1 ? getRMD(ira1, rmdAge1) : 0;
-    const requiredRmd2 = hp2 && yr >= rmdStart2 ? getRMD(ira2, rmdAge2) : 0;
+    // Use opening balances and each IRA owner's age on their birthday this year.
+    // The survivor's retained balance is already in their own IRA.
+    const requiredRmd1 = getRegularIraRmd(ira1, S.by1, yr);
+    const requiredRmd2 = hp2 ? getRegularIraRmd(ira2, S.by2, yr) : 0;
     const restrictedIra1 = restrictedInvestmentAmount('ira1', yr, S);
     const restrictedIra2 = restrictedInvestmentAmount('ira2', yr, S);
     const requestedQcd = person => Math.max(0, parseF(resolveOverrideNonBlank(S.ovQcd, yr, 'amount' + person)) || 0);
@@ -2912,7 +2978,7 @@ function runProjection(S) {
       if (!deathYear) continue;
       const finalYear = deathYear + 10;
       const firstYear = deathYear + 1;
-      const ownerStart = rmdStartYearForBirthYear(lot.ownerBy);
+      const ownerStart = inheritedIraOwnerRmdStartYear(lot.ownerBy);
       const ownerReachedRMD = ownerStart ? deathYear >= ownerStart : false;
       const benefBy = String(lot.beneficiary||'1') === '2' ? by2Eff : by1Eff;
       const firstAge = firstYear - benefBy - 1;
@@ -3167,7 +3233,7 @@ function runProjection(S) {
     let excessFunds_f=0, shortfall_f=0;
     let netTaxNeeded_f=0;
     let baseTax_f=0, rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
-    let caExemptionCredit = 0, caAgi = 0;
+    let caExemptionCredit = 0, caDependentCredit = 0, caAgi = 0;
     let rothConvTaxCash_f=0, rothConvTaxSec_f=0, rothConvTaxIra1_f=0, rothConvTaxIra2_f=0, rothConvTaxWithheld_f=0, rothConvTaxShortfall_f=0;
     let fundingOrder_f=['SEC','IRA','ROTH'];
     for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
@@ -3514,12 +3580,12 @@ function runProjection(S) {
     const charityCash = ovCharityOn && ovCharity != null ? (parseF(ovCharity) || 0) : 0;
     // CA: if no CA entry, default to CA standard (no itemizing for CA)
     const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
-    const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
+    const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
     const netInvestmentIncome = Math.max(0, fedTaxableDivInt + taxableStkGain);
     const niitRes = calcNIIT(agi, netInvestmentIncome, taxFiling);
     // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
     const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
-    const caTax = calcStateTax(caAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:agi, seniorCount:caSeniorCount});
+    const caTax = calcStateTax(caAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:agi, seniorCount:caSeniorCount, dependentCount});
     const stTax = caTax.tax;
     // Counterfactual tax for the same funded year before the Roth conversion and before
     // any dedicated conversion-tax draw. This isolates the conversion-related increment.
@@ -3527,11 +3593,11 @@ function runProjection(S) {
     const baselineAGI = baselineAgiExSS + baselineTSS;
     const baselineQualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
     const baselineLtcgIncome = baselineQualDivsForTax + baselineTaxableStkGain;
-    const baselineFedRes = calcFedTax(baselineAGI, baselineLtcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash);
+    const baselineFedRes = calcFedTax(baselineAGI, baselineLtcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
     const baselineNetInvestmentIncome = Math.max(0, fedTaxableDivInt + baselineTaxableStkGain);
     const baselineNIIT = calcNIIT(baselineAGI, baselineNetInvestmentIncome, taxFiling).tax;
     const baselineCaAGI = baselineAGI - baselineTSS - treasuryInterest + caTaxableMuniInterest;
-    const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:baselineAGI, seniorCount:caSeniorCount}).tax;
+    const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:baselineAGI, seniorCount:caSeniorCount, dependentCount}).tax;
     const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineNIIT + baselineStTax;
     // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
     // an approved SSA-44 life-changing-event request after spouse death: only years
@@ -3563,6 +3629,7 @@ function runProjection(S) {
     // Save finals from this pass
     netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; niit_f=niitRes.tax; netInvestmentIncome_f=niitRes.netInvestmentIncome; niitThreshold_f=niitRes.threshold; niitExcessMagi_f=niitRes.excessMagi; niitTaxableBase_f=niitRes.taxableBase; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
     caExemptionCredit = caTax.exemptionCredit;
+    caDependentCredit = caTax.dependentCredit;
     caAgi = caAGI;
     baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
     rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
@@ -3757,6 +3824,7 @@ function runProjection(S) {
       w2AGI, w2AGI1, w2AGI2, taxableRMDs, taxableStkGain, qualDivs, qualDivsForTax, tSS: tSSfinal, taxableSS: tSSfinal,
       agi:effectiveCloseoutAgi, magi:effectiveCloseoutMagi, projectedAgi:agi, projectedMagi:magi, closeoutStatus:yearCloseout.status||'projected', closeoutActuals:Object.assign({},yearCloseout), stdDed: fedRes.stdDed, seniorBonus: fedRes.seniorBonus, charityDed: fedRes.charityDed, itemizedUsed: fedRes.itemizedUsed, effDed: fedRes.effDed, taxableInc,
       // Taxes
+      dependentCount, childTaxCredit:fedRes.childTaxCredit, otherDependentCredit:fedRes.otherDependentCredit, caDependentCredit,
       fedOrd: fedRes.ordTax, ltcg: fedRes.ltcgTax, niit, netInvestmentIncome, niitThreshold, niitExcessMagi, niitTaxableBase, stTax, caExemptionCredit, caSeniorCount, caAgi, taxState:effectiveState, irmaaTx, medicareBase, irmaaMagi, irmaaLookbackYear, irmaaSurvivorRelief, taxFiling,
       totalTax: cashTax, incomeTax:effectiveCloseoutIncomeTax, projectedIncomeTax:incomeTax, cashTax, fundingTax, taxOvrActive,
       effRate, margRate, blended, irmaaTier,
@@ -5524,6 +5592,13 @@ async function initGitHubLoad() {
 }
 
 function applyMigrations(merged) {
+  merged.dependents = (Array.isArray(merged.dependents) ? merged.dependents : [])
+    .filter(row => row && typeof row === 'object' && !Array.isArray(row))
+    .map(row => ({
+      nickname:typeof row.nickname === 'string' ? row.nickname : '',
+      birthYear:dependentYear(row.birthYear) ?? '',
+      lastYearClaimed:dependentYear(row.lastYearClaimed) ?? ''
+    }));
   const curYr = new Date().getFullYear();
   if (!merged.startYear || isNaN(merged.startYear)) merged.startYear = curYr;
   if (!merged.endYear   || isNaN(merged.endYear))   merged.endYear   = curYr + 25;
@@ -5724,8 +5799,6 @@ function applyMigrations(merged) {
   if (looksBlankPlan) {
     if (merged.by1 === 2000) merged.by1 = '';
     if (merged.by2 === 2000) merged.by2 = '';
-    if (merged.rmdStart1 === 2076 || merged.rmdStart1 === 2075) merged.rmdStart1 = 0;
-    if (merged.rmdStart2 === 2076 || merged.rmdStart2 === 2075) merged.rmdStart2 = 0;
   }
   if (!merged._m_irmaaPartDIncluded) {
     if (updatePartBOnlyIRMAA(merged.irmaaSurch)) merged.irmaaSurch = [...D2.irmaaSurch];
@@ -6184,7 +6257,6 @@ function readUI(){
   S.widowSSA44Relief=document.getElementById('i-widow-ssa44')?.checked ?? false;
   S.ssCola=gf('i-cola')/100;
   S.wageGrowth=gf('i-wagegrowth')/100;
-  // RMD start years auto-calculated in updateLabels — not read from inputs
   S.pre2020InhUseForFunding=gv('i-preinh-fund')||'no';readPre2020InhLots();syncLegacyPre2020FromLots(S);S.stkGainPct=gf('i-stkgain')/100;
   S.growthRate=gf('i-growth')/100;S.divRate=gf('i-divr')/100;S.divReinvestPct=Math.max(0,Math.min(1,gf('i-divreinv')/100));
   S.intRate=gf('i-intr')/100;S.reinvestDivs=S.divReinvestPct>=0.999?'yes':S.divReinvestPct<=0.001?'no':'partial';
@@ -6245,7 +6317,7 @@ function updateLabels(){
   setTxt('l-magi2','Medicare MAGI — '+(planStart-2)+' ($)');
   setTxt('l-magi1','Medicare MAGI — '+(planStart-1)+' ($)');
   setTxt('l-rothsrc-pct','Roth Split to '+n1+' (%)');
-  setTxt('l-rmd1',n1+' RMD Start Year');setTxt('l-rmd2',n2+' RMD Start Year');
+  setTxt('l-rmd1',n1+' First Modeled IRA RMD Year');setTxt('l-rmd2',n2+' First Modeled IRA RMD Year');
   setTxt('l-preinh-startbal1',n1+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr1',n1+' Balance Start Year');
   setTxt('l-preinh-startbal2',n2+' Initial Pre-2020 Inh IRA(s) ($)');setTxt('l-preinh-startyr2',n2+' Balance Start Year');
   renderPre2020InhLots();
@@ -6253,18 +6325,8 @@ function updateLabels(){
   setTxt('l-preinh-ownerby2',n2+' Deceased Owner Birth Year');setTxt('l-preinh-deathyr2',n2+' Deceased Owner Death Year');
   setTxt('l-ira1',n1+' IRA');setTxt('l-ira2',n2+' IRA');
   setTxt('l-roth1',n1+' Roth');setTxt('l-roth2',n2+' Roth');
-  // SECURE 2.0 RMD age by birth year:
-  //   Born 1951-1959 → RMD age 73 → start year = by + 73 + 1 = by + 74
-  //   Born 1960+     → RMD age 75 → start year = by + 75 + 1 = by + 76
-  const rmdAge = rmdAgeForBirthYear; // fallback 1959 = safe default (age 73)
-  const rmd1yr = rmdStartYearForBirthYear(S.by1) || 0;
-  const rmd2yr = rmdStartYearForBirthYear(S.by2) || 0;
-  S.rmdStart1 = rmd1yr;
-  S.rmdStart2 = rmd2yr;
-  const rmd1el = document.getElementById('i-rmd1-disp');
-  const rmd2el = document.getElementById('i-rmd2-disp');
-  if(rmd1el) rmd1el.textContent = rmd1yr ? (rmd1yr + ' (age '+rmdAge(S.by1)+' at start)') : '— enter birth year';
-  if(rmd2el) rmd2el.textContent = rmd2yr ? (rmd2yr + ' (age '+rmdAge(S.by2)+' at start)') : '— enter birth year';
+  setTxt('i-rmd1-disp', firstModeledIraRmdYear(S.by1) ?? '— enter birth year');
+  setTxt('i-rmd2-disp', firstModeledIraRmdYear(S.by2) ?? '— enter birth year');
   // Update start year reference in balances panel
   const syRef = document.getElementById('start-year-ref');
   if(syRef) syRef.textContent = S.startYear || 2026;
@@ -7225,7 +7287,36 @@ function renderTaxPaymentResults(jurisdiction, row) {
     </tr></thead><tbody>${result.periods.map((p, i) => '<tr><td>'+(i+1)+'</td><td>'+money(p.target)+
       '</td><td>'+money(p.paid)+'</td><td>'+money(p.gap)+'</td></tr>').join('')}</tbody></table></div>`;
 }
+let dependentCreditYear = null;
+function renderDependentCredits() {
+  const panel = document.getElementById('dependent-tax-panel');
+  if (!panel) return;
+  panel.hidden = !proj.some(row => row.dependentCount > 0);
+  if (panel.hidden) {
+    panel.innerHTML = '';
+    return;
+  }
+  const currentYear = new Date().getFullYear();
+  const row = proj.find(r => r.yr === dependentCreditYear)
+    || proj.find(r => r.yr === currentYear && r.dependentCount > 0)
+    || proj.find(r => r.dependentCount > 0);
+  dependentCreditYear = row.yr;
+  panel.innerHTML = `
+    <div class="sh">Dependent Credits Used</div>
+    <div class="setup-field" style="max-width:180px;margin-bottom:10px">
+      <label for="dependent-credit-year">Tax year</label>
+      <select id="dependent-credit-year" onchange="dependentCreditYear=Number(this.value);renderDependentCredits()">
+        ${proj.map(r => '<option value="'+r.yr+'"'+(r.yr === row.yr ? ' selected' : '')+'>'+r.yr+'</option>').join('')}
+      </select>
+    </div>
+    <div class="tbl-wrap"><table class="data">
+      <thead><tr><th>Dependents Claimed</th><th>Child Tax Credit</th><th>Credit for Other Dependents</th><th>CA Dependent Credit</th></tr></thead>
+      <tbody><tr><td>${row.dependentCount}</td><td>${f$(row.childTaxCredit)}</td><td>${f$(row.otherDependentCredit)}</td><td>${f$(row.caDependentCredit)}</td></tr></tbody>
+    </table></div>
+    <p class="note" style="margin-top:8px">Tax totals already reflect these credits. If the shared federal phaseout or tax limit reduces the combined credit, the app assigns the available amount to the Child Tax Credit first. Cash Flow budgets tax still due after withholding and does not model a refund of excess paycheck withholding.</p>`;
+}
 function renderTax(){
+  renderDependentCredits();
   renderTaxPaymentCheck('federal');
   renderTaxPaymentCheck('california');
   const totF=proj.reduce((s,r)=>s+r.fedOrd+r.ltcg+(r.niit||0),0);
@@ -7389,8 +7480,8 @@ function renderYD(){
       ${(r.atWages>0||r.ptWages>0)?dr('Wages & Self-Employ',f$((r.atWages||0)+(r.ptWages||0))):''}
       ${dr(p1()+' SS',f$(r.grossSS1))}
       ${dr(p2()+' SS',f$(r.grossSS2))}
-      ${r.rmd1>0?dr(p1()+(r.qcdRmd1>0?' Remaining Cash RMD':' RMD'),f$(r.rmd1)):''}
-      ${r.rmd2>0?dr(p2()+(r.qcdRmd2>0?' Remaining Cash RMD':' RMD'),f$(r.rmd2)):''}
+      ${r.rmd1>0?dr(p1()+(r.qcdRmd1>0?' Remaining Cash RMD':' RMD')+' (age '+(yr-S.by1)+')',f$(r.rmd1)):''}
+      ${r.rmd2>0?dr(p2()+(r.qcdRmd2>0?' Remaining Cash RMD':' RMD')+' (age '+(yr-S.by2)+')',f$(r.rmd2)):''}
       ${r.pre2020InhDraw1>0?dr(p1()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw1)):''}
       ${r.pre2020InhDraw2>0?dr(p2()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw2)):''}
       ${r.post2020InhRMD>0?dr('Post-2020 Inh IRA Required RMD',f$(r.post2020InhRMD)):''}
@@ -7495,6 +7586,8 @@ function renderYD(){
       ${dr('Filing Status Used',r.taxFiling||S.filing)}
       ${dr('Federal Ordinary',f$(r.fedOrd))}
       ${dr('LTCG / Qual Divs',f$(r.ltcg))}
+      ${r.childTaxCredit>0?dr('Child Tax Credit Used',f$(r.childTaxCredit)):''}
+      ${r.otherDependentCredit>0?dr('Credit for Other Dependents Used',f$(r.otherDependentCredit)):''}
       ${(r.netInvestmentIncome||0)>0?dr('NIIT Net Investment Income',f$(r.netInvestmentIncome)):''}
       ${(r.netInvestmentIncome||0)>0?dr('NIIT AGI Threshold',f$(r.niitThreshold)):''}
       ${(r.niitExcessMagi||0)>0?dr('AGI Above NIIT Threshold',f$(r.niitExcessMagi)):''}
@@ -7502,6 +7595,7 @@ function renderYD(){
       ${(r.niit||0)>0?dr('Net Investment Income Tax (3.8%)',f$(r.niit),'','color:#8b1a50'):''}
       ${(r.netInvestmentIncome||0)>0?'<div style="font-size:10px;line-height:1.5;color:#6a4800;background:#fff8e8;border-left:3px solid #8b1a50;padding:5px 8px;margin-top:6px">NIIT is 3.8% of the smaller of net investment income or AGI above the filing-status threshold. IRA draws, Roth conversions, and taxable Social Security can raise AGI but are not included in net investment income.</div>':''}
       ${r.caExemptionCredit>0?dr('CA Personal and Senior Credits Used',f$(r.caExemptionCredit)):''}
+      ${r.caDependentCredit>0?dr('CA Dependent Credit Used',f$(r.caDependentCredit)):''}
       ${dr('CA State Tax After Credits',f$(r.stTax))}
       ${r.treasuryInterest>0?dr('CA-exempt U.S. Treasury Interest',f$(r.treasuryInterest)):''}
       ${caTaxableMuniInterest>0?dr('CA-taxable Non-CA Muni Interest',f$(caTaxableMuniInterest)):''}
@@ -9494,7 +9588,7 @@ function buildReportPayload(){
     ssStressPct: S.ssStressPct || 0, ssStressStartYear: S.ssStressStartYear || '', ssStressPerson: S.ssStressPerson || 'both',
     widowMode: S.widowMode||'off', widowDeathYear: S.widowDeathYear||0, widowSpendPct: S.widowSpendPct||0, widowIraSpousePct:S.widowIraSpousePct == null ? 100 : S.widowIraSpousePct,
     widowEndSS: S.widowEndSS !== false, widowSurvivorSS: S.widowSurvivorSS !== false, widowSwitchSingle: S.widowSwitchSingle !== false, widowSSA44Relief: S.widowSSA44Relief === true,
-    rmdStart1: S.rmdStart1, rmdStart2: S.rmdStart2,
+    rmdStart1: firstModeledIraRmdYear(S.by1), rmdStart2: firstModeledIraRmdYear(S.by2),
     pre2020InhOwnerBy1: S.pre2020InhOwnerBy1||'', pre2020InhDeathYear1: S.pre2020InhDeathYear1||'',
     pre2020InhOwnerBy2: S.pre2020InhOwnerBy2||'', pre2020InhDeathYear2: S.pre2020InhDeathYear2||'',
     pre2020InhUseForFunding: S.pre2020InhUseForFunding||'no',
@@ -9543,6 +9637,7 @@ function buildReportPayload(){
     agi:r.agi||0, projectedAgi:r.projectedAgi??r.agi??0, projectedMagi:r.projectedMagi??r.magi??0, projectedIncomeTax:r.projectedIncomeTax??r.incomeTax??0, closeoutStatus:r.closeoutStatus||'projected', closeoutActuals:Object.assign({},r.closeoutActuals||{}), effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0, seniorBonus:r.seniorBonus||0, charityDed:r.charityDed||0,
     taxableInc:r.taxableInc||0,
     fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, niit:r.niit||0,
+    childTaxCredit:r.childTaxCredit||0, otherDependentCredit:r.otherDependentCredit||0, caDependentCredit:r.caDependentCredit||0,
     netInvestmentIncome:r.netInvestmentIncome||0, niitThreshold:r.niitThreshold||0, niitExcessMagi:r.niitExcessMagi||0, niitTaxableBase:r.niitTaxableBase||0,
     stTax:r.stTax||0, caExemptionCredit:r.caExemptionCredit||0,
     incomeTax:r.incomeTax||0, irmaaTx:r.irmaaTx||0,
@@ -9876,7 +9971,7 @@ function generateReport(){
     <tr><td>SS Start Age</td><td>${A.ssAge1||'—'}</td>${has2?`<td>${A.ssAge2||'—'}</td>`:''}</tr>
     <tr><td>SS Monthly Benefit</td><td>${fd(A.ssmo1)}</td>${has2?`<td>${fd(A.ssmo2)}</td>`:''}</tr>
     <tr><td>Wages End Year</td><td>${wend(A.wagesEnd1)}</td>${has2?`<td>${wend(A.wagesEnd2)}</td>`:''}</tr>
-    <tr><td>RMD Start Year</td><td>${A.rmdStart1||'—'}</td>${has2?`<td>${A.rmdStart2||'—'}</td>`:''}</tr>
+    <tr><td>First Modeled IRA RMD Year</td><td>${A.rmdStart1||'—'}</td>${has2?`<td>${A.rmdStart2||'—'}</td>`:''}</tr>
     <tr><td>Pre-2020 Inh IRA Lots</td><td>${(A.pre2020InhLots||[]).filter(l=>String(l.beneficiary||'1')==='1').length || '—'}</td>${has2?`<td>${(A.pre2020InhLots||[]).filter(l=>String(l.beneficiary)==='2').length || '—'}</td>`:''}</tr>
     <tr><td>Pre-2020 Inh IRA Funding</td><td>${A.pre2020InhUseForFunding==='before'?'Use before regular IRA':A.pre2020InhUseForFunding==='after'?'Use after regular IRA':'RMDs only'}</td>${has2?'<td></td>':''}</tr>
     <tr><td>401k Trad/Roth</td><td>${fp(A.k401Trad1)} / ${fp(A.k401Roth1)}</td>${has2?`<td>${fp(A.k401Trad2)} / ${fp(A.k401Roth2)}</td>`:''}</tr>
@@ -10128,9 +10223,12 @@ function generateReport(){
       ...(rc>0?[ ['Roth Conversion Needed',rc] ]:[]),
       ['Adjusted Gross Income',full.agi||0],
       ['Federal Tax',fed_tax],
+      ...(full.childTaxCredit>0?[['Child Tax Credit Used',full.childTaxCredit]]:[]),
+      ...(full.otherDependentCredit>0?[['Credit for Other Dependents Used',full.otherDependentCredit]]:[]),
       ...((full.niit||0)>0?[['Net Investment Income Tax (included above)',full.niit]]:[]),
       ...((full.caExemptionCredit||0)>0?[['CA Exemption Credits Used',full.caExemptionCredit]]:[]),
-      ...(ca_tax || full.caExemptionCredit?[['CA State Tax After Credits',ca_tax]]:[]),
+      ...(full.caDependentCredit>0?[['CA Dependent Credit Used',full.caDependentCredit]]:[]),
+      ...(ca_tax || full.caExemptionCredit || full.caDependentCredit?[['CA State Tax After Credits',ca_tax]]:[]),
       ['Total Income Tax',inc_tax],
       ['IRMAA Surcharge',irmaa],
       ['Medicare Part B',mcare],
@@ -11340,7 +11438,8 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const newAGI = agiExSS + amount + newTaxableSS;
   const ltcgIncome = (row.qualDivsForTax||0)+(row.taxableStkGain||0);
   const fedItemized = row.itemizedUsed ? Math.max(0,(row.effDed||0)-(row.seniorBonus||0)-(row.charityDed||0)) : null;
-  const newFed = calcFedTax(newAGI, ltcgIncome, filing, age1, age2, hasSecond, tables, fedItemized, row.charityDed||0);
+  const dependents = countTaxDependents(A.dependents, row.yr);
+  const newFed = calcFedTax(newAGI, ltcgIncome, filing, age1, age2, hasSecond, tables, fedItemized, row.charityDed||0, dependents);
   const netInvestmentIncome = row.netInvestmentIncome != null
     ? Math.max(0, row.netInvestmentIncome)
     : Math.max(0, (row.fedTaxableDivInt||0) + (row.taxableStkGain||0));
@@ -11351,7 +11450,7 @@ function rothLabFutureIraWithdrawalRate(rows, state, horizonYear, withdrawalAmou
   const newCaAGI = newAGI - newTaxableSS - (row.treasuryInterest||0) + (row.caTaxableMuniInterest||0);
   const caItemized = parseF(resolveOverrideNonBlank(A.ovDeductions, row.yr, 'caItemized'));
   const caSeniorCount = row.caSeniorCount ?? (Number(age1 >= 64) + Number(hasSecond && age2 >= 64));
-  const newState = calcStateTax(newCaAGI, filing, effectiveState, tables, caItemized, {federalAgi:newAGI, seniorCount:caSeniorCount}).tax;
+  const newState = calcStateTax(newCaAGI, filing, effectiveState, tables, caItemized, {federalAgi:newAGI, seniorCount:caSeniorCount, dependentCount:dependents.children + dependents.others}).tax;
   const baselineTax = Math.max(0,row.projectedIncomeTax ?? row.incomeTax ?? 0);
   return Math.max(0, Math.min(1, (newFed.ordTax + newFed.ltcgTax + newNIIT + newState - baselineTax) / amount));
 }
@@ -12936,7 +13035,7 @@ function setupAgePreview(){
     if (a2s && a2e) parts.push(n2+' is about '+a2s+' in '+start+' and '+a2e+' in '+end);
   }
   const ageText = parts.length ? parts.join('. ') + '.' : 'Enter birth years to see approximate ages at the start and end of the plan.';
-  return setupInfoCard('Plan years and ages', 'The plan runs from '+start+' through '+end+'. '+ageText+' Ages drive Social Security, Medicare, RMD, and senior deduction timing.', 'done');
+  return setupInfoCard('Plan years and ages', 'The plan runs from '+start+' through '+end+'. '+ageText+' For required minimum distributions (RMDs) from your own IRA, the model uses the age you reach during the calendar year.', 'done');
 }
 function setupPlanStartField(){
   const val = parseInt(S.startYear) || setupYear();
@@ -13227,6 +13326,69 @@ function renderSetupInterviewView(){
     '</div></div>' +
     '<div class="setup-side"><div class="setup-section-title" style="font-size:18px">Needs Attention</div>'+setupReadinessList(5)+'</div></div>';
 }
+function setupDependentYearNote(row) {
+  if (row.birthYear && row.lastYearClaimed && row.lastYearClaimed < row.birthYear) {
+    return 'Last year claimed must be the birth year or later.';
+  }
+  return '';
+}
+function setupDependentClaimYearSuggestions(value) {
+  const birthYear = dependentYear(value);
+  if (birthYear == null) return '';
+  return [18, 23].map(age => {
+    const year = dependentYear(birthYear + age);
+    return year == null ? '' : 'Turns ' + age + ' in ' + year + '.';
+  }).filter(Boolean).join(' ');
+}
+function setupPreviewDependentClaimYears(index, value) {
+  const suggestions = document.getElementById('dependent-' + index + '-lastYearClaimed-suggestions');
+  if (suggestions) suggestions.textContent = setupDependentClaimYearSuggestions(value);
+}
+function setupAddDependent() {
+  S.dependents.push({nickname:'', birthYear:'', lastYearClaimed:''});
+  setupAfterChange(true);
+  document.getElementById('dependent-'+(S.dependents.length-1)+'-nickname')?.focus();
+}
+function setupEditDependent(index, key, value) {
+  const row = S.dependents[index];
+  if (!row || !['nickname','birthYear','lastYearClaimed'].includes(key)) return;
+  row[key] = key === 'nickname' ? value.trim() : (dependentYear(value) ?? '');
+  const note = document.getElementById('dependent-note-'+index);
+  if (note) {
+    note.textContent = key !== 'nickname' && value !== '' && row[key] === ''
+      ? 'Enter a four-digit year from 1900 to 9999.' : setupDependentYearNote(row);
+  }
+  setupAfterChange(false);
+}
+function setupRemoveDependent(index) {
+  if (!S.dependents[index]) return;
+  S.dependents.splice(index, 1);
+  setupAfterChange(true);
+}
+function renderSetupDependents() {
+  const rows = S.dependents.map((row,index) => {
+    const field = (label,key,type) => {
+      const id = 'dependent-'+index+'-'+key;
+      const bounds = type === 'number' ? ' min="1900" max="9999" step="1"' : '';
+      const preview = key === 'birthYear' ? ' oninput="setupPreviewDependentClaimYears('+index+',this.value)"' : '';
+      const isClaimYear = key === 'lastYearClaimed';
+      const describedBy = isClaimYear ? ' aria-describedby="'+id+'-guidance"' : '';
+      const guidance = isClaimYear ? '<div class="setup-field-note" id="'+id+'-guidance">'+
+        'For a child, start with the year they turn 18. A qualifying full-time student can be claimed through the last year they qualify, up to the year they turn 23 under the student age rule. Full-time enrollment must cover part of at least five calendar months that year.'+
+        '<div id="'+id+'-suggestions" aria-live="polite">'+setupDependentClaimYearSuggestions(row.birthYear)+'</div></div>' : '';
+      return '<div class="setup-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+type+'"'+bounds+
+        preview+describedBy+' value="'+setupEsc(row[key])+'" onchange="setupEditDependent('+index+',\''+key+'\',this.value)">'+guidance+'</div>';
+    };
+    return '<div class="strategy-card"><div class="strategy-card-title">Dependent '+(index+1)+
+      ' <button type="button" class="btn btn-light btn-sm" style="float:right" onclick="setupRemoveDependent('+index+')">Remove</button></div>'+
+      '<div class="setup-field-grid">'+field('Nickname (optional)','nickname','text')+field('Birth year','birthYear','number')+
+      field('Last tax year claimed','lastYearClaimed','number')+'</div>'+
+      '<div class="setup-field-note" id="dependent-note-'+index+'" aria-live="polite">'+setupDependentYearNote(row)+'</div></div>';
+  }).join('');
+  return '<div class="strategy-card" style="grid-column:1/-1"><div class="strategy-card-title">Dependents (optional)</div>'+
+    '<p class="setup-section-copy">Add anyone you expect to claim. Enter both years to include them from their birth year through the last tax year claimed. The model uses your claiming and credit eligibility assumptions. A child who turns 17 can still be your dependent and may qualify for the Credit for Other Dependents.</p>'+
+    rows+'<button type="button" class="btn btn-light btn-sm" onclick="setupAddDependent()">Add Dependent</button></div>';
+}
 function renderSetupHouseholdStep(){
   const yr = setupYear();
   const has2 = hasP2();
@@ -13245,7 +13407,8 @@ function renderSetupHouseholdStep(){
     setupSelect('State Tax Setting','state',S.state,[['CA','California'],['','Federal Only']],{note:'California turns on California tax estimates. Federal Only skips state income tax.'}),
     setupPlanStartField(),
     setupPlanLengthField(),
-    setupAgePreview()
+    setupAgePreview(),
+    renderSetupDependents()
   ].join('');
 }
 function renderSetupAssumptionsStep(){
