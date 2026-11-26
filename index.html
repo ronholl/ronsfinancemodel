@@ -1343,6 +1343,8 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
 <div id="pane-cashflow" class="pane">
   <div class="sh">Complete Year-by-Year Cash Flow</div>
   <div class="marker-legend"><strong>✦</strong> before a value = year-specific override/timing strategy active; <strong>†</strong> after IRMAA = SSA-44 survivor relief assumption applied; <strong>‡</strong> = year or value updated through Year-End Closeout. A ‡ Total Tax may not equal the still-projected federal/state component columns. An IRA gift (QCD) goes directly to charity. Regular RMD columns show the cash still payable after the gift.</div>
+  <div class="marker-legend" id="cf-aca-note" hidden>Household shows the tax household size and the ages claimed dependents turn that year. ACA targets reflect any cushion entered in Strategy Builder. ACA household MAGI uses projected federal AGI, tax-exempt interest, nontaxable Social Security, and any additional ACA income entered. Future guidelines marked Projected use the plan's spending inflation rate.</div>
+  <div class="marker-legend" id="cf-fixed-ira-summary" hidden></div>
   <div id="cf-wrap" style="overflow-x:auto;overflow-y:auto;max-height:75vh;position:relative;isolation:isolate;background:#fffdf5">
     <table id="cf-tbl" style="border-collapse:collapse;font-size:11px;white-space:nowrap;min-width:max-content">
       <thead id="cf-thead"></thead>
@@ -1358,8 +1360,9 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <summary style="cursor:pointer;font-weight:700">Tax Coverage &amp; Limitations</summary>
     <p style="margin-top:8px"><strong>Included.</strong> Federal income tax, taxable Social Security, ordinary and preferential investment-income rates, standard or entered itemized deductions, NIIT, nonrefundable dependent credits, California income tax with personal and senior exemption credits, and eligible IRA gifts entered as QCDs. Medicare premiums and IRMAA are shown separately.</p>
     <p><strong>Key assumptions.</strong> Traditional IRA withdrawals and conversions are generally treated as fully taxable apart from modeled QCDs. Brokerage dividends use the selected ordinary or qualified treatment and modeled sale gains use long-term rates. NIIT estimates use taxable dividends, interest and modeled gains. IRA basis (Form 8606), short-term gain splits, loss carryovers, and specialized Form 8960 items are outside those estimates.</p>
-    <p><strong>Check separately if applicable.</strong> Alternative minimum tax (AMT), self-employment tax, annual household Additional Medicare Tax, the California surtax over $1 million of taxable income, retirement-account penalties, and other state returns. The W-2 withholding helper includes a simplified Additional Medicare Tax estimate. The payment checks use the standard federal and California rules.</p>
+    <p><strong>Check separately if applicable.</strong> Alternative minimum tax (AMT), self-employment tax, annual household Additional Medicare Tax, the California surtax over $1 million of taxable income, retirement-account penalties outside the regular IRA withdrawal estimate below, and other state returns. The W-2 withholding helper includes a simplified Additional Medicare Tax estimate. The payment checks use the standard federal and California rules.</p>
     <p class="note"><strong>NIIT.</strong> The app uses 3.8% of the smaller of modeled net investment income or federal AGI above the filing threshold ($250,000 joint, $200,000 single/head of household, $125,000 separate). The taxable part of Social Security, IRA draws and conversions can raise AGI. <a href="https://www.irs.gov/instructions/i8960" target="_blank" rel="noopener">IRS Form 8960</a></p>
+    <p class="note"><strong>Early IRA withdrawals.</strong> During a regular fixed IRA strategy, the forecast takes 10% in federal additional tax from the owner’s gross IRA cash distributions through the year the owner turns 59. This annual estimate assumes the distributions occur before age 59½ and that no exception applies. Check any state penalty, account-specific exception, or SEPP recapture separately. <a href="https://www.irs.gov/taxtopics/tc557" target="_blank" rel="noopener">IRS early IRA withdrawal rules</a></p>
     <p class="note"><strong>Dependents.</strong> The model uses the claiming years you enter and estimates nonrefundable credits from 2025 onward. The federal credit uses modeled federal AGI for the phaseout and holds the published 2027 Child Tax Credit amount for later years. The refundable Additional Child Tax Credit and dependent-care credits are outside this estimate. <a href="https://www.irs.gov/pub/irs-prior/f1040s8--2026.pdf" target="_blank" rel="noopener">IRS Schedule 8812</a></p>
     <p class="note"><strong>California.</strong> Personal, senior, and dependent exemption credits are modeled for California resident years from 2025 onward. The 2026 credit amounts come from FTB. The 2026 phaseout thresholds use FTB's published inflation adjustment, and later years use your bracket inflation assumption. <a href="https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html" target="_blank" rel="noopener">FTB 2026 figures</a></p>
     <div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="setupView='strategy';setupStrategyType='qcd';setupEditingStrategy=null;ST('setup')">Plan an IRA Charitable Gift (QCD)</button></div>
@@ -1382,7 +1385,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <table class="data" id="tax-tbl">
       <thead><tr>
         <th>Year</th><th>Ages</th><th>AGI</th><th>Deduction</th><th>Sr. Bonus</th><th>Charity</th><th>Taxable Inc</th>
-        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>NIIT</th><th>CA Credit Used</th><th>CA State (net)</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
+        <th>Filing</th><th>Fed Ord</th><th>LTCG/QDI</th><th>NIIT</th><th id="tax-early-ira-header" hidden>Early IRA Tax</th><th>CA Credit Used</th><th>CA State (net)</th><th>Total Tax</th><th>Eff %</th><th>Marginal</th><th>Taxable Blend</th>
         <th style="color:#888">IRMAA MAGI</th><th>IRMAA Surcharge</th><th>Medicare Part B</th><th>IRMAA Tier</th>
       </tr></thead>
       <tbody id="tax-body"></tbody>
@@ -2109,16 +2112,182 @@ function dependentYear(value) {
   const year = Number(value);
   return Number.isInteger(year) && year >= 1900 && year <= 9999 ? year : null;
 }
+function claimedDependentAge(dependent, year) {
+  const birth = dependentYear(dependent?.birthYear);
+  const last = dependentYear(dependent?.lastYearClaimed);
+  return birth != null && last != null && year >= birth && year <= last ? year - birth : null;
+}
 function countTaxDependents(dependents, year) {
   let children = 0, others = 0;
   for (const dependent of Array.isArray(dependents) ? dependents : []) {
-    const birth = dependentYear(dependent?.birthYear);
-    const last = dependentYear(dependent?.lastYearClaimed);
-    if (birth == null || last == null || year < birth || year > last) continue;
-    if (year - birth < 17) children++;
+    const age = claimedDependentAge(dependent,year);
+    if (age == null) continue;
+    if (age < 17) children++;
     else others++;
   }
   return {children, others};
+}
+
+function fixedIraPaymentAmount(value) {
+  const amount = Math.round(Number(value) * 100) / 100;
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
+function normalizeFixedIraSeppEstimate(estimate) {
+  if (!estimate || typeof estimate !== 'object') return null;
+  const rate = estimate.ratePct == null || estimate.ratePct === '' ? NaN : Number(estimate.ratePct);
+  return {
+    source:estimate.source === 'projected' ? 'projected' : 'ira',
+    balance:fixedIraPaymentAmount(estimate.balance),
+    ratePct:Number.isFinite(rate) && rate >= 0 && rate <= 5 ? rate : null
+  };
+}
+
+function normalizeFixedIraWithdrawal(row, acaTargets = []) {
+  if (!row || typeof row !== 'object') return null;
+  const startYear = dependentYear(row.startYear);
+  const endYear = dependentYear(row.endYear);
+  const owner = String(row.owner);
+  const amount = fixedIraPaymentAmount(row.amount);
+  if (startYear == null || endYear == null || endYear < startYear ||
+      !['1','2'].includes(owner) || amount == null) return null;
+  const sepp = row.sepp && typeof row.sepp === 'object' ? {
+    birthDate:typeof row.sepp.birthDate === 'string' ? row.sepp.birthDate : '',
+    firstDate:typeof row.sepp.firstDate === 'string' ? row.sepp.firstDate : '',
+    noTransitionPayment:row.sepp.noTransitionPayment === true,
+    calculatedAmount:fixedIraPaymentAmount(row.sepp.calculatedAmount),
+    estimate:normalizeFixedIraSeppEstimate(row.sepp.estimate)
+  } : null;
+  const reserveIra = typeof row.reserveIra === 'boolean' ? row.reserveIra :
+    acaTargets.some(target => startYear <= target.endYear && endYear >= target.startYear);
+  return {owner, amount, startYear, endYear, sepp, reserveIra,
+    ...(!sepp && !reserveIra && row.earlyDrawConfirmed === true ? {earlyDrawConfirmed:true} : {})};
+}
+
+function fixedIraSeppDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !dependentYear(value.slice(0,4))) return null;
+  const date = new Date(value + 'T00:00:00Z');
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value ? date : null;
+}
+
+function fixedIraSeppTiming(row, state) {
+  const birth = fixedIraSeppDate(row.sepp.birthDate);
+  const first = fixedIraSeppDate(row.sepp.firstDate);
+  if (!birth || !first) return {issue:'Enter the owner’s exact birth date and first SEPP payment date.'};
+  const ownerBirthYear = dependentYear(state['by' + row.owner]);
+  if (ownerBirthYear && ownerBirthYear !== birth.getUTCFullYear()) {
+    return {issue:'Use a birth date that matches the selected IRA owner’s birth year in Household.'};
+  }
+  if (first <= birth) return {issue:'The first payment date must follow the owner’s birth date.'};
+  const age59Half = new Date(Date.UTC(birth.getUTCFullYear() + 59, birth.getUTCMonth() + 6, birth.getUTCDate()));
+  const fifth = new Date(Date.UTC(first.getUTCFullYear() + 5, first.getUTCMonth(), first.getUTCDate()));
+  if (age59Half.getUTCDate() !== birth.getUTCDate() || (birth.getUTCMonth() === 1 && birth.getUTCDate() === 29) ||
+      fifth.getUTCDate() !== first.getUTCDate()) {
+    return {issue:'Confirm the exact milestone dates with the IRA custodian for a leap-day or month-end date. Use the fixed withdrawal forecast while reviewing the dates.'};
+  }
+  if (first >= age59Half) {
+    return {issue:'The first payment is at or after age 59½. A regular fixed withdrawal can model this payment.'};
+  }
+  const boundary = fifth > age59Half ? fifth : age59Half;
+  if (boundary.getUTCFullYear() > 9999) return {issue:'The change date exceeds the supported plan years.'};
+  const date = boundary.toISOString().slice(0,10);
+  const changeYear = boundary.getUTCFullYear();
+  const minimumYear = changeYear - 1;
+  const transitionYear = date.endsWith('-01-01') ? null : changeYear;
+  const modeledFirstYear = Math.max(first.getUTCFullYear(), Number(state.startYear));
+  const needsConfirmation = transitionYear != null && row.endYear === minimumYear;
+  const result = {date, minimumYear, transitionYear, needsConfirmation};
+  if (row.startYear !== modeledFirstYear) {
+    return {...result, issue:'Set First Payment Year to ' + modeledFirstYear + ' for the first payment in this plan.'};
+  }
+  if (Number(state.endYear) < minimumYear) {
+    return {...result, issue:'Extend the plan through ' + minimumYear + ' to show the full payment years.'};
+  }
+  if (row.endYear == null || row.endYear < minimumYear) {
+    return {...result, issue:'Set Last Payment Year to at least ' + minimumYear + ' to cover the full calendar years before the change date.'};
+  }
+  if (needsConfirmation && !row.sepp.noTransitionPayment) {
+    return {...result, issue:'Confirm the transition-year payment schedule before ending the modeled payments in ' + row.endYear + '.'};
+  }
+  return result;
+}
+
+function fixedIraProtectionYears(row, state) {
+  if (!row.sepp) return {startYear:row.startYear, endYear:row.endYear};
+  const first = fixedIraSeppDate(row.sepp.firstDate);
+  const timing = fixedIraSeppTiming(row, state);
+  return {
+    startYear:Math.min(row.startYear, first?.getUTCFullYear() ?? row.startYear),
+    // Annual cash flow cannot place an extra draw after a midyear change date.
+    endYear:Math.max(row.endYear, timing.transitionYear ?? timing.minimumYear ?? row.endYear)
+  };
+}
+
+function fixedIraReservesOwner(row) {
+  return row.reserveIra === true || !!row.sepp;
+}
+
+function fixedIraSchedulesConflict(row, other, state) {
+  if (row.owner !== other.owner || (!fixedIraReservesOwner(row) && !fixedIraReservesOwner(other))) return false;
+  const a = fixedIraProtectionYears(row, state);
+  const b = fixedIraProtectionYears(other, state);
+  return a.startYear <= b.endYear && b.startYear <= a.endYear;
+}
+
+function formatFixedIraSeppDate(date) {
+  return new Date(date).toLocaleDateString('en-US', {dateStyle:'long', timeZone:'UTC'});
+}
+
+// Coverage years use the HHS guidelines in effect when regular enrollment opens.
+const ACA_INCOME_TARGET_POVERTY = {
+  2025:{US:[15060,5380], AK:[18810,6730], HI:[17310,6190]},
+  2026:{US:[15650,5500], AK:[19550,6880], HI:[17990,6330]},
+  2027:{US:[15960,5680], AK:[19950,7100], HI:[18360,6530]}
+};
+const ACA_INCOME_TARGET_FIRST_YEAR = Number(Object.keys(ACA_INCOME_TARGET_POVERTY)[0]);
+const ACA_INCOME_TARGET_REGIONS = {US:'Contiguous U.S. and D.C.', AK:'Alaska', HI:'Hawaii'};
+const ACA_INCOME_TARGET_PRESETS = [150, 200, 250, 300, 400];
+const ACA_TARGET_FUNDING_LABELS = {
+  limit:'Stay at or below the target when possible',
+  compare:'Show the target for comparison'
+};
+const ACA_TARGET_FUNDING_HELP = {
+  limit:'The plan limits extra IRA withdrawals, gains from brokerage sales, and Roth conversions. It uses other available funds and shows any funding shortfall. Wages, dividends, and scheduled withdrawals can still put you over the target.',
+  compare:'The plan follows your usual funding order. Cash Flow shows how far your projected income is above or below the target.'
+};
+
+function normalizeAcaIncomeTarget(row) {
+  if (!row || typeof row !== 'object') return null;
+  const startYear = dependentYear(row.startYear);
+  const endYear = dependentYear(row.endYear) ?? (row.endYear == null || row.endYear === '' ? startYear : null);
+  const {region} = row;
+  const percent = Number(row.percent);
+  const cushion = Number(row.cushion ?? 0);
+  const additionalMagi = Number(row.additionalMagi ?? 0);
+  if (startYear == null || startYear < ACA_INCOME_TARGET_FIRST_YEAR || endYear == null || endYear < startYear ||
+      !Object.hasOwn(ACA_INCOME_TARGET_REGIONS, region) || !Number.isFinite(percent) || percent <= 0 ||
+      [cushion, additionalMagi].some(amount => !Number.isFinite(amount) || amount < 0)) return null;
+  const limitFunding = row.limitFunding !== false;
+  return {startYear, endYear, region, percent, cushion, additionalMagi, limitFunding,
+    rothFill:limitFunding && row.rothFill === true};
+}
+
+function acaIncomeStrategyForYear(state, year) {
+  return (state.ovAcaIncomeTarget || []).findLast(row => year >= row.startYear && year <= row.endYear);
+}
+
+function acaIncomeTargetForYear(year, joint, dependentCount, inflation, strategy) {
+  const baseYear = Object.keys(ACA_INCOME_TARGET_POVERTY).map(Number).filter(y => y <= year).at(-1);
+  if (baseYear == null) return null;
+  const [base, perPerson] = ACA_INCOME_TARGET_POVERTY[baseYear][strategy.region];
+  const size = (joint ? 2 : 1) + dependentCount;
+  const povertyLine = (base + perPerson * (size - 1)) * Math.pow(1 + (Number(inflation) || 0), year - baseYear);
+  const incomeLimit = povertyLine * strategy.percent / 100;
+  if (!Number.isFinite(incomeLimit) || incomeLimit < 0) return null;
+  return {
+    size, baseYear, projected:year > baseYear,
+    limit:Math.floor(incomeLimit), target:Math.max(0, Math.floor(incomeLimit - strategy.cushion))
+  };
 }
 
 // Schedule 8812 combines both credits into one nonrefundable amount.
@@ -2583,6 +2752,8 @@ function defaultState() {
     ovCashFloor:[],      // {floor, startYear, endYear, notes}
     ovHSADeposit:[],     // {amount, startYear, endYear}
     ovIncomeLevel:[],    // {magiTarget, startYear, endYear, notes}
+    ovAcaIncomeTarget:[], // Annual Marketplace income targets
+    ovFixedIraWithdrawals:[], // {owner, amount, startYear, endYear}
     ovTaxFill:[],        // {active:'T'|'off', headroom, startYear, endYear, notes}
     ovRothSource:[],     // {source:'HIGH'|'LOW'|'P1'|'P2'|'SPLIT', p1Pct, startYear, endYear, notes}
     ovRothTaxFunding:[], // {method:'NORMAL'|'OUTSIDE'|'IRA'|'WITHHOLD', startYear, endYear, notes}
@@ -2666,6 +2837,13 @@ function runProjection(S) {
   }
   const rows = [];
   const hp2 = S.householdMode !== 'single' && !!(S.name2 && S.name2.trim());
+
+  const fixedIraSchedules = S.ovFixedIraWithdrawals || [];
+  const hasRegularIraSchedules = fixedIraSchedules.some(row => !row.sepp);
+  const iraReservations = fixedIraSchedules.filter(fixedIraReservesOwner)
+    .map(schedule => ({schedule, ...fixedIraProtectionYears(schedule, S)}))
+    // Keep a checked SEPP ahead of ordinary reserved schedules on previously saved overlaps.
+    .sort((a,b) => Number(!!a.schedule.sepp) - Number(!!b.schedule.sepp));
 
   // Working balances — will be overridden by SOY entries when present
   let cash=0, sec=0, ira1=0, ira2=0, roth1=0, roth2=0, hsa=0;
@@ -2932,13 +3110,46 @@ function runProjection(S) {
     const requiredRmd2 = hp2 ? getRegularIraRmd(ira2, S.by2, yr) : 0;
     const restrictedIra1 = restrictedInvestmentAmount('ira1', yr, S);
     const restrictedIra2 = restrictedInvestmentAmount('ira2', yr, S);
+    const owner1Active = !(afterDeathYear && p2Survivor);
+    const owner2Active = hp2 && !(afterDeathYear && p1Survivor);
     const requestedQcd = person => Math.max(0, parseF(resolveOverrideNonBlank(S.ovQcd, yr, 'amount' + person)) || 0);
-    const qcdRequested1 = afterDeathYear && p2Survivor ? 0 : requestedQcd(1);
-    const qcdRequested2 = !hp2 || (afterDeathYear && p1Survivor) ? 0 : requestedQcd(2);
-    const qcd1 = modelQcd(qcdRequested1, yr - by1Eff, ira1, restrictedIra1, requiredRmd1, yr);
-    const qcd2 = modelQcd(qcdRequested2, yr - by2Eff, ira2, restrictedIra2, requiredRmd2, yr);
+    const qcdRequested1 = owner1Active ? requestedQcd(1) : 0;
+    const qcdRequested2 = owner2Active ? requestedQcd(2) : 0;
+    const reservedSchedule = owner => iraReservations.findLast(range =>
+      range.schedule.owner === owner && yr >= range.startYear && yr <= range.endYear);
+    const reservedIra1 = owner1Active ? reservedSchedule('1') : null;
+    const reservedIra2 = owner2Active ? reservedSchedule('2') : null;
+    const qcd1 = modelQcd(reservedIra1 ? 0 : qcdRequested1, yr - by1Eff, ira1, restrictedIra1, requiredRmd1, yr);
+    const qcd2 = modelQcd(reservedIra2 ? 0 : qcdRequested2, yr - by2Eff, ira2, restrictedIra2, requiredRmd2, yr);
     const rmd1 = qcd1.cashRmd, rmd2 = qcd2.cashRmd;
-    const committedIra1 = rmd1 + qcd1.amount, committedIra2 = rmd2 + qcd2.amount;
+    const paymentYear = row => yr >= row.startYear && yr <= row.endYear;
+    const activeFixedSchedule = (owner, protection) => {
+      const row = protection?.schedule || fixedIraSchedules.findLast(item => item.owner === owner && paymentYear(item));
+      return row && paymentYear(row) ? row : null;
+    };
+    const fixedSchedule1 = owner1Active ? activeFixedSchedule('1', reservedIra1) : null;
+    const fixedSchedule2 = owner2Active ? activeFixedSchedule('2', reservedIra2) : null;
+    const requested1 = fixedSchedule1?.amount || 0;
+    const requested2 = fixedSchedule2?.amount || 0;
+    const earlyIraRate = row => row && !row.sepp && fixedIraMayStartBefore59Half(row.owner,yr,S) ? 0.10 : 0;
+    const earlyIraRate1 = earlyIraRate(fixedSchedule1);
+    const earlyIraRate2 = earlyIraRate(fixedSchedule2);
+    const earlyDrawNeedsConsent1 = earlyIraRate1 > 0 && !reservedIra1 && !fixedSchedule1.earlyDrawConfirmed;
+    const earlyDrawNeedsConsent2 = earlyIraRate2 > 0 && !reservedIra2 && !fixedSchedule2.earlyDrawConfirmed;
+    const blockExtraIra1 = reservedIra1 || earlyDrawNeedsConsent1;
+    const blockExtraIra2 = reservedIra2 || earlyDrawNeedsConsent2;
+    // Use cash RMDs toward the schedule and reserve any additional payment before other draws.
+    const fixedIra1 = Math.min(Math.max(0, requested1 - rmd1), Math.max(0, ira1 - restrictedIra1 - rmd1 - qcd1.amount));
+    const fixedIra2 = Math.min(Math.max(0, requested2 - rmd2), Math.max(0, ira2 - restrictedIra2 - rmd2 - qcd2.amount));
+    const fixedIraCash = fixedIra1 + fixedIra2;
+    const regularIraCash = rmd1 + rmd2 + fixedIraCash;
+    const scheduledIraRequested = requested1 + requested2;
+    const scheduledIraPaid1 = Math.min(requested1, rmd1) + fixedIra1;
+    const scheduledIraPaid2 = Math.min(requested2, rmd2) + fixedIra2;
+    const scheduledIraPaid = scheduledIraPaid1 + scheduledIraPaid2;
+    const scheduledEarlyIraTax = scheduledIraPaid1 * earlyIraRate1 + scheduledIraPaid2 * earlyIraRate2;
+    const committedIra1 = rmd1 + qcd1.amount + fixedIra1;
+    const committedIra2 = rmd2 + qcd2.amount + fixedIra2;
     pre2020Lots.forEach(lot => {
       lot._pre2020Required = 0;
       lot._pre2020Calc = {draw:0, divisor:0, firstYear:null, ownerReachedRMD:false};
@@ -3197,11 +3408,19 @@ function runProjection(S) {
     const w2AGIFunding  = w2AGI1Funding + w2AGI2Funding;
 
     // ── Mandatory funding (step 1 of waterfall) ───────────────────────────
-    // SS + RMDs + Inh draw + dividends + wages — these come in regardless
-    const mandatoryFunding = grossSS + rmd1 + rmd2 + pre2020InhDraw + post2020InhDraw + divs + netAtWages + ptWages; // SS, RMDs, pre-2020 inherited RMDs, dividends, wages = W-2 take-home + self-employ
+    // Scheduled IRA payments join RMDs, Social Security, wages and cash dividends before other funding.
+    const mandatoryFunding = grossSS + regularIraCash + pre2020InhDraw + post2020InhDraw + divs + netAtWages + ptWages;
 
     // ── Required funding ──────────────────────────────────────────────────
     const step1Total = mandatoryFunding + hsaWith;
+    const acaStrategy = acaIncomeStrategyForYear(S,yr);
+    const acaFundingTarget = acaStrategy && acaStrategy.limitFunding !== false
+      ? acaIncomeTargetForYear(yr,taxFiling === 'MFJ' && taxHasP2,dependentCount,S.spendInfl,acaStrategy) : null;
+    // ACA MAGI includes all Social Security. Its taxable and nontaxable parts
+    // sum to the same amount even when a taxable draw changes their split.
+    const acaMagiBeforeOptional = acaFundingTarget ? w2AGIFunding + ptWages + regularIraCash +
+      pre2020InhDraw + post2020InhDraw + fedTaxableDivInt + grossSS + taxExemptInterest +
+      acaStrategy.additionalMagi : null;
     const cashGapNeeded = Math.max(0, cashFloor - startCashBal);
     const restrictedSec = restrictedInvestmentAmount('sec',yr,S);
     const restrictedRoth1 = restrictedInvestmentAmount('roth1',yr,S);
@@ -3219,181 +3438,6 @@ function runProjection(S) {
     // A manual Funded Tax amount controls the ordinary cash-tax funding entry,
     // but it must not silently disable the selected Roth conversion tax method.
     const rothTaxFundingCfg = getRothTaxFundingForYear(S, yr);
-    let baseTaxFundingEst = taxEst;
-    let convTaxFundingEst = 0;
-    let totalTax=0, fedRes_f, niit_f=0, netInvestmentIncome_f=0, niitThreshold_f=0, niitExcessMagi_f=0, niitTaxableBase_f=0, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
-    let irmaaLookbackYear_f=yr-2, irmaaSurvivorRelief_f=false;
-    let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
-    const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
-    let rothModeWith1_f=0, rothModeWith2_f=0;
-    let ira1Draw_f=0, ira2Draw_f=0, secDraw_f=0, cashDraw_f=0;
-    let pre2020InhAddl1_f=0, pre2020InhAddl2_f=0;
-    let pre2020AddlByLot_f={};
-    let rothDraw1_f=0, rothDraw2_f=0;
-    let excessFunds_f=0, shortfall_f=0;
-    let netTaxNeeded_f=0;
-    let baseTax_f=0, rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
-    let caExemptionCredit = 0, caDependentCredit = 0, caAgi = 0;
-    let rothConvTaxCash_f=0, rothConvTaxSec_f=0, rothConvTaxIra1_f=0, rothConvTaxIra2_f=0, rothConvTaxWithheld_f=0, rothConvTaxShortfall_f=0;
-    let fundingOrder_f=['SEC','IRA','ROTH'];
-    for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
-    const normalTaxEstimate = rothTaxFundingCfg.method === 'NORMAL' ? taxEst : baseTaxFundingEst;
-    const totalRequired = spending + normalTaxEstimate + cashGapNeeded;
-
-    // ── Excess / shortfall_inner ────────────────────────────────────────────────
-    // Excess mandatory funding goes to Securities
-    // Step 1 inflows: mandatory (SS/RMDs/divs/wages) + HSA withdrawal
-    const excessFunds_inner  = Math.max(0, step1Total - totalRequired);
-    let   remainingShortfall = Math.max(0, totalRequired - step1Total);
-    const shortfall_inner = remainingShortfall;
-
-    // Only the explicit Roth-above-target mode should change normal cash-flow funding.
-    // No-extra-fill means no added conversions and no hidden cap on IRA draws needed
-    // for spending/tax funding, so scenario comparisons stay neutral when Roth Conv is $0.
-    const fundingTargetInfo = getProjectionIncomeTargetInfo(S, yr, taxFiling, tables);
-    const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode === 'R');
-    const useRothAboveTargetFunding = protectTaxableFunding;
-    const qualDivsForFunding = fedTaxableDivInt;
-    const estimateAGIForFundingDraws = (ira1Extra, ira2Extra, preAddl1, preAddl2, secExtra) => {
-      const taxableStkGainEst = Math.max(0, secExtra || 0) * stkGainPct;
-      const taxableRMDsEst = rmd1 + rmd2 + pre2020InhDraw + (preAddl1 || 0) + (preAddl2 || 0) + post2020InhDraw + (ira1Extra || 0) + (ira2Extra || 0) + qualDivsForFunding;
-      const agiExSSEst = w2AGIFunding + ptWages + taxableRMDsEst + taxableStkGainEst;
-      const tSSEst = calcTaxableSS(grossSS, agiExSSEst + grossSS, taxFiling, taxExemptInterest);
-      return agiExSSEst + tSSEst;
-    };
-    const allowedRegularIRADrawForTarget = (which, avail) => {
-      if (!protectTaxableFunding || avail <= 0) return avail;
-      const target = fundingTargetInfo.targetIncome;
-      const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
-      const currentTargetIncome = currentAGI + (taxExemptInterest || 0);
-      if (currentTargetIncome >= target - 0.50) return 0;
-      let lo = 0, hi = Math.max(0, avail);
-      for (let i = 0; i < 24; i++) {
-        const mid = (lo + hi) / 2;
-        const testIra1 = ira1Draw_inner + (which === 1 ? mid : 0);
-        const testIra2 = ira2Draw_inner + (which === 2 ? mid : 0);
-        const testAGI = estimateAGIForFundingDraws(testIra1, testIra2, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
-        const testTargetIncome = testAGI + (taxExemptInterest || 0);
-        if (testTargetIncome <= target + 0.50) lo = mid;
-        else hi = mid;
-      }
-      return Math.max(0, lo);
-    };
-
-    // ── Funding waterfall — cash above floor, then selected account order ──
-    const fundingOrder = getFundingOrderForYear(S, yr);
-    const fundingChoice = fundingOrder[0] || 'SEC';
-    let cashDraw_inner=0, secDraw_inner=0, ira1Draw_inner=0, ira2Draw_inner=0, pre2020InhAddl1_inner=0, pre2020InhAddl2_inner=0, rothDraw1_inner=0, rothDraw2_inner=0;
-    const pre2020AddlByLot_inner = {};
-    const pre2020FundingMode = S.pre2020InhUseForFunding === true ? 'before' : (S.pre2020InhUseForFunding || 'no');
-    const drawPre2020ForFunding = (slot) => {
-      if (pre2020FundingMode !== slot || remainingShortfall <= 0) return;
-      const buckets = pre2020Lots.map(lot => {
-        const beneficiary = pre2020LotBeneficiary(lot);
-        if (!lot.active || (lot.bal || 0) <= 0 || (beneficiary === '2' && !hp2)) return null;
-        const already = pre2020AddlByLot_inner[lot.idx] || 0;
-        const required = lot._pre2020Required || 0;
-        return {idx:lot.idx, beneficiary, avail:Math.max(0, (lot.bal || 0) - required - already)};
-      }).filter(Boolean).sort((a,b)=>b.avail-a.avail);
-      for (const b of buckets) {
-        if (remainingShortfall <= 0 || b.avail <= 0) continue;
-        const d = Math.min(remainingShortfall, b.avail);
-        pre2020AddlByLot_inner[b.idx] = (pre2020AddlByLot_inner[b.idx] || 0) + d;
-        if (b.beneficiary === '2') pre2020InhAddl2_inner += d;
-        else pre2020InhAddl1_inner += d;
-        remainingShortfall -= d;
-      }
-    };
-
-    // Step 2: Cash down to floor
-    if (remainingShortfall > 0) {
-      const availCash = Math.max(0, cash - cashFloor);
-      cashDraw_inner = Math.min(remainingShortfall, availCash);
-      remainingShortfall -= cashDraw_inner;
-    }
-    const drawRothFunding = () => {
-      const buckets = [
-        {i:1, avail:Math.max(0, roth1 - restrictedRoth1 - rothDraw1_inner)},
-        ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - restrictedRoth2 - rothDraw2_inner)}] : [])
-      ].sort((a,b)=>b.avail-a.avail);
-      for (const b of buckets) {
-        if (remainingShortfall <= 0 || b.avail <= 0) continue;
-        const d = Math.min(remainingShortfall, b.avail);
-        if (b.i === 1) rothDraw1_inner += d;
-        else rothDraw2_inner += d;
-        remainingShortfall -= d;
-      }
-    };
-    const drawFundingBucket = (bucket) => {
-      if (remainingShortfall <= 0) return;
-      if (useRothAboveTargetFunding) {
-        const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
-        if (currentAGI >= fundingTargetInfo.targetIncome - 0.50) {
-          drawRothFunding();
-          if (remainingShortfall <= 0) return;
-        }
-      }
-      if (bucket === 'SEC') {
-        const d = Math.min(remainingShortfall, Math.max(0,sec-restrictedSec-secDraw_inner));
-        secDraw_inner += Math.max(0, d);
-        remainingShortfall -= Math.max(0, d);
-      } else if (bucket === 'IRA') {
-        drawPre2020ForFunding('before');
-        if (remainingShortfall > 0) {
-          const buckets = [
-            {i:1, avail:Math.max(0, ira1 - committedIra1 - restrictedIra1 - ira1Draw_inner)},
-            ...(hp2 ? [{i:2, avail:Math.max(0, ira2 - committedIra2 - restrictedIra2 - ira2Draw_inner)}] : [])
-          ].sort((a,b)=>b.avail-a.avail);
-          for (const b of buckets) {
-            if (remainingShortfall <= 0 || b.avail <= 0) continue;
-            const targetCap = allowedRegularIRADrawForTarget(b.i, b.avail);
-            const d = Math.min(remainingShortfall, b.avail, targetCap);
-            if (d <= 0.50) continue;
-            if (b.i === 1) ira1Draw_inner += d;
-            else ira2Draw_inner += d;
-            remainingShortfall -= d;
-          }
-          drawPre2020ForFunding('after');
-        }
-      } else if (bucket === 'ROTH') {
-        drawRothFunding();
-      }
-    };
-    fundingOrder.forEach(drawFundingBucket);
-    const unfunded = remainingShortfall;
-
-    let ira1Addl = ira1Draw_inner;
-    let ira2Addl = ira2Draw_inner;
-
-    // Update draw aliases
-
-    // ── First-pass AGI (before IRMAA conversion) ──────────────────────────
-    let taxableStkGain = secDraw_inner * stkGainPct;
-    // Dividends are ALWAYS a taxable event whether reinvested or not.
-    // The reinvest flag only controls whether dividends are paid out as cash;
-    // they still appear in AGI. Cash interest is always ordinary income.
-    const allSecDivs = taxableSecDivs;                      // federal-taxable brokerage dividends only
-    const cashInt    = cashInterest;                        // cash interest (always ordinary)
-    const qualDivs   = fedTaxableDivInt;                    // federal-taxable dividends & interest
-    let taxableRMDs    = rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
-    let agiExSS        = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
-    const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling, taxExemptInterest);
-    let agi              = agiExSS + tSS0;
-
-    // ── IRMAA / Income targeting (iterative solver) ───────────────────────
-    let rothConv=0, rothConvDraw1=0, rothConvDraw2=0;
-    let rothModeWith1=0, rothModeWith2=0;
-    // Roth conversions can only use IRA dollars not already used for RMDs or cash-flow funding.
-    // This prevents an extreme conversion year from drawing the same IRA dollars for taxes and also moving them to Roth.
-    const rothConvAvail1 = Math.max(0, ira1 - committedIra1 - ira1Addl - restrictedIra1);
-    const rothConvAvail2 = hp2 ? Math.max(0, ira2 - committedIra2 - ira2Addl - restrictedIra2) : 0;
-    const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
-    const assignRothConversionDraws = () => {
-      const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
-      rothConvDraw1 = assigned.draw1;
-      rothConvDraw2 = assigned.draw2;
-    };
-
     const irmaaLvlOv  = resolveOverrideNonBlank(S.ovIRMAA, yr, 'level');
     const irmaaModeOv = resolveOverrideNonBlank(S.ovIRMAA, yr, 'fillMode');
     const irmaaMaxBracketOv = resolveOverrideNonBlank(S.ovIRMAA, yr, 'maxBracket');
@@ -3430,239 +3474,471 @@ function runProjection(S) {
     const irmaaActive    = !incomeOvActive && (irmaaTarget != null || bracketTargetActive);  // covers IRMAA target or bracket-only target
     const taxFillActive  = taxFillOn && !incomeOvActive && !irmaaActive;
 
-    if (irmaaActive && rothConvAvailTotal > 0) {
-      // Use scaled IRMAA thresholds (inflation-adjusted) for conversion targeting
-      const baseIRMAA = getIRMAAThresholdsForFiling(taxFiling, tables);
-      const ceilIdx = irmaaTarget != null ? Math.min(irmaaTarget + 1, baseIRMAA.length - 1) : 0;
-      const tierMax = baseIRMAA[ceilIdx];
-      const maxBracketCapActive = maxBracketCeilPre != null;
-      const bracketHeadroom = parseF(irmaaBracketHRRaw) || 0;
-      let targetIncome = irmaaTarget != null ? tierMax - headroom : Infinity;
-      if (maxBracketCapActive) {
-        const bracketTarget = maxBracketCeilPre - bracketHeadroom;
-        const bracketTargetAsMagi = bracketTarget + taxExemptInterest;
-        targetIncome = irmaaTarget != null ? Math.min(targetIncome, bracketTargetAsMagi) : bracketTargetAsMagi;
-      }
+    const acaFillOn = !!(acaFundingTarget && acaStrategy.rothFill && !incomeOvActive && !irmaaActive && !taxFillActive);
+    const normalTaxFunding = rothTaxFundingCfg.method === 'NORMAL';
+    let totalTax=0, fedRes_f, niit_f=0, netInvestmentIncome_f=0, niitThreshold_f=0, niitExcessMagi_f=0, niitTaxableBase_f=0, stTax_f=0, irmaaTx_f=0, agi_f=0, magi_f=0, tSSfinal_f=0, medicareBase_f=0;
+    let irmaaLookbackYear_f=yr-2, irmaaSurvivorRelief_f=false;
+    let rothConv_f=0, rothConvDraw1_f=0, rothConvDraw2_f=0;
+    const rothConvSourceCfg = getRothConvSourceForYear(S, yr);
+    let rothModeWith1_f=0, rothModeWith2_f=0;
+    let ira1Draw_f=0, ira2Draw_f=0, secDraw_f=0, cashDraw_f=0;
+    let pre2020InhAddl1_f=0, pre2020InhAddl2_f=0;
+    let pre2020AddlByLot_f={};
+    let rothDraw1_f=0, rothDraw2_f=0;
+    let excessFunds_f=0, shortfall_f=0, acaLimitApplied_f=false;
+    let netTaxNeeded_f=0, earlyIraCashTax_f=0, earlyIraWithheldTax_f=0;
+    let baseTax_f=0, rothConvTax_f=0, rothConvTaxFundingNeed_f=0;
+    let caExemptionCredit = 0, caDependentCredit = 0, caAgi = 0;
+    let rothConvTaxCash_f=0, rothConvTaxSec_f=0, rothConvTaxIra1_f=0, rothConvTaxIra2_f=0, rothConvTaxWithheld_f=0, rothConvTaxShortfall_f=0;
+    let fundingOrder_f=['SEC','IRA','ROTH'];
+    let unfunded_f=0, fundingChoice_f, irmaaMagi_f;
+    let qualDivs_f, qualDivsForTax_f, taxableRMDs_f, taxableStkGain_f, w2AGI_f, w2AGI1_f, w2AGI2_f;
 
-      for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
-        const curAGI = agiExSS + tSS + rothConv;
-        const curMAGI = curAGI + taxExemptInterest;
-        const diff = targetIncome - curMAGI;
+    const solveYearFunding = (acaConversionAmount = 0) => {
+      let taxEstimate = taxEst;
+      let baseTaxFundingEst = taxEst;
+      let convTaxFundingEst = 0;
+      let taxConverged = false;
+      let acaConversionCapacity = 0;
+      for (let taxPass = 0; taxPass < TAX_SOLVER_MAX_PASSES; taxPass++) {
+        const normalTaxEstimate = normalTaxFunding ? taxEstimate : baseTaxFundingEst;
+        const totalRequired = spending + normalTaxEstimate + cashGapNeeded + scheduledEarlyIraTax;
 
-        if (Math.abs(diff) < 10) break; // converged
+        // ── Excess / shortfall_inner ────────────────────────────────────────────────
+        // Excess mandatory funding goes to Securities
+        // Step 1 inflows: mandatory (SS/RMDs/divs/wages) + HSA withdrawal
+        const excessFunds_inner  = Math.max(0, step1Total - totalRequired);
+        let   remainingShortfall = Math.max(0, totalRequired - step1Total);
+        const shortfall_inner = remainingShortfall;
+        let acaRoom = acaFundingTarget ? acaFundingTarget.target - acaMagiBeforeOptional : Infinity;
+        let acaLimitApplied = false;
+        const limitAcaDraw = (amount, taxableShare = 1) => {
+          if (taxableShare <= 0) return amount;
+          const allowed = Math.min(amount, Math.max(0, acaRoom) / taxableShare);
+          if (amount - allowed > 0.005) acaLimitApplied = true;
+          return allowed;
+        };
 
-        if (curMAGI < targetIncome) {
-          // Under target — convert from IRA to Roth to fill up to target
-          // Cap: can't convert more than available IRA balance, and diff is the exact gap needed
-          rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
-        } else if (fillMode === 'F' && !maxBracketCapActive) {
-          // Over target but uncapped Fill mode: push to next tier - headroom
-          // Fill to ceiling of next tier = start of tier after next
-          const nextCeilIdx = Math.min(ceilIdx + 1, baseIRMAA.length - 1);
-          const nextMax = nextCeilIdx < baseIRMAA.length
-            ? baseIRMAA[nextCeilIdx]
-            : 1e9;
-          const fillTo   = nextMax - headroom;
-          const fillDiff = fillTo - curMAGI;
-          if (fillDiff > 0) rothConv = Math.min(rothConv + fillDiff, rothConvAvailTotal);
-          break;
-        } else if (fillMode === 'R') {
-          // Roth-above-target mode does not add conversions when income is already over target.
-          // Funding needs above the target are handled earlier in the waterfall as Roth draws.
-          rothConv = 0;
-          break;
-        } else {
-          // No-extra-fill / capped Fill mode: if already over the active target, do not add conversions.
+        // The IRMAA Roth-above-target option can also route ordinary funding to Roth.
+        const fundingTargetInfo = getProjectionIncomeTargetInfo(S, yr, taxFiling, tables);
+        const protectTaxableFunding = !!(fundingTargetInfo && fundingTargetInfo.targetIncome > 0 && fundingTargetInfo.fillMode === 'R');
+        const useRothAboveTargetFunding = protectTaxableFunding;
+        const qualDivsForFunding = fedTaxableDivInt;
+        const estimateAGIForFundingDraws = (ira1Extra, ira2Extra, preAddl1, preAddl2, secExtra) => {
+          const taxableStkGainEst = Math.max(0, secExtra || 0) * stkGainPct;
+          const taxableRMDsEst = regularIraCash + pre2020InhDraw + (preAddl1 || 0) + (preAddl2 || 0) + post2020InhDraw + (ira1Extra || 0) + (ira2Extra || 0) + qualDivsForFunding;
+          const agiExSSEst = w2AGIFunding + ptWages + taxableRMDsEst + taxableStkGainEst;
+          const tSSEst = calcTaxableSS(grossSS, agiExSSEst + grossSS, taxFiling, taxExemptInterest);
+          return agiExSSEst + tSSEst;
+        };
+        const allowedRegularIRADrawForTarget = (which, avail) => {
+          if (!protectTaxableFunding || avail <= 0) return avail;
+          const target = fundingTargetInfo.targetIncome;
+          const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+          const currentTargetIncome = currentAGI + (taxExemptInterest || 0);
+          if (currentTargetIncome >= target - 0.50) return 0;
+          let lo = 0, hi = Math.max(0, avail);
+          for (let i = 0; i < 24; i++) {
+            const mid = (lo + hi) / 2;
+            const testIra1 = ira1Draw_inner + (which === 1 ? mid : 0);
+            const testIra2 = ira2Draw_inner + (which === 2 ? mid : 0);
+            const testAGI = estimateAGIForFundingDraws(testIra1, testIra2, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+            const testTargetIncome = testAGI + (taxExemptInterest || 0);
+            if (testTargetIncome <= target + 0.50) lo = mid;
+            else hi = mid;
+          }
+          return Math.max(0, lo);
+        };
+
+        // ── Funding waterfall — cash above floor, then selected account order ──
+        const fundingOrder = getFundingOrderForYear(S, yr);
+        const fundingChoice = fundingOrder[0] || 'SEC';
+        let cashDraw_inner=0, secDraw_inner=0, ira1Draw_inner=0, ira2Draw_inner=0, pre2020InhAddl1_inner=0, pre2020InhAddl2_inner=0, rothDraw1_inner=0, rothDraw2_inner=0;
+        const pre2020AddlByLot_inner = {};
+        const pre2020FundingMode = S.pre2020InhUseForFunding === true ? 'before' : (S.pre2020InhUseForFunding || 'no');
+        const drawPre2020ForFunding = (slot) => {
+          if (pre2020FundingMode !== slot || remainingShortfall <= 0) return;
+          const buckets = pre2020Lots.map(lot => {
+            const beneficiary = pre2020LotBeneficiary(lot);
+            if (!lot.active || (lot.bal || 0) <= 0 || (beneficiary === '2' && !hp2)) return null;
+            const already = pre2020AddlByLot_inner[lot.idx] || 0;
+            const required = lot._pre2020Required || 0;
+            return {idx:lot.idx, beneficiary, avail:Math.max(0, (lot.bal || 0) - required - already)};
+          }).filter(Boolean).sort((a,b)=>b.avail-a.avail);
+          for (const b of buckets) {
+            if (remainingShortfall <= 0 || b.avail <= 0) continue;
+            const d = limitAcaDraw(Math.min(remainingShortfall, b.avail));
+            acaRoom -= d;
+            pre2020AddlByLot_inner[b.idx] = (pre2020AddlByLot_inner[b.idx] || 0) + d;
+            if (b.beneficiary === '2') pre2020InhAddl2_inner += d;
+            else pre2020InhAddl1_inner += d;
+            remainingShortfall -= d;
+          }
+        };
+
+        // Step 2: Cash down to floor
+        if (remainingShortfall > 0) {
+          const availCash = Math.max(0, cash - cashFloor);
+          cashDraw_inner = Math.min(remainingShortfall, availCash);
+          remainingShortfall -= cashDraw_inner;
+        }
+        const drawRothFunding = () => {
+          const buckets = [
+            {i:1, avail:Math.max(0, roth1 - restrictedRoth1 - rothDraw1_inner)},
+            ...(hp2 ? [{i:2, avail:Math.max(0, roth2 - restrictedRoth2 - rothDraw2_inner)}] : [])
+          ].sort((a,b)=>b.avail-a.avail);
+          for (const b of buckets) {
+            if (remainingShortfall <= 0 || b.avail <= 0) continue;
+            const d = Math.min(remainingShortfall, b.avail);
+            if (b.i === 1) rothDraw1_inner += d;
+            else rothDraw2_inner += d;
+            remainingShortfall -= d;
+          }
+        };
+        const drawFundingBucket = (bucket) => {
+          if (remainingShortfall <= 0) return;
+          if (useRothAboveTargetFunding) {
+            const currentAGI = estimateAGIForFundingDraws(ira1Draw_inner, ira2Draw_inner, pre2020InhAddl1_inner, pre2020InhAddl2_inner, secDraw_inner);
+            if (currentAGI >= fundingTargetInfo.targetIncome - 0.50) {
+              drawRothFunding();
+              if (remainingShortfall <= 0) return;
+            }
+          }
+          if (bucket === 'SEC') {
+            const d = limitAcaDraw(Math.min(remainingShortfall, Math.max(0,sec-restrictedSec-secDraw_inner)), stkGainPct);
+            secDraw_inner += d;
+            acaRoom -= d * stkGainPct;
+            remainingShortfall -= d;
+          } else if (bucket === 'IRA') {
+            drawPre2020ForFunding('before');
+            if (remainingShortfall > 0) {
+              const buckets = [
+                {i:1, rate:earlyIraRate1, avail:blockExtraIra1 ? 0 : Math.max(0, ira1 - committedIra1 - restrictedIra1 - ira1Draw_inner)},
+                ...(hp2 ? [{i:2, rate:earlyIraRate2, avail:blockExtraIra2 ? 0 : Math.max(0, ira2 - committedIra2 - restrictedIra2 - ira2Draw_inner)}] : [])
+              ].sort((a,b)=>b.avail-a.avail);
+              for (const b of buckets) {
+                if (remainingShortfall <= 0 || b.avail <= 0) continue;
+                const targetCap = allowedRegularIRADrawForTarget(b.i, b.avail);
+                const d = limitAcaDraw(Math.min(remainingShortfall / (1 - b.rate), b.avail, targetCap));
+                if (d <= 0.50) continue;
+                acaRoom -= d;
+                if (b.i === 1) ira1Draw_inner += d;
+                else ira2Draw_inner += d;
+                remainingShortfall = Math.max(0, remainingShortfall - d * (1 - b.rate));
+              }
+              drawPre2020ForFunding('after');
+            }
+          } else if (bucket === 'ROTH') {
+            drawRothFunding();
+          }
+        };
+        fundingOrder.forEach(drawFundingBucket);
+        const unfunded = remainingShortfall;
+
+        let ira1Addl = ira1Draw_inner;
+        let ira2Addl = ira2Draw_inner;
+
+        // Update draw aliases
+
+        // ── First-pass AGI (before IRMAA conversion) ──────────────────────────
+        let taxableStkGain = secDraw_inner * stkGainPct;
+        // Dividends are ALWAYS a taxable event whether reinvested or not.
+        // The reinvest flag only controls whether dividends are paid out as cash;
+        // they still appear in AGI. Cash interest is always ordinary income.
+        const allSecDivs = taxableSecDivs;                      // federal-taxable brokerage dividends only
+        const cashInt    = cashInterest;                        // cash interest (always ordinary)
+        const qualDivs   = fedTaxableDivInt;                    // federal-taxable dividends & interest
+        let taxableRMDs    = regularIraCash + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
+        let agiExSS        = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain; // qualDivs already inside taxableRMDs
+        const tSS0           = calcTaxableSS(grossSS, agiExSS + grossSS, taxFiling, taxExemptInterest);
+        let agi              = agiExSS + tSS0;
+
+        // ── IRMAA / Income targeting (iterative solver) ───────────────────────
+        let rothConv=0, rothConvDraw1=0, rothConvDraw2=0;
+        let rothModeWith1=0, rothModeWith2=0;
+        // Roth conversions can only use IRA dollars not already used for RMDs or cash-flow funding.
+        // This prevents an extreme conversion year from drawing the same IRA dollars for taxes and also moving them to Roth.
+        const conversionWithholding = rothTaxFundingCfg.method === 'WITHHOLD';
+        const allowConversion1 = !reservedIra1 && !(conversionWithholding && earlyDrawNeedsConsent1);
+        const allowConversion2 = hp2 && !reservedIra2 && !(conversionWithholding && earlyDrawNeedsConsent2);
+        const rothConvAvail1 = allowConversion1 ? Math.max(0, ira1 - committedIra1 - ira1Addl - restrictedIra1) : 0;
+        const rothConvAvail2 = allowConversion2 ? Math.max(0, ira2 - committedIra2 - ira2Addl - restrictedIra2) : 0;
+        const rothConvAvailTotal = rothConvAvail1 + rothConvAvail2;
+        const assignRothConversionDraws = () => {
+          const assigned = allocateRothConversionDraws(rothConv, rothConvAvail1, rothConvAvail2, rothConvSourceCfg);
+          rothConvDraw1 = assigned.draw1;
+          rothConvDraw2 = assigned.draw2;
+        };
+
+        if (acaFillOn) {
+          acaConversionCapacity = Math.min(rothConvAvailTotal, Math.max(0, acaRoom));
+          rothConv = Math.min(acaConversionAmount, acaConversionCapacity);
+          if (rothConv > 0) assignRothConversionDraws();
+        } else if (irmaaActive && rothConvAvailTotal > 0) {
+          // Use scaled IRMAA thresholds (inflation-adjusted) for conversion targeting
+          const baseIRMAA = getIRMAAThresholdsForFiling(taxFiling, tables);
+          const ceilIdx = irmaaTarget != null ? Math.min(irmaaTarget + 1, baseIRMAA.length - 1) : 0;
+          const tierMax = baseIRMAA[ceilIdx];
+          const maxBracketCapActive = maxBracketCeilPre != null;
+          const bracketHeadroom = parseF(irmaaBracketHRRaw) || 0;
+          let targetIncome = irmaaTarget != null ? tierMax - headroom : Infinity;
+          if (maxBracketCapActive) {
+            const bracketTarget = maxBracketCeilPre - bracketHeadroom;
+            const bracketTargetAsMagi = bracketTarget + taxExemptInterest;
+            targetIncome = irmaaTarget != null ? Math.min(targetIncome, bracketTargetAsMagi) : bracketTargetAsMagi;
+          }
+
+          for (let pass = 0; pass < 6; pass++) {
+            const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
+            const curAGI = agiExSS + tSS + rothConv;
+            const curMAGI = curAGI + taxExemptInterest;
+            const diff = targetIncome - curMAGI;
+
+            if (Math.abs(diff) < 10) break; // converged
+
+            if (curMAGI < targetIncome) {
+              // Under target — convert from IRA to Roth to fill up to target
+              // Cap: can't convert more than available IRA balance, and diff is the exact gap needed
+              rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
+            } else if (fillMode === 'F' && !maxBracketCapActive) {
+              // Over target but uncapped Fill mode: push to next tier - headroom
+              // Fill to ceiling of next tier = start of tier after next
+              const nextCeilIdx = Math.min(ceilIdx + 1, baseIRMAA.length - 1);
+              const nextMax = nextCeilIdx < baseIRMAA.length
+                ? baseIRMAA[nextCeilIdx]
+                : 1e9;
+              const fillTo   = nextMax - headroom;
+              const fillDiff = fillTo - curMAGI;
+              if (fillDiff > 0) rothConv = Math.min(rothConv + fillDiff, rothConvAvailTotal);
+              break;
+            } else if (fillMode === 'R') {
+              // Roth-above-target mode does not add conversions when income is already over target.
+              // Funding needs above the target are handled earlier in the waterfall as Roth draws.
+              rothConv = 0;
+              break;
+            } else {
+              // No-extra-fill / capped Fill mode: if already over the active target, do not add conversions.
+              break;
+            }
+          }
+          assignRothConversionDraws();
+
+        } else if (incomeOvActive && rothConvAvailTotal > 0) {
+          const target = parseF(incomeLvlOv) - incomeHeadroom;
+          for (let pass = 0; pass < 6; pass++) {
+            const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
+            const curAGI = agiExSS + tSS + rothConv;
+            const curMAGI = curAGI + taxExemptInterest;
+            const diff = target - curMAGI;
+            if (Math.abs(diff) < 10) break;
+            if (curMAGI < target) {
+              rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
+            } else break;
+          }
+          assignRothConversionDraws();
+        } else if (taxFillActive && rothConvAvailTotal > 0) {
+          // Tax Bracket Fill: convert IRA→Roth to top of current federal bracket minus headroom
+          for (let pass = 0; pass < 6; pass++) {
+            const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
+            const curAGI = agiExSS + tSS + rothConv;
+            const bktCeil = getBracketCeiling(curAGI, taxFiling, tables);
+            if (bktCeil === null) break; // already in top bracket
+            const target = bktCeil - taxFillHR;
+            if (curAGI >= target) break;
+            const diff = Math.min(target - curAGI, rothConvAvailTotal - rothConv);
+            if (diff <= 1) break;
+            rothConv = rothConv + diff;
+          }
+          assignRothConversionDraws();
+        }
+
+        // Keep the gross conversion equal to the same plan under Normal Funding.
+        // Tax withholding is applied below and therefore reduces only Net to Roth.
+        if (!acaFillOn && conversionWithholding && normalFundingReferenceByYear) {
+          const referenceRow = normalFundingReferenceByYear.get(yr);
+          if (referenceRow) {
+            rothConv = Math.min(Math.max(0, referenceRow.rothConv || 0), rothConvAvailTotal);
+            assignRothConversionDraws();
+          }
+        }
+
+        if (rothConv > 0) {
+          const allowed = limitAcaDraw(rothConv);
+          if (allowed < rothConv) {
+            rothConv = allowed;
+            assignRothConversionDraws();
+          }
+          acaRoom -= rothConv;
+        }
+
+        // Route the estimated incremental conversion tax separately when requested.
+        // These amounts are recalculated on each tax pass, so IRA gross-up and taxable-sale gains converge.
+        const baselineTaxableRMDs = taxableRMDs;
+        const baselineTaxableStkGain = taxableStkGain;
+        const baselineAgiExSS = agiExSS;
+        let rothConvTaxCash_inner=0, rothConvTaxSec_inner=0, rothConvTaxIra1_inner=0, rothConvTaxIra2_inner=0, rothConvTaxWithheld_inner=0;
+        let rothConvTaxShortfall_inner=0, earlyIraWithheldTax=0;
+        if (rothConv > 0 && rothTaxFundingCfg.method !== 'NORMAL' && convTaxFundingEst > 0) {
+          let dedicatedNeed = convTaxFundingEst;
+          if (rothTaxFundingCfg.method === 'WITHHOLD') {
+            const earlyRateOnWithholding = (rothConvDraw1 * earlyIraRate1 + rothConvDraw2 * earlyIraRate2) / rothConv;
+            rothConvTaxWithheld_inner = Math.min(dedicatedNeed / (1 - earlyRateOnWithholding), rothConv);
+            earlyIraWithheldTax = rothConvTaxWithheld_inner * earlyRateOnWithholding;
+            dedicatedNeed -= rothConvTaxWithheld_inner - earlyIraWithheldTax;
+          } else if (rothTaxFundingCfg.method === 'OUTSIDE') {
+            const availCash = Math.max(0, cash - cashFloor - cashDraw_inner);
+            rothConvTaxCash_inner = Math.min(dedicatedNeed, availCash);
+            cashDraw_inner += rothConvTaxCash_inner;
+            dedicatedNeed -= rothConvTaxCash_inner;
+            const availSec = Math.max(0, sec - restrictedSec - secDraw_inner);
+            rothConvTaxSec_inner = limitAcaDraw(Math.min(dedicatedNeed, availSec), stkGainPct);
+            acaRoom -= rothConvTaxSec_inner * stkGainPct;
+            secDraw_inner += rothConvTaxSec_inner;
+            dedicatedNeed -= rothConvTaxSec_inner;
+          } else if (rothTaxFundingCfg.method === 'IRA') {
+            const buckets = [
+              {i:1, rate:earlyIraRate1, avail:blockExtraIra1 ? 0 : Math.max(0, ira1-committedIra1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
+              ...(hp2 ? [{i:2, rate:earlyIraRate2, avail:blockExtraIra2 ? 0 : Math.max(0, ira2-committedIra2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
+            ].sort((a,b)=>b.avail-a.avail);
+            for (const b of buckets) {
+              if (dedicatedNeed <= 0 || b.avail <= 0) continue;
+              const d = limitAcaDraw(Math.min(dedicatedNeed / (1 - b.rate), b.avail));
+              acaRoom -= d;
+              if (b.i === 1) { rothConvTaxIra1_inner += d; ira1Draw_inner += d; }
+              else { rothConvTaxIra2_inner += d; ira2Draw_inner += d; }
+              dedicatedNeed -= d * (1 - b.rate);
+            }
+          }
+          rothConvTaxShortfall_inner = Math.max(0, dedicatedNeed);
+          ira1Addl = ira1Draw_inner;
+          ira2Addl = ira2Draw_inner;
+          taxableStkGain = secDraw_inner * stkGainPct;
+          taxableRMDs = regularIraCash + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
+          agiExSS = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain;
+        }
+
+        // Final AGI with conversion
+        const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
+        agi = agiExSS + tSSfinal_inner + rothConv;
+        const magi = agi + taxExemptInterest;
+
+        // ── Taxes ─────────────────────────────────────────────────────────────
+        // Dividend tax treatment: ordinary = all taxed at ordinary rates; qualified = LTCG rates
+        // Dividend tax treatment: cash interest always ordinary; security dividends can be qualified
+        const qualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
+        const ltcgIncome = qualDivsForTax + taxableStkGain; // divs + stk gains both get LTCG rates
+        // Itemized deduction override — use higher of itemized or standard for each jurisdiction
+        const ovDedRow    = resolveOverrideNonBlank(S.ovDeductions, yr, 'fedItemized');
+        const ovDedCA     = resolveOverrideNonBlank(S.ovDeductions, yr, 'caItemized');
+        const ovCharityFlag = resolveOverrideNonBlank(S.ovDeductions, yr, 'charityOn');
+        const ovCharityOn = ovCharityFlag === 'Yes' || ovCharityFlag === 'T';
+        const ovCharity    = resolveOverrideNonBlank(S.ovDeductions, yr, 'charityCash');
+        const fedItemized = ovDedRow != null ? parseF(ovDedRow) : null;
+        const charityCash = ovCharityOn && ovCharity != null ? (parseF(ovCharity) || 0) : 0;
+        // CA: if no CA entry, default to CA standard (no itemizing for CA)
+        const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
+        const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
+        const netInvestmentIncome = Math.max(0, fedTaxableDivInt + taxableStkGain);
+        const niitRes = calcNIIT(agi, netInvestmentIncome, taxFiling);
+        // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
+        const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
+        const caTax = calcStateTax(caAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:agi, seniorCount:caSeniorCount, dependentCount});
+        const stTax = caTax.tax;
+        // Counterfactual tax for the same funded year before the Roth conversion and before
+        // any dedicated conversion-tax draw. This isolates the conversion-related increment.
+        const baselineTSS = calcTaxableSS(grossSS, baselineAgiExSS + grossSS, taxFiling, taxExemptInterest);
+        const baselineAGI = baselineAgiExSS + baselineTSS;
+        const baselineQualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
+        const baselineLtcgIncome = baselineQualDivsForTax + baselineTaxableStkGain;
+        const baselineFedRes = calcFedTax(baselineAGI, baselineLtcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
+        const baselineNetInvestmentIncome = Math.max(0, fedTaxableDivInt + baselineTaxableStkGain);
+        const baselineNIIT = calcNIIT(baselineAGI, baselineNetInvestmentIncome, taxFiling).tax;
+        const baselineCaAGI = baselineAGI - baselineTSS - treasuryInterest + caTaxableMuniInterest;
+        const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:baselineAGI, seniorCount:caSeniorCount, dependentCount}).tax;
+        const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineNIIT + baselineStTax;
+        // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
+        // an approved SSA-44 life-changing-event request after spouse death: only years
+        // whose lookback still points to the pre-death/death-year joint period use the
+        // current projected survivor MAGI and current survivor filing status.
+        const irmaaLookbackYear = yr === S.startYear ? S.startYear - 2
+                               : yr === S.startYear + 1 ? S.startYear - 1
+                               : yr - 2;
+        const irmaaLookbackMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
+                                  yr === S.startYear+1 ? (S.medicareMagi1||0) :
+                                  rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
+        const survivorIRMAARelief = afterDeathYear && S.widowSSA44Relief === true && irmaaLookbackYear <= widowYear;
+        const irmaaMagi = survivorIRMAARelief ? magi : irmaaLookbackMagi;
+        const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
+        // Part B base premium — per enrolled person (age 65+), inflated with medicareCostInfl
+        const partBPerPerson = tables.partBBase || 2220;
+        const medicareCount = afterDeathYear
+          ? (survivorAge>=65?1:0)
+          : (age1>=65?1:0) + (hp2&&age2>=65?1:0);
+        const medicareBase = partBPerPerson * medicareCount;
+        const newTax = fedRes.ordTax + fedRes.ltcgTax + niitRes.tax + stTax; // income tax only (IRMAA separate)
+        const conversionTax = rothConv > 0 ? Math.max(0, newTax - baselineTax) : 0;
+        const baselineTaxFundingNeed = Math.max(0, baselineTax - totalWithheld);
+        const conversionTaxFundingNeed = rothConv > 0 ? Math.max(0, newTax - Math.max(baselineTax, totalWithheld)) : 0;
+        // Withholding means withholding the tax caused by the conversion itself.
+        // Existing wage withholding must not make this selected withholding vanish.
+        const conversionTaxRoutingNeed = rothTaxFundingCfg.method === 'WITHHOLD' ? conversionTax : conversionTaxFundingNeed;
+        const newNetTax = taxOvrAmt != null
+          ? taxOvrAmt + (acaFillOn && normalTaxFunding ? conversionTaxFundingNeed : 0)
+          : Math.max(0, newTax - totalWithheld - (rothConvTaxWithheld_inner - earlyIraWithheldTax));
+        // Dedicate part of each gross cash distribution to the additional tax.
+        // Conversion withholding already covers its own share outside household cash flow.
+        earlyIraCashTax_f = scheduledEarlyIraTax + ira1Draw_inner * earlyIraRate1 + ira2Draw_inner * earlyIraRate2;
+        earlyIraWithheldTax_f = earlyIraWithheldTax;
+        // Save finals from this pass
+        netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; niit_f=niitRes.tax; netInvestmentIncome_f=niitRes.netInvestmentIncome; niitThreshold_f=niitRes.threshold; niitExcessMagi_f=niitRes.excessMagi; niitTaxableBase_f=niitRes.taxableBase; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
+        caExemptionCredit = caTax.exemptionCredit;
+        caDependentCredit = caTax.dependentCredit;
+        caAgi = caAGI;
+        baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
+        rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
+        rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
+        rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
+        ira1Draw_f=ira1Draw_inner; ira2Draw_f=ira2Draw_inner; secDraw_f=secDraw_inner; cashDraw_f=cashDraw_inner;
+        pre2020InhAddl1_f=pre2020InhAddl1_inner; pre2020InhAddl2_f=pre2020InhAddl2_inner; pre2020AddlByLot_f=Object.assign({}, pre2020AddlByLot_inner);
+        rothDraw1_f=rothDraw1_inner; rothDraw2_f=rothDraw2_inner;
+        excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
+        acaLimitApplied_f=acaLimitApplied;
+        unfunded_f=unfunded; fundingChoice_f=fundingChoice; fundingOrder_f=fundingOrder; irmaaMagi_f=irmaaMagi;
+        irmaaLookbackYear_f=irmaaLookbackYear; irmaaSurvivorRelief_f=survivorIRMAARelief;
+        qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
+        taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
+        // A funding override fixes ordinary funded tax. Auto-fill still funds
+        // its incremental tax, including under a dedicated conversion-tax method.
+        const taxDelta = normalTaxFunding ? Math.abs(newNetTax - taxEstimate)
+          : Math.max(taxOvrAmt == null ? Math.abs(baselineTaxFundingNeed - baseTaxFundingEst) : 0,
+            Math.abs(conversionTaxRoutingNeed - convTaxFundingEst));
+        if (taxDelta < TAX_SOLVER_EPS) {
+          taxConverged = true;
           break;
         }
-      }
-      assignRothConversionDraws();
+        taxEstimate = newNetTax;
+        if (taxOvrAmt == null) baseTaxFundingEst = baselineTaxFundingNeed;
+        convTaxFundingEst = conversionTaxRoutingNeed;
+      } // end taxPass loop
+      return {acaConversionCapacity, funded:taxConverged && unfunded_f + rothConvTaxShortfall_f < TAX_SOLVER_EPS};
+    }; // end solveYearFunding
 
-    } else if (incomeOvActive && rothConvAvailTotal > 0) {
-      const target = parseF(incomeLvlOv) - incomeHeadroom;
-      for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
-        const curAGI = agiExSS + tSS + rothConv;
-        const curMAGI = curAGI + taxExemptInterest;
-        const diff = target - curMAGI;
-        if (Math.abs(diff) < 10) break;
-        if (curMAGI < target) {
-          rothConv = Math.min(rothConv + diff, rothConvAvailTotal);
-        } else break;
-      }
-      assignRothConversionDraws();
-    } else if (taxFillActive && rothConvAvailTotal > 0) {
-      // Tax Bracket Fill: convert IRA→Roth to top of current federal bracket minus headroom
-      for (let pass = 0; pass < 6; pass++) {
-        const tSS = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
-        const curAGI = agiExSS + tSS + rothConv;
-        const bktCeil = getBracketCeiling(curAGI, taxFiling, tables);
-        if (bktCeil === null) break; // already in top bracket
-        const target = bktCeil - taxFillHR;
-        if (curAGI >= target) break;
-        const diff = Math.min(target - curAGI, rothConvAvailTotal - rothConv);
-        if (diff <= 1) break;
-        rothConv = rothConv + diff;
-      }
-      assignRothConversionDraws();
-    }
-
-    // Keep the gross conversion equal to the same plan under Normal Funding.
-    // Tax withholding is applied below and therefore reduces only Net to Roth.
-    if (rothTaxFundingCfg.method === 'WITHHOLD' && normalFundingReferenceByYear) {
-      const referenceRow = normalFundingReferenceByYear.get(yr);
-      if (referenceRow) {
-        rothConv = Math.min(Math.max(0, referenceRow.rothConv || 0), rothConvAvailTotal);
-        assignRothConversionDraws();
-      }
-    }
-
-    // Route the estimated incremental conversion tax separately when requested.
-    // These amounts are recalculated on each tax pass, so IRA gross-up and taxable-sale gains converge.
-    const baselineTaxableRMDs = taxableRMDs;
-    const baselineTaxableStkGain = taxableStkGain;
-    const baselineAgiExSS = agiExSS;
-    let rothConvTaxCash_inner=0, rothConvTaxSec_inner=0, rothConvTaxIra1_inner=0, rothConvTaxIra2_inner=0, rothConvTaxWithheld_inner=0;
-    let rothConvTaxShortfall_inner=0;
-    if (rothConv > 0 && rothTaxFundingCfg.method !== 'NORMAL' && convTaxFundingEst > 0) {
-      let dedicatedNeed = convTaxFundingEst;
-      if (rothTaxFundingCfg.method === 'WITHHOLD') {
-        rothConvTaxWithheld_inner = Math.min(dedicatedNeed, rothConv);
-        dedicatedNeed -= rothConvTaxWithheld_inner;
-      } else if (rothTaxFundingCfg.method === 'OUTSIDE') {
-        const availCash = Math.max(0, cash - cashFloor - cashDraw_inner);
-        rothConvTaxCash_inner = Math.min(dedicatedNeed, availCash);
-        cashDraw_inner += rothConvTaxCash_inner;
-        dedicatedNeed -= rothConvTaxCash_inner;
-        const availSec = Math.max(0, sec - restrictedSec - secDraw_inner);
-        rothConvTaxSec_inner = Math.min(dedicatedNeed, availSec);
-        secDraw_inner += rothConvTaxSec_inner;
-        dedicatedNeed -= rothConvTaxSec_inner;
-      } else if (rothTaxFundingCfg.method === 'IRA') {
-        const buckets = [
-          {i:1, avail:Math.max(0, ira1-committedIra1-ira1Draw_inner-rothConvDraw1-restrictedIra1)},
-          ...(hp2 ? [{i:2, avail:Math.max(0, ira2-committedIra2-ira2Draw_inner-rothConvDraw2-restrictedIra2)}] : [])
-        ].sort((a,b)=>b.avail-a.avail);
-        for (const b of buckets) {
-          if (dedicatedNeed <= 0 || b.avail <= 0) continue;
-          const d = Math.min(dedicatedNeed, b.avail);
-          if (b.i === 1) { rothConvTaxIra1_inner += d; ira1Draw_inner += d; }
-          else { rothConvTaxIra2_inner += d; ira2Draw_inner += d; }
-          dedicatedNeed -= d;
+    const baseline = solveYearFunding();
+    if (acaFillOn && baseline.funded) {
+      // Start with the cash-flow plan before an ACA conversion. Each trial uses
+      // the full tax solver so tax funding and the gains it causes count against the target.
+      const fits = amount => solveYearFunding(amount).funded && rothConv_f >= amount - 0.005;
+      let high = Math.floor(baseline.acaConversionCapacity);
+      if (high > 0 && !fits(high)) {
+        let low = 0;
+        while (high - low > 1) {
+          const amount = Math.floor((low + high) / 2);
+          if (fits(amount)) low = amount;
+          else high = amount;
         }
+        solveYearFunding(low);
       }
-      rothConvTaxShortfall_inner = Math.max(0, dedicatedNeed);
-      ira1Addl = ira1Draw_inner;
-      ira2Addl = ira2Draw_inner;
-      taxableStkGain = secDraw_inner * stkGainPct;
-      taxableRMDs = rmd1 + rmd2 + pre2020InhDraw + pre2020InhAddl1_inner + pre2020InhAddl2_inner + post2020InhDraw + ira1Addl + ira2Addl + qualDivs;
-      agiExSS = w2AGIFunding + ptWages + taxableRMDs + taxableStkGain;
     }
-
-    // Final AGI with conversion
-    const tSSfinal_inner = calcTaxableSS(grossSS, agiExSS + rothConv + grossSS, taxFiling, taxExemptInterest);
-    agi = agiExSS + tSSfinal_inner + rothConv;
-    const magi = agi + taxExemptInterest;
-
-    // ── Taxes ─────────────────────────────────────────────────────────────
-    // Dividend tax treatment: ordinary = all taxed at ordinary rates; qualified = LTCG rates
-    // Dividend tax treatment: cash interest always ordinary; security dividends can be qualified
-    const qualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
-    const ltcgIncome = qualDivsForTax + taxableStkGain; // divs + stk gains both get LTCG rates
-    // Itemized deduction override — use higher of itemized or standard for each jurisdiction
-    const ovDedRow    = resolveOverrideNonBlank(S.ovDeductions, yr, 'fedItemized');
-    const ovDedCA     = resolveOverrideNonBlank(S.ovDeductions, yr, 'caItemized');
-    const ovCharityFlag = resolveOverrideNonBlank(S.ovDeductions, yr, 'charityOn');
-    const ovCharityOn = ovCharityFlag === 'Yes' || ovCharityFlag === 'T';
-    const ovCharity    = resolveOverrideNonBlank(S.ovDeductions, yr, 'charityCash');
-    const fedItemized = ovDedRow != null ? parseF(ovDedRow) : null;
-    const charityCash = ovCharityOn && ovCharity != null ? (parseF(ovCharity) || 0) : 0;
-    // CA: if no CA entry, default to CA standard (no itemizing for CA)
-    const caItemized  = ovDedCA  != null ? parseF(ovDedCA)  : null;
-    const fedRes  = calcFedTax(agi, ltcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
-    const netInvestmentIncome = Math.max(0, fedTaxableDivInt + taxableStkGain);
-    const niitRes = calcNIIT(agi, netInvestmentIncome, taxFiling);
-    // CA does not tax Social Security, does not tax U.S. Treasury interest, and taxes non-CA muni interest.
-    const caAGI   = agi - tSSfinal_inner - treasuryInterest + caTaxableMuniInterest;
-    const caTax = calcStateTax(caAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:agi, seniorCount:caSeniorCount, dependentCount});
-    const stTax = caTax.tax;
-    // Counterfactual tax for the same funded year before the Roth conversion and before
-    // any dedicated conversion-tax draw. This isolates the conversion-related increment.
-    const baselineTSS = calcTaxableSS(grossSS, baselineAgiExSS + grossSS, taxFiling, taxExemptInterest);
-    const baselineAGI = baselineAgiExSS + baselineTSS;
-    const baselineQualDivsForTax = (S.qualDivsMode||'ordinary')==='qualified' ? taxableSecDivs : 0;
-    const baselineLtcgIncome = baselineQualDivsForTax + baselineTaxableStkGain;
-    const baselineFedRes = calcFedTax(baselineAGI, baselineLtcgIncome, taxFiling, taxAge1, taxAge2, taxHasP2, tables, fedItemized, charityCash, dependents);
-    const baselineNetInvestmentIncome = Math.max(0, fedTaxableDivInt + baselineTaxableStkGain);
-    const baselineNIIT = calcNIIT(baselineAGI, baselineNetInvestmentIncome, taxFiling).tax;
-    const baselineCaAGI = baselineAGI - baselineTSS - treasuryInterest + caTaxableMuniInterest;
-    const baselineStTax = calcStateTax(baselineCaAGI, taxFiling, effectiveState, tables, caItemized, {federalAgi:baselineAGI, seniorCount:caSeniorCount, dependentCount}).tax;
-    const baselineTax = baselineFedRes.ordTax + baselineFedRes.ltcgTax + baselineNIIT + baselineStTax;
-    // IRMAA normally uses a two-year MAGI lookback. Optional survivor relief models
-    // an approved SSA-44 life-changing-event request after spouse death: only years
-    // whose lookback still points to the pre-death/death-year joint period use the
-    // current projected survivor MAGI and current survivor filing status.
-    const irmaaLookbackYear = yr === S.startYear ? S.startYear - 2
-                           : yr === S.startYear + 1 ? S.startYear - 1
-                           : yr - 2;
-    const irmaaLookbackMagi = yr === S.startYear   ? (S.medicareMagi2||0) :
-                              yr === S.startYear+1 ? (S.medicareMagi1||0) :
-                              rows.length >= 2 ? (rows[rows.length-2].magi ?? rows[rows.length-2].agi) : magi;
-    const survivorIRMAARelief = afterDeathYear && S.widowSSA44Relief === true && irmaaLookbackYear <= widowYear;
-    const irmaaMagi = survivorIRMAARelief ? magi : irmaaLookbackMagi;
-    const irmaaTx = calcIRMAA(irmaaMagi, taxFiling, taxAge1, taxAge2, taxHasP2, tables);
-    // Part B base premium — per enrolled person (age 65+), inflated with medicareCostInfl
-    const partBPerPerson = tables.partBBase || 2220;
-    const medicareCount = afterDeathYear
-      ? (survivorAge>=65?1:0)
-      : (age1>=65?1:0) + (hp2&&age2>=65?1:0);
-    const medicareBase = partBPerPerson * medicareCount;
-    const newTax = fedRes.ordTax + fedRes.ltcgTax + niitRes.tax + stTax; // income tax only (IRMAA separate)
-    const conversionTax = rothConv > 0 ? Math.max(0, newTax - baselineTax) : 0;
-    const baselineTaxFundingNeed = Math.max(0, baselineTax - totalWithheld);
-    const conversionTaxFundingNeed = rothConv > 0 ? Math.max(0, newTax - Math.max(baselineTax, totalWithheld)) : 0;
-    // Withholding means withholding the tax caused by the conversion itself.
-    // Existing wage withholding must not make this selected withholding vanish.
-    const conversionTaxRoutingNeed = rothTaxFundingCfg.method === 'WITHHOLD' ? conversionTax : conversionTaxFundingNeed;
-    const newNetTax = taxOvrAmt != null ? taxOvrAmt : Math.max(0, newTax - totalWithheld - rothConvTaxWithheld_inner);  // IRMAA excluded — Medicare premium, not income tax funding
-    // Save finals from this pass
-    netTaxNeeded_f=newNetTax; totalTax=newTax; fedRes_f=fedRes; niit_f=niitRes.tax; netInvestmentIncome_f=niitRes.netInvestmentIncome; niitThreshold_f=niitRes.threshold; niitExcessMagi_f=niitRes.excessMagi; niitTaxableBase_f=niitRes.taxableBase; stTax_f=stTax; irmaaTx_f=irmaaTx; agi_f=agi; magi_f=magi; tSSfinal_f=tSSfinal_inner; medicareBase_f=medicareBase;
-    caExemptionCredit = caTax.exemptionCredit;
-    caDependentCredit = caTax.dependentCredit;
-    caAgi = caAGI;
-    baseTax_f=baselineTax; rothConvTax_f=conversionTax; rothConvTaxFundingNeed_f=conversionTaxRoutingNeed;
-    rothConvTaxCash_f=rothConvTaxCash_inner; rothConvTaxSec_f=rothConvTaxSec_inner; rothConvTaxIra1_f=rothConvTaxIra1_inner; rothConvTaxIra2_f=rothConvTaxIra2_inner; rothConvTaxWithheld_f=rothConvTaxWithheld_inner; rothConvTaxShortfall_f=rothConvTaxShortfall_inner;
-    rothConv_f=rothConv; rothConvDraw1_f=rothConvDraw1; rothConvDraw2_f=rothConvDraw2;
-    rothModeWith1_f=rothModeWith1; rothModeWith2_f=rothModeWith2;
-    ira1Draw_f=ira1Draw_inner; ira2Draw_f=ira2Draw_inner; secDraw_f=secDraw_inner; cashDraw_f=cashDraw_inner;
-    pre2020InhAddl1_f=pre2020InhAddl1_inner; pre2020InhAddl2_f=pre2020InhAddl2_inner; pre2020AddlByLot_f=Object.assign({}, pre2020AddlByLot_inner);
-    rothDraw1_f=rothDraw1_inner; rothDraw2_f=rothDraw2_inner;
-    excessFunds_f=excessFunds_inner; shortfall_f=shortfall_inner;
-    unfunded_f=unfunded; fundingChoice_f=fundingChoice; fundingOrder_f=fundingOrder; irmaaMagi_f=irmaaMagi;
-    irmaaLookbackYear_f=irmaaLookbackYear; irmaaSurvivorRelief_f=survivorIRMAARelief;
-    qualDivs_f=qualDivs; qualDivsForTax_f=qualDivsForTax; taxableRMDs_f=taxableRMDs;
-    taxableStkGain_f=taxableStkGain; w2AGI_f=w2AGIFunding; w2AGI1_f=w2AGI1Funding; w2AGI2_f=w2AGI2Funding;
-    // A tax override fixes ordinary funded tax. Dedicated conversion-tax methods
-    // still need additional passes so withholding/outside/IRA routing can converge.
-    if (taxOvrAmt != null) {
-      if (rothTaxFundingCfg.method === 'NORMAL') break;
-      const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
-      if (convDelta < TAX_SOLVER_EPS) break;
-      convTaxFundingEst = conversionTaxRoutingNeed;
-      continue;
-    }
-    if (rothTaxFundingCfg.method === 'NORMAL') {
-      if (Math.abs(newNetTax - taxEst) < TAX_SOLVER_EPS) break;
-      taxEst = newNetTax;
-    } else {
-      const baseDelta = Math.abs(baselineTaxFundingNeed - baseTaxFundingEst);
-      const convDelta = Math.abs(conversionTaxRoutingNeed - convTaxFundingEst);
-      if (baseDelta < TAX_SOLVER_EPS && convDelta < TAX_SOLVER_EPS) break;
-      baseTaxFundingEst = baselineTaxFundingNeed;
-      convTaxFundingEst = conversionTaxRoutingNeed;
-    }
-    } // end taxPass loop
     // Unpack finals from converged pass
     const tSSfinal=tSSfinal_f, rothConv=rothConv_f, magi=magi_f;
     const rothConvDraw1=rothConvDraw1_f, rothConvDraw2=rothConvDraw2_f;
@@ -3679,19 +3955,20 @@ function runProjection(S) {
     const fedRes=fedRes_f, niit=niit_f, netInvestmentIncome=netInvestmentIncome_f, niitThreshold=niitThreshold_f, niitExcessMagi=niitExcessMagi_f, niitTaxableBase=niitTaxableBase_f, stTax=stTax_f, irmaaTx=irmaaTx_f, agi=agi_f;
     const medicareBase=medicareBase_f;
     const taxOvrActive = taxOvrAmt != null;
-    const ira1Addl=ira1Draw_f, ira2Addl=ira2Draw_f, stkSales=secDraw_f;
+    // Existing reports use these fields for all taxable distributions above regular RMDs.
+    const ira1Addl=ira1Draw_f + fixedIra1, ira2Addl=ira2Draw_f + fixedIra2, stkSales=secDraw_f;
     const unfunded=unfunded_f, fundingChoice=fundingChoice_f, fundingOrder=fundingOrder_f, irmaaMagi=irmaaMagi_f;
     const irmaaLookbackYear=irmaaLookbackYear_f, irmaaSurvivorRelief=irmaaSurvivorRelief_f;
     const qualDivs=qualDivs_f, qualDivsForTax=qualDivsForTax_f, taxableRMDs=taxableRMDs_f;
     const taxableStkGain=taxableStkGain_f, w2AGI=w2AGI_f, w2AGI1=w2AGI1_f, w2AGI2=w2AGI2_f;
-    // incomeTax = fed+CA (IRMAA separate); cashTax = incomeTax + IRMAA (actual cash out)
-    const incomeTax = totalTax; // totalTax = fed+CA only at this point
+    const earlyIraTax = earlyIraCashTax_f + earlyIraWithheldTax_f;
+    const incomeTax = totalTax + earlyIraTax;
     const yearCloseout = (S.yearEndCloseouts && S.yearEndCloseouts[yr]) || {};
     const closeoutHas = key => yearCloseout[key] !== null && yearCloseout[key] !== undefined && yearCloseout[key] !== '';
     const effectiveCloseoutAgi = closeoutHas('agi') ? Math.max(0, parseF(yearCloseout.agi)) : agi;
     const effectiveCloseoutMagi = closeoutHas('magi') ? Math.max(0, parseF(yearCloseout.magi)) : magi;
     const hasSplitCloseoutTax = closeoutHas('federalIncomeTax') || closeoutHas('stateIncomeTax');
-    const effectiveCloseoutFederalTax = closeoutHas('federalIncomeTax') ? Math.max(0, parseF(yearCloseout.federalIncomeTax)) : (fedRes.ordTax + fedRes.ltcgTax + niit);
+    const effectiveCloseoutFederalTax = closeoutHas('federalIncomeTax') ? Math.max(0, parseF(yearCloseout.federalIncomeTax)) : (fedRes.ordTax + fedRes.ltcgTax + niit + earlyIraTax);
     const effectiveCloseoutStateTax = closeoutHas('stateIncomeTax') ? Math.max(0, parseF(yearCloseout.stateIncomeTax)) : stTax;
     const effectiveCloseoutIncomeTax = hasSplitCloseoutTax ? effectiveCloseoutFederalTax + effectiveCloseoutStateTax
       : closeoutHas('incomeTax') ? Math.max(0, parseF(yearCloseout.incomeTax)) : incomeTax;
@@ -3713,9 +3990,9 @@ function runProjection(S) {
     const baseTaxFunding = Math.max(0, baseTax_f - totalWithheld);
     // Tax override controls funding. Otherwise conversion withholding is a tax payment,
     // while outside/IRA methods remain cash-flow requirements funded by their dedicated draws.
-    const fundingTax = taxOvrActive ? taxOvrAmt
-      : rothTaxFundingCfg.method === 'NORMAL' ? netTaxNeeded
-      : baseTaxFunding + (rothTaxFundingCfg.method === 'WITHHOLD' ? 0 : rothConvTaxFundingNeed);
+    const dedicatedTax = rothTaxFundingCfg.method === 'WITHHOLD' || (taxOvrActive && !acaFillOn) ? 0 : rothConvTaxFundingNeed;
+    const fundingTax = earlyIraCashTax_f + (normalTaxFunding
+      ? netTaxNeeded : (taxOvrActive ? taxOvrAmt : baseTaxFunding) + dedicatedTax);
     const effRate  = agi > 0 ? cashTax / agi : 0;
     const taxableInc = Math.max(0, agi - fedRes.effDed);
     const margRate = getMarginalRate(taxableInc, taxFiling, tables);
@@ -3728,12 +4005,11 @@ function runProjection(S) {
     // Regular IRA/Roth growth is applied to start-of-year balance before flows.
     // Inherited IRA growth is applied after inherited IRA RMDs/draws so only the remaining balance grows.
 
-    // IRA 1: prior * (1+g) - rmd1 - ira1Addl - rothConvDraw1 + 401K trad + employer
-    ira1 = Math.max(0, ira1 + ira1Growth - committedIra1 - ira1Addl - rothConvDraw1
+    // Committed withdrawals already include any scheduled distribution.
+    ira1 = Math.max(0, ira1 + ira1Growth - committedIra1 - ira1Draw - rothConvDraw1
                        + k401Contrib1Trad + k401Emp1Amt);
 
-    // IRA 2: prior * (1+g) - rmd2 - ira2Addl - rothConvDraw2 + 401K trad + employer
-    ira2 = Math.max(0, ira2 + ira2Growth - committedIra2 - ira2Addl - rothConvDraw2
+    ira2 = Math.max(0, ira2 + ira2Growth - committedIra2 - ira2Draw - rothConvDraw2
                        + k401Contrib2Trad + k401Emp2Amt);
 
     // Roth 1: prior * (1+g) + conv1 + roth401K - rothDraw1 - rothModeWith1
@@ -3773,9 +4049,9 @@ function runProjection(S) {
     const rawCashNetOfExcess = rawCash - excessFunds;
     cashSweep = (cashFloor > 0 && rawCashNetOfExcess > cashFloor)
       ? rawCashNetOfExcess - cashFloor : 0;
-    cash = cashFloor > 0
-      ? Math.max(0, Math.min(cashFloor, rawCash))
-      : Math.max(0, rawCash);
+    // A surplus from scheduled payments is already deposited in securities above.
+    const cashAfterSweep = fixedIraCash > 0 ? rawCashNetOfExcess : rawCash;
+    cash = Math.max(0, cashFloor > 0 ? Math.min(cashFloor, cashAfterSweep) : cashAfterSweep);
     if (cashSweep > 0) sec = Math.max(0, sec + cashSweep);
     const endSecTaxableBal = sec * secBalanceMix.taxable;
     const endSecTreasuryBal = sec * secBalanceMix.treasury;
@@ -3803,6 +4079,14 @@ function runProjection(S) {
       pre2020InhDivisor1: pre2020Calc1.divisor, pre2020InhDivisor2: pre2020Calc2.divisor, ira1Addl, ira2Addl,
       divs, totalSecDivs, taxableSecDivs, treasuryInterest, caMuniInterest, otherMuniInterest, fedTaxableDivInt, taxExemptInterest, caTaxableMuniInterest, hasManualSecBuckets, hasManualSecIncome:hasManualSecBuckets, reinvestedSecDivs, divReinvestPct, stkSales, rothDraw1, rothDraw2, hsaWith,
       mandatoryFunding, step1Total, totalFunding,
+      ...(fixedIraSchedules.length ? {fixedIra1, fixedIra2, scheduledIraRequested, scheduledIraPaid,
+        scheduledIraRequested1:requested1, scheduledIraRequested2:requested2, scheduledIraPaid1, scheduledIraPaid2,
+        fixedIraReserved1:!!reservedIra1, fixedIraReserved2:!!reservedIra2,
+        scheduledIraShortfall:Math.max(0, scheduledIraRequested - scheduledIraPaid)} : {}),
+      ...(acaFundingTarget ? {acaMagiBeforeOptional, acaLimitApplied:acaLimitApplied_f} : {}),
+      ...(acaFillOn ? {acaRothConversion:rothConv} : {}),
+      ...(hasRegularIraSchedules ? {earlyIraTax} : {}),
+      ...(earlyDrawNeedsConsent1 || earlyDrawNeedsConsent2 ? {earlyDrawNeedsConsent:true} : {}),
       // Spending / cash
       spending, spendWithTax: spending + fundingTax, cashFloor, cashGapNeeded, totalRequired: spending + fundingTax + cashGapNeeded,
       excessFunds, cashSweep, shortfall, unfunded:unfunded+rothConvTaxFundingShortfall, fundingChoice, fundingOrder,
@@ -5592,6 +5876,10 @@ async function initGitHubLoad() {
 }
 
 function applyMigrations(merged) {
+  merged.ovAcaIncomeTarget = (Array.isArray(merged.ovAcaIncomeTarget) ? merged.ovAcaIncomeTarget : [])
+    .map(normalizeAcaIncomeTarget).filter(Boolean);
+  merged.ovFixedIraWithdrawals = (Array.isArray(merged.ovFixedIraWithdrawals) ? merged.ovFixedIraWithdrawals : [])
+    .map(row => normalizeFixedIraWithdrawal(row, merged.ovAcaIncomeTarget)).filter(Boolean);
   merged.dependents = (Array.isArray(merged.dependents) ? merged.dependents : [])
     .filter(row => row && typeof row === 'object' && !Array.isArray(row))
     .map(row => ({
@@ -6857,6 +7145,111 @@ function rowHasCloseoutIncomeTax(r){
   const c=(r&&r.closeoutActuals)||{};
   return ['incomeTax','federalIncomeTax','stateIncomeTax'].some(k=>c[k]!==null&&c[k]!==undefined&&c[k]!=='');
 }
+function acaJointHousehold(row) {
+  return row.taxFiling === 'MFJ' && hasP2() && !isWidowAfterDeathYear(row);
+}
+function acaIncomeTargetForProjectionRow(row, strategy) {
+  const result = acaIncomeTargetForYear(row.yr,acaJointHousehold(row),row.dependentCount,S.spendInfl,strategy);
+  if (!result) return null;
+  const nontaxableSS = Math.max(0, row.grossSS - row.taxableSS);
+  const magi = row.projectedAgi + row.taxExemptInterest + nontaxableSS + strategy.additionalMagi;
+  return {...result, magi, difference:magi - result.target};
+}
+
+function acaHouseholdLabel(row) {
+  const size = (acaJointHousehold(row) ? 2 : 1) + row.dependentCount;
+  const claimed = (S.dependents || []).flatMap(dependent => {
+    const age = claimedDependentAge(dependent,row.yr);
+    return age == null ? [] : [(dependent.nickname || 'Dependent') + ' (' + age + ')'];
+  });
+  return setupEsc([size, ...claimed].join(' · '));
+}
+
+function acaIncomeRoomLabel(difference) {
+  const dollars = Math.round(difference * 100) / 100;
+  if (dollars === 0) return 'At target';
+  const amount = Math.abs(dollars) < 1 ? 'Less than $1' : f$(Math.abs(dollars));
+  return amount + (dollars > 0 ? ' over' : ' under');
+}
+
+function renderCashFlowPlanningSummary(acaRows, scheduledRows) {
+  const root = document.getElementById('cf-fixed-ira-summary');
+  if (!root) return;
+  const firstAcaIndex = acaRows.findIndex(Boolean);
+  const hasSchedule = scheduledRows.length > 0;
+  const tightestIndex = acaRows.reduce((best, aca, index) => {
+    if (!aca || (hasSchedule && !proj[index].scheduledIraRequested)) return best;
+    return best < 0 || aca.difference > acaRows[best].difference ? index : best;
+  }, -1);
+  const parts = [];
+  if (tightestIndex >= 0) {
+    const label = hasSchedule ? 'Tightest ACA year during the payment schedule' : 'Tightest ACA year';
+    parts.push('<strong>' + label + '</strong> ' + proj[tightestIndex].yr +
+      ' (' + acaIncomeRoomLabel(acaRows[tightestIndex].difference) + ').');
+  }
+  if (proj.some(row => row.acaMagiBeforeOptional != null)) {
+    parts.push('The ACA target limits optional taxable draws and conversions in the selected years.');
+    const acaFillYears = proj.filter(row => row.acaRothConversion != null);
+    if (acaFillYears.some(row => row.acaRothConversion > 0)) {
+      parts.push('Conversions from ACA fill appear under Roth Conversion.');
+    } else if (acaFillYears.length) {
+      parts.push('ACA fill found no conversion that fit the target, available IRA balances, and funding needs.');
+    }
+    const scheduledOver = proj.findIndex((row,index) => row.acaMagiBeforeOptional > acaRows[index]?.target &&
+      acaRows[index].difference >= 0.005);
+    if (scheduledOver >= 0) {
+      parts.push('<strong>' + proj[scheduledOver].yr + ' is ' + acaIncomeRoomLabel(acaRows[scheduledOver].difference) +
+        '</strong> with income and scheduled payments already in the plan.');
+    }
+    const cappedGap = proj.find(row => row.acaLimitApplied && row.unfunded > 0.50);
+    if (cappedGap) {
+      parts.push('<strong>' + cappedGap.yr + ' funding gap under the ACA limit</strong> ' + f$(cappedGap.unfunded) + '.');
+    }
+  }
+  if (hasSchedule) {
+    const missedPayment = scheduledRows.find(row => row.scheduledIraShortfall > 0.005);
+    const fundingGap = scheduledRows.find(row => row.unfunded > 0.50);
+    parts.push(missedPayment ? 'First scheduled payment shortfall in ' + missedPayment.yr + ' (' + f$(missedPayment.scheduledIraShortfall) + ').'
+      : 'Projected IRA balances cover the scheduled payments in the years shown.');
+    parts.push(fundingGap ? 'First plan funding gap during the schedule in ' + fundingGap.yr + ' (' + f$(fundingGap.unfunded) + ').'
+      : 'The plan covers its funding needs in the scheduled years shown.');
+    if (scheduledRows.some(row => row.earlyDrawNeedsConsent)) {
+      parts.push('<strong>Extra IRA draws before age 59½ are paused.</strong> Confirm them on the withdrawal strategy to include them in the forecast.');
+    }
+    if (scheduledRows.some(row => row.earlyIraTax > 0)) {
+      parts.push('Early IRA Tax is the estimated 10% federal additional tax paid from gross distributions under a regular IRA schedule.');
+    }
+    if (scheduledRows.some(row => row.scheduledIraPaid > row.fixedIra1 + row.fixedIra2 + 0.005)) {
+      parts.push('Gross Paid includes any cash RMD that counts toward the schedule.');
+    }
+  } else if (firstAcaIndex >= 0) {
+    parts.push('<button type="button" class="btn btn-light btn-sm" onclick="setupOpenFixedIraWithdrawal(' +
+      proj[firstAcaIndex].yr + ')">Test a fixed IRA withdrawal</button>');
+  }
+  if (proj.some(row => row.fixedIraReserved1 || row.fixedIraReserved2)) {
+    const schedules = S.ovFixedIraWithdrawals || [];
+    for (const row of schedules) {
+      if (!fixedIraReservesOwner(row) || (row.owner === '2' && !hasP2())) continue;
+      const range = fixedIraProtectionYears(row,S);
+      if (range.startYear > S.endYear || range.endYear < S.startYear) continue;
+      const name = setupEsc(row.owner === '1' ? p1() : p2());
+      const purpose = row.sepp ? 'SEPP' : 'scheduled payments';
+      parts.push('<strong>' + name + ' IRA reserved for ' + purpose + ' through ' + range.endYear + '.</strong>');
+      if (row.sepp) {
+        if (row.sepp.calculatedAmount) parts.push(setupEsc(fixedIraSeppAmountMessage(row.amount, row.sepp.calculatedAmount)));
+        parts.push(setupEsc(fixedIraSeppTimingMessage(fixedIraSeppTiming(row,S),row.endYear)));
+      }
+      if (schedules.some(other => other !== row && fixedIraSchedulesConflict(row,other,S))) {
+        parts.push('Review overlapping fixed withdrawals for ' + name + ' in Strategy Builder. The reserved schedule takes priority during the reserved years.');
+      }
+    }
+  } else if (hasSchedule && firstAcaIndex >= 0) {
+    parts.push('Check the fixed withdrawal’s IRA funding option in Strategy Builder to see whether the plan can make additional draws.');
+  }
+  root.innerHTML = parts.join(' ');
+  root.hidden = !parts.length;
+}
+
 function renderCF(){
   const n1=p1(), n2=p2(), hp=hasP2();
   const W   = (n) => {
@@ -6877,8 +7270,29 @@ function renderCF(){
   const frozenLefts  = frozenWidths.reduce((acc,w,i)=>{acc.push(i===0?0:acc[i-1]+frozenWidths[i-1]);return acc;},[]);
   const frozenTotal  = frozenWidths.reduce((a,b)=>a+b,0);
 
+  const acaRows = proj.map(row => {
+    const strategy = acaIncomeStrategyForYear(S,row.yr);
+    return strategy ? acaIncomeTargetForProjectionRow(row, strategy) : null;
+  });
+  const showAcaTargets = acaRows.some(Boolean);
+  const acaNote = document.getElementById('cf-aca-note');
+  if (acaNote) acaNote.hidden = !showAcaTargets;
+  const scheduledRows = proj.filter(row => row.scheduledIraRequested > 0);
+  const fixedIraOwners = [1,2].filter(owner => scheduledRows.some(row => row['scheduledIraRequested'+owner] > 0));
+  renderCashFlowPlanningSummary(acaRows, scheduledRows);
+
   // Scrollable column groups
   let groups = [
+    ...(showAcaTargets ? [{label:'ACA INCOME TARGET', bg:'#13353a', tc:'#9ad1d6', cols:[
+      {f:'acaHousehold', h:'Household Size\nClaimed Dependents'},
+      {f:'acaMagi', h:'ACA Household\nMAGI'},
+      {f:'acaTarget', h:'Income Target\nAfter Cushion'},
+      {f:'acaDifference', h:'Over / Under\nTarget', bold:true}
+    ]}] : []),
+    ...(fixedIraOwners.length ? [{label:'FIXED IRA WITHDRAWAL', bg:'#234036', tc:'#9bd0b6',
+      cols:fixedIraOwners.map(owner => ({f:'scheduledIraPaid'+owner,
+        h:setupEsc(owner === 1 ? n1 : n2)+'\nGross Paid', bold:true, scheduledOwner:owner}))
+    }] : []),
     { label:'MANDATORY FUNDING', bg:'#1a3a1a', tc:'#6abf6a', cols:[
       {f:'atWages',     h:'Take-Home\nWages'},
       {f:'ptWages',     h:'Self-Employ\nIncome'},
@@ -6943,6 +7357,7 @@ function renderCF(){
       {f:'fedOrd',    h:'Federal\nOrd Tax'},
       {f:'ltcg',      h:'LTCG\nTax'},
       {f:'niit',      h:'NIIT\n3.8%'},
+      ...(proj.some(row => row.earlyIraTax > 0) ? [{f:'earlyIraTax',h:'Early IRA\nTax',red:true}] : []),
       {f:'stTax',     h:'CA\nState Tax'},
       {f:'incomeTax', h:'Total\nTax',       bold:true},
       {f:'effRate',   h:'Eff\nRate',        pct:true},
@@ -6990,6 +7405,8 @@ function renderCF(){
     if (field === 'startAllInh') return ((r.startPre2020Inh1||0)+(r.startPre2020Inh2||0)+(r.startPost2020Inh||0)) > 0;
     if (field === 'blended') return Math.abs(r.ltcg||0) > 0.49 || Math.abs(r.qualDivsForTax||0) > 0.49 || Math.abs(r.taxableStkGain||0) > 0.49;
     if (field === 'totalWages') return Math.abs((r.w2AGI||0)+(r.ptWages||0)) > 0.49;
+    if (field === 'ira1Addl') return r.ira1Addl - (r.fixedIra1 || 0) > 0.49;
+    if (field === 'ira2Addl') return r.ira2Addl - (r.fixedIra2 || 0) > 0.49;
     if (field === 'rothConvNet') return Math.abs(r.rothConvTaxWithheld||0) > 0.49;
     if (field === 'taxableDivs') return Math.abs(r.fedTaxableDivInt != null ? r.fedTaxableDivInt : (r.qualDivs != null ? r.qualDivs : (r.divs||0))) > 0.49;
     if (field === 'taxableSecDivs') return hasBondIncomeDetail && Math.abs(r.taxableSecDivs || 0) > 0.49;
@@ -7088,7 +7505,16 @@ function renderCF(){
     const sowNetWorthToday = todayDollarValueForYear(sowNetWorth, r.yr);
     const totalWages  = (r.w2AGI||0) + (r.ptWages||0);   // taxable wages (for TAXABLE INCOME section)
     const fundingWages = (r.atWages||0) + (r.ptWages||0); // cash received (for MANDATORY FUNDING section)
-    const derived = { taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, startAllInh, sowNetWorth, sowNetWorthToday, totalWages, fundingWages };
+    const aca = acaRows[ri];
+    const difference = aca ? Math.round(aca.difference * 100) / 100 : null;
+    const derived = {taxableRMDs, taxableIRADraws, taxableDivs, taxableStkGain, taxableSS, actualTax, startAllInh, sowNetWorth, sowNetWorthToday, totalWages, fundingWages,
+      acaHousehold:showAcaTargets ? acaHouseholdLabel(r) : null,
+      acaMagi:aca ? f$(aca.magi) : null,
+      acaTarget:aca ? f$(aca.target) + (aca.projected ? ' (Projected)' : '') : null,
+      acaDifference:aca ? acaIncomeRoomLabel(aca.difference) : '—',
+      ira1Addl:r.ira1Addl - (r.fixedIra1 || 0),
+      ira2Addl:r.ira2Addl - (r.fixedIra2 || 0)
+    };
 
     groups.forEach((g,gi)=>{
       g.cols.forEach((col,ci)=>{
@@ -7104,11 +7530,21 @@ function renderCF(){
         if(col.bold) fw='font-weight:700;';
         if(col.green && raw>0) color='color:#1a6a1a;';
         if(col.red   && raw>0) color='color:#8b0000;';
+        if (col.f==='acaDifference' && difference > 0) color='color:#8b0000;';
+        if (col.f==='acaDifference' && difference < 0) color='color:#1a6a1a;';
+        if (col.scheduledOwner) {
+          const requested = r['scheduledIraRequested'+col.scheduledOwner] || 0;
+          const short = requested - raw > 0.005;
+          val = requested > 0 ? f$(raw) + (short ? ' of ' + f$(requested) : '') : '—';
+          if (short) color='color:#8b0000;';
+        }
         if(col.f==='shortfall'  && raw>0) color='color:#8b0000;font-weight:700;';
         if(col.f==='totalTax') color='color:#8b0000;';
         if(col.f==='netWorth') color='color:#1a4a1a;font-weight:800;';
+        const householdStyle = col.f === 'acaHousehold'
+          ? 'text-align:left;max-width:190px;white-space:normal;overflow-wrap:anywhere;' : '';
         cells += `<td style="padding:3px 10px;text-align:right;font-family:'JetBrains Mono',monospace;
-          font-size:11px;border-bottom:1px solid #e8e0d0;background:${rowBg};${bdr}${color}${fw}">${val}</td>`;
+          font-size:11px;border-bottom:1px solid #e8e0d0;background:${rowBg};${bdr}${color}${fw}${householdStyle}">${val}</td>`;
       });
     });
     return `<tr>${cells}</tr>`;
@@ -7250,12 +7686,15 @@ function renderTaxPaymentCheck(jurisdiction) {
       : 'The standard federal schedule allocates the payment target and withholding evenly. For uneven income, timing exceptions, or a penalty calculation, consult Form 2210. <a href="https://www.irs.gov/publications/p505" target="_blank" rel="noopener">IRS Publication 505</a>'}</p>`;
   renderTaxPaymentResults(jurisdiction, row);
 }
+function projectedFederalTax(row) {
+  return (row.fedOrd||0) + (row.ltcg||0) + (row.niit||0) + (row.earlyIraTax||0);
+}
 function renderTaxPaymentResults(jurisdiction, row) {
   const california = jurisdiction === 'california';
   const el = document.getElementById(california ? 'ca-tax-payment-results' : 'tax-payment-results');
   if (!el) return;
   const values = (california ? S.caTaxPaymentChecks : S.taxPaymentChecks)?.[row.yr] || {};
-  const projectedTax = california ? row.stTax || 0 : (row.fedOrd||0) + (row.ltcg||0) + (row.niit||0);
+  const projectedTax = california ? row.stTax || 0 : projectedFederalTax(row);
   const result = calculateTaxPaymentCheck(projectedTax, row.taxFiling || S.filing, values, jurisdiction, row.caAgi);
   const jurisdictionName = california ? 'California' : 'Federal';
   const money = amount => amount.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2});
@@ -7319,7 +7758,9 @@ function renderTax(){
   renderDependentCredits();
   renderTaxPaymentCheck('federal');
   renderTaxPaymentCheck('california');
-  const totF=proj.reduce((s,r)=>s+r.fedOrd+r.ltcg+(r.niit||0),0);
+  const totF=proj.reduce((s,r)=>s+projectedFederalTax(r),0);
+  const hasEarlyIraTax = proj.some(row => row.earlyIraTax > 0);
+  document.getElementById('tax-early-ira-header').hidden = !hasEarlyIraTax;
   const totN=proj.reduce((s,r)=>s+(r.niit||0),0);
   const totS=proj.reduce((s,r)=>s+r.stTax,0);
   const totI=proj.reduce((s,r)=>s+r.irmaaTx,0);
@@ -7340,6 +7781,7 @@ function renderTax(){
     {label:'Fed Ord',data:proj.map(r=>r.fedOrd),backgroundColor:'#c0392b',stack:'s'},
     {label:'LTCG',data:proj.map(r=>r.ltcg),backgroundColor:'#e67e22',stack:'s'},
     {label:'NIIT',data:proj.map(r=>r.niit||0),backgroundColor:'#8b1a50',stack:'s'},
+    ...(hasEarlyIraTax ? [{label:'Early IRA Tax',data:proj.map(r=>r.earlyIraTax||0),backgroundColor:'#a65a00',stack:'s'}] : []),
     {label:'CA State',data:proj.map(r=>r.stTax),backgroundColor:'#8e44ad',stack:'s'},
     {label:'IRMAA',data:proj.map(r=>r.irmaaTx),backgroundColor:'#2980b9',stack:'s'},
     {label:'Medicare B',data:proj.map(r=>r.medicareBase||0),backgroundColor:'#16a085',stack:'s'},
@@ -7358,7 +7800,7 @@ function renderTax(){
     <td>${r.charityDed>0?f$(r.charityDed):'—'}</td>
     <td>${f$(r.taxableInc != null ? r.taxableInc : Math.max(0,r.agi-(r.effDed||r.stdDed)))}</td>
     <td style="font-size:9px">${r.taxFiling||S.filing}</td>
-    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${r.niit>0?f$(r.niit):'—'}</td><td>${r.caExemptionCredit>0?f$(r.caExemptionCredit):'—'}</td><td>${f$(r.stTax)}</td>
+    <td>${f$(r.fedOrd)}</td><td>${f$(r.ltcg)}</td><td>${r.niit>0?f$(r.niit):'—'}</td>${hasEarlyIraTax?'<td>'+(r.earlyIraTax>0?f$(r.earlyIraTax):'—')+'</td>':''}<td>${r.caExemptionCredit>0?f$(r.caExemptionCredit):'—'}</td><td>${f$(r.stTax)}</td>
     <td class="hi red">${(r.taxOvrActive?'✦ ':'')+f$(r.incomeTax)}</td>
     <td>${fp(r.effRate)}</td><td>${fp(r.margRate)}</td><td>${fp(r.blended)}</td>
     <td style="color:#888;font-size:10px">${f$(r.irmaaMagi)}</td>
@@ -7439,7 +7881,9 @@ function renderYD(){
   const agiPartsTotal = agiWages + agiIRADraws + agiRothConv + agiDivInt + agiStkGain + agiTaxableSS;
   const agiResidual = (r.agi || 0) - agiPartsTotal;
   const autoFunding = (r.mandatoryFunding||0) + (r.hsaWith||0);
-  const accountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.pre2020InhAddl||0) + (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothDraw1||0) + (r.rothDraw2||0);
+  const discretionaryIra1 = (r.ira1Addl || 0) - (r.fixedIra1 || 0);
+  const discretionaryIra2 = (r.ira2Addl || 0) - (r.fixedIra2 || 0);
+  const accountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.pre2020InhAddl||0) + discretionaryIra1 + discretionaryIra2 + (r.rothDraw1||0) + (r.rothDraw2||0);
   const taxableAccountDraws = (r.pre2020InhAddl||0) + (r.ira1Addl||0) + (r.ira2Addl||0) + (r.rothConv||0);
   const nonTaxableAccountDraws = (r.cashDraw||0) + (r.stkSales||0) + (r.rothDraw1||0) + (r.rothDraw2||0);
   const fundingTax = r.fundingTax || 0;
@@ -7482,6 +7926,9 @@ function renderYD(){
       ${dr(p2()+' SS',f$(r.grossSS2))}
       ${r.rmd1>0?dr(p1()+(r.qcdRmd1>0?' Remaining Cash RMD':' RMD')+' (age '+(yr-S.by1)+')',f$(r.rmd1)):''}
       ${r.rmd2>0?dr(p2()+(r.qcdRmd2>0?' Remaining Cash RMD':' RMD')+' (age '+(yr-S.by2)+')',f$(r.rmd2)):''}
+      ${r.fixedIra1>0?dr(p1()+' Fixed IRA Withdrawal',f$(r.fixedIra1)):''}
+      ${r.fixedIra2>0?dr(p2()+' Fixed IRA Withdrawal',f$(r.fixedIra2)):''}
+      ${r.scheduledIraShortfall>0.005?dr('Scheduled IRA Payment Shortfall',f$(r.scheduledIraShortfall),'warn'):''}
       ${r.pre2020InhDraw1>0?dr(p1()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw1)):''}
       ${r.pre2020InhDraw2>0?dr(p2()+' Pre-2020 Inh IRA RMD',f$(r.pre2020InhDraw2)):''}
       ${r.post2020InhRMD>0?dr('Post-2020 Inh IRA Required RMD',f$(r.post2020InhRMD)):''}
@@ -7499,8 +7946,8 @@ function renderYD(){
       ${r.pre2020InhAddl1>0?dr(p1()+' Pre-2020 Inh IRA Draw',f$(r.pre2020InhAddl1)):''}
       ${r.pre2020InhAddl2>0?dr(p2()+' Pre-2020 Inh IRA Draw',f$(r.pre2020InhAddl2)):''}
       ${r.cashDraw>0?dr('Cash Draw',f$(r.cashDraw)):''}
-      ${r.ira1Addl>0?dr(p1()+' IRA Draw',f$(r.ira1Addl)):''}
-      ${r.ira2Addl>0?dr(p2()+' IRA Draw',f$(r.ira2Addl)):''}
+      ${discretionaryIra1>0?dr(p1()+' IRA Draw',f$(discretionaryIra1)):''}
+      ${discretionaryIra2>0?dr(p2()+' IRA Draw',f$(discretionaryIra2)):''}
       ${r.stkSales>0?dr('Securities Draw',f$(r.stkSales)):''}
       ${r.rothDraw1>0?dr(p1()+' Roth Withdrawal',f$(r.rothDraw1)):''}
       ${r.rothDraw2>0?dr(p2()+' Roth Withdrawal',f$(r.rothDraw2)):''}
@@ -7593,6 +8040,7 @@ function renderYD(){
       ${(r.niitExcessMagi||0)>0?dr('AGI Above NIIT Threshold',f$(r.niitExcessMagi)):''}
       ${(r.niitTaxableBase||0)>0?dr('NIIT Taxable Base — Smaller Amount',f$(r.niitTaxableBase)):''}
       ${(r.niit||0)>0?dr('Net Investment Income Tax (3.8%)',f$(r.niit),'','color:#8b1a50'):''}
+      ${r.earlyIraTax>0?dr('Early IRA Tax Paid From IRA',f$(r.earlyIraTax),'','color:#8b0000'):''}
       ${(r.netInvestmentIncome||0)>0?'<div style="font-size:10px;line-height:1.5;color:#6a4800;background:#fff8e8;border-left:3px solid #8b1a50;padding:5px 8px;margin-top:6px">NIIT is 3.8% of the smaller of net investment income or AGI above the filing-status threshold. IRA draws, Roth conversions, and taxable Social Security can raise AGI but are not included in net investment income.</div>':''}
       ${r.caExemptionCredit>0?dr('CA Personal and Senior Credits Used',f$(r.caExemptionCredit)):''}
       ${r.caDependentCredit>0?dr('CA Dependent Credit Used',f$(r.caDependentCredit)):''}
@@ -8652,6 +9100,7 @@ function apCard(yr){
     ${row('Adjusted Gross Income', r.agi, true)}
     ${row('Federal Ordinary + LTCG Tax', (r.fedOrd||0)+(r.ltcg||0))}
     ${(r.niit||0)>0 ? row('Net Investment Income Tax', r.niit, false, '#8b1a50') : ''}
+    ${r.earlyIraTax>0 ? row('Early IRA Tax Paid From IRA', r.earlyIraTax, false, '#8b0000') : ''}
     ${row('CA State Tax', r.stTax||0)}
     ${row('Total Income Tax', incomeTax, true)}
     ${hasIRMAA ? row('IRMAA Surcharge', r.irmaaTx, false, '#8b4000') : ''}
@@ -9637,6 +10086,7 @@ function buildReportPayload(){
     agi:r.agi||0, projectedAgi:r.projectedAgi??r.agi??0, projectedMagi:r.projectedMagi??r.magi??0, projectedIncomeTax:r.projectedIncomeTax??r.incomeTax??0, closeoutStatus:r.closeoutStatus||'projected', closeoutActuals:Object.assign({},r.closeoutActuals||{}), effDed:r.effDed||r.stdDed||0, stdDed:r.stdDed||0, seniorBonus:r.seniorBonus||0, charityDed:r.charityDed||0,
     taxableInc:r.taxableInc||0,
     fedOrd:r.fedOrd||0, ltcg:r.ltcg||0, niit:r.niit||0,
+    ...(r.earlyIraTax>0 ? {earlyIraTax:r.earlyIraTax} : {}),
     childTaxCredit:r.childTaxCredit||0, otherDependentCredit:r.otherDependentCredit||0, caDependentCredit:r.caDependentCredit||0,
     netInvestmentIncome:r.netInvestmentIncome||0, niitThreshold:r.niitThreshold||0, niitExcessMagi:r.niitExcessMagi||0, niitTaxableBase:r.niitTaxableBase||0,
     stTax:r.stTax||0, caExemptionCredit:r.caExemptionCredit||0,
@@ -10216,7 +10666,7 @@ function generateReport(){
     if(unfunded>0) funds.push(['⚠ Funding Gap',unfunded]);
     else if((full.excessFunds||0)>50) funds.push(['Surplus → Securities',full.excessFunds]);
     funds.push(['Funding Required',fundingRequired]);
-    const fed_tax=(full.fedOrd||0)+(full.ltcg||0)+(full.niit||0);
+    const fed_tax=projectedFederalTax(full);
     const ca_tax=full.stTax||0;
     const taxes=[
       ...(targetIncome?[ [targetIncome.label,targetIncome.value] ]:[]),
@@ -10226,6 +10676,7 @@ function generateReport(){
       ...(full.childTaxCredit>0?[['Child Tax Credit Used',full.childTaxCredit]]:[]),
       ...(full.otherDependentCredit>0?[['Credit for Other Dependents Used',full.otherDependentCredit]]:[]),
       ...((full.niit||0)>0?[['Net Investment Income Tax (included above)',full.niit]]:[]),
+      ...(full.earlyIraTax>0?[['Early IRA Tax Paid From IRA (included above)',full.earlyIraTax]]:[]),
       ...((full.caExemptionCredit||0)>0?[['CA Exemption Credits Used',full.caExemptionCredit]]:[]),
       ...(full.caDependentCredit>0?[['CA Dependent Credit Used',full.caDependentCredit]]:[]),
       ...(ca_tax || full.caExemptionCredit || full.caDependentCredit?[['CA State Tax After Credits',ca_tax]]:[]),
@@ -10412,7 +10863,8 @@ function generateReport(){
   }).join('');
 
   // ── Tax Summary ──
-  const totFed=rows.reduce((s,r)=>s+(r.fedOrd||0)+(r.ltcg||0)+(r.niit||0),0);
+  const totFed=rows.reduce((s,r)=>s+projectedFederalTax(r),0);
+  const hasEarlyIraTax=rows.some(row=>row.earlyIraTax>0);
   const totNIIT=rows.reduce((s,r)=>s+(r.niit||0),0);
   const totCA=rows.reduce((s,r)=>s+(r.stTax||0),0);
   const totIRMAA=rows.reduce((s,r)=>s+(r.irmaaTx||0),0);
@@ -10497,7 +10949,7 @@ function generateReport(){
       ${td((r.closeoutStatus&&r.closeoutStatus!=='projected'?'‡ ':'')+r.yr)}${td(age(r))}${td(((r.closeoutActuals||{}).agi!==null&&(r.closeoutActuals||{}).agi!==undefined&&(r.closeoutActuals||{}).agi!==''?'‡ ':'')+fd(r.agi,true),'r')}
       ${td(flag+fd(ded,true),'r')}${td(r.seniorBonus>0?fd(r.seniorBonus,true):'—','r')}${td(r.charityDed>0?fd(r.charityDed,true):'—','r')}${td(fd(r.taxableInc,true),'r')}
       ${td(r.taxFiling||A.filing)}
-      ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.niit),'r')}${td(dz(r.stTax),'r')}
+      ${td(fd(r.fedOrd,true),'r')}${td(dz(r.ltcg),'r')}${td(dz(r.niit),'r')}${hasEarlyIraTax?td(dz(r.earlyIraTax),'r'):''}${td(dz(r.stTax),'r')}
       ${td((rowHasCloseoutIncomeTax(r)?'‡ ':'')+fd(r.incomeTax,true),'r bold')}
       ${td(fp(r.effRate),'r')}${td(fp(r.margRate),'r')}
       ${td(dz(r.irmaaTx),'r')}${td(dz(r.medicareBase),'r')}
@@ -10672,7 +11124,7 @@ function generateReport(){
         <td class="bold" style="padding:0 20px 0 30px">Peak Age</td><td class="r">${age(peak)}</td></tr>
   </tbody></table>
   <table><thead><tr>
-    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('NIIT'),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
+    ${[th('Year'),th('Ages'),thr('AGI'),thr('Deduction'),thr('Sr.\nBonus'),thr('Charity'),thr('Taxable\nIncome'),th('Filing'),thr('Federal\nOrdinary'),thr('LTCG\nTax'),thr('NIIT'),...(hasEarlyIraTax?[thr('Early IRA\nTax')]:[]),thr('CA State\nTax'),thr('Total\nIncome Tax'),thr('Eff\nRate'),thr('Marginal\nRate'),thr('IRMAA\nSurcharge'),thr('Medicare\nPart B'),th('IRMAA\nTier')].join('')}
   </tr></thead><tbody>${txRows}</tbody></table>
   <p class="note"><strong>NIIT estimate:</strong> 3.8% of the smaller of net investment income or AGI above the filing-status threshold. Form 8960 adjustments and allocable investment deductions are not modeled. ✦ = itemized deduction. ‡ = year or value replaced through Year-End Closeout; other figures remain projections.</p>
 
@@ -11322,6 +11774,9 @@ function rothLabCurrentPlanDescription(start, end){
   (S.ovTaxFill || []).filter(r => rothLabOverlap(r,start,end) && r.active === 'T').forEach(r => {
     bits.push(rothLabRangeText(r) + ' tax bracket fill' + (r.headroom ? ' with cushion ' + shortDollar(r.headroom) : ''));
   });
+  (S.ovAcaIncomeTarget || []).filter(r => r.rothFill && rothLabOverlap(r,start,end)).forEach(r => {
+    bits.push(rothLabRangeText(r) + ' ACA Roth fill');
+  });
   if (!bits.length) return 'No saved Roth conversion target rows overlap this analysis window. This is the current plan before adding lab scenarios.';
   return 'Saved Roth target rows: ' + bits.join('; ') + '.';
 }
@@ -11656,6 +12111,17 @@ function rothLabApplyScenario(st, def, start, end){
   if (def.kind === 'current') return st;
   if (def.kind === 'user') return rothLabApplyUserScenarioSnapshot(st, def.userScenario, start, end);
   rothLabClearConversionWindow(st, start, end);
+  // Keep ACA funding caps in each scenario while comparing conversion strategies.
+  if (st.ovAcaIncomeTarget?.some(row => row.rothFill && rothLabOverlap(row,start,end))) {
+    st.ovAcaIncomeTarget = st.ovAcaIncomeTarget.flatMap(row => {
+      if (!row.rothFill || !rothLabOverlap(row,start,end)) return [row];
+      return [
+        ...(row.startYear < start ? [{...row, endYear:start-1}] : []),
+        {...row, startYear:Math.max(start,row.startYear), endYear:Math.min(end,row.endYear), rothFill:false},
+        ...(row.endYear > end ? [{...row, startYear:end+1}] : [])
+      ];
+    });
+  }
   if (def.kind === 'none') {
     rothLabSuppressGlobalTargets(st, start, end, 'Roth Lab: no extra Roth conversions');
   } else if (def.kind === 'taxfill-guard') {
@@ -12842,6 +13308,7 @@ let setupStep = 0;
 let setupCheckYear = null;
 let setupCloseoutYear = null;
 let setupStrategyType = 'spending-onetime';
+let setupFixedIraStartYear = null;
 let setupEditingStrategy = null;
 let advancedMode = false;
 
@@ -13152,7 +13619,7 @@ function setupCopyProjectedCloseout(yr){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0)+(row.niit||0),
+    federalIncomeTax:projectedFederalTax(row),
     stateIncomeTax:row.stTax||0
   };
   setupAfterChange(true);
@@ -13245,7 +13712,7 @@ function setupReadiness(){
     add(has401kDefault ? 'done' : 'warn', '401k defaults', has401kDefault ? 'Global 401k contribution defaults are set; Start of Year can still override specific years.' : 'If wages include 401k saving or employer match, set global defaults or leave zero intentionally.', 'Open 401k Defaults', 'interview-savings');
   }
   add(S.growthRate != null && S.spendInfl != null ? 'done' : 'warn', 'Core assumptions', 'Growth, inflation, dividend, and cash interest assumptions are using defaults unless you change them.', 'Open Assumptions', 'interview-assumptions');
-  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovTaxFill','ovRothSource','ovRothTaxFunding','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovSSStress','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions','ovQcd'].reduce((n,k)=>n+((S[k]||[]).length),0);
+  const overrideCount = ['ovSpending','ovIRMAA','ovIncomeLevel','ovAcaIncomeTarget','ovFixedIraWithdrawals','ovTaxFill','ovRothSource','ovRothTaxFunding','ovGrowth','ovIncomeRates','ovStkGainPct','ovWageGrowth','ovSSStress','ovInflation','ovFundingOrder','ovCashFloor','ovHSADeposit','ovStateTax','ovDeductions','ovQcd'].reduce((n,k)=>n+((S[k]||[]).length),0);
   add(overrideCount ? 'done' : 'warn', 'Future strategies', overrideCount ? overrideCount+' strategy/override row(s) are active.' : 'No future changes are active yet. Add only the life events you actually want to model.', 'Strategy builder', 'strategy');
   const done = items.filter(i => i.status === 'done').length;
   const missing = items.filter(i => i.status === 'missing').length;
@@ -13870,7 +14337,7 @@ function renderSetupCloseoutView(){
     rothConversions:row.rothConv||0,
     agi:row.projectedAgi != null ? row.projectedAgi : (row.agi||0),
     magi:row.projectedMagi != null ? row.projectedMagi : (row.magi||0),
-    federalIncomeTax:(row.fedOrd||0)+(row.ltcg||0)+(row.niit||0),
+    federalIncomeTax:projectedFederalTax(row),
     stateIncomeTax:row.stTax||0
   };
   const field = (label,key,note) => {
@@ -13895,7 +14362,7 @@ function renderSetupCloseoutView(){
   const totals = [
     field('Final Adjusted Gross Income — AGI ($)','agi','Overrides the displayed historical AGI for this year.'),
     field('Final Medicare MAGI ($)','magi','Authoritative for the model\'s IRMAA calculation two years later.'),
-    field('Actual Federal Income Tax — for Comparison Only ($)','federalIncomeTax','Optional. Enter the actual total federal income tax, including any Net Investment Income Tax (NIIT), without adding state tax. Used only for plan-versus-actual comparison.'),
+    field('Actual Federal Income Tax — for Comparison Only ($)','federalIncomeTax','Optional. Enter the actual total federal income tax, including any Net Investment Income Tax (NIIT) and federal additional tax on early IRA distributions. Used only for plan-versus-actual comparison.'),
     field('Actual State Income Tax — for Comparison Only ($)','stateIncomeTax','Optional. Enter the actual state income tax separately. Used only for plan-versus-actual comparison.')
   ].join('');
   const projectedTaxTotal = projected.federalIncomeTax + projected.stateIncomeTax;
@@ -13918,6 +14385,8 @@ function setupStrategyOptions(){
     ['roth-source','Roth conversion source'],
     ['roth-tax-funding','Roth conversion tax funding'],
     ['income-level','MAGI income ceiling'],
+    ['aca-income-target','ACA Income Target'],
+    ['fixed-ira-withdrawal','Fixed Annual IRA Withdrawal'],
     ['tax-fill','Tax bracket fill'],
     ['income-rates','Dividend / interest rates'],
     ['stock-gain','Stock sale gain rate'],
@@ -13980,6 +14449,14 @@ function setupStrategyDescription(){
       title:'MAGI income ceiling',
       body:'Use this to keep taxable income under a chosen limit in certain years. This can matter before Medicare for health insurance subsidies, or whenever you want the model to avoid crossing a tax or benefit threshold.'
     },
+    'aca-income-target': {
+      title:'ACA Income Target',
+      body:'Set a Marketplace income target based on your tax household size. Choose whether the plan should adjust funding to stay within the target or show it for comparison in Cash Flow.'
+    },
+    'fixed-ira-withdrawal': {
+      title:'Fixed Annual IRA Withdrawal',
+      body:'Schedule a regular annual withdrawal for spending or model a 72(t) SEPP, a series of substantially equal periodic payments. The model uses the selected owner’s combined Traditional IRA / 401(k) balance and applies the taxable payment to spending before other account draws.'
+    },
     'tax-fill': {
       title:'Tax bracket fill',
       body:'Use this to let the model convert IRA money to Roth until it reaches the top of the current tax bracket, leaving any headroom you choose. It is a way to use lower-tax years on purpose.'
@@ -14026,8 +14503,8 @@ function setupStrategyDescription(){
 }
 function renderSetupStrategyView(){
   const options = setupStrategyOptions();
-  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupEditingStrategy=null;setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
-  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Strategy Builder</div><div class="setup-section-copy">Add future changes without touching override tables. The builder creates the same override rows the expert view uses, so advanced users can still inspect and edit everything later.</div>'+selector+'<div class="strategy-card">'+renderStrategyForm()+'</div>'+renderSelectedStrategyOverrides()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Active Strategies</div>'+renderActiveStrategies()+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'overrides\')">Open Override Tables</button></div></div></div>';
+  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupEditingStrategy=null;setupFixedIraStartYear=null;setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
+  return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Strategy Builder</div><div class="setup-section-copy">Add future changes and review or edit your saved strategies here.</div>'+selector+'<div class="strategy-card">'+renderStrategyForm()+'</div>'+renderSelectedStrategyOverrides()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Active Strategies</div>'+renderActiveStrategies()+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'overrides\')">Open Override Tables</button></div></div></div>';
 }
 function stratInput(id,label,value,opts){
   opts = opts || {};
@@ -14036,7 +14513,8 @@ function stratInput(id,label,value,opts){
   const max = opts.max != null ? " max='"+setupEsc(opts.max)+"'" : '';
   const placeholder = opts.placeholder ? " placeholder='"+setupEsc(opts.placeholder)+"'" : '';
   const v = value == null ? '' : value;
-  return setupField(label, "<input id='strat-"+id+"' type='number' value='"+setupEsc(v)+"'"+step+min+max+placeholder+">", opts.note || '');
+  const type = opts.type === 'date' ? 'date' : 'number';
+  return setupField(label, "<input id='strat-"+id+"' type='"+type+"' value='"+setupEsc(v)+"'"+step+min+max+placeholder+">", opts.note || '');
 }
 function stratText(id,label,value,note){
   const v = value == null ? '' : value;
@@ -14078,6 +14556,279 @@ function setupStrategyFieldValue(row, key, fallback){
 function setupStrategySingleYear(row, fallback){
   return setupStrategyFieldValue(row, 'startYear', setupStrategyFieldValue(row, 'year', fallback));
 }
+function readSetupAcaIncomeTarget() {
+  const choice = stratVal('aca-percent');
+  return normalizeAcaIncomeTarget({
+    startYear:stratVal('start'),
+    endYear:stratVal('end'),
+    region:stratVal('aca-region'),
+    percent:choice === 'custom' ? stratVal('aca-custom-percent') : choice,
+    cushion:stratVal('aca-cushion'),
+    additionalMagi:stratVal('aca-additional-magi'),
+    limitFunding:stratVal('aca-funding-mode') !== 'compare',
+    rothFill:document.getElementById('strat-aca-roth-fill')?.checked === true
+  });
+}
+function setupAcaIncomeTargetPreview(strategy) {
+  const firstYear = Math.max(ACA_INCOME_TARGET_FIRST_YEAR, setupYear());
+  if (firstYear > S.endYear) return 'ACA targets are available for coverage years from ' + ACA_INCOME_TARGET_FIRST_YEAR + ' onward.';
+  if (!strategy) return 'Choose a poverty level percentage to see the dollar target.';
+  const row = proj.find(item => item.yr === strategy.startYear);
+  const result = row && acaIncomeTargetForProjectionRow(row, strategy);
+  if (!result || strategy.endYear > S.endYear) return 'Choose coverage years within the plan and a valid target.';
+  const source = result.projected
+    ? 'Projected from the ' + (result.baseYear - 1) + ' HHS guideline using the plan’s spending inflation.'
+    : 'Uses the ' + (result.baseYear - 1) + ' HHS guideline.';
+  return row.yr + ' · Tax household of ' + result.size + ' · ' + f$(result.limit) + ' at ' + strategy.percent + '% of the federal poverty level' +
+    (strategy.cushion ? ' · ' + f$(result.target) + ' after cushion' : '') + '. ' + source;
+}
+function setupUpdateAcaIncomeTargetPreview() {
+  document.getElementById('strat-aca-custom-wrap').hidden = stratVal('aca-percent') !== 'custom';
+  const fundingMode = stratVal('aca-funding-mode') === 'compare' ? 'compare' : 'limit';
+  document.getElementById('strat-aca-funding-help').textContent = ACA_TARGET_FUNDING_HELP[fundingMode];
+  document.getElementById('strat-aca-roth-fill-wrap').hidden = fundingMode === 'compare';
+  document.getElementById('strat-aca-preview').textContent = setupAcaIncomeTargetPreview(readSetupAcaIncomeTarget());
+}
+function renderSetupAcaIncomeTargetFields(row) {
+  const firstYear = Math.max(ACA_INCOME_TARGET_FIRST_YEAR, setupYear());
+  const val = (key, fallback) => setupStrategyFieldValue(row, key, fallback);
+  const percent = val('percent', '');
+  const choice = !percent || ACA_INCOME_TARGET_PRESETS.includes(percent) ? percent : 'custom';
+  const fundingMode = row?.limitFunding === false ? 'compare' : 'limit';
+  return '<div class="setup-field-grid" style="grid-column:1/-1" oninput="setupUpdateAcaIncomeTargetPreview()">'+
+    stratInput('start','First Coverage Year',val('startYear',firstYear),{min:firstYear,max:S.endYear})+
+    stratInput('end','Last Coverage Year',val('endYear',''),{min:firstYear,max:S.endYear,placeholder:'Same as first year'})+
+    stratSelect('aca-region','Poverty Guideline Region',val('region','US'),Object.entries(ACA_INCOME_TARGET_REGIONS))+
+    stratSelect('aca-percent','Federal Poverty Level Target',choice,[['','Select a percentage'],...ACA_INCOME_TARGET_PRESETS.map(value=>[value,value+'%']),['custom','Custom %']])+
+    '<div id="strat-aca-custom-wrap"'+(choice === 'custom' ? '' : ' hidden')+'>'+
+      stratInput('aca-custom-percent','Custom Poverty Level (%)',choice === 'custom' ? percent : '',{min:0.01,step:'0.01'})+'</div>'+
+    stratInput('aca-cushion','Optional Cushion ($)',val('cushion',''),{min:0,step:'0.01',note:'Subtracts this amount from each annual target, down to $0.'})+
+    stratInput('aca-additional-magi','Additional ACA Income ($/yr)',val('additionalMagi',''),{min:0,step:'0.01',note:'Optional. Add excluded foreign income or MAGI for dependents who must file a federal return, if applicable.'})+
+    stratSelect('aca-funding-mode','How should the plan use the ACA target?',fundingMode,Object.entries(ACA_TARGET_FUNDING_LABELS),
+      '<span id="strat-aca-funding-help" aria-live="polite">'+setupEsc(ACA_TARGET_FUNDING_HELP[fundingMode])+'</span>')+
+    '<div id="strat-aca-roth-fill-wrap" class="setup-check-body" style="grid-column:1/-1"'+(fundingMode === 'compare' ? ' hidden' : '')+'>'+
+      '<label><input type="checkbox" id="strat-aca-roth-fill" aria-describedby="strat-aca-roth-fill-note"'+
+        (row?.rothFill && fundingMode === 'limit' ? ' checked' : '')+'> Use remaining ACA room for Roth conversions</label>'+
+      '<div id="strat-aca-roth-fill-note" class="setup-field-note">Convert pre-tax IRA money to Roth in lower-income years, when the income tax cost may be lower. The forecast funds spending first and accounts for conversion taxes before filling the room you have left. Conversions can reduce Marketplace savings even below your target. Other Roth conversion targets take priority in years they apply.</div></div>'+
+    '<div class="setup-check done" style="grid-column:1/-1"><div class="setup-check-title">ACA Income Target Preview</div>'+
+      '<div class="setup-check-body" id="strat-aca-preview" aria-live="polite">'+setupEsc(setupAcaIncomeTargetPreview(row))+'</div>'+
+      '<div class="setup-field-note">Cash Flow shows each year’s target and the amount over or under. The last listed target applies in overlapping years.</div>'+
+      '<a href="https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references" target="_blank" rel="noopener">HHS poverty guidelines</a></div>'+
+    '<div style="grid-column:1/-1"><button type="button" class="btn btn-light btn-sm" onclick="setupOpenFixedIraWithdrawal(stratVal(\'start\'))">Test a fixed IRA withdrawal, such as a SEPP</button>'+
+      '<div class="setup-field-note">Save your ACA target first. Then test a fixed payment to see how much room is left in each year.</div></div>'+
+    '</div>';
+}
+function setupOpenFixedIraWithdrawal(year) {
+  setupFixedIraStartYear = dependentYear(year) ?? setupYear();
+  setupEditingStrategy = null;
+  setupStrategyType = 'fixed-ira-withdrawal';
+  setupView = 'strategy';
+  ST('setup');
+}
+function readSetupFixedIraSepp() {
+  if (stratVal('sepp-timing') !== 'check') return null;
+  return {
+    birthDate:stratVal('sepp-birth'),
+    firstDate:stratVal('sepp-first'),
+    calculatedAmount:stratVal('sepp-calculated-amount'),
+    estimate:normalizeFixedIraSeppEstimate({
+      source:stratVal('sepp-estimate-source'),
+      balance:stratVal('sepp-estimate-balance'),
+      ratePct:stratVal('sepp-estimate-rate')
+    }),
+    noTransitionPayment:document.getElementById('strat-sepp-transition')?.checked === true
+  };
+}
+function formatFixedIraSeppAmount(amount) {
+  return amount.toLocaleString('en-US',{style:'currency',currency:'USD'});
+}
+
+function fixedIraSeppAmountMessage(amount, calculatedAmount) {
+  if (calculatedAmount == null) return '';
+  const expected = formatFixedIraSeppAmount(calculatedAmount);
+  if (amount == null) return 'Enter ' + expected + ' as the gross annual payment.';
+  if (amount === calculatedAmount) return 'The gross annual payment matches the ' + expected + ' SEPP amount entered.';
+  return 'The gross annual payment of ' + formatFixedIraSeppAmount(amount) +
+    ' needs to match the ' + expected + ' calculated SEPP amount.';
+}
+
+function fixedIraSeppTimingMessage(timing, endYear) {
+  if (!timing.date) return timing.issue;
+  let message = 'Suggested last full payment year is ' + timing.minimumYear +
+    '. Earliest date to change the SEPP is ' + formatFixedIraSeppDate(timing.date) + '.';
+  if (!timing.transitionYear) {
+    message += ' The payments through ' + timing.minimumYear +
+      ' complete the commitment if made as scheduled. Withdrawals in ' + (timing.minimumYear + 1) +
+      ' can follow your regular plan.';
+  } else if (timing.needsConfirmation && !timing.issue) {
+    message += ' You confirmed that no payment is due before the change date in ' + timing.transitionYear + '.';
+  } else {
+    message += ' A SEPP payment may still be due in ' + timing.transitionYear +
+      ', depending on when your payments fall before the change date. Confirm the amount with your IRA custodian.';
+    if (endYear >= timing.transitionYear) {
+      message += ' The forecast shows the full annual amount in ' + timing.transitionYear + '.';
+    }
+  }
+  return timing.issue ? message + ' ' + timing.issue : message;
+}
+function fixedIraPaymentYearAgeLabel(owner, year, state) {
+  const birthYear = dependentYear(state['by' + owner]);
+  return birthYear != null && year >= birthYear ? 'Turns ' + (year - birthYear) + ' in ' + year + '.' : '';
+}
+function fixedIraMayStartBefore59Half(owner, year, state) {
+  const birthYear = dependentYear(state['by' + owner]);
+  return year != null && birthYear != null && year - birthYear < 60;
+}
+function fixedIraFirstPaymentAgeLabel(sepp) {
+  const birth = fixedIraSeppDate(sepp?.birthDate);
+  const first = fixedIraSeppDate(sepp?.firstDate);
+  if (!birth || !first || first < birth) return '';
+  const beforeBirthday = sepp.firstDate.slice(5) < sepp.birthDate.slice(5);
+  const age = first.getUTCFullYear() - birth.getUTCFullYear() - Number(beforeBirthday);
+  return 'Age ' + age + ' on the first payment date.';
+}
+function fixedIraSeppEstimatePreview(sepp, owner, startYear, timing) {
+  const first = fixedIraSeppDate(sepp?.firstDate);
+  const year = first?.getUTCFullYear() ?? startYear;
+  const projected = fixedIraPaymentAmount(proj.find(row => row.yr === year)?.['startIRA' + owner]);
+  const projectionNote = projected == null
+    ? 'A positive opening IRA / 401(k) balance is needed in the plan to use the full projected balance.'
+    : 'Opening IRA / 401(k) balance for ' + (owner === '2' ? p2() : p1()) + ' in ' + year + ' is ' +
+      formatFixedIraSeppAmount(projected) + '. Use the full balance only if all of it will be in the IRA making the SEPP payments.';
+  const estimate = sepp?.estimate;
+  const balance = estimate?.source === 'projected' ? projected : estimate?.balance;
+  let message = '';
+  if (!timing?.date) message = 'Enter valid SEPP dates above to estimate the payment.';
+  else if (year < 2023) message = 'This estimate uses IRS rules for SEPPs that started in 2023 or later.';
+  else if (balance == null) message = 'Choose a positive projected balance or enter the balance of the specific IRA.';
+  else if (estimate?.ratePct == null) message = 'Enter an interest rate from 0% to 5%.';
+  if (message) return {projectionNote, message, amount:null};
+
+  const age = year - Number(sepp.birthDate.slice(0,4));
+  const factor = SINGLE_LIFE_EXPECTANCY_TABLE[age];
+  const rate = estimate.ratePct / 100;
+  const amount = fixedIraPaymentAmount(rate === 0 ? balance / factor :
+    balance * rate / -Math.expm1(-factor * Math.log1p(rate)));
+  message = amount == null ? 'The estimated payment is outside the supported dollar range.' :
+    'Estimated gross annual payment is ' + formatFixedIraSeppAmount(amount) +
+    ' using age ' + age + ' and a Single Life factor of ' + factor + '.';
+  return {projectionNote, message, amount};
+}
+
+function setupUpdateFixedIraSepp(event, applyEstimate = false) {
+  const panel = document.getElementById('strat-sepp-dates');
+  const confirmPayment = document.getElementById('strat-sepp-transition');
+  if (['strat-sepp-birth','strat-sepp-first','strat-ira-owner','strat-start','strat-end'].includes(event.target.id)) {
+    confirmPayment.checked = false;
+  }
+  const owner = stratVal('ira-owner');
+  const startYear = dependentYear(stratVal('start'));
+  const endYear = dependentYear(stratVal('end'));
+  document.getElementById('strat-start-age').textContent = fixedIraPaymentYearAgeLabel(owner,startYear,S);
+  document.getElementById('strat-end-age').textContent = fixedIraPaymentYearAgeLabel(owner,endYear,S);
+  const sepp = readSetupFixedIraSepp();
+  panel.hidden = !sepp;
+  document.getElementById('strat-ira-reserve-wrap').hidden = !!sepp;
+  const early = !sepp && fixedIraMayStartBefore59Half(owner,startYear,S);
+  const allowEarlyExtra = early && stratVal('ira-reserve') === 'allow';
+  const earlyWarning = document.getElementById('strat-ira-early-draw');
+  earlyWarning.hidden = !early;
+  earlyWarning.classList.toggle('missing', allowEarlyExtra);
+  document.getElementById('strat-ira-early-consent-wrap').hidden = !allowEarlyExtra;
+  if (['strat-ira-owner','strat-start','strat-end','strat-ira-reserve','strat-sepp-timing'].includes(event.target.id)) {
+    document.getElementById('strat-ira-early-consent').checked = false;
+  }
+  if (!sepp) return;
+  document.getElementById('strat-ira-reserve').value = 'reserve';
+  document.getElementById('strat-sepp-first-age').textContent = fixedIraFirstPaymentAgeLabel(sepp);
+  const timing = fixedIraSeppTiming({owner, startYear, endYear, sepp}, S);
+  document.getElementById('strat-sepp-transition-wrap').hidden = !timing.needsConfirmation;
+  document.getElementById('strat-sepp-result').textContent = fixedIraSeppTimingMessage(timing, endYear);
+  const estimate = fixedIraSeppEstimatePreview(sepp, owner, startYear, timing);
+  if (applyEstimate && estimate.amount != null) {
+    document.getElementById('strat-ira-amount').value = estimate.amount.toFixed(2);
+  }
+  document.getElementById('strat-sepp-amount-result').textContent =
+    fixedIraSeppAmountMessage(fixedIraPaymentAmount(stratVal('ira-amount')), fixedIraPaymentAmount(sepp.calculatedAmount));
+  document.getElementById('strat-sepp-estimate-balance-wrap').hidden = sepp.estimate.source === 'projected';
+  document.getElementById('strat-sepp-projection-note').textContent = estimate.projectionNote;
+  document.getElementById('strat-sepp-estimate-result').textContent = estimate.message;
+  document.getElementById('strat-sepp-use-estimate').disabled = estimate.amount == null;
+}
+function renderSetupFixedIraWithdrawalFields(row) {
+  const firstYear = setupYear();
+  const lastYear = S.endYear || firstYear;
+  const suggestedYear = setupFixedIraStartYear >= firstYear && setupFixedIraStartYear <= lastYear ? setupFixedIraStartYear : firstYear;
+  const owner = row?.owner || '1';
+  const startYear = row?.startYear ?? suggestedYear;
+  const endYear = row?.endYear ?? '';
+  const sepp = row?.sepp;
+  const timing = sepp ? fixedIraSeppTiming(row, S) : null;
+  const estimate = sepp?.estimate;
+  const preview = fixedIraSeppEstimatePreview(sepp, owner, startYear, timing);
+  const early = !sepp && fixedIraMayStartBefore59Half(owner,startYear,S);
+  const reserve = row ? fixedIraReservesOwner(row) : early || setupFixedIraStartYear != null;
+  return '<div class="setup-field-grid" style="grid-column:1/-1" oninput="setupUpdateFixedIraSepp(event)">'+
+    stratSelect('sepp-timing','Withdrawal Type',sepp ? 'check' : 'ordinary',
+      [['ordinary','Regular scheduled withdrawal'],['check','72(t) SEPP']],
+      'Use Regular scheduled withdrawal for recurring payments outside a SEPP. Choose 72(t) SEPP to check the commitment dates and block extra draws from the owner’s IRA.')+
+    stratSelect('ira-owner','IRA Owner',owner,[['1',p1()], ...(hasP2() || owner === '2' ? [['2',p2()]] : [])])+
+    stratInput('ira-amount','Gross Annual Payment ($)',row?.amount ?? '',{min:0.01,step:'0.01',note:'Enter the annual amount before taxes. Cash RMDs count toward this amount.'})+
+    stratInput('start','First Payment Year',startYear,{min:firstYear,max:lastYear,
+      note:'<span id="strat-start-age">'+fixedIraPaymentYearAgeLabel(owner,startYear,S)+'</span>'})+
+    stratInput('end','Last Payment Year',endYear,{min:firstYear,max:lastYear,
+      note:'<div id="strat-end-age">'+fixedIraPaymentYearAgeLabel(owner,endYear,S)+'</div>'+
+        'Includes this year. These years apply independently of the ACA target. A reserved IRA schedule needs its own years for that owner.'})+
+    '<div id="strat-ira-reserve-wrap"'+(sepp?' hidden':'')+'>'+
+      stratSelect('ira-reserve','IRA Funding for Regular Withdrawals',reserve?'reserve':'allow',
+        [['reserve','Reserve IRA for scheduled payments'],['allow','Allow extra draws under the funding order']],
+        'Reserving the IRA blocks extra draws. For scheduled payments under the SEPP exception, choose 72(t) SEPP as the withdrawal type.')+'</div>'+
+    '<div id="strat-ira-early-draw" class="setup-check warn'+(early && !reserve ? ' missing' : '')+'" style="grid-column:1/-1"'+
+      (!early ? ' hidden' : '')+'>'+
+      '<div class="setup-check-title">IRA withdrawals before age 59½</div>'+
+      '<div class="setup-check-body">The forecast takes the 10% federal additional tax out of each taxable distribution from this owner’s IRA during the regular schedule. It assumes no exception and treats the full year the owner turns 59 as early. If these payments are part of a SEPP, choose 72(t) SEPP.</div>'+
+      '<div class="setup-check-body" id="strat-ira-early-consent-wrap"'+(early && !reserve ? '' : ' hidden')+'>'+
+        '<label><input type="checkbox" id="strat-ira-early-consent"'+(row?.earlyDrawConfirmed ? ' checked' : '')+
+        '> I want to allow extra IRA draws before age 59½. I understand those draws can incur an additional 10% federal tax on top of regular income tax.</label></div>'+
+      '<a href="https://www.irs.gov/taxtopics/tc557" target="_blank" rel="noopener">IRS early IRA withdrawal rules and exceptions</a></div>'+
+    '<div id="strat-sepp-dates" style="grid-column:1/-1"'+(sepp?'':' hidden')+'>'+
+      '<div class="setup-check warn" style="margin-bottom:10px"><div class="setup-check-title">Extra IRA draws blocked during the SEPP</div>'+
+        '<div class="setup-check-body">The plan reserves the owner’s combined IRA / 401(k) balance and blocks extra draws and Roth conversions from it during the commitment. An extra withdrawal from the actual SEPP IRA before the earliest change date can trigger additional tax for the current and prior years, plus interest.</div></div>'+
+      '<div class="setup-field-grid">'+
+        stratInput('sepp-birth','IRA Owner’s Birth Date',sepp?.birthDate,{type:'date'})+
+        stratInput('sepp-first','First SEPP Payment Date',sepp?.firstDate,{type:'date',
+          note:'<div id="strat-sepp-first-age">'+fixedIraFirstPaymentAgeLabel(sepp)+'</div>'+
+            'Enter the date the first payment is expected to arrive. For an existing SEPP, use the original first payment date. The five-year clock starts on that date.'})+
+      '</div>'+
+      '<div class="setup-check done" style="margin:10px 0"><div class="setup-check-title">Fixed SEPP Payment Estimate</div>'+
+        '<div class="setup-check-body">Uses fixed amortization and the IRS Single Life Table, based on the age you reach in the first payment year.</div>'+
+        '<div class="setup-field-grid" style="margin-top:8px">'+
+          stratSelect('sepp-estimate-source','Balance to Use',estimate?.source ?? 'ira',
+            [['ira','Specific IRA balance'],['projected','Full projected IRA / 401(k) balance']])+
+          '<div id="strat-sepp-estimate-balance-wrap"'+(estimate?.source === 'projected' ? ' hidden' : '')+'>'+
+            stratInput('sepp-estimate-balance','Specific IRA Balance at SEPP Start ($)',estimate?.balance,{min:0.01,step:'0.01'})+'</div>'+
+          stratInput('sepp-estimate-rate','Interest Rate (%)',estimate ? estimate.ratePct : 5,{min:0,max:5,step:'0.01',
+            note:'5% is the planning default. This estimator supports 0% to 5%. A higher rate may be permitted based on IRS rates before the first payment.'})+
+        '</div>'+
+        '<div id="strat-sepp-projection-note" class="setup-field-note">'+setupEsc(preview.projectionNote)+'</div>'+
+        '<div id="strat-sepp-estimate-result" class="setup-check-body" aria-live="polite">'+setupEsc(preview.message)+'</div>'+
+        '<button type="button" id="strat-sepp-use-estimate" class="btn btn-light btn-sm" style="margin-top:8px" onclick="setupUpdateFixedIraSepp(event,true)"'+
+          (preview.amount == null ? ' disabled' : '')+'>Use Estimate as Gross Payment</button>'+
+        '<div class="setup-field-note">This fills Gross Annual Payment above. Saving the strategy keeps that amount fixed.</div>'+
+      '</div>'+
+      stratInput('sepp-calculated-amount','Calculated SEPP Annual Payment ($)',sepp?.calculatedAmount,{min:0.01,step:'0.01',
+        note:'Optional. Enter an independently calculated SEPP amount to check that the scheduled payment matches.'+
+          '<div id="strat-sepp-amount-result" aria-live="polite">'+
+            setupEsc(fixedIraSeppAmountMessage(row?.amount, sepp?.calculatedAmount))+'</div>'})+
+      '<div class="setup-check warn" style="margin-top:10px"><div class="setup-check-title">72(t) SEPP Timing Check</div>'+
+        '<div class="setup-check-body">The earliest change date is the later of age 59½ and the fifth anniversary of the first payment.</div>'+
+        '<div class="setup-check-body" id="strat-sepp-result" aria-live="polite">'+setupEsc(timing ? fixedIraSeppTimingMessage(timing,row.endYear) : '')+'</div>'+
+        '<div class="setup-check-body" id="strat-sepp-transition-wrap"'+(timing?.needsConfirmation?'':' hidden')+'>'+
+          '<label><input type="checkbox" id="strat-sepp-transition"'+(sepp?.noTransitionPayment?' checked':'')+'> I confirmed that no scheduled payment is due in the transition year before the change date.</label></div>'+
+        '<div class="setup-field-note">When the earliest change date falls midyear, the forecast reserves that full year. Confirm actual payment amounts and dates for the specific SEPP account with the IRA custodian.</div>'+
+        '<a href="https://www.irs.gov/retirement-plans/substantially-equal-periodic-payments" target="_blank" rel="noopener">IRS SEPP payment rules</a></div>'+
+    '</div></div>';
+}
 function renderStrategyForm(){
   const yr = setupYear();
   const end = S.endYear || yr;
@@ -14106,6 +14857,8 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'roth-source') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('source','Conversion Source',val('source',S.rothConvSource||'HIGH'),rothConvSourceOptions())+stratInput('p1Pct',rothSplitPctLabel(),val('p1Pct',S.rothConvP1Pct ?? 50),{step:'1',min:0,max:100,note:'Used only for Percent split. Any shortfall falls back to the other IRA.'})+stratText('notes','Notes',val('notes','Roth conversion source'));
   else if (setupStrategyType === 'roth-tax-funding') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('method','Tax Funding Method',val('method',normalizeRothTaxFunding(S.rothConvTaxFunding)),ROTH_TAX_FUNDING_OPTIONS,'Withholding reduces the amount deposited into Roth. Separate IRA Withdrawal deposits the full conversion and grosses up the additional taxable distribution.')+stratText('notes','Notes',val('notes','Roth conversion tax funding'));
   else if (setupStrategyType === 'income-level') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('magi','MAGI Target ($)',val('magiTarget',''),{min:0})+stratText('notes','Notes',val('notes','MAGI ceiling'));
+  else if (setupStrategyType === 'aca-income-target') fields = renderSetupAcaIncomeTargetFields(row);
+  else if (setupStrategyType === 'fixed-ira-withdrawal') fields = renderSetupFixedIraWithdrawalFields(row);
   else if (setupStrategyType === 'tax-fill') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('active','Tax Fill',val('active','T'),[['T','Active'],['off','Off']])+stratInput('headroom','Headroom ($)',val('headroom',''),{min:0})+stratText('notes','Notes',val('notes','Tax bracket fill'));
   else if (setupStrategyType === 'income-rates') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('div','Brokerage Dividend Rate (%)',val('divRate',''),{step:'0.01',min:0})+stratInput('reinvest','Dividend Reinvest (%)',val('divReinvestPct',''),{step:'1',min:0})+stratInput('interest','Cash Interest Rate (%)',val('intRate',''),{step:'0.01',min:0})+stratText('notes','Notes',val('notes','Income rate change'));
   else if (setupStrategyType === 'stock-gain') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('rate','Taxable Gain on Stock Sales (%)',val('rate',''),{step:'1',min:0})+stratText('notes','Notes',val('notes','Stock sale gain change'));
@@ -14171,6 +14924,57 @@ function applySetupStrategy(){
   else if (setupStrategyType === 'roth-source') writeOv('ovRothSource', {source:normalizeRothConvSource(stratVal('source')), p1Pct:clampPct(stratVal('p1Pct'), S.rothConvP1Pct ?? 50), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'roth-tax-funding') writeOv('ovRothTaxFunding', {method:normalizeRothTaxFunding(stratVal('method')), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-level') writeOv('ovIncomeLevel', {magiTarget:stratVal('magi'), startYear:start, endYear:end, notes:notes});
+  else if (setupStrategyType === 'aca-income-target') {
+    const strategy = readSetupAcaIncomeTarget();
+    const firstRow = strategy && proj.find(row => row.yr === strategy.startYear);
+    if (!strategy || !firstRow || strategy.endYear > S.endYear || !acaIncomeTargetForProjectionRow(firstRow, strategy)) {
+      alert('Choose coverage years in the plan, a positive poverty level percentage, and zero or positive dollar amounts.');
+      return;
+    }
+    writeOv('ovAcaIncomeTarget', strategy);
+  }
+  else if (setupStrategyType === 'fixed-ira-withdrawal') {
+    const sepp = readSetupFixedIraSepp();
+    const strategy = normalizeFixedIraWithdrawal({
+      owner:stratVal('ira-owner'), amount:stratVal('ira-amount'), startYear:stratVal('start'), endYear:stratVal('end'),
+      reserveIra:stratVal('ira-reserve') === 'reserve', sepp,
+      earlyDrawConfirmed:document.getElementById('strat-ira-early-consent')?.checked === true
+    });
+    if (!strategy || strategy.startYear < yr || strategy.endYear > S.endYear || (strategy.owner === '2' && !hasP2())) {
+      alert('Choose an IRA owner in the plan, enter a positive payment, and enter the first and last payment years within the plan.');
+      return;
+    }
+    if (!strategy.sepp && !strategy.reserveIra && !strategy.earlyDrawConfirmed &&
+        fixedIraMayStartBefore59Half(strategy.owner,strategy.startYear,S)) {
+      alert('Confirm that you want to allow extra IRA draws before age 59½, or choose Reserve IRA for scheduled payments.');
+      return;
+    }
+    if (strategy.sepp) {
+      const calculatedAmount = strategy.sepp.calculatedAmount;
+      if (sepp.calculatedAmount && calculatedAmount == null) {
+        alert('Enter a positive calculated SEPP annual payment or leave that field blank.');
+        return;
+      }
+      if (calculatedAmount != null && strategy.amount !== calculatedAmount) {
+        alert(fixedIraSeppAmountMessage(strategy.amount, calculatedAmount));
+        return;
+      }
+      const timing = fixedIraSeppTiming(strategy, S);
+      if (timing.issue) {
+        alert(fixedIraSeppTimingMessage(timing,strategy.endYear));
+        return;
+      }
+    }
+    const overlap = (S.ovFixedIraWithdrawals || []).some((other, index) =>
+      !(editing === 'ovFixedIraWithdrawals' && index === setupEditingStrategy.rowIndex) &&
+      fixedIraSchedulesConflict(strategy,other,S));
+    if (overlap) {
+      alert('An overlapping withdrawal uses this owner’s combined IRA balance. Edit the existing schedule or use Version 2.0 to model separate IRAs for the same owner.');
+      return;
+    }
+    writeOv('ovFixedIraWithdrawals', strategy);
+    setupFixedIraStartYear = null;
+  }
   else if (setupStrategyType === 'tax-fill') writeOv('ovTaxFill', {active:stratVal('active'), headroom:stratVal('headroom'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'income-rates') writeOv('ovIncomeRates', {divRate:stratVal('div'), divReinvestPct:stratVal('reinvest'), intRate:stratVal('interest'), startYear:start, endYear:end, notes:notes});
   else if (setupStrategyType === 'stock-gain') writeOv('ovStkGainPct', {rate:stratVal('rate'), startYear:start, endYear:end, notes:notes});
@@ -14304,6 +15108,25 @@ function setupCollectStrategyRows(filterType){
     setupPushPart(parts, 'MAGI ceiling', setupMoneyLabel(row.magiTarget));
     add('Income Level', row, parts, ['income-level'], {tableKey:'ovIncomeLevel', rowIndex:idx, editType:'income-level'});
   });
+  (S.ovAcaIncomeTarget || []).forEach((row, idx) => {
+    const parts = [row.percent + '% of the federal poverty level', ACA_INCOME_TARGET_REGIONS[row.region],
+      ACA_TARGET_FUNDING_LABELS[row.limitFunding === false ? 'compare' : 'limit']];
+    if (row.rothFill) parts.push('Fills remaining ACA room with Roth conversions');
+    if (row.cushion) parts.push(f$(row.cushion) + ' cushion');
+    if (row.additionalMagi) parts.push(f$(row.additionalMagi) + ' additional ACA income per year');
+    add('ACA Income Target', row, parts, ['aca-income-target'], {tableKey:'ovAcaIncomeTarget', rowIndex:idx, editType:'aca-income-target'});
+  });
+  (S.ovFixedIraWithdrawals || []).forEach((row, idx) => {
+    const parts = [row.sepp ? '72(t) SEPP' : 'Regular scheduled withdrawal',
+      row.owner === '2' ? p2() : p1(), (row.sepp ? formatFixedIraSeppAmount(row.amount) : f$(row.amount)) + ' gross per year'];
+    if (fixedIraReservesOwner(row)) parts.push('Owner’s IRA reserved for scheduled payments');
+    if (row.sepp) parts.push(fixedIraSeppTimingMessage(fixedIraSeppTiming(row,S),row.endYear));
+    else if (!row.reserveIra && fixedIraMayStartBefore59Half(row.owner,row.startYear,S)) {
+      parts.push(row.earlyDrawConfirmed ? 'Extra early draws confirmed with 10% additional federal tax'
+        : 'Extra early draws paused until confirmed');
+    }
+    add('Fixed Annual IRA Withdrawal', row, parts, ['fixed-ira-withdrawal'], {tableKey:'ovFixedIraWithdrawals', rowIndex:idx, editType:'fixed-ira-withdrawal'});
+  });
   (S.ovTaxFill || []).forEach((row, idx) => {
     const parts = [];
     if (row.active === 'T') parts.push('Tax bracket fill active');
@@ -14418,7 +15241,8 @@ function setupRenderStrategyRows(rows, emptyText){
 function renderSelectedStrategyOverrides(){
   const label = setupStrategyLabel(setupStrategyType);
   const rows = setupCollectStrategyRows(setupStrategyType);
-  return '<div style="margin-top:14px"><div class="sh">Current '+setupEsc(label)+' Rows</div>'+setupRenderStrategyRows(rows, 'No current rows for '+label+'. Add one above or use the expert Override Tables if needed.')+'</div>';
+  return '<div style="margin-top:14px"><div class="sh">Current '+setupEsc(label)+' Rows</div>'+setupRenderStrategyRows(rows, 'No current rows for '+label+'. Add one above'+
+    (['aca-income-target','fixed-ira-withdrawal'].includes(setupStrategyType) ? '.' : ' or use the expert Override Tables if needed.'))+'</div>';
 }
 function renderActiveStrategies(){
   const rows = setupCollectStrategyRows();
