@@ -1365,7 +1365,7 @@ footer a:hover{color:#f5d87a;text-decoration:underline}
     <p class="note"><strong>Early IRA withdrawals.</strong> During a regular fixed IRA strategy, the forecast takes 10% in federal additional tax from the owner’s gross IRA cash distributions through the year the owner turns 59. This annual estimate assumes the distributions occur before age 59½ and that no exception applies. Check any state penalty, account-specific exception, or SEPP recapture separately. <a href="https://www.irs.gov/taxtopics/tc557" target="_blank" rel="noopener">IRS early IRA withdrawal rules</a></p>
     <p class="note"><strong>Dependents.</strong> The model uses the claiming years you enter and estimates nonrefundable credits from 2025 onward. The federal credit uses modeled federal AGI for the phaseout and holds the published 2027 Child Tax Credit amount for later years. The refundable Additional Child Tax Credit and dependent-care credits are outside this estimate. <a href="https://www.irs.gov/pub/irs-prior/f1040s8--2026.pdf" target="_blank" rel="noopener">IRS Schedule 8812</a></p>
     <p class="note"><strong>California.</strong> Personal, senior, and dependent exemption credits are modeled for California resident years from 2025 onward. The 2026 credit amounts come from FTB. The 2026 phaseout thresholds use FTB's published inflation adjustment, and later years use your bracket inflation assumption. <a href="https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html" target="_blank" rel="noopener">FTB 2026 figures</a></p>
-    <div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="setupView='strategy';setupStrategyType='qcd';setupEditingStrategy=null;ST('setup')">Plan an IRA Charitable Gift (QCD)</button></div>
+    <div class="setup-mini-actions"><button type="button" class="btn btn-light btn-sm" onclick="setupOpenStrategy('qcd')">Plan an IRA Charitable Gift (QCD)</button></div>
   </details>
   <section id="dependent-tax-panel" class="panel" hidden></section>
   <details class="panel" style="margin-bottom:14px">
@@ -2176,7 +2176,7 @@ function fixedIraSeppTiming(row, state) {
   if (!birth || !first) return {issue:'Enter the owner’s exact birth date and first SEPP payment date.'};
   const ownerBirthYear = dependentYear(state['by' + row.owner]);
   if (ownerBirthYear && ownerBirthYear !== birth.getUTCFullYear()) {
-    return {issue:'Use a birth date that matches the selected IRA owner’s birth year in Household.'};
+    return {issue:'Use ' + ownerBirthYear + ' as the birth year to match the selected IRA owner’s Household entry.'};
   }
   if (first <= birth) return {issue:'The first payment date must follow the owner’s birth date.'};
   const age59Half = new Date(Date.UTC(birth.getUTCFullYear() + 59, birth.getUTCMonth() + 6, birth.getUTCDate()));
@@ -2695,7 +2695,7 @@ function defaultState() {
     // Personal
     name1:'', name2:'', householdMode:'',
     dependents:[],
-    by1:'', by2:'',
+    by1:'', by2:'', birthDate1:'', birthDate2:'',
     filing:'MFJ', state:'CA',
     startYear:new Date().getFullYear(), endYear:new Date().getFullYear()+25,
     // SS
@@ -4081,6 +4081,8 @@ function runProjection(S) {
       mandatoryFunding, step1Total, totalFunding,
       ...(fixedIraSchedules.length ? {fixedIra1, fixedIra2, scheduledIraRequested, scheduledIraPaid,
         scheduledIraRequested1:requested1, scheduledIraRequested2:requested2, scheduledIraPaid1, scheduledIraPaid2,
+        scheduledIraType1:fixedSchedule1 ? (fixedSchedule1.sepp ? 'sepp' : 'regular') : null,
+        scheduledIraType2:fixedSchedule2 ? (fixedSchedule2.sepp ? 'sepp' : 'regular') : null,
         fixedIraReserved1:!!reservedIra1, fixedIraReserved2:!!reservedIra2,
         scheduledIraShortfall:Math.max(0, scheduledIraRequested - scheduledIraPaid)} : {}),
       ...(acaFundingTarget ? {acaMagiBeforeOptional, acaLimitApplied:acaLimitApplied_f} : {}),
@@ -5892,7 +5894,10 @@ function applyMigrations(merged) {
   if (!merged.endYear   || isNaN(merged.endYear))   merged.endYear   = curYr + 25;
   if (merged.startYear > merged.endYear) { merged.startYear = curYr; merged.endYear = curYr + 25; }
   // One-time data correction (applied only once; guarded by migration flag)
-  if (!merged._m_by1fixed && merged.by1 === 1958) { merged.by1 = 1959; merged._m_by1fixed = true; }
+  if (!merged._m_by1fixed && merged.by1 === 1958) {
+    if (fixedIraSeppDate(merged.birthDate1)?.getUTCFullYear() !== 1958) merged.by1 = 1959;
+    merged._m_by1fixed = true;
+  }
   // Migrate baseSpend → SOY[startYear].spending (one-time, field removed from UI)
   if (!merged._m_baseSpendMigrated && merged.baseSpend > 0) {
     const sy = merged.startYear || 2026;
@@ -6088,6 +6093,19 @@ function applyMigrations(merged) {
     if (merged.by1 === 2000) merged.by1 = '';
     if (merged.by2 === 2000) merged.by2 = '';
   }
+  for (const owner of ['1','2']) {
+    const dateKey = 'birthDate' + owner;
+    const yearKey = 'by' + owner;
+    const date = fixedIraSeppDate(merged[dateKey]);
+    const year = dependentYear(merged[yearKey]);
+    const dateYear = date?.getUTCFullYear();
+    if (!date || (year != null && year !== dateYear)) {
+      merged[dateKey] = '';
+    } else {
+      merged[yearKey] = dateYear;
+      if (owner === '1' && dateYear === 1958) merged._m_by1fixed = true;
+    }
+  }
   if (!merged._m_irmaaPartDIncluded) {
     if (updatePartBOnlyIRMAA(merged.irmaaSurch)) merged.irmaaSurch = [...D2.irmaaSurch];
     merged._m_irmaaPartDIncluded = true;
@@ -6228,6 +6246,7 @@ function appPreserveScroll(fn){
   }
 }
 function ST(name){
+  if (!setupSaveStrategyEdits()) return;
   if (isAdvancedView(name) && !advancedMode) {
     advancedMode = true;
     applyAdvancedMode();
@@ -6360,6 +6379,12 @@ function loadUI(){
   const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
   sv('i-n1',S.name1);sv('i-n2',S.name2);
   sv('i-by1',S.by1);sv('i-by2',S.by2);
+  for (const owner of ['1','2']) {
+    const field = document.getElementById('i-by' + owner);
+    if (!field) continue;
+    field.readOnly = !!S['birthDate' + owner];
+    field.title = field.readOnly ? 'Edit the full birth date in Setup Guide → Interview → Household.' : '';
+  }
   sv('i-filing',S.filing);sv('i-state',S.state);
   sv('i-sy',S.startYear);
   sv('i-ey',S.endYear);
@@ -7291,7 +7316,7 @@ function renderCF(){
     ]}] : []),
     ...(fixedIraOwners.length ? [{label:'FIXED IRA WITHDRAWAL', bg:'#234036', tc:'#9bd0b6',
       cols:fixedIraOwners.map(owner => ({f:'scheduledIraPaid'+owner,
-        h:setupEsc(owner === 1 ? n1 : n2)+'\nGross Paid', bold:true, scheduledOwner:owner}))
+        h:setupEsc(owner === 1 ? n1 : n2)+'\nGross Paid / Type', bold:true, scheduledOwner:owner}))
     }] : []),
     { label:'MANDATORY FUNDING', bg:'#1a3a1a', tc:'#6abf6a', cols:[
       {f:'atWages',     h:'Take-Home\nWages'},
@@ -7535,7 +7560,10 @@ function renderCF(){
         if (col.scheduledOwner) {
           const requested = r['scheduledIraRequested'+col.scheduledOwner] || 0;
           const short = requested - raw > 0.005;
-          val = requested > 0 ? f$(raw) + (short ? ' of ' + f$(requested) : '') : '—';
+          const isSepp = r['scheduledIraType'+col.scheduledOwner] === 'sepp';
+          const payment = isSepp ? formatFixedIraSeppAmount : f$;
+          const type = isSepp ? '72(t) SEPP' : 'Regular';
+          val = requested > 0 ? payment(raw) + (short ? ' of ' + payment(requested) : '') + ' · ' + type : '—';
           if (short) color='color:#8b0000;';
         }
         if(col.f==='shortfall'  && raw>0) color='color:#8b0000;font-weight:700;';
@@ -10177,6 +10205,7 @@ function renderSafariInlineReport(html){
 }
 
 function generateReport(){
+  if (!setupSaveStrategyEdits()) return;
   const P = buildReportPayload();
   const A = P.assumptions, rows = P.rows, ap = P.apRows||rows.slice(0,3);
   const has2 = !!(A.name2||'').trim();
@@ -13310,6 +13339,7 @@ let setupCloseoutYear = null;
 let setupStrategyType = 'spending-onetime';
 let setupFixedIraStartYear = null;
 let setupEditingStrategy = null;
+let setupStrategyInitialValues = null;
 let advancedMode = false;
 
 const SETUP_STEPS = [
@@ -13640,6 +13670,7 @@ function setupAfterChange(rerender){
   }
 }
 function setupSetView(view){
+  if (view === setupView || !setupSaveStrategyEdits()) return;
   setupView = view;
   renderSetupGuide();
 }
@@ -13649,6 +13680,7 @@ function setupSetStep(step){
   renderSetupGuide();
 }
 function setupOpenInterviewStep(id){
+  if (!setupSaveStrategyEdits()) return;
   const steps = setupVisibleSteps();
   const idx = steps.findIndex(st => st.id === id);
   setupView = 'interview';
@@ -13755,7 +13787,7 @@ function setupReadinessList(limit){
 
 function renderSetupGuide(){
   const root = document.getElementById('setup-guide-root');
-  if (!root) return;
+  if (!root || setupStrategyHasEdits()) return;
   const r = setupReadiness();
   root.innerHTML =
     '<div class="setup-shell">' +
@@ -13772,6 +13804,8 @@ function renderSetupGuide(){
       '</div>' +
       (setupView === 'readiness' ? renderSetupReadinessView() : setupView === 'annual' ? renderSetupAnnualView() : setupView === 'closeout' ? renderSetupCloseoutView() : setupView === 'strategy' ? renderSetupStrategyView() : renderSetupInterviewView()) +
     '</div>';
+  setupStrategyInitialValues = setupView === 'strategy' && setupStrategyEditing() ? setupStrategyFieldValues() : null;
+  setupRefreshStrategySaveStatus();
 }
 function setupTopTab(id, label){
   return '<button class="setup-tab '+(setupView === id ? 'active' : '')+'" onclick="setupSetView(\''+id+'\')">'+setupEsc(label)+'</button>';
@@ -13856,6 +13890,40 @@ function renderSetupDependents() {
     '<p class="setup-section-copy">Add anyone you expect to claim. Enter both years to include them from their birth year through the last tax year claimed. The model uses your claiming and credit eligibility assumptions. A child who turns 17 can still be your dependent and may qualify for the Credit for Other Dependents.</p>'+
     rows+'<button type="button" class="btn btn-light btn-sm" onclick="setupAddDependent()">Add Dependent</button></div>';
 }
+function setupSetHouseholdBirthDate(owner, value) {
+  if (owner !== '1' && owner !== '2') return;
+  const date = fixedIraSeppDate(value);
+  if (value && !date) {
+    alert('Enter a valid full birth date.');
+    renderSetupGuide();
+    return;
+  }
+  S['birthDate' + owner] = date ? value : '';
+  if (date) {
+    S['by' + owner] = date.getUTCFullYear();
+    if (owner === '1') S._m_by1fixed = true;
+  }
+  setupAfterChange(true);
+}
+
+function renderSetupHouseholdBirth(owner, name) {
+  const yearKey = 'by' + owner;
+  const birthDate = S['birthDate' + owner];
+  const birthYearLabel = name + ' Birth Year';
+  const yearField = birthDate
+    ? setupField(birthYearLabel, '<input type="number" aria-label="' + setupEsc(birthYearLabel) +
+        '" value="' + setupEsc(S[yearKey]) + '" readonly>', 'Uses the year from the full birth date.')
+    : setupStateSelect(birthYearLabel,yearKey,'optional-int',S[yearKey],setupBirthYearOptions(S[yearKey]),
+        {rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'});
+  const dateId = 'setup-household-birth-date-' + owner;
+  return '<div>' + yearField + '<div class="setup-field" style="margin-top:8px">' +
+    '<label for="' + dateId + '">' + setupEsc(name + ' Full Birth Date (optional)') + '</label>' +
+    '<input type="date" id="' + dateId + '" value="' + setupEsc(birthDate) +
+      '" aria-describedby="' + dateId + '-note" data-owner="' + owner +
+      '" onchange="setupSetHouseholdBirthDate(this.dataset.owner,this.value)">' +
+    '<div id="' + dateId + '-note" class="setup-field-note">A full date fills Birth Year and prefills SEPP setup. Clear the date to use just the birth year.</div></div></div>';
+}
+
 function renderSetupHouseholdStep(){
   const yr = setupYear();
   const has2 = hasP2();
@@ -13868,8 +13936,8 @@ function renderSetupHouseholdStep(){
     setupSelect('Plan Includes','householdMode',householdIntent,[['','Not sure yet - keep both options visible'],['single','One person'],['couple','Two people / spouse or partner']],{rerender:true,note:'Choose One person to hide spouse and survivor setup. Choose Two people to keep survivor planning available.'}),
     setupInput('Primary Person Name','name1','text',S.name1,{type:'text',rerender:true,note:'Used for labels and report headings.'}),
     showSecond ? setupInput('Spouse / Partner Name','name2','text',S.name2,{type:'text',rerender:true,placeholder:'Leave blank until known',note:'Enter a name for a two-person plan. If this is a one-person plan, set Plan Includes to One person.'}) : '',
-    setupStateSelect(n1+' Birth Year','by1','optional-int',S.by1,setupBirthYearOptions(S.by1),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}),
-    showSecond ? setupStateSelect(n2+' Birth Year','by2','optional-int',S.by2,setupBirthYearOptions(S.by2),{rerender:true,note:'Used for age, Social Security, Medicare, RMD, and senior deduction timing.'}) : '',
+    renderSetupHouseholdBirth('1',n1),
+    showSecond ? renderSetupHouseholdBirth('2',n2) : '',
     setupSelect('Tax Filing Status','filing',S.filing,[['MFJ','Married Filing Jointly'],['SINGLE','Single'],['HOH','Head of Household']],{rerender:true,note:'Controls federal brackets, standard deduction, Medicare IRMAA thresholds, and the report filing label. For a one-person plan this is usually Single or Head of Household.'}),
     setupSelect('State Tax Setting','state',S.state,[['CA','California'],['','Federal Only']],{note:'California turns on California tax estimates. Federal Only skips state income tax.'}),
     setupPlanStartField(),
@@ -14501,9 +14569,53 @@ function setupStrategyDescription(){
   const d = descriptions[setupStrategyType] || {title:setupStrategyLabel(setupStrategyType), body:'Use this strategy to add a future planning change without editing the raw override table directly.'};
   return '<div class="setup-check done" style="margin:10px 0 14px"><div class="setup-check-title">'+setupEsc(d.title)+'</div><div class="setup-check-body">'+setupEsc(d.body)+'</div></div>';
 }
+function setupStrategyFields() {
+  const form = document.getElementById('setup-strategy-fields');
+  return Array.from(form?.querySelectorAll('input, select') || []);
+}
+function setupStrategyControlValue(field) {
+  if (field.type === 'checkbox') return field.checked;
+  return field.validity?.badInput ? null : field.value;
+}
+function setupStrategyFieldValues() {
+  return setupStrategyFields().map(setupStrategyControlValue);
+}
+function setupStrategyHasEdits() {
+  if (!setupEditingStrategy || !setupStrategyInitialValues) return false;
+  return setupStrategyFieldValues().some((value,index) => value !== setupStrategyInitialValues[index]);
+}
+function setupWarnUnsavedStrategy(event) {
+  if (!setupStrategyHasEdits()) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
+function setupRefreshStrategySaveStatus() {
+  const pending = setupStrategyHasEdits();
+  const status = document.getElementById('setup-strategy-save-status');
+  if (status) status.textContent = pending ? 'Unsaved changes' : '';
+  if (pending) window.addEventListener?.('beforeunload', setupWarnUnsavedStrategy);
+  else window.removeEventListener?.('beforeunload', setupWarnUnsavedStrategy);
+}
+function setupSaveStrategyEdits() {
+  if (!setupStrategyHasEdits()) return true;
+  if (!applySetupStrategy()) return false;
+  showSaved();
+  return true;
+}
+function setupChangeStrategyType(control) {
+  if (!setupSaveStrategyEdits()) {
+    control.value = setupStrategyType;
+    return;
+  }
+  setupEditingStrategy = null;
+  setupFixedIraStartYear = null;
+  setupStrategyType = control.value;
+  renderSetupGuide();
+}
+
 function renderSetupStrategyView(){
   const options = setupStrategyOptions();
-  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupEditingStrategy=null;setupFixedIraStartYear=null;setupStrategyType=this.value;renderSetupGuide()">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
+  const selector = '<div class="setup-field" style="max-width:340px"><label>Strategy Type</label><select onchange="setupChangeStrategyType(this)">'+options.map(o=>'<option value="'+o[0]+'" '+(setupStrategyType===o[0]?'selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+setupStrategyDescription();
   return '<div class="setup-grid"><div class="setup-main"><div class="setup-section-title">Strategy Builder</div><div class="setup-section-copy">Add future changes and review or edit your saved strategies here.</div>'+selector+'<div class="strategy-card">'+renderStrategyForm()+'</div>'+renderSelectedStrategyOverrides()+'</div><div class="setup-side"><div class="setup-section-title" style="font-size:18px">Active Strategies</div>'+renderActiveStrategies()+'<div class="setup-mini-actions"><button class="btn btn-light" onclick="ST(\'overrides\')">Open Override Tables</button></div></div></div>';
 }
 function stratInput(id,label,value,opts){
@@ -14527,8 +14639,12 @@ function setupToggleStrategyCharity(value){
   const w = document.getElementById('strat-charity-wrap');
   if (w) w.style.display = String(value || 'No') === 'Yes' ? '' : 'none';
 }
-function setupSetGlobalRothTaxFunding(value){
-  S.rothConvTaxFunding = normalizeRothTaxFunding(value);
+function setupSetGlobalRothTaxFunding(control){
+  if (!setupSaveStrategyEdits()) {
+    control.value = normalizeRothTaxFunding(S.rothConvTaxFunding);
+    return;
+  }
+  S.rothConvTaxFunding = normalizeRothTaxFunding(control.value);
   setupAfterChange(true);
 }
 function stratCharitySelect(value){
@@ -14615,15 +14731,19 @@ function renderSetupAcaIncomeTargetFields(row) {
       '<div class="setup-field-note">Cash Flow shows each year’s target and the amount over or under. The last listed target applies in overlapping years.</div>'+
       '<a href="https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines/prior-hhs-poverty-guidelines-federal-register-references" target="_blank" rel="noopener">HHS poverty guidelines</a></div>'+
     '<div style="grid-column:1/-1"><button type="button" class="btn btn-light btn-sm" onclick="setupOpenFixedIraWithdrawal(stratVal(\'start\'))">Test a fixed IRA withdrawal, such as a SEPP</button>'+
-      '<div class="setup-field-note">Save your ACA target first. Then test a fixed payment to see how much room is left in each year.</div></div>'+
+      (row ? '' : '<div class="setup-field-note">Choose Add Strategy to save the ACA target before testing a fixed payment.</div>')+'</div>'+
     '</div>';
 }
-function setupOpenFixedIraWithdrawal(year) {
-  setupFixedIraStartYear = dependentYear(year) ?? setupYear();
+function setupOpenStrategy(type, year = null) {
+  if (!setupSaveStrategyEdits()) return;
+  setupFixedIraStartYear = year;
   setupEditingStrategy = null;
-  setupStrategyType = 'fixed-ira-withdrawal';
+  setupStrategyType = type;
   setupView = 'strategy';
   ST('setup');
+}
+function setupOpenFixedIraWithdrawal(year) {
+  setupOpenStrategy('fixed-ira-withdrawal', dependentYear(year) ?? setupYear());
 }
 function readSetupFixedIraSepp() {
   if (stratVal('sepp-timing') !== 'check') return null;
@@ -14679,6 +14799,26 @@ function fixedIraMayStartBefore59Half(owner, year, state) {
   const birthYear = dependentYear(state['by' + owner]);
   return year != null && birthYear != null && year - birthYear < 60;
 }
+function knownFixedIraBirthDate(owner, state) {
+  const birthYear = dependentYear(state['by' + owner]);
+  const householdDate = state['birthDate' + owner];
+  const date = fixedIraSeppDate(householdDate);
+  if (date && (birthYear == null || date.getUTCFullYear() === birthYear)) return householdDate;
+  const dates = new Set();
+  for (const schedule of state.ovFixedIraWithdrawals || []) {
+    if (schedule.owner !== owner) continue;
+    const date = fixedIraSeppDate(schedule.sepp?.birthDate);
+    if (date && (birthYear == null || date.getUTCFullYear() === birthYear)) dates.add(schedule.sepp.birthDate);
+  }
+  return dates.size === 1 ? dates.values().next().value : '';
+}
+function fixedIraBirthDateNote(owner, state) {
+  const birthYear = dependentYear(state['by' + owner]);
+  return 'Enter the owner’s full birth date.' + (birthYear == null ? '' : ' Household lists ' + birthYear + ' as the birth year.');
+}
+function fixedIraSuggestedFirstDate(year) {
+  return dependentYear(year) == null ? '' : year + '-01-01';
+}
 function fixedIraFirstPaymentAgeLabel(sepp) {
   const birth = fixedIraSeppDate(sepp?.birthDate);
   const first = fixedIraSeppDate(sepp?.firstDate);
@@ -14718,7 +14858,8 @@ function fixedIraSeppEstimatePreview(sepp, owner, startYear, timing) {
 function setupUpdateFixedIraSepp(event, applyEstimate = false) {
   const panel = document.getElementById('strat-sepp-dates');
   const confirmPayment = document.getElementById('strat-sepp-transition');
-  if (['strat-sepp-birth','strat-sepp-first','strat-ira-owner','strat-start','strat-end'].includes(event.target.id)) {
+  const changed = event.target.id;
+  if (['strat-sepp-birth','strat-sepp-first','strat-ira-owner','strat-start','strat-end'].includes(changed)) {
     confirmPayment.checked = false;
   }
   const owner = stratVal('ira-owner');
@@ -14726,6 +14867,14 @@ function setupUpdateFixedIraSepp(event, applyEstimate = false) {
   const endYear = dependentYear(stratVal('end'));
   document.getElementById('strat-start-age').textContent = fixedIraPaymentYearAgeLabel(owner,startYear,S);
   document.getElementById('strat-end-age').textContent = fixedIraPaymentYearAgeLabel(owner,endYear,S);
+  if (changed === 'strat-ira-owner') {
+    document.getElementById('strat-sepp-birth').value = knownFixedIraBirthDate(owner,S);
+    document.getElementById('strat-sepp-birth-note').textContent = fixedIraBirthDateNote(owner,S);
+  }
+  if (changed === 'strat-sepp-first') panel.dataset.firstDateSuggested = 'false';
+  if (changed === 'strat-start' && panel.dataset.firstDateSuggested === 'true') {
+    document.getElementById('strat-sepp-first').value = fixedIraSuggestedFirstDate(startYear);
+  }
   const sepp = readSetupFixedIraSepp();
   panel.hidden = !sepp;
   document.getElementById('strat-ira-reserve-wrap').hidden = !!sepp;
@@ -14735,7 +14884,7 @@ function setupUpdateFixedIraSepp(event, applyEstimate = false) {
   earlyWarning.hidden = !early;
   earlyWarning.classList.toggle('missing', allowEarlyExtra);
   document.getElementById('strat-ira-early-consent-wrap').hidden = !allowEarlyExtra;
-  if (['strat-ira-owner','strat-start','strat-end','strat-ira-reserve','strat-sepp-timing'].includes(event.target.id)) {
+  if (['strat-ira-owner','strat-start','strat-end','strat-ira-reserve','strat-sepp-timing'].includes(changed)) {
     document.getElementById('strat-ira-early-consent').checked = false;
   }
   if (!sepp) return;
@@ -14747,6 +14896,7 @@ function setupUpdateFixedIraSepp(event, applyEstimate = false) {
   const estimate = fixedIraSeppEstimatePreview(sepp, owner, startYear, timing);
   if (applyEstimate && estimate.amount != null) {
     document.getElementById('strat-ira-amount').value = estimate.amount.toFixed(2);
+    setupRefreshStrategySaveStatus();
   }
   document.getElementById('strat-sepp-amount-result').textContent =
     fixedIraSeppAmountMessage(fixedIraPaymentAmount(stratVal('ira-amount')), fixedIraPaymentAmount(sepp.calculatedAmount));
@@ -14762,8 +14912,11 @@ function renderSetupFixedIraWithdrawalFields(row) {
   const owner = row?.owner || '1';
   const startYear = row?.startYear ?? suggestedYear;
   const endYear = row?.endYear ?? '';
-  const sepp = row?.sepp;
-  const timing = sepp ? fixedIraSeppTiming(row, S) : null;
+  const birthDate = row?.sepp?.birthDate || knownFixedIraBirthDate(owner,S);
+  const firstDateSuggested = !row?.sepp?.firstDate;
+  const firstDate = firstDateSuggested ? fixedIraSuggestedFirstDate(startYear) : row.sepp.firstDate;
+  const sepp = row?.sepp ? {...row.sepp, birthDate, firstDate} : null;
+  const timing = sepp ? fixedIraSeppTiming({...row,sepp},S) : null;
   const estimate = sepp?.estimate;
   const preview = fixedIraSeppEstimatePreview(sepp, owner, startYear, timing);
   const early = !sepp && fixedIraMayStartBefore59Half(owner,startYear,S);
@@ -14791,14 +14944,15 @@ function renderSetupFixedIraWithdrawalFields(row) {
         '<label><input type="checkbox" id="strat-ira-early-consent"'+(row?.earlyDrawConfirmed ? ' checked' : '')+
         '> I want to allow extra IRA draws before age 59½. I understand those draws can incur an additional 10% federal tax on top of regular income tax.</label></div>'+
       '<a href="https://www.irs.gov/taxtopics/tc557" target="_blank" rel="noopener">IRS early IRA withdrawal rules and exceptions</a></div>'+
-    '<div id="strat-sepp-dates" style="grid-column:1/-1"'+(sepp?'':' hidden')+'>'+
+    '<div id="strat-sepp-dates" style="grid-column:1/-1" data-first-date-suggested="'+firstDateSuggested+'"'+(sepp?'':' hidden')+'>'+
       '<div class="setup-check warn" style="margin-bottom:10px"><div class="setup-check-title">Extra IRA draws blocked during the SEPP</div>'+
         '<div class="setup-check-body">The plan reserves the owner’s combined IRA / 401(k) balance and blocks extra draws and Roth conversions from it during the commitment. An extra withdrawal from the actual SEPP IRA before the earliest change date can trigger additional tax for the current and prior years, plus interest.</div></div>'+
       '<div class="setup-field-grid">'+
-        stratInput('sepp-birth','IRA Owner’s Birth Date',sepp?.birthDate,{type:'date'})+
-        stratInput('sepp-first','First SEPP Payment Date',sepp?.firstDate,{type:'date',
+        stratInput('sepp-birth','IRA Owner’s Birth Date',birthDate,{type:'date',
+          note:'<span id="strat-sepp-birth-note">'+setupEsc(fixedIraBirthDateNote(owner,S))+'</span>'})+
+        stratInput('sepp-first','First SEPP Payment Date',firstDate,{type:'date',
           note:'<div id="strat-sepp-first-age">'+fixedIraFirstPaymentAgeLabel(sepp)+'</div>'+
-            'Enter the date the first payment is expected to arrive. For an existing SEPP, use the original first payment date. The five-year clock starts on that date.'})+
+            'January 1 of the first payment year is the planning default. Use the expected first payment date for a new SEPP. For a SEPP already underway, use its original first payment date.'})+
       '</div>'+
       '<div class="setup-check done" style="margin:10px 0"><div class="setup-check-title">Fixed SEPP Payment Estimate</div>'+
         '<div class="setup-check-body">Uses fixed amortization and the IRS Single Life Table, based on the age you reach in the first payment year.</div>'+
@@ -14870,11 +15024,13 @@ function renderStrategyForm(){
   else if (setupStrategyType === 'inflation') fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratInput('bracket','Tax Bracket Inflation (%)',val('bracketInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting.'})+stratInput('irmaa','IRMAA MAGI Threshold Inflation (%)',val('irmaaInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting for IRMAA MAGI income-tier thresholds.'})+stratInput('medicare','Medicare Cost Inflation (%)',val('medicareCostInfl',''),{step:'0.1',min:0,note:'Blank inherits the global Tax Tables setting. Useful for 2036+ lower-cost-growth assumptions.'})+stratText('notes','Notes',val('notes','Inflation assumption change'));
   else fields = stratInput('start','Start Year',val('startYear',yr),{min:yr})+stratInput('end','End Year',val('endYear',end),{min:yr})+stratSelect('draw1','Draw 1',val('draw1',S.fundingOrder1||'SEC'),FUNDING_ORDER_OPTIONS)+stratSelect('draw2','Draw 2',val('draw2',S.fundingOrder2||'IRA'),FUNDING_ORDER_OPTIONS)+stratSelect('draw3','Draw 3',val('draw3',S.fundingOrder3||'ROTH'),FUNDING_ORDER_OPTIONS)+stratText('notes','Notes',val('notes','Funding order change'));
   const globalTaxFunding = setupStrategyType === 'roth-tax-funding'
-    ? '<div class="setup-check done" style="margin-bottom:14px"><div class="setup-check-title">Saved Plan Default - Applies When No Year Override Exists</div><div class="setup-check-body">This is the global setting for the saved plan. A dated strategy below replaces it only during that strategy&rsquo;s year range.</div><div class="setup-field" style="margin-top:9px;max-width:720px"><label>Global Conversion Tax Funding</label><select onchange="setupSetGlobalRothTaxFunding(this.value)">'+ROTH_TAX_FUNDING_OPTIONS.map(o=>'<option value="'+setupEsc(o[0])+'" '+(normalizeRothTaxFunding(S.rothConvTaxFunding)===o[0]?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('')+'</select><div style="font-family:Georgia,serif;font-size:12px;line-height:1.45;font-style:italic;color:#6a5830;margin-top:5px">Follow Normal Funding Order adds conversion tax to the year&rsquo;s funding requirement and pays it using the plan&rsquo;s normal cash and account-draw order. Withholding is the only choice that reduces the amount deposited into Roth.</div></div></div><div class="sh">Optional Year-Specific Override</div>'
+    ? '<div class="setup-check done" style="margin-bottom:14px"><div class="setup-check-title">Saved Plan Default - Applies When No Year Override Exists</div><div class="setup-check-body">This is the global setting for the saved plan. A dated strategy below replaces it only during that strategy&rsquo;s year range.</div><div class="setup-field" style="margin-top:9px;max-width:720px"><label>Global Conversion Tax Funding</label><select onchange="setupSetGlobalRothTaxFunding(this)">'+ROTH_TAX_FUNDING_OPTIONS.map(o=>'<option value="'+setupEsc(o[0])+'" '+(normalizeRothTaxFunding(S.rothConvTaxFunding)===o[0]?'selected':'')+'>'+setupEsc(o[1])+'</option>').join('')+'</select><div style="font-family:Georgia,serif;font-size:12px;line-height:1.45;font-style:italic;color:#6a5830;margin-top:5px">Follow Normal Funding Order adds conversion tax to the year&rsquo;s funding requirement and pays it using the plan&rsquo;s normal cash and account-draw order. Withholding is the only choice that reduces the amount deposited into Roth.</div></div></div><div class="sh">Optional Year-Specific Override</div>'
     : '';
-  const editNote = editing ? '<div class="setup-check warn" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Update the fields below and save, or cancel to add a new strategy instead.</div></div>' : '';
+  const editNote = editing ? '<div class="setup-check done" style="margin-bottom:12px"><div class="setup-check-title">Editing current strategy</div><div class="setup-check-body">Edits save when you move on. Choose Update Strategy to save now or Cancel Edit to discard your changes.</div><strong id="setup-strategy-save-status" role="status"></strong></div>' : '';
   const buttons = '<button class="btn btn-dark" onclick="applySetupStrategy()">'+(editing?'Update Strategy':'Add Strategy')+'</button>'+(editing?'<button class="btn btn-light" onclick="setupCancelStrategyEdit()">Cancel Edit</button>':'');
-  return '<div class="strategy-card-title">'+setupEsc(setupStrategyLabel(setupStrategyType))+'</div>'+globalTaxFunding+editNote+'<div class="setup-field-grid">'+fields+'</div><div class="setup-actions">'+buttons+'</div>';
+  return '<div class="strategy-card-title">'+setupEsc(setupStrategyLabel(setupStrategyType))+'</div>'+globalTaxFunding+editNote+
+    '<div id="setup-strategy-fields" class="setup-field-grid" oninput="setupRefreshStrategySaveStatus()" onchange="setupRefreshStrategySaveStatus()">'+fields+'</div>'+
+    '<div class="setup-actions">'+buttons+'</div>';
 }
 function stratVal(id){
   const el = document.getElementById('strat-'+id);
@@ -14885,10 +15041,24 @@ function stratInt(id, fallback){
   return isNaN(n) ? fallback : n;
 }
 function applySetupStrategy(){
+  const invalidField = setupStrategyFields().find((field,index) => {
+    if (field.closest('[hidden]')) return false;
+    const changed = setupStrategyInitialValues?.[index] !== setupStrategyControlValue(field);
+    return field.validity?.badInput ||
+      (changed && (field.validity?.rangeUnderflow || field.validity?.rangeOverflow));
+  });
+  if (invalidField) {
+    invalidField.reportValidity();
+    return false;
+  }
   const yr = setupYear();
   const notes = stratVal('notes');
   const start = stratInt('start', stratInt('year', yr));
   const end = stratInt('end', start);
+  if (end < start) {
+    alert('Choose an end year on or after the start year.');
+    return false;
+  }
   const editing = setupEditingStrategy && setupEditingStrategy.tableKey;
   const writeOv = (key, row) => {
     if (!Array.isArray(S[key])) S[key] = [];
@@ -14915,7 +15085,7 @@ function applySetupStrategy(){
     const amount1 = stratVal('amount1'), amount2 = hasP2() ? stratVal('amount2') : '';
     if (start < yr || end > S.endYear || end < start || [amount1,amount2].some(value => Number(value) < 0) || (amount1 === '' && amount2 === '')) {
       alert('Enter a gift amount or zero, and choose a start and end year within the plan.');
-      return;
+      return false;
     }
     writeOv('ovQcd', {amount1, amount2, startYear:start, endYear:end, notes});
   }
@@ -14929,7 +15099,7 @@ function applySetupStrategy(){
     const firstRow = strategy && proj.find(row => row.yr === strategy.startYear);
     if (!strategy || !firstRow || strategy.endYear > S.endYear || !acaIncomeTargetForProjectionRow(firstRow, strategy)) {
       alert('Choose coverage years in the plan, a positive poverty level percentage, and zero or positive dollar amounts.');
-      return;
+      return false;
     }
     writeOv('ovAcaIncomeTarget', strategy);
   }
@@ -14942,27 +15112,27 @@ function applySetupStrategy(){
     });
     if (!strategy || strategy.startYear < yr || strategy.endYear > S.endYear || (strategy.owner === '2' && !hasP2())) {
       alert('Choose an IRA owner in the plan, enter a positive payment, and enter the first and last payment years within the plan.');
-      return;
+      return false;
     }
     if (!strategy.sepp && !strategy.reserveIra && !strategy.earlyDrawConfirmed &&
         fixedIraMayStartBefore59Half(strategy.owner,strategy.startYear,S)) {
       alert('Confirm that you want to allow extra IRA draws before age 59½, or choose Reserve IRA for scheduled payments.');
-      return;
+      return false;
     }
     if (strategy.sepp) {
       const calculatedAmount = strategy.sepp.calculatedAmount;
       if (sepp.calculatedAmount && calculatedAmount == null) {
         alert('Enter a positive calculated SEPP annual payment or leave that field blank.');
-        return;
+        return false;
       }
       if (calculatedAmount != null && strategy.amount !== calculatedAmount) {
         alert(fixedIraSeppAmountMessage(strategy.amount, calculatedAmount));
-        return;
+        return false;
       }
       const timing = fixedIraSeppTiming(strategy, S);
       if (timing.issue) {
         alert(fixedIraSeppTimingMessage(timing,strategy.endYear));
-        return;
+        return false;
       }
     }
     const overlap = (S.ovFixedIraWithdrawals || []).some((other, index) =>
@@ -14970,7 +15140,7 @@ function applySetupStrategy(){
       fixedIraSchedulesConflict(strategy,other,S));
     if (overlap) {
       alert('An overlapping withdrawal uses this owner’s combined IRA balance. Edit the existing schedule or use Version 2.0 to model separate IRAs for the same owner.');
-      return;
+      return false;
     }
     writeOv('ovFixedIraWithdrawals', strategy);
     setupFixedIraStartYear = null;
@@ -14990,6 +15160,7 @@ function applySetupStrategy(){
   }
   setupEditingStrategy = null;
   setupAfterChange(true);
+  return true;
 }
 function setupHasValue(v){
   return v !== null && v !== undefined && v !== '' && v !== 'off';
@@ -15203,6 +15374,7 @@ function setupJsString(v){
   return JSON.stringify(String(v || ''));
 }
 function setupEditStrategyRow(editType, tableKey, rowIndex){
+  if (!setupSaveStrategyEdits()) return;
   setupStrategyType = editType || setupStrategyType;
   setupEditingStrategy = {tableKey:tableKey, rowIndex:parseInt(rowIndex, 10) || 0};
   setupView = 'strategy';
@@ -15214,6 +15386,8 @@ function setupEditStrategyRow(editType, tableKey, rowIndex){
 }
 function setupDeleteStrategyRow(tableKey, rowIndex){
   if (!confirm('Remove this strategy row?')) return;
+  const deletingEditedRow = setupEditingStrategy?.tableKey === tableKey && setupEditingStrategy.rowIndex === Number(rowIndex);
+  if (!deletingEditedRow && !setupSaveStrategyEdits()) return;
   if (tableKey === 'retirement') {
     S.wagesEnd1 = 9999; S.ptEnd1 = 9999;
     if (hasP2()) { S.wagesEnd2 = 9999; S.ptEnd2 = 9999; }
